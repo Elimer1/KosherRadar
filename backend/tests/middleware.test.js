@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { ZodError } from 'zod';
 
 vi.mock('../src/config/env.js', () => ({
   env: {
@@ -23,7 +24,7 @@ import { authMiddleware } from '../src/middleware/authMiddleware.js';
 import { adminMiddleware } from '../src/middleware/adminMiddleware.js';
 import { validateBody } from '../src/middleware/validate.js';
 import { errorMiddleware } from '../src/middleware/errorMiddleware.js';
-import { AppError } from '../src/utils/AppError.js';
+import { appError } from '../src/utils/appError.js';
 import { registerSchema } from '../src/schemas/authSchemas.js';
 import { getMyProfileService } from '../src/services/userService.js';
 
@@ -37,25 +38,22 @@ const makeRes = () => {
 describe('authMiddleware', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('passes 401 to next() when there is no Authorization header', async () => {
-    const next = vi.fn();
-    await authMiddleware({ headers: {} }, makeRes(), next);
-
-    expect(next.mock.calls[0][0]).toMatchObject({ statusCode: 401 });
+  it('throws 401 when there is no Authorization header', async () => {
+    await expect(authMiddleware({ headers: {} }, makeRes(), vi.fn())).rejects.toMatchObject({
+      statusCode: 401,
+    });
   });
 
   it('rejects a header that is not a Bearer token', async () => {
-    const next = vi.fn();
-    await authMiddleware({ headers: { authorization: 'Basic abc' } }, makeRes(), next);
-
-    expect(next.mock.calls[0][0]).toMatchObject({ statusCode: 401 });
+    await expect(
+      authMiddleware({ headers: { authorization: 'Basic abc' } }, makeRes(), vi.fn()),
+    ).rejects.toMatchObject({ statusCode: 401 });
   });
 
   it('rejects a garbage token', async () => {
-    const next = vi.fn();
-    await authMiddleware({ headers: { authorization: 'Bearer not.a.jwt' } }, makeRes(), next);
-
-    expect(next.mock.calls[0][0]).toMatchObject({ statusCode: 401, code: 'INVALID_TOKEN' });
+    await expect(
+      authMiddleware({ headers: { authorization: 'Bearer not.a.jwt' } }, makeRes(), vi.fn()),
+    ).rejects.toMatchObject({ statusCode: 401, code: 'INVALID_TOKEN' });
   });
 
   it('attaches the database user to req.user for a valid token', async () => {
@@ -73,17 +71,15 @@ describe('authMiddleware', () => {
 
 describe('adminMiddleware', () => {
   it('blocks an ordinary USER with 403', () => {
-    const next = vi.fn();
-    adminMiddleware({ user: { role: 'USER' } }, makeRes(), next);
-
-    expect(next.mock.calls[0][0]).toMatchObject({ statusCode: 403 });
+    expect(() => adminMiddleware({ user: { role: 'USER' } }, makeRes(), vi.fn())).toThrow(
+      expect.objectContaining({ statusCode: 403 }),
+    );
   });
 
   it('blocks a request with no user', () => {
-    const next = vi.fn();
-    adminMiddleware({}, makeRes(), next);
-
-    expect(next.mock.calls[0][0]).toMatchObject({ statusCode: 403 });
+    expect(() => adminMiddleware({}, makeRes(), vi.fn())).toThrow(
+      expect.objectContaining({ statusCode: 403 }),
+    );
   });
 
   it('lets an ADMIN through', () => {
@@ -107,33 +103,30 @@ describe('validateBody with registerSchema', () => {
     expect(next).toHaveBeenCalledWith();
   });
 
-  it('returns a 400 with field errors for a short password', () => {
+  it('throws a ZodError with a field issue for a short password', () => {
     const req = { body: { email: 'a@example.com', password: 'short' } };
-    const next = vi.fn();
 
-    validateBody(registerSchema)(req, makeRes(), next);
+    let thrown;
+    try {
+      validateBody(registerSchema)(req, makeRes(), vi.fn());
+    } catch (error) {
+      thrown = error;
+    }
 
-    const error = next.mock.calls[0][0];
-    expect(error.statusCode).toBe(400);
-    expect(error.errors[0].field).toBe('password');
+    expect(thrown).toBeInstanceOf(ZodError);
+    expect(thrown.issues[0].path).toEqual(['password']);
   });
 
   it('rejects an object where a string is expected (NoSQL injection attempt)', () => {
     const req = { body: { email: { $ne: '' }, password: 'password123' } };
-    const next = vi.fn();
 
-    validateBody(registerSchema)(req, makeRes(), next);
-
-    expect(next.mock.calls[0][0]).toMatchObject({ statusCode: 400 });
+    expect(() => validateBody(registerSchema)(req, makeRes(), vi.fn())).toThrow(ZodError);
   });
 
   it('rejects a password longer than the bcrypt limit of 72 characters', () => {
     const req = { body: { email: 'a@example.com', password: 'a'.repeat(73) } };
-    const next = vi.fn();
 
-    validateBody(registerSchema)(req, makeRes(), next);
-
-    expect(next.mock.calls[0][0]).toMatchObject({ statusCode: 400 });
+    expect(() => validateBody(registerSchema)(req, makeRes(), vi.fn())).toThrow(ZodError);
   });
 });
 
@@ -143,22 +136,26 @@ describe('errorMiddleware', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
-  it('formats an AppError with message and code', () => {
+  it('formats an appError with message and code', () => {
     const res = makeRes();
-    errorMiddleware(new AppError('Nope', 403, 'SOME_CODE'), {}, res, vi.fn());
+    errorMiddleware(appError('Nope', 403, 'SOME_CODE'), {}, res, vi.fn());
 
     expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith({ message: 'Nope', code: 'SOME_CODE' });
   });
 
-  it('includes validation errors', () => {
-    const error = new AppError('Validation failed', 400, 'VALIDATION_ERROR');
-    error.errors = [{ field: 'email', message: 'Invalid' }];
+  it('formats a ZodError as a 400 with field errors', () => {
     const res = makeRes();
+    const result = registerSchema.safeParse({ email: 'a@example.com', password: 'short' });
 
-    errorMiddleware(error, {}, res, vi.fn());
+    errorMiddleware(result.error, {}, res, vi.fn());
 
-    expect(res.json.mock.calls[0][0].errors).toEqual([{ field: 'email', message: 'Invalid' }]);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'Validation failed',
+      code: 'VALIDATION_ERROR',
+      errors: [{ field: 'password', message: 'Password must be at least 8 characters' }],
+    });
   });
 
   it('maps a duplicate key error to 409', () => {
