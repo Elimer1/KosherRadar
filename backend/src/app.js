@@ -12,12 +12,10 @@ export const createApp = () => {
 
   app.disable('x-powered-by');
 
-  // Only the configured frontend origin may call the API from a browser.
   app.use(cors({ origin: env.clientUrl }));
   app.use(express.json({ limit: '10kb' }));
 
   app.get('/api/health', (req, res) => {
-    // readyState 1 means connected to MongoDB.
     const databaseConnected = mongoose.connection.readyState === 1;
     res.status(200).json({ status: 'ok', database: databaseConnected ? 'connected' : 'disconnected' });
   });

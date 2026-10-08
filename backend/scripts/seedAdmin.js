@@ -2,7 +2,6 @@ import { env, validateEnv } from '../src/config/env.js';
 import { connectDb, disconnectDb } from '../src/config/db.js';
 import { seedAdminService } from '../src/services/adminSeedService.js';
 
-// Usage: npm run seed:admin   (reads SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD from backend/.env)
 const runSeed = async () => {
   try {
     validateEnv();

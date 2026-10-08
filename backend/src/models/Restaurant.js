@@ -9,7 +9,6 @@ import {
 const restaurantSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true, maxlength: 150 },
-    // Only filled when a reliable localized name is known (for example from Geoapify).
     nameHe: { type: String, trim: true, maxlength: 150 },
     nameEn: { type: String, trim: true, maxlength: 150 },
 
@@ -18,12 +17,10 @@ const restaurantSchema = new mongoose.Schema(
     addressEn: { type: String, trim: true, maxlength: 250 },
     city: { type: String, trim: true, maxlength: 100 },
 
-    // Plain lat/lng for display, plus GeoJSON "location" for the 2dsphere index.
     latitude: { type: Number, required: true, min: -90, max: 90 },
     longitude: { type: Number, required: true, min: -180, max: 180 },
     location: {
       type: { type: String, enum: ['Point'], default: 'Point' },
-      // GeoJSON order is [longitude, latitude].
       coordinates: { type: [Number] },
     },
 
@@ -33,17 +30,14 @@ const restaurantSchema = new mongoose.Schema(
 
     foodType: { type: String, enum: FOOD_TYPES, required: true },
     categories: { type: [{ type: String, enum: CATEGORIES }], default: [] },
-    // Searchable food words in Hebrew/English, for example "pizza" or "פיצה".
     foodKeywords: { type: [String], default: [] },
 
-    // Unverified claims made by the submitter. These are never shown as certificates.
     claimedHechsher: { type: String, trim: true, maxlength: 100 },
     claimedKashrutLevel: { type: String, enum: KASHRUT_LEVELS },
 
     status: { type: String, enum: SUBMISSION_STATUSES, default: 'PENDING' },
     submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 
-    // Private to admins. Never include in public responses.
     adminNote: { type: String, trim: true, maxlength: 1000 },
     rejectionReason: {
       type: String,
@@ -54,10 +48,8 @@ const restaurantSchema = new mongoose.Schema(
       },
     },
 
-    // Manually verified by an admin. Never scraped.
     kosharotUrl: { type: String, trim: true, maxlength: 300 },
 
-    // Warnings only; a suspected duplicate is never rejected automatically.
     possibleDuplicates: [
       {
         restaurant: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant' },
@@ -68,7 +60,6 @@ const restaurantSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Keep the GeoJSON point in sync with latitude/longitude.
 restaurantSchema.pre('validate', function syncLocation() {
   if (this.latitude !== undefined && this.longitude !== undefined) {
     this.location = { type: 'Point', coordinates: [this.longitude, this.latitude] };

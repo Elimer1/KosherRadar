@@ -13,7 +13,6 @@ export const env = {
   seedAdminPassword: process.env.SEED_ADMIN_PASSWORD || '',
 };
 
-// Called at startup so a missing secret fails loudly instead of at the first login.
 export const validateEnv = () => {
   const missing = [];
 

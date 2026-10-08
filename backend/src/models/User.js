@@ -3,7 +3,6 @@ import { ROLES } from '../config/constants.js';
 
 const userSchema = new mongoose.Schema(
   {
-    // Always stored trimmed + lowercase so "A@x.com" and "a@x.com" are the same account.
     email: {
       type: String,
       required: true,
@@ -11,7 +10,6 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    // select: false means queries do NOT return the hash unless asked with .select('+passwordHash').
     passwordHash: {
       type: String,
       required: true,
@@ -22,7 +20,6 @@ const userSchema = new mongoose.Schema(
       enum: ROLES,
       default: 'USER',
     },
-    // Private contribution points. Only the owner may see them.
     points: {
       type: Number,
       default: 0,

@@ -14,7 +14,6 @@ const reportSchema = new mongoose.Schema(
 
     status: { type: String, enum: REPORT_STATUSES, default: 'PENDING' },
 
-    // Private to admins.
     adminNote: { type: String, trim: true, maxlength: 1000 },
     rejectionReason: {
       type: String,
@@ -25,8 +24,6 @@ const reportSchema = new mongoose.Schema(
       },
     },
 
-    // true only when an admin really changed the restaurant/teuda. A report that is
-    // merely marked RESOLVED keeps this false and earns no points.
     correctionApplied: { type: Boolean, default: false },
   },
   { timestamps: true }

@@ -10,7 +10,6 @@ export const loginController = async (req, res) => {
   res.status(200).json(result);
 };
 
-// Lets the frontend check that its stored token is still valid.
 export const getCurrentUserController = async (req, res) => {
   res.status(200).json({ user: toPublicUser(req.user) });
 };

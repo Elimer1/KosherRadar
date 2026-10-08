@@ -7,7 +7,6 @@ import {
 
 const SALT_ROUNDS = 10;
 
-// Safe to run many times. An existing account keeps its password; it is only promoted to ADMIN.
 export const seedAdminService = async ({ email, password }) => {
   if (!email || !password) {
     throw new Error('SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD must be set');

@@ -4,7 +4,6 @@ import { User } from '../src/models/User.js';
 import { Restaurant } from '../src/models/Restaurant.js';
 import { Teuda } from '../src/models/Teuda.js';
 
-// These tests use Mongoose validation only; they do not need a database connection.
 const someId = () => new mongoose.Types.ObjectId();
 
 describe('User model', () => {

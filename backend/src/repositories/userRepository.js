@@ -8,7 +8,6 @@ export const findUserByEmailRepo = async (email) => {
   return User.findOne({ email });
 };
 
-// passwordHash is hidden by default, so login must ask for it explicitly.
 export const findUserByEmailWithPasswordRepo = async (email) => {
   return User.findOne({ email }).select('+passwordHash');
 };

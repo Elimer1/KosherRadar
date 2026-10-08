@@ -62,7 +62,6 @@ describe('registerService', () => {
   it('never passes role or points from the client to the database', async () => {
     findUserByEmailRepo.mockResolvedValue(null);
 
-    // Even if a malicious body reaches the service, only email and passwordHash are saved.
     await registerService({
       email: 'a@example.com',
       password: 'password123',
@@ -157,7 +156,6 @@ describe('getUserFromTokenService', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns the user from the database, so the stored role is trusted', async () => {
-    // The token says ADMIN, the database says USER: the database wins.
     const token = signTokenService({ _id: 'user-1', role: 'ADMIN' });
     findUserByIdRepo.mockResolvedValue({ _id: 'user-1', role: 'USER' });
 
