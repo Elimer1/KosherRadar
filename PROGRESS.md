@@ -4,7 +4,18 @@ Authoritative requirements: `PROJECT_SPEC.md` (do not edit without approval). Re
 
 ## Active milestone
 
-**Milestone 1 — Foundation and auth**: code complete and merged to `main`; one item BLOCKED (real-database flow). Waiting for approval before Milestone 2.
+**Milestone 2 — Submissions and image upload**: IN PROGRESS (approved by the user in a conversation that also contained the Milestone 1 handoff). Milestone 1 is merged to `main`; its real-database item is still BLOCKED.
+
+## Feature ownership (Milestone 2)
+
+Recorded before implementation, per section 19. Same disclosure rule as Milestone 1: AI-generated code, owner must review it.
+
+| Feature branch | Responsible teammate | Scope |
+| --- | --- | --- |
+| `feature/teuda-submission` | Moshe Silber | Hechsher options, Cloudinary upload + image validation, teuda date rules, submit-teuda endpoint, submit-teuda page, tests |
+| `feature/restaurant-submission` | Eli Mermelstein | Restaurant model changes, duplicate warning, submit-restaurant endpoint (optionally with a teuda), submit-restaurant page, tests |
+| `feature/report-submission` | Moshe Silber | Report endpoint, report page, tests |
+| `feature/milestone-2-docs` | Eli Mermelstein | Progress and checklist files, README and `.env.example` updates |
 
 ## Feature ownership (Milestone 1)
 
