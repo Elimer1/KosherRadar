@@ -18,6 +18,10 @@ export const env = {
   // חדש (אבן דרך 3): הגדרות שליחת מייל ב-Resend (מיילי דחייה ואיפוס סיסמה)
   resendApiKey: process.env.RESEND_API_KEY || '',
   emailFrom: process.env.EMAIL_FROM || '',
+  // NEW (Milestone 4): Atlas Search is OFF until the index from ATLAS_SEARCH_SETUP.md exists and was checked.
+  // חדש (אבן דרך 4): Atlas Search כבוי עד שהאינדקס מ-ATLAS_SEARCH_SETUP.md קיים ונבדק.
+  atlasSearchEnabled: process.env.ATLAS_SEARCH_ENABLED === 'true',
+  atlasSearchIndex: process.env.ATLAS_SEARCH_INDEX || 'restaurant_search',
 };
 
 export const validateEnv = () => {
