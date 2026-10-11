@@ -118,7 +118,7 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
           value={text}
           maxLength={100}
           autoComplete="off"
-          placeholder="Restaurant name or food, for example pizza"
+          placeholder="Restaurant name or food"
           className={`${inputClassName} mt-0`}
           role="combobox"
           aria-expanded={showList}
