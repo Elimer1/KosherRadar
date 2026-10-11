@@ -3,7 +3,7 @@
 Statuses: `NOT STARTED`, `IN PROGRESS`, `IMPLEMENTED UNVERIFIED`, `TESTED`, `BLOCKED`. `TESTED` requires evidence (a passing test or a real run), recorded in the Evidence column.
 Source of requirements: `PROJECT_SPEC.md`.
 
-After the Milestone 3 merges, `main` runs backend 24 files / 324 tests and frontend 7 files / 40 tests, all passing; frontend typecheck, lint and build succeed (the backend count includes the team's uncommitted duplicate-detection edits that sit in the working tree, see `PROGRESS.md`).
+After the Milestone 4 merges, `main` runs backend 34 files / 448 tests and frontend 11 files / 76 tests, all passing; frontend typecheck, lint and build succeed. (After Milestone 3: backend 24 files / 324 tests, frontend 7 files / 40 tests.)
 
 Evidence for Milestone 1 came from `npm test` runs on `main` after merging both feature branches (backend 4 files / 40 tests, frontend 1 file / 11 tests). After the Milestone 2 merges, `main` runs backend 13 files / 150 tests and frontend 4 files / 24 tests, all passing; frontend `npm run typecheck`, `npm run build` and `npm run lint` succeed. No MongoDB, Cloudinary account or browser was available, so nothing was verified against real services.
 
@@ -63,7 +63,7 @@ Evidence for Milestone 1 came from `npm test` runs on `main` after merging both 
 | Zod validation, NoSQL-injection-safe inputs, safe URLs (4) | TESTED | `submissionSchemas.test.js`, `restaurantSchemas.test.js` (objects instead of strings, `javascript:` links, bad ids) |
 | No points awarded at submission (7) | IMPLEMENTED UNVERIFIED | No points code exists in Milestone 2 and no test asserts it. `submittedWithNewRestaurant` is stored for the Milestone 3 +3 / +2 decision |
 | Submission pages (restaurant, certificate, report) (10) | IMPLEMENTED UNVERIFIED | `SubmitRestaurantPage.tsx`, `SubmitTeudaPage.tsx`, `SubmitReportPage.tsx`; typecheck, lint and build pass, API payload builders tested; **no browser run**. English only until Milestone 5 |
-| Entry points for certificate/report pages (10) | NOT STARTED | Needs the restaurant detail page (Milestone 4); until then only reachable by URL |
+| Entry points for certificate/report pages (10) | IMPLEMENTED UNVERIFIED | Linked from the restaurant page in Milestone 4 (see the Milestone 4 table) |
 | Real submission flow against MongoDB + Cloudinary (15) | BLOCKED | No MongoDB connection string, Cloudinary account, or `backend/.env` here |
 
 ## Milestone 3 — Admin and kashrut business rules
@@ -82,7 +82,7 @@ Evidence for Milestone 1 came from `npm test` runs on `main` after merging both 
 | Cannot approve a certificate before its restaurant is approved (6, 12) | TESTED | `adminTeudaService.test.js` ("cannot approve a certificate while its restaurant is not approved"). The UI also disables the button |
 | Report resolution: apply proposed / already corrected / no correction; correction changes only the allowed fields (6, 7) | TESTED | `adminReportService.test.js` (`buildCorrectionChanges`, idempotent resolve). Unit tests only |
 | Kashrut status derivation: verified / unverified / expired / unknown, priority, `+N more`, six-month rule (5) | TESTED | `kashrutStatusService.js`, `kashrutStatusService.test.js` (24 cases, e.g. verified RABBANUT outranks an unverified MEHADRIN claim). Israel calendar dates, expired status is derived and never stored |
-| Public teuda serializer hides admin-only data (5, 12) | TESTED | `kashrutStatusService.test.js` (`toPublicTeuda` has no admin or internal fields; `getPublicTeudot` removes admin-only and unapproved certificates). **No public endpoint uses it yet (Milestone 4)** |
+| Public teuda serializer hides admin-only data (5, 12) | TESTED | `kashrutStatusService.test.js` (`toPublicTeuda` has no admin or internal fields; `getPublicTeudot` removes admin-only and unapproved certificates). Since Milestone 4 the public search and details endpoints use it |
 | Conflict warning, overrideable (5.8) | TESTED | `findConflictingTeudot` tests (same level, both valid, never blocks); `adminTeudaService.test.js` (approve still succeeds with `conflictWarning`). UI shows "Approve anyway" |
 | Rejection emails via Resend, failure does not roll back (6, 12) | TESTED | `emailService.test.js` (mocked `fetch`: SENT / FAILED / NOT_CONFIGURED, never throws, plain text, no admin note), `adminTeudaService.test.js` and siblings (rejection saved when the email fails; `emailStatus` returned). **Real delivery through Resend: BLOCKED (see next row)** |
 | Real Resend delivery (2, 6) | BLOCKED | No `RESEND_API_KEY`, no verified domain here. Without a verified domain Resend only sends to the owner's own address. Never attempted |
@@ -93,18 +93,33 @@ Evidence for Milestone 1 came from `npm test` runs on `main` after merging both 
 | Rate limit on password reset requests (4) | IMPLEMENTED UNVERIFIED | `passwordResetRateLimiter` (5 per hour per IP), `authRateLimiter` on reset; not exercised against a running server |
 | Admin-only UI guard and navbar link (4, 10) | IMPLEMENTED UNVERIFIED | `AdminRoute.tsx` (hides the pages for non-admins; real protection is the server). No browser run |
 | Frontend helpers: labels, form values, payload builders (10) | TESTED | `adminLabels.test.ts`, `adminForms.test.ts`, `resetToken.test.ts` |
-| Kosharot URL (6) | TESTED | Admin-only `kosharotUrl` (http/https only): `adminSchemas.test.js`, `adminRestaurantService.test.js`. Not shown publicly yet (Milestone 4) |
+| Kosharot URL (6) | TESTED | Admin-only `kosharotUrl` (http/https only): `adminSchemas.test.js`, `adminRestaurantService.test.js`. Shown on the public restaurant page since Milestone 4 (re-checked as http/https on output) |
 | Real admin flow against MongoDB + Cloudinary + Resend (15) | BLOCKED | No connection string, accounts or `backend/.env` here |
 
 ## Milestone 4 — Search and restaurant pages
 
+"TESTED" below means Vitest with mocked repositories, real HTTP requests to an Express app with mocked services, or the frontend helper tests. **Nothing ran against a real MongoDB or Atlas Search.** The UI was looked at once in a browser, but only against a throwaway stub API (not part of the repo), never the real backend.
+
 | Requirement | Status | Notes |
 | --- | --- | --- |
-| Atlas Search + Mongoose fallback, `ATLAS_SEARCH_SETUP.md` (2, 14) | NOT STARTED | |
-| Bilingual food search (8) | NOT STARTED | |
-| Autocomplete: 2 chars, 300ms debounce (8) | NOT STARTED | |
-| Filters and 20-per-page Load More (8) | NOT STARTED | |
-| Restaurant detail page (10) | NOT STARTED | |
+| Mongoose fallback search (APPROVED only, name + food, filters, 20 per page, stable order) (8) | TESTED | `restaurantSearchService.test.js` (relevance, nearest-first with stable tie-breaks, paging, `capped`), `restaurantSearchRepository.test.js` (the query that is built: APPROVED only, anchored prefixes, `$in`, `$geoWithin`), `searchRoutesHttp.test.js`. The real MongoDB execution of these queries was **not** run |
+| Search fields built on save + `npm run search:rebuild` for existing restaurants (8) | TESTED | `searchFields.test.js` (including the Restaurant model rebuilding the fields on `validate()`); the rebuild script's database write was not run. Existing restaurants need the rebuild before they are found |
+| Bilingual food search with synonym groups (8) | IMPLEMENTED UNVERIFIED | `searchFields.test.js` covers Hebrew/English matching and typed prefixes. **The synonym list was written by the agent and is not reviewed by the team** |
+| Atlas Search with working fallback (2, 14) | IMPLEMENTED UNVERIFIED | Fallback is TESTED (`restaurantSearchService.test.js`: Atlas error gives `atlasUnavailable` and basic results). Atlas itself (`$search` stage, fuzzy name match) was **never run against a real Atlas cluster** and a missing index silently returns nothing |
+| `ATLAS_SEARCH_SETUP.md` with exact index JSON (14) | IMPLEMENTED UNVERIFIED | `ATLAS_SEARCH_SETUP.md` (index JSON, steps, verification by a typo search, troubleshooting). The index definition was never created in a real Atlas project |
+| Autocomplete: 2 chars, 300 ms debounce, max 8 (8) | TESTED | `searchSchemas.test.js` (min 2), `restaurantSearchService.test.js` (limit 8); `useDebouncedValue` / `SearchBar` behavior was only seen in the browser against the stub API, no component tests |
+| Kashrut filters: level, hechsher (same evidence item), hide expired, include unknown (8, 5) | TESTED | `kashrutFilters.test.js`, `restaurantSearchService.test.js`; reuses `kashrutStatusService.js` |
+| Food type, category and distance-radius filters (8) | TESTED | `searchSchemas.test.js` (radius must be 1/5/10/25/50 and needs `lat` + `lng`), repository test (`$geoWithin` only with center + radius). Address / Geoapify location is Milestone 5 |
+| Query validation, NoSQL-injection-safe, rate limit (4) | TESTED | `searchSchemas.test.js`, `searchRoutesHttp.test.js` (repeated keys 400; injected keys never reach the service). The rate limiter was not exercised against a running server |
+| Filters, results and 20-per-page Load More UI (8, 10) | IMPLEMENTED UNVERIFIED | `HomePage.tsx`, `SearchFiltersPanel.tsx`, `RestaurantCard.tsx`, `useRestaurantSearch.ts` (stale answers ignored, duplicates removed); `searchApi.test.ts` (query building); typecheck, lint, build pass. Viewed in the browser only with a stub API. No component tests |
+| Result cards: status in words, Call and Waze, no ratings (10, 12) | IMPLEMENTED UNVERIFIED | `RestaurantCard.tsx`, `KashrutBadge.tsx`, `kashrutText.test.ts`, `navigationLinks.test.ts`. "Use my current location" uses the browser's location prompt and was not tried on a real device |
+| Public restaurant details API: APPROVED only, no admin data, same 404 otherwise (6, 10, 12) | TESTED | `restaurantDetailsService.test.js` (404 for missing / PENDING / REJECTED; serialized JSON checked for admin note, submitter, rejection reason, duplicates, search fields, Cloudinary id), `restaurantDetailsRoutesHttp.test.js` (public, 400 for bad ids) |
+| Public certificates only: no pending, no admin-only (> 6 months expired) (5) | TESTED | `restaurantDetailsService.test.js` (exact six-month boundary, old certificate hidden even next to a newer one, claim hidden when a certificate repeats it) |
+| Safe links: only http/https for website, Kosharot and photo links (4, 12) | TESTED | `safeUrl.test.js` (backend, re-checked on output), `safeUrl.test.ts` (frontend), `restaurantDetailsService.test.js` (a `javascript:` value written straight into the database is never sent) |
+| Restaurant detail page (status, certificates with photo, mashgiach, EXPIRED labels, unverified claims apart, Kosharot link) (10) | IMPLEMENTED UNVERIFIED | `RestaurantDetailsPage.tsx`; looked at in the browser with a stub API (loaded, 404 state). No component tests |
+| Entry points: add certificate / report problem from the restaurant page (10) | IMPLEMENTED UNVERIFIED | Links on `RestaurantDetailsPage.tsx`; the existing `ProtectedRoute` sends anonymous visitors to login. Not clicked through with a real login |
+| Google Maps and Waze links (8, 10) | IMPLEMENTED UNVERIFIED | Waze on cards and the detail page, Google Maps on the detail page (`navigationLinks.test.ts`). Share button and map popups are Milestone 5 |
+| Real search and details flow against MongoDB / Atlas Search / browser (15) | BLOCKED | No `backend/.env`, MongoDB or Atlas cluster available here |
 
 ## Milestone 5 — Maps, location, interface polish
 
@@ -112,7 +127,7 @@ Evidence for Milestone 1 came from `npm test` runs on `main` after merging both 
 | --- | --- | --- |
 | Leaflet map, clustering, bounds queries (9) | NOT STARTED | |
 | Geoapify location (8, 10) | NOT STARTED | |
-| Waze / Google Maps / share (8, 10) | NOT STARTED | |
+| Waze / Google Maps / share (8, 10) | IN PROGRESS | Waze and Call on result cards, Waze and Google Maps on the detail page were done in Milestone 4. Share button and map popup links are still to do |
 | English + Hebrew, RTL/LTR (11) | NOT STARTED | |
 | Responsive across four width ranges (11) | NOT STARTED | |
 | List/Map exclusive toggle, saved view (8, 18) | NOT STARTED | |

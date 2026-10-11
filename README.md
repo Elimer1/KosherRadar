@@ -2,7 +2,7 @@
 
 A crowdsourced, factual kashrut-information directory for restaurants in Israel. KosherRadar is not a rating app and does not certify anything itself. The authoritative requirements are in `PROJECT_SPEC.md`; current status is in `PROGRESS.md` and `REQUIREMENTS_CHECKLIST.md`.
 
-Current state: **Milestone 3 (admin and kashrut business rules)** on top of Milestones 1 and 2. Logged-in users can submit restaurants (optionally with a certificate photo), add a certificate to an approved restaurant, and report a problem. Everything is saved as `PENDING`. Admins review it in the admin dashboard (approve, reject with a reason, edit, delete, resolve reports), and users can reset a forgotten password by email. Public restaurant pages, search and maps are later milestones, so even approved data is not shown to the public yet.
+Current state: **Milestone 4 (search and restaurant pages)** on top of Milestones 1 to 3. Anyone can search approved restaurants on the home page (by name or food, in Hebrew or English, with filters, autocomplete and 20 results per page) and open a restaurant page that shows its kashrut evidence: certificates, EXPIRED certificates and unverified claims, kept apart. Logged-in users can submit restaurants (optionally with a certificate photo), add a certificate to an approved restaurant, and report a problem. Everything they send is saved as `PENDING`; admins review it in the admin dashboard (approve, reject with a reason, edit, delete, resolve reports), and users can reset a forgotten password by email. The map, location search, share button and the Hebrew interface are Milestone 5.
 
 Nothing in this project has been run against a real MongoDB, Cloudinary or Resend account yet. See `PROGRESS.md` for what is tested and what is not.
 
@@ -36,6 +36,8 @@ Fill in `backend/.env`:
 
 - `RESEND_API_KEY` and `EMAIL_FROM` - from your Resend free account (see "Email (Resend)" below). Without them everything else works: moderation decisions are still saved and the admin sees that the email was not sent, but password reset emails are not delivered.
 
+- `ATLAS_SEARCH_ENABLED` (default `false`) and `ATLAS_SEARCH_INDEX` (default `restaurant_search`) - optional typo-tolerant search. Search works without it (it then uses a plain MongoDB query). To switch it on, create the Atlas Search index described in `ATLAS_SEARCH_SETUP.md`. **That guide was written but never run against a real Atlas cluster.**
+
 `.env` is git-ignored. Never commit it.
 
 ### Email (Resend)
@@ -55,7 +57,10 @@ npm run dev          # start with auto-reload (node --watch)
 npm start            # start normally
 npm test             # run Vitest
 npm run seed:admin   # create the first ADMIN account (safe to run more than once)
+npm run search:rebuild  # fill the search fields of restaurants that already exist (see below)
 ```
+
+**After updating to Milestone 4, run `npm run search:rebuild` once.** Search uses three fields (`nameTokens`, `foodTokens`, `foodGroups`) that are built every time a restaurant is saved. Restaurants saved before Milestone 4 do not have them yet, so they will not be found until the script has run. It is safe to run again.
 
 The API listens on `http://localhost:5000`. Health check: `GET /api/health`.
 
@@ -99,6 +104,9 @@ npm run preview      # serve the production build locally
 | GET | `/api/users/me` | logged-in user (includes private points) |
 | GET | `/api/admin/check` | ADMIN only |
 | GET | `/api/options` | public; hechsher list, food types, categories, levels |
+| GET | `/api/restaurants?q&level&hechsher&foodType&category&hideExpired&includeUnknown&lat&lng&radiusKm&page` | public, rate-limited; search APPROVED restaurants, 20 per page, response has `items`, `total`, `hasMore`, `capped` and `search.mode` (`ATLAS` or `BASIC`). A radius needs `lat` and `lng`. Without a location the order is relevance (with text) or A-Z; with one it is nearest first |
+| GET | `/api/restaurants/suggestions?q&...` | public, rate-limited; autocomplete, at most 8 rows, `q` needs 2 characters |
+| GET | `/api/restaurants/:restaurantId` | public, rate-limited; one APPROVED restaurant with all public kashrut evidence and public certificates (404 for any other status, no admin data) |
 | GET | `/api/restaurants/:restaurantId/submission-context` | public; name/address and the public certificates of an APPROVED restaurant (404 for any other status) |
 | POST | `/api/restaurants` | logged-in; multipart: `restaurant` JSON, optional `teuda` JSON and `photo` file; saves PENDING |
 | POST | `/api/restaurants/:restaurantId/teudot` | logged-in; multipart: `teuda` JSON and `photo` file; restaurant must be APPROVED; saves PENDING |
@@ -120,10 +128,15 @@ Admin endpoints (every one needs a valid login **and** the `ADMIN` role; the ser
 | GET | `/api/admin/reports/pending` | pending reports |
 | POST | `/api/admin/reports/:reportId/resolve` or `/reject` | resolve (`APPLY_PROPOSED`, `CORRECTION_ALREADY_MADE` or `NO_CORRECTION`) / reject with a reason |
 
+Public pages (no login needed), added in Milestone 4:
+
+- `/` - the search page: one search box (restaurant name or food), autocomplete, filters (kashrut level, hechsher, food type, category, hide expired, include unknown, "use my current location" with a radius) and a Load More button.
+- `/restaurants/:restaurantId` - the restaurant page: status in words, certificates with their photo, mashgiach details and EXPIRED labels, unverified claims shown separately, a Kosharot link when an admin added one, Call / Google Maps / Waze links, and links to add a certificate or report a problem.
+
 Submission pages in the frontend (all need login):
 
 - `/submit-restaurant` - linked from the navbar and home page.
-- `/restaurants/:restaurantId/add-teuda` and `/restaurants/:restaurantId/report` - there is no public restaurant page or search yet (Milestone 4), so these are only reachable by typing the URL with the id of an APPROVED restaurant (admins can find the id in the admin dashboard).
+- `/restaurants/:restaurantId/add-teuda` and `/restaurants/:restaurantId/report` - linked from the restaurant page (anonymous visitors are sent to the login page first).
 
 Other pages added in Milestone 3:
 
@@ -140,6 +153,14 @@ To try the admin area: run `npm run seed:admin`, log in with that account, and o
 - Rejecting anything requires a reason, which is saved and emailed to the contributor. The decision is saved even if the email fails.
 - Private points go to the contributor once per item: +3 when the certificate sent together with a new restaurant is approved, +2 when a certificate added to an existing restaurant is approved, +1 when a report's correction is applied. A restaurant without a certificate earns nothing, admins do not collect points, and approving the same item twice cannot award points twice.
 
+### Search rules
+
+- Only APPROVED restaurants are searchable. Status and certificate filters reuse the same kashrut service as the restaurant page, so a restaurant never shows two different statuses.
+- The text is matched against the restaurant name (any language) and its food: `foodKeywords` plus a built-in Hebrew / English synonym list (for example "פיצה" finds "pizza"). **The synonym list was written by the agent and has not been reviewed by the team.**
+- The level and hechsher filters must match the **same** certificate (or claim); "hide expired" removes expired evidence; restaurants with unknown status only appear with "include unknown" and never match a kashrut filter.
+- Because status depends on dates, the database narrows the candidates first (at most 2000, sorted by name) and the server then applies the kashrut filters and the sort. If more than 2000 restaurants match, the response has `capped: true` and the page tells the visitor that the list may be incomplete.
+- Search works fully without Atlas Search. With `ATLAS_SEARCH_ENABLED=true` it also finds restaurants with a mistyped name; if Atlas fails, the plain search is used and the page says so.
+
 ### Submission rules
 
 - A new restaurant, certificate or report is always `PENDING`. The client cannot set status, owner, points or admin notes; those fields are ignored.
@@ -152,4 +173,4 @@ To try the admin area: run `npm run seed:admin`, log in with that account, and o
 
 ## External services
 
-Cloudinary is used for certificate photos and Resend for emails (see setup above). Geoapify and Atlas Search are not used yet. They belong to later milestones.
+Cloudinary is used for certificate photos and Resend for emails (see setup above). Atlas Search is optional (see `ATLAS_SEARCH_SETUP.md`). Geoapify is not used yet; it belongs to Milestone 5.
