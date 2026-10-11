@@ -4,9 +4,11 @@ Authoritative requirements: `PROJECT_SPEC.md` (do not edit without approval). Re
 
 ## Active milestone
 
-**Milestone 3 — Admin and kashrut business rules** (IMPLEMENTED and merged into `main`; waiting for your review and your explicit approval before Milestone 4). Scope from `PROJECT_SPEC.md` section 16: moderation dashboard, approve / reject / edit / delete, certificate validity and visibility, conflicting-teuda warning, private admin notes, rejection emails (Resend), idempotent point awards. The checklist also assigns password reset (Resend) to this milestone.
+**Milestone 4 — Search and restaurant pages** (DONE and merged to `main`; waiting for your approval before Milestone 5). Scope from `PROJECT_SPEC.md` section 16: Atlas Search with a working Mongoose fallback, `ATLAS_SEARCH_SETUP.md` with the exact index JSON, bilingual food search, autocomplete, filters, pagination, restaurant details, status presentation, related tests.
 
-Milestones 1 and 2 are merged to `main`. Their real-database, Cloudinary and browser checks are still BLOCKED (see "Blockers").
+Milestones 1 to 4 are merged to `main`. Their real-database, Atlas Search, Cloudinary, Resend and real-backend browser checks are still BLOCKED (see "Blockers"). Milestone 4 has **not been pushed** to `origin` yet.
+
+Before this milestone started, the leftover working-tree change on `main` (deleted `project.zip`, a snapshot archive that had been committed by mistake) was committed, and `main` plus the Milestone 3 feature branches were pushed to `origin`. The six duplicate-detection files had already been committed in an earlier "share snapshot" commit, so they are no longer uncommitted.
 
 ## Comment convention for new code (requested by the team)
 
@@ -24,6 +26,16 @@ Example:
 // חדש (אבן דרך 3): אישור מסעדה ממתינה (למנהלים בלבד)
 export async function approveRestaurant(id, adminId) { /* ... */ }
 ```
+
+## Feature ownership (Milestone 4)
+
+Recorded before implementation, per section 19. Same rules as below: `--author` follows the responsible teammate, the code is AI-generated and must be reviewed by its owner. Merge order: `feature/restaurant-search`, then `feature/restaurant-details` (it reuses the status component built in the search feature), then the docs branch.
+
+| Feature branch | Responsible teammate | Scope |
+| --- | --- | --- |
+| `feature/restaurant-search` | Eli Mermelstein | Search fields and bilingual food synonyms on the restaurant, Atlas Search + Mongoose fallback, `ATLAS_SEARCH_SETUP.md`, public search and suggestions API (kashrut filters, location radius, 20 per page), home page search UI with autocomplete, filters, Load More and result cards, tests |
+| `feature/restaurant-details` | Moshe Silber | Public restaurant detail API and serializer (approved only, no admin data), `/restaurants/:id` page with full kashrut evidence, links to add a certificate / report a problem, tests |
+| `feature/milestone-4-docs` | Eli Mermelstein | Progress and checklist files, README and `.env.example` updates |
 
 ## Feature ownership (Milestone 3)
 
@@ -110,21 +122,50 @@ Recorded before implementation, per section 19. Commits use `--author` for the r
 - **Query validation**: Express 5 makes `req.query` read-only, so validated query values are in `req.validatedQuery`, and a repeated query key answers 400.
 - **The admin screens are English only**; translation is Milestone 5. The hechsher names are still the unreviewed agent-written list from Milestone 2.
 
-### Team working-tree changes not touched
+### Milestone 4
 
-Six files on `main` have uncommitted edits that were already there before Milestone 3 and were deliberately left alone and never staged: `backend/src/repositories/restaurantRepository.js`, `backend/src/services/duplicateService.js`, `backend/src/services/restaurantSubmissionService.js`, `backend/src/utils/normalizeText.js`, `backend/tests/duplicateService.test.js`, `backend/tests/restaurantSubmissionService.test.js` (duplicate-detection work). The backend test counts below were run with those edits present. Please commit or discard them yourself.
+- Ownership was recorded first (`feature/milestone-4-docs`). Then `feature/restaurant-search` (Eli) and `feature/restaurant-details` (Moshe) were built and merged into `main` with `--no-ff`, in that order; `feature/milestone-4-docs` is merged last. Branches were not deleted. All code is AI-generated and must be reviewed by its owner. The merge commits carry the git-configured identity, not `--author`.
+- **Search backend**: `config/foodSynonyms.js`, `utils/searchFields.js` (word splitting, search-field building, query parsing), `utils/geo.js`, `repositories/restaurantSearchRepository.js` (candidate query, optional Atlas `$search`, certificates for the candidates in one query), `services/restaurantSearchService.js` (kashrut summary and filters through `kashrutStatusService.js`, relevance, sorting, paging), `services/publicRestaurantSerializer.js`, `schemas/searchSchemas.js`, `searchFieldsRebuildService.js` + `scripts/rebuildSearchFields.js`, `searchRateLimiter`. `Restaurant` got `nameTokens`, `foodTokens`, `foodGroups` (rebuilt on every save) and three indexes. `kashrutStatusService.js` got `withoutExpiredEvidence` and `applyKashrutFilters`.
+- **Details backend**: `GET /api/restaurants/:restaurantId` (`restaurantDetailsService.js`, `toPublicRestaurantDetails`, `utils/safeUrl.js`). `toPublicTeuda` now also re-checks `photoUrl` as http/https.
+- **Frontend**: the home page is now the public search (`HomePage`, `SearchBar`, `SearchFiltersPanel`, `RestaurantCard`, `KashrutBadge`, `useRestaurantSearch`, `useDebouncedValue`) and `/restaurants/:restaurantId` is the public restaurant page (`RestaurantDetailsPage`). Helpers: `kashrutText`, `navigationLinks`, `safeUrl`, `searchResults`.
+- **Docs**: `ATLAS_SEARCH_SETUP.md`, README (API table, search rules, `search:rebuild`), `backend/.env.example` (`ATLAS_SEARCH_ENABLED`, `ATLAS_SEARCH_INDEX`).
+
+### Design decisions made in Milestone 4 (please review)
+
+- **Status filters cannot be done in MongoDB alone** (they depend on dates and on another collection). The database narrows to at most 2000 candidates (APPROVED, text, food type, category, radius), then the shared kashrut service filters and sorts in JavaScript. If more than 2000 match, the answer has `capped: true` and the page warns that the list may be incomplete. This is a limit to revisit with real data volumes.
+- **Search fields are stored, not computed per query**: `nameTokens`, `foodTokens`, `foodGroups` are rebuilt on every save. **Restaurants that existed before Milestone 4 are not found until `cd backend; npm run search:rebuild` has run once.**
+- **Food synonyms** live in `config/foodSynonyms.js` (about 24 one-word groups, Hebrew and English). **Written by the agent, not reviewed by the team.** Typed words of 3+ letters also match groups by prefix.
+- **Atlas Search is optional** (`ATLAS_SEARCH_ENABLED=true`). Its hits are added to the plain search results, never replace them; on any error the plain search answers and `search.atlasUnavailable` is true. A missing index silently finds nothing, so `ATLAS_SEARCH_SETUP.md` explains how to test with a typo. **Never run against a real Atlas cluster.**
+- **Relevance and order**: exact name 1, name starts with the text 0.9, a name word 0.7, Atlas hit ×0.85, food only 0.4, +0.05 for name and food. With a location: nearest first (restaurants without coordinates last), then relevance, name, id. Without one: relevance when there is text, else A-Z. Ties always end on the id, so paging never repeats or skips a restaurant.
+- **Kashrut filters**: the level and the hechsher must match the same certificate or claim; "hide expired" removes expired evidence (a restaurant with only expired evidence disappears); unknown restaurants only appear with "include unknown" and never match a kashrut filter.
+- **Public output is whitelisted** in `publicRestaurantSerializer.js`. A pending, rejected or missing restaurant gives the same 404. Links (website, Kosharot, certificate photo) are checked as http/https when saved and again when sent.
+- **Location**: the API supports `lat`, `lng` and a radius of 1/5/10/25/50 km. The UI only offers "Use my current location" and a radius; a typed address (Geoapify) is Milestone 5.
+- **Add certificate / Report a problem** links are always shown on the restaurant page; anonymous visitors reach the login page through the existing `ProtectedRoute`.
+- **Kosharot link** is shown only when an admin added `kosharotUrl`. The page states that KosherRadar is not a kashrut authority.
+- **English only** until Milestone 5. The hechsher names and the synonym list are agent-written and unreviewed.
+
+### Corrections to earlier statements
+
+- Earlier in this milestone I said `PROGRESS.md` contained stray line-number markers. That was wrong: they were only an artifact of how the file was displayed to me; the file has none.
+- The six duplicate-detection files that earlier versions of this file listed as "uncommitted team changes" were already committed in a "share snapshot" commit, so nothing in the working tree is waiting for the team any more.
 
 ## Tests and builds
 
-Run on `main` after the Milestone 3 merges (the docs branch was merged afterwards and changes only `.md` files):
+Run on `main` after the Milestone 4 feature merges (the docs branch changes only `.md` files):
 
 | Command | Result |
 | --- | --- |
-| `cd backend; npm test` | 24 test files, 324 tests passed (Milestone 2 ended with 13 files / 150 tests) |
+| `cd backend; npm test` | 34 test files, 448 tests passed (Milestone 3 ended with 24 files / 324 tests) |
 | `cd frontend; npm run typecheck` | passed |
-| `cd frontend; npm test` | 7 test files, 40 tests passed |
+| `cd frontend; npm test` | 11 test files, 76 tests passed (Milestone 3 ended with 7 files / 40 tests) |
 | `cd frontend; npm run build` | passed |
 | `cd frontend; npm run lint` | passed (no findings) |
+
+New Milestone 4 backend tests: `searchFields`, `geo`, `searchSchemas`, `kashrutFilters`, `restaurantSearchService`, `restaurantSearchRepository` (the built query, repository mocked), `searchRoutesHttp` (real HTTP, service mocked), `restaurantDetailsService`, `restaurantDetailsRoutesHttp`, `safeUrl`. New frontend tests: `searchApi`, `kashrutText`, `navigationLinks`, `safeUrl`.
+
+Done once and not kept: the search page and the restaurant page (loaded, 404 state, filters, Load More, autocomplete) were opened in a browser against a throwaway stub API (`.scratch/`, git-ignored via `.git/info/exclude`). This proves the screens render and the requests are shaped as the stub expects; it does **not** prove anything about the real backend, MongoDB or Atlas Search. There are no frontend component tests.
+
+Milestone 3 notes that still apply:
 
 New Milestone 3 backend tests: `kashrutStatusService`, `emailService` (mocked `fetch`), `pointsService`, `adminSchemas`, `adminTeudaService`, `adminRestaurantService`, `adminReportService`, `adminRoutes` (middleware order on every route), `adminRoutesHttp` (real HTTP, services mocked), `passwordResetService`, `passwordResetRoutesHttp`. New frontend tests: `adminLabels`, `adminForms`, `resetToken`.
 
@@ -142,7 +183,11 @@ Not run: either server against a real MongoDB, a real Cloudinary upload, and the
 - Seed-admin was not run against a real database (its service logic is covered by unit tests).
 - **BLOCKED (Milestone 3):** Resend. Needs `RESEND_API_KEY` and `EMAIL_FROM` in `backend/.env`. No email (rejection or password reset) was ever sent. Without a verified domain Resend only sends to your own account address (see README).
 - **UNVERIFIED (Milestone 3):** the whole admin flow against a real database and the admin and password reset pages in a browser. Sessions are not revoked by a password reset (see design decisions).
-- Not used yet (later milestones): Geoapify, Atlas Search.
+- **BLOCKED (Milestone 4):** Atlas Search. Needs a real Atlas cluster, the index from `ATLAS_SEARCH_SETUP.md` and `ATLAS_SEARCH_ENABLED=true`. The `$search` pipeline and the index JSON were never run; only the fallback is tested.
+- **UNVERIFIED (Milestone 4):** every MongoDB query behind search and details (the candidate `$or` query, `$geoWithin $centerSphere`, the new indexes, the one-query certificate lookup, `npm run search:rebuild`) and the search and restaurant pages against the real backend. Performance with real data (2000-candidate cap) is unknown.
+- Not used yet (later milestones): Geoapify.
+
+To finish the Milestone 4 blocked items: run `cd backend; npm run search:rebuild`, start both servers, search a restaurant by name, by an English and a Hebrew food word, and with each filter, open its page, then create the Atlas index, set `ATLAS_SEARCH_ENABLED=true`, restart, and search a mistyped name (steps in `ATLAS_SEARCH_SETUP.md`).
 
 To finish the Milestone 3 blocked items: fill in `backend/.env` (including Resend), run `cd backend; npm run seed:admin`, start both servers, log in as the admin, open `/admin`, then send a restaurant with a certificate from a normal account and approve it, reject another with a reason, check the contributor's points in Atlas (`users.points`, `awardedPointKeys`), and try `/forgot-password` with your own address.
 
@@ -150,8 +195,8 @@ To finish the blocked items: copy `backend/.env.example` to `backend/.env`, fill
 
 ## Next milestone
 
-Milestone 4 — Search and restaurant pages (needs your explicit approval, in a fresh conversation). Things it will build on: `buildKashrutSummary` and `getPublicTeudot` in `kashrutStatusService.js` (the single place that decides public kashrut status and which certificates are public; do not copy that logic), the APPROVED restaurants and certificates admins now create, `Restaurant.kosharotUrl`, and the normalized text fields on the restaurant used for search. No public endpoint exists yet that returns restaurants.
+Milestone 5 — Maps, location and interface polish (needs your explicit approval, in a fresh conversation). Spec section 16: Leaflet visible-bounds queries and clustering, Geoapify, Waze / Google Maps / share, English and Hebrew translations with RTL/LTR, responsive Tailwind design across four ranges, view preference, UI integration. Things it will build on: `GET /api/restaurants` already accepts `lat`, `lng` and `radiusKm` (a bounds query for the map is not written yet); `searchRestaurantsService` and `kashrutStatusService.js` (reuse them for the map, do not copy status logic); `publicRestaurantSerializer.js`; the card and detail pages that already have Call / Waze / Google Maps links; `buildSearchParams` and `useRestaurantSearch` on the frontend. Every UI string is still hard-coded English and must move to the translation files.
 
 ## Continuation prompt (copy into a new Cursor Agent conversation)
 
-> Read the complete repository-root `PROJECT_SPEC.md` (authoritative master specification), `PROGRESS.md`, `REQUIREMENTS_CHECKLIST.md`, and the recent Git commits. Do not modify `PROJECT_SPEC.md` without my approval. Implement **only Milestone 4** from section 16, preserving all existing functionality. Work autonomously within that milestone; test, fix, update both tracking files, make real incremental, appropriately attributed feature-branch commits and merge verified work as specified in section 19, then STOP and ask for approval before the next milestone. Do not claim untested integrations work (MongoDB, Cloudinary and Resend were never verified; see "Blockers"). Reuse `kashrutStatusService.js` for every public status and certificate filter. Do not touch or commit the team's six uncommitted duplicate-detection files listed in `PROGRESS.md`. Follow the "Comment convention for new code" section in `PROGRESS.md`: mark every new file, function and block with an English `NEW (Milestone 4)` comment plus a Hebrew `חדש (אבן דרך 4)` comment.
+> Read the complete repository-root `PROJECT_SPEC.md` (authoritative master specification), `PROGRESS.md`, `REQUIREMENTS_CHECKLIST.md`, and the recent Git commits. Do not modify `PROJECT_SPEC.md` without my approval. Implement **only Milestone 5** from section 16, preserving all existing functionality. Work autonomously within that milestone; test, fix, update both tracking files, make real incremental, appropriately attributed feature-branch commits and merge verified work as specified in section 19, then STOP and ask for approval before the next milestone. Do not claim untested integrations work (MongoDB, Atlas Search, Cloudinary, Resend and Geoapify were never verified; see "Blockers"). Reuse `kashrutStatusService.js` and `restaurantSearchService.js` for every public status and filter. Follow the "Comment convention for new code" section in `PROGRESS.md`: mark every new file, function and block with an English `NEW (Milestone 5)` comment plus a Hebrew `חדש (אבן דרך 5)` comment.
