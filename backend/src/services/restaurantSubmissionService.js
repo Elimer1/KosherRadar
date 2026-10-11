@@ -76,7 +76,13 @@ export const submitRestaurantService = async ({ restaurantData, teudaData, file,
     };
   } catch (error) {
     // Do not leave a restaurant behind that the user believes was sent together with a certificate.
-    await deleteRestaurantByIdRepo(restaurant._id);
+    // A failed cleanup is only logged so the original error is the one the user gets.
+    try {
+      await deleteRestaurantByIdRepo(restaurant._id);
+    } catch (cleanupError) {
+      console.error('Could not delete orphaned restaurant:', restaurant._id, cleanupError.message);
+    }
+
     await deleteImageService(image.cloudinaryPublicId);
     throw error;
   }

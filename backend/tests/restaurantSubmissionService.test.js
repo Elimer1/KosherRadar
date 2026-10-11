@@ -184,4 +184,19 @@ describe('submitRestaurantService', () => {
     expect(deleteRestaurantByIdRepo).toHaveBeenCalledWith('rest-1');
     expect(deleteImageService).toHaveBeenCalledWith('kosherradar/teudot/photo');
   });
+
+  it('keeps the original error when the restaurant cleanup also fails', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const originalError = new Error('teuda database down');
+    createTeudaRepo.mockRejectedValue(originalError);
+    deleteRestaurantByIdRepo.mockRejectedValue(new Error('cleanup failed'));
+
+    await expect(
+      submitRestaurantService({ restaurantData: restaurantData(), teudaData: teudaData(), file, user })
+    ).rejects.toBe(originalError);
+
+    expect(deleteImageService).toHaveBeenCalledWith('kosherradar/teudot/photo');
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
 });

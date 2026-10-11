@@ -1,7 +1,5 @@
 import { Restaurant } from '../models/Restaurant.js';
 
-const EARTH_RADIUS_METERS = 6378100;
-
 // Pending and approved restaurants count when looking for duplicates. Rejected ones do not.
 const ACTIVE_STATUSES = ['PENDING', 'APPROVED'];
 
@@ -26,43 +24,58 @@ export const findPendingRestaurantBySubmitterRepo = async ({
   return Restaurant.findOne({ submittedBy, nameNormalized, addressNormalized, status: 'PENDING' });
 };
 
-// Exact matches on indexed fields. The result is capped so one odd address cannot return hundreds of rows.
+const DUPLICATE_FIELDS =
+  'name nameNormalized address addressNormalized phoneNormalized geoapifyPlaceId';
+
+// Each kind of match gets its own query and its own cap. With one combined query, many weak
+// address matches (for example a shopping center) could push out an exact place ID match.
+// The address cap is the largest because one address can legitimately hold many restaurants
+// and the service still needs to find the one whose name also matches.
+const PLACE_ID_LIMIT = 5;
+const PHONE_LIMIT = 10;
+const ADDRESS_LIMIT = 30;
+const NEARBY_LIMIT = 25;
+
+const findActive = (condition, limit) =>
+  Restaurant.find({ status: { $in: ACTIVE_STATUSES }, ...condition })
+    .select(DUPLICATE_FIELDS)
+    .limit(limit)
+    .lean();
+
+// Exact matches on indexed fields, strongest kind first: place ID, then phone, then address.
+// A restaurant found by several kinds is returned once.
 export const findDuplicateCandidatesRepo = async ({
   geoapifyPlaceId,
   phoneNormalized,
   addressNormalized,
 }) => {
-  const conditions = [];
+  const [byPlaceId, byPhone, byAddress] = await Promise.all([
+    geoapifyPlaceId ? findActive({ geoapifyPlaceId }, PLACE_ID_LIMIT) : [],
+    phoneNormalized ? findActive({ phoneNormalized }, PHONE_LIMIT) : [],
+    addressNormalized ? findActive({ addressNormalized }, ADDRESS_LIMIT) : [],
+  ]);
 
-  if (geoapifyPlaceId) {
-    conditions.push({ geoapifyPlaceId });
+  const unique = new Map();
+
+  for (const restaurant of [...byPlaceId, ...byPhone, ...byAddress]) {
+    unique.set(String(restaurant._id), restaurant);
   }
 
-  if (phoneNormalized) {
-    conditions.push({ phoneNormalized });
-  }
-
-  if (addressNormalized) {
-    conditions.push({ addressNormalized });
-  }
-
-  if (conditions.length === 0) {
-    return [];
-  }
-
-  return Restaurant.find({ status: { $in: ACTIVE_STATUSES }, $or: conditions })
-    .select('name nameNormalized address addressNormalized phoneNormalized geoapifyPlaceId')
-    .limit(10);
+  return [...unique.values()];
 };
 
-// Restaurants within a few hundred meters, using the 2dsphere index. Capped for the same reason.
+// Restaurants within a few hundred meters, closest first (2dsphere index). Capped so a dense
+// area cannot return hundreds of rows, and sorting by distance keeps the closest ones.
 export const findNearbyRestaurantsRepo = async ({ latitude, longitude, radiusMeters }) => {
-  return Restaurant.find({
-    status: { $in: ACTIVE_STATUSES },
-    location: {
-      $geoWithin: { $centerSphere: [[longitude, latitude], radiusMeters / EARTH_RADIUS_METERS] },
+  return findActive(
+    {
+      location: {
+        $nearSphere: {
+          $geometry: { type: 'Point', coordinates: [longitude, latitude] },
+          $maxDistance: radiusMeters,
+        },
+      },
     },
-  })
-    .select('name nameNormalized address addressNormalized phoneNormalized geoapifyPlaceId')
-    .limit(25);
+    NEARBY_LIMIT
+  );
 };

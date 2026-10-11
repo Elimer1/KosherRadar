@@ -22,6 +22,31 @@ export const namesAreSimilar = (nameA, nameB) => {
   return shorter.length >= MIN_PARTIAL_NAME_LENGTH && longer.includes(shorter);
 };
 
+// How convincing each reason is. Admins see the strongest matches first.
+const REASON_PRIORITY = {
+  SAME_PLACE_ID: 5,
+  SAME_NAME_AND_ADDRESS: 4,
+  SAME_PHONE: 3,
+  SIMILAR_NAME_NEARBY: 2,
+  SAME_ADDRESS: 1,
+};
+
+const strongestPriority = (match) =>
+  Math.max(...match.reasons.map((reason) => REASON_PRIORITY[reason] || 0));
+
+// Strongest reason first; when equal, the match with more reasons wins.
+const compareMatches = (a, b) =>
+  strongestPriority(b) - strongestPriority(a) || b.reasons.length - a.reasons.length;
+
+// Rejects null, strings, NaN and values outside the real latitude/longitude ranges.
+const hasValidCoordinates = ({ latitude, longitude }) =>
+  Number.isFinite(latitude) &&
+  Number.isFinite(longitude) &&
+  latitude >= -90 &&
+  latitude <= 90 &&
+  longitude >= -180 &&
+  longitude <= 180;
+
 const addReason = (matches, restaurant, reason) => {
   const id = String(restaurant._id);
   const existing = matches.get(id) || { restaurant: restaurant._id, reasons: [] };
@@ -39,15 +64,25 @@ export const findPossibleDuplicatesService = async (candidate) => {
   const nameNormalized = normalizeText(candidate.name);
   const addressNormalized = normalizeText(candidate.address);
   const phoneNormalized = normalizePhone(candidate.phone);
-  const hasCoordinates = candidate.latitude !== undefined && candidate.longitude !== undefined;
+  const hasCoordinates = hasValidCoordinates(candidate);
 
   const matches = new Map();
 
-  const exactCandidates = await findDuplicateCandidatesRepo({
-    geoapifyPlaceId: candidate.geoapifyPlaceId,
-    phoneNormalized,
-    addressNormalized,
-  });
+  // The two lookups do not depend on each other, so they run together.
+  const [exactCandidates, nearby] = await Promise.all([
+    findDuplicateCandidatesRepo({
+      geoapifyPlaceId: candidate.geoapifyPlaceId,
+      phoneNormalized,
+      addressNormalized,
+    }),
+    hasCoordinates
+      ? findNearbyRestaurantsRepo({
+          latitude: candidate.latitude,
+          longitude: candidate.longitude,
+          radiusMeters: NEARBY_RADIUS_METERS,
+        })
+      : [],
+  ]);
 
   for (const existing of exactCandidates) {
     if (candidate.geoapifyPlaceId && existing.geoapifyPlaceId === candidate.geoapifyPlaceId) {
@@ -66,19 +101,12 @@ export const findPossibleDuplicatesService = async (candidate) => {
     }
   }
 
-  if (hasCoordinates) {
-    const nearby = await findNearbyRestaurantsRepo({
-      latitude: candidate.latitude,
-      longitude: candidate.longitude,
-      radiusMeters: NEARBY_RADIUS_METERS,
-    });
-
-    for (const existing of nearby) {
-      if (namesAreSimilar(nameNormalized, existing.nameNormalized)) {
-        addReason(matches, existing, 'SIMILAR_NAME_NEARBY');
-      }
+  for (const existing of nearby) {
+    if (namesAreSimilar(nameNormalized, existing.nameNormalized)) {
+      addReason(matches, existing, 'SIMILAR_NAME_NEARBY');
     }
   }
 
-  return [...matches.values()].slice(0, MAX_DUPLICATES_STORED);
+  // Sort first, then cut, so the 10 kept are the strongest ones.
+  return [...matches.values()].sort(compareMatches).slice(0, MAX_DUPLICATES_STORED);
 };

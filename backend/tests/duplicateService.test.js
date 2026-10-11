@@ -38,12 +38,36 @@ describe('normalizeText and normalizePhone', () => {
     expect(normalizePhone('')).toBe('');
     expect(normalizePhone(undefined)).toBe('');
   });
+
+  it('treats +972 and a leading 0 as the same landline number', () => {
+    expect(normalizePhone('02-555-1234')).toBe('025551234');
+    expect(normalizePhone('+972-2-555-1234')).toBe('025551234');
+  });
+
+  it('handles the 00972 prefix and a bracketed trunk 0', () => {
+    expect(normalizePhone('00972-50-123-4567')).toBe('0501234567');
+    expect(normalizePhone('+972 (0)50-123-4567')).toBe('0501234567');
+  });
 });
 
 describe('namesAreSimilar', () => {
   it('matches equal names and names that contain each other', () => {
     expect(namesAreSimilar('pizza hut', 'pizza hut')).toBe(true);
     expect(namesAreSimilar('pizza', 'pizza hut')).toBe(true);
+  });
+
+  it('matches Hebrew names that only differ by an attached prefix', () => {
+    expect(namesAreSimilar('מסעדה', 'המסעדה')).toBe(true);
+    expect(namesAreSimilar('פיצה האט', 'הפיצה האט')).toBe(true);
+  });
+
+  it('keeps the current behavior of matching partial words', () => {
+    // Known and accepted: duplicates are only warnings, so a false positive is cheap.
+    expect(namesAreSimilar('bar', 'barcelona')).toBe(true);
+  });
+
+  it('does not match the same words in a different order', () => {
+    expect(namesAreSimilar('pizza hut', 'hut pizza')).toBe(false);
   });
 
   it('does not match unrelated names or very short fragments', () => {
@@ -136,6 +160,67 @@ describe('findPossibleDuplicatesService', () => {
     await findPossibleDuplicatesService({ name: 'Pizza Hut', address: '1 Main St' });
 
     expect(findNearbyRestaurantsRepo).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['null', { latitude: null, longitude: null }],
+    ['strings', { latitude: '31.78', longitude: '35.22' }],
+    ['NaN', { latitude: Number.NaN, longitude: 35.22 }],
+    ['out of range latitude', { latitude: 91, longitude: 35.22 }],
+    ['out of range longitude', { latitude: 31.78, longitude: 181 }],
+    ['only one value', { latitude: 31.78 }],
+  ])('skips the nearby search for invalid coordinates (%s)', async (_label, coordinates) => {
+    await findPossibleDuplicatesService({ name: 'Pizza Hut', address: '1 Main St', ...coordinates });
+
+    expect(findNearbyRestaurantsRepo).not.toHaveBeenCalled();
+  });
+
+  it('puts the strongest matches first, whatever order the repository returned them in', async () => {
+    findDuplicateCandidatesRepo.mockResolvedValue([
+      existing('address-only', { nameNormalized: 'sushi bar', addressNormalized: '1 main st jerusalem' }),
+      existing('phone', { phoneNormalized: '0501234567' }),
+      existing('place', { geoapifyPlaceId: 'place-1' }),
+    ]);
+    findNearbyRestaurantsRepo.mockResolvedValue([existing('nearby', { nameNormalized: 'pizza hut' })]);
+
+    const result = await findPossibleDuplicatesService(candidate);
+
+    expect(result.map((match) => match.restaurant)).toEqual([
+      'place',
+      'phone',
+      'nearby',
+      'address-only',
+    ]);
+  });
+
+  it('ranks a match with more reasons above one with the same strongest reason', async () => {
+    findDuplicateCandidatesRepo.mockResolvedValue([
+      existing('phone-only', { phoneNormalized: '0501234567' }),
+      existing('phone-and-address', {
+        phoneNormalized: '0501234567',
+        nameNormalized: 'sushi bar',
+        addressNormalized: '1 main st jerusalem',
+      }),
+    ]);
+
+    const result = await findPossibleDuplicatesService(candidate);
+
+    expect(result.map((match) => match.restaurant)).toEqual(['phone-and-address', 'phone-only']);
+  });
+
+  it('keeps the strongest 10 when more than 10 match', async () => {
+    const weak = Array.from({ length: 12 }, (_, index) =>
+      existing(`weak-${index}`, { nameNormalized: 'sushi bar', addressNormalized: '1 main st jerusalem' })
+    );
+    findDuplicateCandidatesRepo.mockResolvedValue([
+      ...weak,
+      existing('place', { geoapifyPlaceId: 'place-1' }),
+    ]);
+
+    const result = await findPossibleDuplicatesService(candidate);
+
+    expect(result).toHaveLength(10);
+    expect(result[0]).toEqual({ restaurant: 'place', reasons: ['SAME_PLACE_ID'] });
   });
 
   it('never returns more than 10 possible duplicates', async () => {

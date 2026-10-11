@@ -14,16 +14,19 @@ export const normalizeText = (text) => {
 };
 
 // Keeps digits only and turns the Israel country code into a leading 0,
-// so "+972-50-123-4567" and "050 123 4567" compare as equal.
+// so "+972-50-123-4567", "00972-50-123-4567", "+972 (0)50-123-4567" and "050 123 4567"
+// all compare as equal.
 export const normalizePhone = (phone) => {
   if (!phone) {
     return '';
   }
 
-  const digits = String(phone).replace(/\D/g, '');
+  // "00972" is the international dialing prefix written instead of "+972".
+  const digits = String(phone).replace(/\D/g, '').replace(/^00972/, '972');
 
   if (digits.startsWith('972')) {
-    return `0${digits.slice(3)}`;
+    // Some people write the local 0 in brackets after the country code: +972 (0)50...
+    return `0${digits.slice(3).replace(/^0/, '')}`;
   }
 
   return digits;
