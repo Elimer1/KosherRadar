@@ -19,6 +19,10 @@ const teudaSchema = new mongoose.Schema(
     status: { type: String, enum: SUBMISSION_STATUSES, default: 'PENDING' },
     submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 
+    // True when the teuda was sent together with a brand-new restaurant. Milestone 3 uses this to
+    // tell the +3 point case (new restaurant with teuda) from the +2 case (teuda for an existing restaurant).
+    submittedWithNewRestaurant: { type: Boolean, default: false },
+
     adminNote: { type: String, trim: true, maxlength: 1000 },
     rejectionReason: {
       type: String,

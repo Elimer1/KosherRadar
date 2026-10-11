@@ -11,6 +11,9 @@ export const env = {
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
   seedAdminEmail: process.env.SEED_ADMIN_EMAIL || '',
   seedAdminPassword: process.env.SEED_ADMIN_PASSWORD || '',
+  cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
+  cloudinaryApiKey: process.env.CLOUDINARY_API_KEY || '',
+  cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || '',
 };
 
 export const validateEnv = () => {
