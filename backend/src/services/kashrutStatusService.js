@@ -193,3 +193,61 @@ export const findConflictingTeudot = (proposed, approvedTeudot, today = todayInI
       expirationDate: dateToDateOnly(other.expirationDate),
     }));
 };
+
+// NEW (Milestone 4): the summary as the visitor sees it when "Hide Expired" is on: expired evidence is removed.
+// A restaurant that also has a valid certificate or an unverified claim keeps those (spec 5.7).
+// חדש (אבן דרך 4): הסיכום כפי שהמבקר רואה כש"הסתר פג תוקף" פעיל: ראיות שפג תוקפן מוסרות.
+export const withoutExpiredEvidence = (summary) => {
+  const items = summary.items.filter((item) => item.kind !== 'EXPIRED');
+  const primary = items[0] || null;
+
+  return {
+    status: primary ? (primary.kind === 'VERIFIED' ? 'VERIFIED' : 'UNVERIFIED') : 'UNKNOWN',
+    primary,
+    moreCount: Math.max(0, items.length - 1),
+    items,
+    hasRecentExpired: false,
+  };
+};
+
+// NEW (Milestone 4): applies the visitor's kashrut filters to one restaurant's summary (spec 5.5 and 5.7).
+// Returns the summary to show, or null when the restaurant must not appear in the results.
+//   hideExpired     drop expired evidence; a restaurant that has nothing but expired evidence disappears
+//   includeUnknown  UNKNOWN restaurants appear only when this is true
+//   level / hechsherValues  the SAME piece of evidence (verified, recent expired, or a labeled unverified
+//                   claim) must match; a restaurant with no evidence can never match a kashrut filter
+// חדש (אבן דרך 4): מחיל את מסנני הכשרות של המבקר על הסיכום של מסעדה אחת. מחזיר את הסיכום להצגה, או null
+// כשהמסעדה לא צריכה להופיע. אותה ראיה חייבת להתאים גם לרמה וגם להשגחה; מסעדה בלי ראיות לא תתאים למסנן כשרות.
+export const applyKashrutFilters = (summary, { hideExpired, includeUnknown, level, hechsherValues }) => {
+  let view = summary;
+
+  if (hideExpired) {
+    view = withoutExpiredEvidence(summary);
+
+    // Only expired evidence existed: hiding it must hide the restaurant, not turn it into "unknown".
+    // הייתה רק ראיה שפגה: הסתרתה מסתירה את המסעדה, ולא הופכת אותה ל"לא ידוע".
+    if (summary.items.length > 0 && view.items.length === 0) {
+      return null;
+    }
+  }
+
+  const hasKashrutFilter = Boolean(level) || hechsherValues.length > 0;
+
+  if (view.status === 'UNKNOWN') {
+    return includeUnknown && !hasKashrutFilter ? view : null;
+  }
+
+  if (hasKashrutFilter) {
+    const matches = view.items.some(
+      (item) =>
+        (!level || item.kashrutLevel === level) &&
+        (hechsherValues.length === 0 || hechsherValues.includes(item.hechsher))
+    );
+
+    if (!matches) {
+      return null;
+    }
+  }
+
+  return view;
+};
