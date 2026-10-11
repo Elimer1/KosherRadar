@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import AccountPage from './pages/AccountPage';
+import SubmitTeudaPage from './pages/SubmitTeudaPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
         {/* Pages below need a logged-in user */}
         <Route element={<ProtectedRoute />}>
           <Route path="/account" element={<AccountPage />} />
+          <Route path="/restaurants/:restaurantId/add-teuda" element={<SubmitTeudaPage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
