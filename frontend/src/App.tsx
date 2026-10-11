@@ -9,6 +9,8 @@ import SubmitRestaurantPage from './pages/SubmitRestaurantPage';
 import SubmitReportPage from './pages/SubmitReportPage';
 import SubmitTeudaPage from './pages/SubmitTeudaPage';
 import NotFoundPage from './pages/NotFoundPage';
+// NEW (Milestone 4) / חדש (אבן דרך 4)
+import RestaurantDetailsPage from './pages/RestaurantDetailsPage';
 // NEW (Milestone 3) / חדש (אבן דרך 3)
 import AdminRoute from './components/AdminRoute';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -23,6 +25,8 @@ function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<HomePage />} />
+        {/* NEW (Milestone 4): public restaurant page, no login needed / חדש (אבן דרך 4): דף מסעדה ציבורי */}
+        <Route path="/restaurants/:restaurantId" element={<RestaurantDetailsPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         {/* NEW (Milestone 3): password reset pages (no login needed) / חדש (אבן דרך 3): דפי איפוס סיסמה */}
