@@ -29,6 +29,13 @@ const userSchema = new mongoose.Schema(
         message: 'points must be an integer',
       },
     },
+    // NEW (Milestone 3): keys of point awards already given, e.g. "TEUDA:<id>". Makes awards idempotent.
+    // חדש (אבן דרך 3): מפתחות של ניקוד שכבר ניתן (למשל "TEUDA:<id>"), כדי שאישור חוזר לא ייתן ניקוד פעמיים.
+    awardedPointKeys: {
+      type: [String],
+      default: [],
+      select: false,
+    },
   },
   { timestamps: true }
 );
