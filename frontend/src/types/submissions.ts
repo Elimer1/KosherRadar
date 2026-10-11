@@ -33,6 +33,45 @@ export const emptyTeudaForm: TeudaFormValues = {
   mashgiachPhone: '',
 };
 
+// Text inputs stay strings; they are converted (numbers, keyword list) just before sending.
+export interface RestaurantFormValues {
+  name: string;
+  address: string;
+  city: string;
+  latitude: string;
+  longitude: string;
+  phone: string;
+  website: string;
+  foodType: string;
+  categories: string[];
+  foodKeywords: string;
+  claimedHechsher: string;
+  claimedHechsherOther: string;
+  claimedKashrutLevel: string;
+}
+
+export const emptyRestaurantForm: RestaurantFormValues = {
+  name: '',
+  address: '',
+  city: '',
+  latitude: '',
+  longitude: '',
+  phone: '',
+  website: '',
+  foodType: '',
+  categories: [],
+  foodKeywords: '',
+  claimedHechsher: '',
+  claimedHechsherOther: '',
+  claimedKashrutLevel: '',
+};
+
+export interface RestaurantSubmitResult {
+  restaurant: { id: string; status: string };
+  teuda: { id: string; status: string } | null;
+  possibleDuplicateCount: number;
+}
+
 export interface SubmissionContextTeuda {
   id: string;
   hechsher: string;

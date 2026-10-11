@@ -22,6 +22,9 @@ function Navbar() {
         </Link>
 
         <div className="flex flex-wrap items-center gap-3 text-sm">
+          <Link to="/submit-restaurant" className="text-gray-700 hover:text-green-700">
+            Add a restaurant
+          </Link>
           {user ? (
             <>
               <Link to="/account" className="text-gray-700 hover:text-green-700">
