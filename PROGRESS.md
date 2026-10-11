@@ -4,9 +4,11 @@ Authoritative requirements: `PROJECT_SPEC.md` (do not edit without approval). Re
 
 ## Active milestone
 
-**Milestone 3 — Admin and kashrut business rules** (IMPLEMENTED and merged into `main`; waiting for your review and your explicit approval before Milestone 4). Scope from `PROJECT_SPEC.md` section 16: moderation dashboard, approve / reject / edit / delete, certificate validity and visibility, conflicting-teuda warning, private admin notes, rejection emails (Resend), idempotent point awards. The checklist also assigns password reset (Resend) to this milestone.
+**Milestone 4 — Search and restaurant pages** (IN PROGRESS, approved by the team). Scope from `PROJECT_SPEC.md` section 16: Atlas Search with a working Mongoose fallback, `ATLAS_SEARCH_SETUP.md` with the exact index JSON, bilingual food search, autocomplete, filters, pagination, restaurant details, status presentation, related tests.
 
-Milestones 1 and 2 are merged to `main`. Their real-database, Cloudinary and browser checks are still BLOCKED (see "Blockers").
+Milestones 1, 2 and 3 are merged to `main`. Their real-database, Cloudinary, Resend and browser checks are still BLOCKED (see "Blockers").
+
+Before this milestone started, the leftover working-tree change on `main` (deleted `project.zip`, a snapshot archive that had been committed by mistake) was committed, and `main` plus the Milestone 3 feature branches were pushed to `origin`. The six duplicate-detection files had already been committed in an earlier "share snapshot" commit, so they are no longer uncommitted.
 
 ## Comment convention for new code (requested by the team)
 
@@ -24,6 +26,16 @@ Example:
 // חדש (אבן דרך 3): אישור מסעדה ממתינה (למנהלים בלבד)
 export async function approveRestaurant(id, adminId) { /* ... */ }
 ```
+
+## Feature ownership (Milestone 4)
+
+Recorded before implementation, per section 19. Same rules as below: `--author` follows the responsible teammate, the code is AI-generated and must be reviewed by its owner. Merge order: `feature/restaurant-search`, then `feature/restaurant-details` (it reuses the status component built in the search feature), then the docs branch.
+
+| Feature branch | Responsible teammate | Scope |
+| --- | --- | --- |
+| `feature/restaurant-search` | Eli Mermelstein | Search fields and bilingual food synonyms on the restaurant, Atlas Search + Mongoose fallback, `ATLAS_SEARCH_SETUP.md`, public search and suggestions API (kashrut filters, location radius, 20 per page), home page search UI with autocomplete, filters, Load More and result cards, tests |
+| `feature/restaurant-details` | Moshe Silber | Public restaurant detail API and serializer (approved only, no admin data), `/restaurants/:id` page with full kashrut evidence, links to add a certificate / report a problem, tests |
+| `feature/milestone-4-docs` | Eli Mermelstein | Progress and checklist files, README and `.env.example` updates |
 
 ## Feature ownership (Milestone 3)
 
