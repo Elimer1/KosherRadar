@@ -33,6 +33,14 @@ export const dateToDateOnly = (date) => {
   return new Date(date).toISOString().slice(0, 10);
 };
 
+// NEW (Milestone 3): moves a "YYYY-MM-DD" date by whole days (used for "expiring in 30 days").
+// חדש (אבן דרך 3): מזיז תאריך "YYYY-MM-DD" במספר ימים שלם (לרשימת "פגות בקרוב").
+export const addDaysToDateOnly = (value, days) => {
+  const date = new Date(`${value}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+};
+
 // Moves a "YYYY-MM-DD" date by whole calendar months. Jan 31 + 1 month becomes Feb 28/29, not March 3.
 export const addMonthsToDateOnly = (value, months) => {
   const [year, month, day] = value.split('-').map(Number);

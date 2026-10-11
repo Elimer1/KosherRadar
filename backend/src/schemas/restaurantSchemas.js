@@ -20,7 +20,9 @@ const emptyToUndefined = (value) => (value === '' || value === null ? undefined 
 const optionalText = (maxLength) =>
   z.preprocess(emptyToUndefined, z.string().trim().min(1).max(maxLength).optional());
 
-const restaurantFieldsSchema = z
+// NEW (Milestone 3): exported so the admin create/edit forms use exactly the same field rules.
+// חדש (אבן דרך 3): מיוצא כדי שטפסי יצירה/עריכה של מנהל ישתמשו באותם כללי שדות בדיוק.
+export const restaurantFieldsSchema = z
   .object({
     name: z.string().trim().min(1, 'Restaurant name is required').max(150),
     address: z.string().trim().min(1, 'Address is required').max(250),

@@ -22,6 +22,15 @@ export const REPORT_STATUSES = ['PENDING', 'RESOLVED', 'REJECTED'];
 
 export const REPORT_TYPES = ['GENERAL', 'KASHRUT_UPDATE'];
 
+// NEW (Milestone 3): how an admin handled a report. Only the first two count as an applied correction (+1 point).
+// חדש (אבן דרך 3): איך מנהל טיפל בדיווח. רק שתי הראשונות נחשבות תיקון שהוחל (+1 נקודה).
+//   APPLY_PROPOSED            the server copies the user's proposed hechsher/level onto the record
+//   CORRECTION_ALREADY_MADE   the admin already edited the record by hand
+//   NO_CORRECTION             informational only: resolved without changing anything
+export const REPORT_RESOLUTIONS = ['APPLY_PROPOSED', 'CORRECTION_ALREADY_MADE', 'NO_CORRECTION'];
+
+export const EXPIRING_SOON_DAYS = 30;
+
 export const HECHSHER_OTHER = 'OTHER';
 
 // Maintained list of common hechsher options. Anything else is entered as free text with OTHER.
