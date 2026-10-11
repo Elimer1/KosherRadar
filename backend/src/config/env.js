@@ -14,6 +14,10 @@ export const env = {
   cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
   cloudinaryApiKey: process.env.CLOUDINARY_API_KEY || '',
   cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || '',
+  // NEW (Milestone 3): Resend email settings (rejection emails and password reset)
+  // חדש (אבן דרך 3): הגדרות שליחת מייל ב-Resend (מיילי דחייה ואיפוס סיסמה)
+  resendApiKey: process.env.RESEND_API_KEY || '',
+  emailFrom: process.env.EMAIL_FROM || '',
 };
 
 export const validateEnv = () => {
