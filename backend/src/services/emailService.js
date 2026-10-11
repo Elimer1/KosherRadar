@@ -87,3 +87,28 @@ export const sendRejectionEmailService = async ({ to, kind, subjectName, reason 
   const { subject, text } = buildRejectionEmail({ kind, subjectName, reason });
   return sendEmailService({ to, subject, text });
 };
+
+// NEW (Milestone 3): the text of the password reset email. The link contains the one-time token.
+// חדש (אבן דרך 3): נוסח מייל איפוס הסיסמה. הקישור מכיל את הטוקן החד-פעמי.
+export const buildPasswordResetEmail = ({ resetLink, validMinutes }) => {
+  return {
+    subject: 'Reset your KosherRadar password',
+    text: [
+      'Hello,',
+      '',
+      'We received a request to reset the password of your KosherRadar account.',
+      `Open this link to choose a new password. It works once and expires in ${validMinutes} minutes:`,
+      '',
+      resetLink,
+      '',
+      'If you did not ask for this, you can ignore this email. Your password stays the same.',
+    ].join('\n'),
+  };
+};
+
+// NEW (Milestone 3): sends the password reset email and returns SENT, FAILED or NOT_CONFIGURED.
+// חדש (אבן דרך 3): שולח את מייל איפוס הסיסמה ומחזיר SENT, FAILED או NOT_CONFIGURED.
+export const sendPasswordResetEmailService = async ({ to, resetLink, validMinutes }) => {
+  const { subject, text } = buildPasswordResetEmail({ resetLink, validMinutes });
+  return sendEmailService({ to, subject, text });
+};

@@ -30,3 +30,9 @@ export const awardPointsOnceRepo = async (userId, key, points) => {
     { new: true }
   );
 };
+
+// NEW (Milestone 3): saves a new password hash after a successful password reset.
+// חדש (אבן דרך 3): שומר hash חדש של סיסמה אחרי איפוס סיסמה מוצלח.
+export const setUserPasswordHashRepo = async (userId, passwordHash) => {
+  return User.findByIdAndUpdate(userId, { passwordHash }, { new: true });
+};

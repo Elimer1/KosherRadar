@@ -11,6 +11,8 @@ import SubmitTeudaPage from './pages/SubmitTeudaPage';
 import NotFoundPage from './pages/NotFoundPage';
 // NEW (Milestone 3) / חדש (אבן דרך 3)
 import AdminRoute from './components/AdminRoute';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import AdminAddTeudaPage from './pages/AdminAddTeudaPage';
 import AdminCreateRestaurantPage from './pages/AdminCreateRestaurantPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
@@ -23,6 +25,9 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        {/* NEW (Milestone 3): password reset pages (no login needed) / חדש (אבן דרך 3): דפי איפוס סיסמה */}
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Pages below need a logged-in user */}
         <Route element={<ProtectedRoute />}>

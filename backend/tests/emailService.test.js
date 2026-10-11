@@ -6,6 +6,7 @@ import {
   EMAIL_FAILED,
   EMAIL_NOT_CONFIGURED,
   EMAIL_SENT,
+  buildPasswordResetEmail,
   buildRejectionEmail,
   sendEmailService,
   sendRejectionEmailService,
@@ -101,5 +102,21 @@ describe('rejection email', () => {
     ).resolves.toBe(EMAIL_FAILED);
 
     consoleError.mockRestore();
+  });
+});
+
+// NEW (Milestone 3): the password reset email text.
+describe('buildPasswordResetEmail', () => {
+  it('contains the link and the validity time, and is plain text', () => {
+    const { subject, text } = buildPasswordResetEmail({
+      resetLink: 'http://localhost:5173/reset-password?token=abc',
+      validMinutes: 60,
+    });
+
+    expect(subject).toBe('Reset your KosherRadar password');
+    expect(text).toContain('http://localhost:5173/reset-password?token=abc');
+    expect(text).toContain('60 minutes');
+    expect(text).toContain('If you did not ask for this');
+    expect(text).not.toContain('<');
   });
 });
