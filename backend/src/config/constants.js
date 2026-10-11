@@ -55,4 +55,14 @@ export const ISRAEL_BOUNDS = { minLat: 29, maxLat: 34, minLng: 34, maxLng: 36.5 
 
 export const PUBLIC_EXPIRED_MONTHS = 6;
 
+// NEW (Milestone 4): public search settings (spec section 8)
+// חדש (אבן דרך 4): הגדרות החיפוש הציבורי (סעיף 8)
+export const SEARCH_PAGE_SIZE = 20;
+export const SUGGESTION_LIMIT = 8;
+export const SEARCH_RADIUS_OPTIONS_KM = [1, 5, 10, 25, 50];
+// At most this many restaurants are examined per search. The answer says when the limit was reached.
+// עד כמות זו של מסעדות נבדקות בכל חיפוש. התשובה מציינת כשהגענו למגבלה.
+export const MAX_SEARCH_CANDIDATES = 2000;
+export const ATLAS_SEARCH_HIT_LIMIT = 100;
+
 export const MAX_FUTURE_EXPIRATION_YEARS = 5;

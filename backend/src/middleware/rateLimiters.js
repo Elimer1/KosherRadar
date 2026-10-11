@@ -34,6 +34,16 @@ export const optionalUploadRateLimiter = rateLimit({
   message: { message: 'Too many photo uploads. Please try again later.' },
 });
 
+// NEW (Milestone 4): generous limit for public search and autocomplete (one request per pause while typing).
+// חדש (אבן דרך 4): מגבלה נדיבה לחיפוש והשלמה אוטומטית ציבוריים (בקשה אחת בכל הפסקה בהקלדה).
+export const searchRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 200,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { message: 'Too many searches. Please wait a moment and try again.' },
+});
+
 // NEW (Milestone 3): a stricter limit for "forgot password", so nobody can use it to flood an inbox with emails.
 // חדש (אבן דרך 3): מגבלה קשוחה יותר ל"שכחתי סיסמה", כדי שאי אפשר יהיה להציף תיבת מייל.
 export const passwordResetRateLimiter = rateLimit({

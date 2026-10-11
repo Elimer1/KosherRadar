@@ -19,8 +19,11 @@ describe('submission routes', () => {
   it('offers only the expected endpoints, so a USER has no way to edit, delete or approve records', () => {
     const summary = allRoutes.map((route) => `${route.methods.join(',').toUpperCase()} ${route.path}`).sort();
 
+    // Milestone 4 added the two public read-only search routes (GET / and GET /suggestions).
     expect(summary).toEqual([
+      'GET /',
       'GET /:restaurantId/submission-context',
+      'GET /suggestions',
       'POST /',
       'POST /',
       'POST /:restaurantId/teudot',

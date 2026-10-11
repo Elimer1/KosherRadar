@@ -8,7 +8,8 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "test": "vitest run",
-    "seed:admin": "node scripts/seedAdmin.js"
+    "seed:admin": "node scripts/seedAdmin.js",
+    "search:rebuild": "node scripts/rebuildSearchFields.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
