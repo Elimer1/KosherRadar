@@ -4,9 +4,38 @@ Authoritative requirements: `PROJECT_SPEC.md` (do not edit without approval). Re
 
 ## Active milestone
 
-**Milestone 2 — Submissions and image upload**: code complete and merged to `main`. Nothing was verified against a real MongoDB or Cloudinary (BLOCKED, see below). Waiting for approval before Milestone 3.
+**Milestone 3 — Admin and kashrut business rules** (approved by the team, IN PROGRESS). Scope from `PROJECT_SPEC.md` section 16: moderation dashboard, approve / reject / edit / delete, certificate validity and visibility, conflicting-teuda warning, private admin notes, rejection emails (Resend), idempotent point awards. The checklist also assigns password reset (Resend) to this milestone.
 
-Milestone 1 (foundation and auth) is also merged; its real-database item is still BLOCKED.
+Milestones 1 and 2 are merged to `main`. Their real-database, Cloudinary and browser checks are still BLOCKED (see "Blockers").
+
+## Comment convention for new code (requested by the team)
+
+Applies to everything added from Milestone 3 onward. Existing Milestone 1 and 2 code is not retro-commented.
+
+- **Mark new code as new.** Every new file starts with a short header comment, and every new function or block added to an existing file gets a one-line marker. Format: `// NEW (Milestone N): <what it is>`.
+- **Add a Hebrew line next to it.** Directly below the English marker: `// חדש (אבן דרך N): <תיאור קצר בעברית>`. Hebrew comments are also added to non-obvious logic in the new code (security, dates, filtering, kashrut rules).
+- **Keep it short.** `PROJECT_SPEC.md` (section on code style) says comments explain *why* and must not narrate self-evident code. So the markers go on files, functions and blocks, not on every line.
+- Use `//` in JS/TS and `{/* ... */}` in JSX. Hebrew in comments only; UI strings still go through the translation files in Milestone 5.
+
+Example:
+
+```js
+// NEW (Milestone 3): approve a pending restaurant (admin only)
+// חדש (אבן דרך 3): אישור מסעדה ממתינה (למנהלים בלבד)
+export async function approveRestaurant(id, adminId) { /* ... */ }
+```
+
+## Feature ownership (Milestone 3)
+
+Recorded before implementation, per section 19. Same rules as below: `--author` follows the responsible teammate, the code is AI-generated and must be reviewed by its owner. Merge order: the first four branches in the order listed, then the docs branch.
+
+| Feature branch | Responsible teammate | Scope |
+| --- | --- | --- |
+| `feature/kashrut-status-rules` | Eli Mermelstein | Verified / unverified / recent-expired / unknown derivation, primary preview and `+N more`, public teuda serializer (no admin-only data), conflict warning, tests |
+| `feature/moderation-notifications-points` | Eli Mermelstein | Resend email service and rejection emails (failure never rolls back a decision), idempotent contribution points (+3 / +2 / +1), tests |
+| `feature/admin-moderation` | Moshe Silber | Admin API (pending lists, expiring soon, manage search, approve / reject / edit / delete, admin-created approved records, report resolution, private notes), admin dashboard UI, tests |
+| `feature/password-reset` | Moshe Silber | Forgot / reset password endpoints (hashed single-use token, Resend email), forgot / reset pages, tests |
+| `feature/milestone-3-docs` | Eli Mermelstein | Progress and checklist files, README and `.env.example` updates |
 
 ## Feature ownership (Milestone 2)
 
@@ -90,4 +119,4 @@ Milestone 3 — Admin and kashrut business rules (needs explicit approval, in a 
 
 ## Continuation prompt (copy into a new Cursor Agent conversation)
 
-> Read the complete repository-root `PROJECT_SPEC.md` (authoritative master specification), `PROGRESS.md`, `REQUIREMENTS_CHECKLIST.md`, and the recent Git commits. Do not modify `PROJECT_SPEC.md` without my approval. Implement **only Milestone 3** from section 16, preserving all existing functionality. Work autonomously within that milestone; test, fix, update both tracking files, make real incremental, appropriately attributed feature-branch commits and merge verified work as specified in section 19, then STOP and ask for approval before the next milestone. Do not claim untested integrations work.
+> Read the complete repository-root `PROJECT_SPEC.md` (authoritative master specification), `PROGRESS.md`, `REQUIREMENTS_CHECKLIST.md`, and the recent Git commits. Do not modify `PROJECT_SPEC.md` without my approval. Implement **only Milestone 3** from section 16, preserving all existing functionality. Work autonomously within that milestone; test, fix, update both tracking files, make real incremental, appropriately attributed feature-branch commits and merge verified work as specified in section 19, then STOP and ask for approval before the next milestone. Do not claim untested integrations work. Follow the "Comment convention for new code" section in `PROGRESS.md`: mark every new file, function and block with an English `NEW (Milestone 3)` comment plus a Hebrew `חדש (אבן דרך 3)` comment.
