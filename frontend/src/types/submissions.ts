@@ -72,6 +72,24 @@ export interface RestaurantSubmitResult {
   possibleDuplicateCount: number;
 }
 
+export interface ReportFormValues {
+  type: string;
+  teudaId: string;
+  description: string;
+  proposedHechsher: string;
+  proposedHechsherOther: string;
+  proposedKashrutLevel: string;
+}
+
+export const emptyReportForm: ReportFormValues = {
+  type: 'GENERAL',
+  teudaId: '',
+  description: '',
+  proposedHechsher: '',
+  proposedHechsherOther: '',
+  proposedKashrutLevel: '',
+};
+
 export interface SubmissionContextTeuda {
   id: string;
   hechsher: string;
