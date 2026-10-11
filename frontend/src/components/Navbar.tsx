@@ -27,6 +27,12 @@ function Navbar() {
           </Link>
           {user ? (
             <>
+              {/* NEW (Milestone 3): only admins see this link / חדש (אבן דרך 3): רק מנהלים רואים קישור זה */}
+              {user.role === 'ADMIN' && (
+                <Link to="/admin" className="font-medium text-green-700 hover:underline">
+                  Admin
+                </Link>
+              )}
               <Link to="/account" className="text-gray-700 hover:text-green-700">
                 {user.email}
               </Link>

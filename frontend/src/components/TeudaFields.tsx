@@ -12,6 +12,9 @@ interface TeudaFieldsProps {
   disabled: boolean;
   onChange: (field: keyof TeudaFormValues, value: string) => void;
   onPhotoChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  // NEW (Milestone 3): the admin edit form changes the details only; the photo cannot be replaced there.
+  // חדש (אבן דרך 3): טופס העריכה של המנהל משנה רק פרטים; אי אפשר להחליף בו את התמונה.
+  hidePhoto?: boolean;
 }
 
 // The certificate fields are shared by "add a certificate" and "submit a new restaurant with a certificate".
@@ -24,6 +27,7 @@ function TeudaFields({
   disabled,
   onChange,
   onPhotoChange,
+  hidePhoto = false,
 }: TeudaFieldsProps) {
   const isOther = values.hechsher === options.hechsherOtherValue;
   const maxMegabytes = Math.round(options.maxImageBytes / (1024 * 1024));
@@ -139,6 +143,7 @@ function TeudaFields({
         </div>
       </div>
 
+      {!hidePhoto && (
       <div>
         <label htmlFor={`${idPrefix}-photo`} className={labelClassName}>
           Photo of the certificate
@@ -160,6 +165,7 @@ function TeudaFields({
           </p>
         )}
       </div>
+      )}
     </div>
   );
 }
