@@ -4,9 +4,38 @@ Authoritative requirements: `PROJECT_SPEC.md` (do not edit without approval). Re
 
 ## Active milestone
 
-**Milestone 2 — Submissions and image upload**: code complete and merged to `main`. Nothing was verified against a real MongoDB or Cloudinary (BLOCKED, see below). Waiting for approval before Milestone 3.
+**Milestone 3 — Admin and kashrut business rules** (IMPLEMENTED and merged into `main`; waiting for your review and your explicit approval before Milestone 4). Scope from `PROJECT_SPEC.md` section 16: moderation dashboard, approve / reject / edit / delete, certificate validity and visibility, conflicting-teuda warning, private admin notes, rejection emails (Resend), idempotent point awards. The checklist also assigns password reset (Resend) to this milestone.
 
-Milestone 1 (foundation and auth) is also merged; its real-database item is still BLOCKED.
+Milestones 1 and 2 are merged to `main`. Their real-database, Cloudinary and browser checks are still BLOCKED (see "Blockers").
+
+## Comment convention for new code (requested by the team)
+
+Applies to everything added from Milestone 3 onward. Existing Milestone 1 and 2 code is not retro-commented.
+
+- **Mark new code as new.** Every new file starts with a short header comment, and every new function or block added to an existing file gets a one-line marker. Format: `// NEW (Milestone N): <what it is>`.
+- **Add a Hebrew line next to it.** Directly below the English marker: `// חדש (אבן דרך N): <תיאור קצר בעברית>`. Hebrew comments are also added to non-obvious logic in the new code (security, dates, filtering, kashrut rules).
+- **Keep it short.** `PROJECT_SPEC.md` (section on code style) says comments explain *why* and must not narrate self-evident code. So the markers go on files, functions and blocks, not on every line.
+- Use `//` in JS/TS and `{/* ... */}` in JSX. Hebrew in comments only; UI strings still go through the translation files in Milestone 5.
+
+Example:
+
+```js
+// NEW (Milestone 3): approve a pending restaurant (admin only)
+// חדש (אבן דרך 3): אישור מסעדה ממתינה (למנהלים בלבד)
+export async function approveRestaurant(id, adminId) { /* ... */ }
+```
+
+## Feature ownership (Milestone 3)
+
+Recorded before implementation, per section 19. Same rules as below: `--author` follows the responsible teammate, the code is AI-generated and must be reviewed by its owner. Merge order: the first four branches in the order listed, then the docs branch.
+
+| Feature branch | Responsible teammate | Scope |
+| --- | --- | --- |
+| `feature/kashrut-status-rules` | Eli Mermelstein | Verified / unverified / recent-expired / unknown derivation, primary preview and `+N more`, public teuda serializer (no admin-only data), conflict warning, tests |
+| `feature/moderation-notifications-points` | Eli Mermelstein | Resend email service and rejection emails (failure never rolls back a decision), idempotent contribution points (+3 / +2 / +1), tests |
+| `feature/admin-moderation` | Moshe Silber | Admin API (pending lists, expiring soon, manage search, approve / reject / edit / delete, admin-created approved records, report resolution, private notes), admin dashboard UI, tests |
+| `feature/password-reset` | Moshe Silber | Forgot / reset password endpoints (hashed single-use token, Resend email), forgot / reset pages, tests |
+| `feature/milestone-3-docs` | Eli Mermelstein | Progress and checklist files, README and `.env.example` updates |
 
 ## Feature ownership (Milestone 2)
 
@@ -58,17 +87,48 @@ Recorded before implementation, per section 19. Commits use `--author` for the r
 - **Entry points**: certificate and report pages have no link yet because there is no restaurant page or search until Milestone 4. They are reachable at `/restaurants/:restaurantId/add-teuda` and `/restaurants/:restaurantId/report` and need an APPROVED restaurant.
 - The submission pages are English only; translations and RTL are Milestone 5.
 
+### Milestone 3
+
+- Ownership was recorded first (`feature/milestone-3-docs`). Then four feature branches were built and merged into `main` with `--no-ff`, in this order: `feature/kashrut-status-rules` (Eli), `feature/moderation-notifications-points` (Eli), `feature/admin-moderation` (Moshe), `feature/password-reset` (Moshe). `feature/milestone-3-docs` is merged last. Branches were not deleted. All code is AI-generated and must be reviewed by its owner.
+- **Kashrut rules** (`services/kashrutStatusService.js`): one place derives VERIFIED / UNVERIFIED / EXPIRED / UNKNOWN, the primary item, `+N more`, the public teuda serializer and the same-level conflict warning. Expired is derived on Israel calendar dates and never stored.
+- **Email and points**: `services/emailService.js` (Resend REST API through `fetch`, never throws, returns SENT / FAILED / NOT_CONFIGURED, plain text only), `services/pointsService.js` (+3 / +2 / +1, once per source through an atomic `awardedPointKeys` update on the user).
+- **Admin API** (`/api/admin/*`, all behind login + ADMIN): pending lists, expiring soon (30 days), manage/search, details with a public preview, approve / reject / edit / delete for restaurants and certificates, admin-created approved records, report resolve / reject. New files: `admin*Repository.js`, `admin*Service.js`, `admin*Controller.js`, `adminSchemas.js`, `adminSerializerService.js`, `moderationNotificationService.js`, `middleware/validateQuery.js`, `utils/pagination.js`.
+- **Admin UI**: `/admin` (five tabs), `/admin/restaurants/new`, `/admin/restaurants/:id`, `/admin/restaurants/:id/add-teuda`, `AdminRoute`, an "Admin" navbar link for admins only.
+- **Password reset**: `POST /api/auth/forgot-password` and `/reset-password`, `passwordResetService.js`, `passwordResetRepository.js` (uses the existing `PasswordResetToken` model), pages `/forgot-password` and `/reset-password`, a link on the login page.
+- **Existing files touched**: `TeudaFields.tsx` (optional `hidePhoto`), `App.tsx`, `Navbar.tsx`, `LoginPage.tsx`, `authApi.ts`, `authController.js`, `authRoutes.js`, `authSchemas.js`, `rateLimiters.js`, `userRepository.js`, `User.js` (`awardedPointKeys`), `env.js` and `.env.example` (Resend), `constants.js`, `israelDate.js`, `teudaRulesService.js`, `restaurantSchemas.js`.
+
+### Design decisions made in Milestone 3 (please review)
+
+- **Approving a restaurant gives no points.** Points are given when its certificate is approved: +3 if the certificate was sent together with the new restaurant (`submittedWithNewRestaurant`) and the same user sent both, +2 for a certificate added to an existing restaurant, +1 when a report's correction is really applied. A restaurant without a certificate earns nothing; admins never collect points; deleting something never takes points back.
+- **A certificate cannot be approved while its restaurant is not approved** (the only hard rule). A same-level conflict only warns ("Approve anyway").
+- **Rejecting a restaurant also closes its pending certificates.** Rejecting needs a reason (at least 3 characters) that is saved and emailed. The decision is saved first; a failed or missing email only changes the `emailStatus` shown to the admin.
+- **Approve and reject are atomic and repeatable**: they only change a PENDING record, so two admins clicking together, or a double click, cannot double-apply or award points twice.
+- **Admin-created records are approved at once and earn no points.** Admin dates may be in the past (from 2000-01-01, up to 5 years ahead) so old evidence can be recorded.
+- **Report resolution** has three outcomes: `APPLY_PROPOSED` (changes only the proposed hechsher / level on the named certificate, or on the restaurant claim when no certificate is named), `CORRECTION_ALREADY_MADE`, and `NO_CORRECTION`. Only the first two with a real correction give +1.
+- **Deleting a restaurant is permanent**: it removes its certificates, its reports and the Cloudinary photos. The UI asks for confirmation.
+- **Password reset**: the token is 32 random bytes (64 hex characters), valid 60 minutes, only its SHA-256 hash is stored, consumed in one atomic update. Requesting a new link cancels older unused ones. A request for an unknown email answers exactly like a known one, and the email is not awaited so response time does not give it away. **Limitation: a reset does not log out sessions that already exist** (JWTs stay valid until they expire in 24 hours; there is no token-version field).
+- **Query validation**: Express 5 makes `req.query` read-only, so validated query values are in `req.validatedQuery`, and a repeated query key answers 400.
+- **The admin screens are English only**; translation is Milestone 5. The hechsher names are still the unreviewed agent-written list from Milestone 2.
+
+### Team working-tree changes not touched
+
+Six files on `main` have uncommitted edits that were already there before Milestone 3 and were deliberately left alone and never staged: `backend/src/repositories/restaurantRepository.js`, `backend/src/services/duplicateService.js`, `backend/src/services/restaurantSubmissionService.js`, `backend/src/utils/normalizeText.js`, `backend/tests/duplicateService.test.js`, `backend/tests/restaurantSubmissionService.test.js` (duplicate-detection work). The backend test counts below were run with those edits present. Please commit or discard them yourself.
+
 ## Tests and builds
 
-Run on `main` after all Milestone 2 merges:
+Run on `main` after the Milestone 3 merges (the docs branch was merged afterwards and changes only `.md` files):
 
 | Command | Result |
 | --- | --- |
-| `cd backend; npm test` | 13 test files, 150 tests passed |
+| `cd backend; npm test` | 24 test files, 324 tests passed (Milestone 2 ended with 13 files / 150 tests) |
 | `cd frontend; npm run typecheck` | passed |
-| `cd frontend; npm test` | 4 test files, 24 tests passed |
-| `cd frontend; npm run build` | passed (110 modules) |
-| `cd frontend; npm run lint` | passed (no findings reported) |
+| `cd frontend; npm test` | 7 test files, 40 tests passed |
+| `cd frontend; npm run build` | passed |
+| `cd frontend; npm run lint` | passed (no findings) |
+
+New Milestone 3 backend tests: `kashrutStatusService`, `emailService` (mocked `fetch`), `pointsService`, `adminSchemas`, `adminTeudaService`, `adminRestaurantService`, `adminReportService`, `adminRoutes` (middleware order on every route), `adminRoutesHttp` (real HTTP, services mocked), `passwordResetService`, `passwordResetRoutesHttp`. New frontend tests: `adminLabels`, `adminForms`, `resetToken`.
+
+Not run in Milestone 3: any server against a real MongoDB, a real Resend email, a real Cloudinary upload (admin-created certificates and certificate deletion), and **none of the admin or password reset pages in a browser**. The frontend tests cover pure functions only, no components. The real-database behavior of the atomic updates (approve / reject, award points, consume reset token) is only covered by mocked unit tests.
 
 Also done once and not kept: a throwaway Express app with the real multer, JSON-field, Zod and image-check middleware, called over HTTP with `fetch`. It returned 200 for a valid upload, 400 for a script renamed to `.jpg`, 413 for a file over 5 MB, 400 for a missing photo, 400 for broken JSON and a field error for a missing "other" hechsher text.
 
@@ -80,14 +140,18 @@ Not run: either server against a real MongoDB, a real Cloudinary upload, and the
 - **UNVERIFIED:** Cloudinary. Needs `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` in `backend/.env`. Without them the photo upload answers 503 and nothing is saved.
 - **UNVERIFIED:** the MongoDB queries behind the duplicate check (`$or` on indexed fields, `$geoWithin`) and the 2dsphere index with restaurants that have no coordinates. Rate limits and CORS were not exercised against a running server.
 - Seed-admin was not run against a real database (its service logic is covered by unit tests).
-- Not used yet (later milestones): Geoapify, Resend, Atlas Search.
+- **BLOCKED (Milestone 3):** Resend. Needs `RESEND_API_KEY` and `EMAIL_FROM` in `backend/.env`. No email (rejection or password reset) was ever sent. Without a verified domain Resend only sends to your own account address (see README).
+- **UNVERIFIED (Milestone 3):** the whole admin flow against a real database and the admin and password reset pages in a browser. Sessions are not revoked by a password reset (see design decisions).
+- Not used yet (later milestones): Geoapify, Atlas Search.
+
+To finish the Milestone 3 blocked items: fill in `backend/.env` (including Resend), run `cd backend; npm run seed:admin`, start both servers, log in as the admin, open `/admin`, then send a restaurant with a certificate from a normal account and approve it, reject another with a reason, check the contributor's points in Atlas (`users.points`, `awardedPointKeys`), and try `/forgot-password` with your own address.
 
 To finish the blocked items: copy `backend/.env.example` to `backend/.env`, fill in the values, run `cd backend; npm run seed:admin`, start `npm run dev` in both `backend/` and `frontend/`, register, log in, open `/submit-restaurant` and send a restaurant with and without a certificate photo, then check the documents in Atlas (`restaurants`, `teudas`, `reports`) and the image in Cloudinary. To try the certificate and report pages, set one restaurant's `status` to `APPROVED` in Atlas (admin approval arrives in Milestone 3) and open `/restaurants/<its id>/add-teuda`.
 
 ## Next milestone
 
-Milestone 3 — Admin and kashrut business rules (needs explicit approval, in a fresh conversation). Things it will build on: `getTeudaVisibility` and `isTeudaPublic` in `teudaRulesService.js`, `Teuda.submittedWithNewRestaurant`, `Restaurant.possibleDuplicates`, and the PENDING records that Milestone 2 creates.
+Milestone 4 — Search and restaurant pages (needs your explicit approval, in a fresh conversation). Things it will build on: `buildKashrutSummary` and `getPublicTeudot` in `kashrutStatusService.js` (the single place that decides public kashrut status and which certificates are public; do not copy that logic), the APPROVED restaurants and certificates admins now create, `Restaurant.kosharotUrl`, and the normalized text fields on the restaurant used for search. No public endpoint exists yet that returns restaurants.
 
 ## Continuation prompt (copy into a new Cursor Agent conversation)
 
-> Read the complete repository-root `PROJECT_SPEC.md` (authoritative master specification), `PROGRESS.md`, `REQUIREMENTS_CHECKLIST.md`, and the recent Git commits. Do not modify `PROJECT_SPEC.md` without my approval. Implement **only Milestone 3** from section 16, preserving all existing functionality. Work autonomously within that milestone; test, fix, update both tracking files, make real incremental, appropriately attributed feature-branch commits and merge verified work as specified in section 19, then STOP and ask for approval before the next milestone. Do not claim untested integrations work.
+> Read the complete repository-root `PROJECT_SPEC.md` (authoritative master specification), `PROGRESS.md`, `REQUIREMENTS_CHECKLIST.md`, and the recent Git commits. Do not modify `PROJECT_SPEC.md` without my approval. Implement **only Milestone 4** from section 16, preserving all existing functionality. Work autonomously within that milestone; test, fix, update both tracking files, make real incremental, appropriately attributed feature-branch commits and merge verified work as specified in section 19, then STOP and ask for approval before the next milestone. Do not claim untested integrations work (MongoDB, Cloudinary and Resend were never verified; see "Blockers"). Reuse `kashrutStatusService.js` for every public status and certificate filter. Do not touch or commit the team's six uncommitted duplicate-detection files listed in `PROGRESS.md`. Follow the "Comment convention for new code" section in `PROGRESS.md`: mark every new file, function and block with an English `NEW (Milestone 4)` comment plus a Hebrew `חדש (אבן דרך 4)` comment.

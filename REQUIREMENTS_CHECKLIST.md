@@ -3,6 +3,8 @@
 Statuses: `NOT STARTED`, `IN PROGRESS`, `IMPLEMENTED UNVERIFIED`, `TESTED`, `BLOCKED`. `TESTED` requires evidence (a passing test or a real run), recorded in the Evidence column.
 Source of requirements: `PROJECT_SPEC.md`.
 
+After the Milestone 3 merges, `main` runs backend 24 files / 324 tests and frontend 7 files / 40 tests, all passing; frontend typecheck, lint and build succeed (the backend count includes the team's uncommitted duplicate-detection edits that sit in the working tree, see `PROGRESS.md`).
+
 Evidence for Milestone 1 came from `npm test` runs on `main` after merging both feature branches (backend 4 files / 40 tests, frontend 1 file / 11 tests). After the Milestone 2 merges, `main` runs backend 13 files / 150 tests and frontend 4 files / 24 tests, all passing; frontend `npm run typecheck`, `npm run build` and `npm run lint` succeed. No MongoDB, Cloudinary account or browser was available, so nothing was verified against real services.
 
 ## Milestone 1 — Foundation and auth
@@ -68,14 +70,31 @@ Evidence for Milestone 1 came from `npm test` runs on `main` after merging both 
 
 | Requirement | Status | Notes |
 | --- | --- | --- |
-| Moderation dashboard tabs (6) | NOT STARTED | |
-| Approve / reject (reason required) / edit / delete (6) | NOT STARTED | |
-| Kashrut status derivation, six-month rule (5) | IN PROGRESS | Date rule `getTeudaVisibility` exists and is tested (Milestone 2). Verified/unverified/unknown status and priority are not built |
-| Conflict warning, overrideable (5.8) | NOT STARTED | |
-| Rejection emails via Resend, failure does not roll back (6, 12) | NOT STARTED | |
-| Private contribution points, idempotent (7) | NOT STARTED | |
-| Password reset via Resend (4) | NOT STARTED | `PasswordResetToken` model exists from Milestone 1; no endpoints or email yet |
-| Kosharot URL (6) | NOT STARTED | |
+"TESTED" below means Vitest with mocked repositories, a mocked `fetch` for Resend, or real HTTP requests to an Express app with mocked services (no database). **Nothing ran against a real MongoDB, Cloudinary or Resend, and no page was opened in a browser.**
+
+| Requirement | Status | Notes |
+| --- | --- | --- |
+| Admin API behind login + ADMIN role on every route (4, 6) | TESTED | `adminRoutes.test.js` (every route sits behind `authMiddleware` then `adminMiddleware`; endpoint list), `adminRoutesHttp.test.js` (real HTTP: 401 without a token, 403 for a USER, 400 for bad ids/bodies, ADMIN reaches the service) |
+| Moderation dashboard tabs: pending restaurants / certificates / reports, expiring soon, manage (6) | IMPLEMENTED UNVERIFIED | `frontend/src/pages/AdminDashboardPage.tsx`, `components/admin/*Tab.tsx`. Backend list endpoints are TESTED (`adminRestaurantService.test.js`, `adminTeudaService.test.js`, `adminReportService.test.js`); the screens compile, lint and build but have **no component tests and were never opened in a browser** |
+| Approve / reject (reason required) restaurants, certificates, reports (6) | TESTED | Services above; `adminSchemas.test.js` (reason required, min 3 characters). Approve and reject use filtered atomic updates (PENDING only), so a repeat or a lost race changes nothing. Real-database behavior of the atomic updates NOT verified. UI IMPLEMENTED UNVERIFIED |
+| Edit and delete restaurants and certificates, with private admin notes (6) | TESTED | `adminRestaurantService.test.js`, `adminTeudaService.test.js` (deleting a restaurant removes its certificates, reports and Cloudinary photos and never touches points; editing keeps the status). UI IMPLEMENTED UNVERIFIED |
+| Admin can create approved restaurants / certificates, dates may be in the past (6) | TESTED | `adminRestaurantService.test.js`, `adminTeudaService.test.js` (`checkExpirationForAdmin`: from 2000-01-01 up to 5 years ahead). The multipart upload route itself was not run with a real file |
+| Cannot approve a certificate before its restaurant is approved (6, 12) | TESTED | `adminTeudaService.test.js` ("cannot approve a certificate while its restaurant is not approved"). The UI also disables the button |
+| Report resolution: apply proposed / already corrected / no correction; correction changes only the allowed fields (6, 7) | TESTED | `adminReportService.test.js` (`buildCorrectionChanges`, idempotent resolve). Unit tests only |
+| Kashrut status derivation: verified / unverified / expired / unknown, priority, `+N more`, six-month rule (5) | TESTED | `kashrutStatusService.js`, `kashrutStatusService.test.js` (24 cases, e.g. verified RABBANUT outranks an unverified MEHADRIN claim). Israel calendar dates, expired status is derived and never stored |
+| Public teuda serializer hides admin-only data (5, 12) | TESTED | `kashrutStatusService.test.js` (`toPublicTeuda` has no admin or internal fields; `getPublicTeudot` removes admin-only and unapproved certificates). **No public endpoint uses it yet (Milestone 4)** |
+| Conflict warning, overrideable (5.8) | TESTED | `findConflictingTeudot` tests (same level, both valid, never blocks); `adminTeudaService.test.js` (approve still succeeds with `conflictWarning`). UI shows "Approve anyway" |
+| Rejection emails via Resend, failure does not roll back (6, 12) | TESTED | `emailService.test.js` (mocked `fetch`: SENT / FAILED / NOT_CONFIGURED, never throws, plain text, no admin note), `adminTeudaService.test.js` and siblings (rejection saved when the email fails; `emailStatus` returned). **Real delivery through Resend: BLOCKED (see next row)** |
+| Real Resend delivery (2, 6) | BLOCKED | No `RESEND_API_KEY`, no verified domain here. Without a verified domain Resend only sends to the owner's own address. Never attempted |
+| Private contribution points, idempotent (7) | TESTED | `pointsService.test.js` (+3 / +2 / +1, once per key, admins and missing users get nothing). The atomic `$ne` / `$push` update (`awardPointsOnceRepo`) was **not run against a real MongoDB** |
+| Password reset: hashed single-use short-lived token, bcrypt, same answer for every email (4, 12) | TESTED | `passwordResetService.test.js` (only the hash is stored, 64-hex random token, older links cancelled, one use only, 400 for unknown/used/expired, password hashed), `passwordResetRoutesHttp.test.js` (real HTTP: 400 validation, identical 200 message). The atomic consume query was not run against a real MongoDB. Existing login sessions (JWT) are **not** revoked by a reset |
+| Password reset emails via Resend (4) | BLOCKED | Same reason as above; a failed email is only logged on the server so the response never reveals whether the account exists |
+| Forgot / reset password pages (4, 10) | IMPLEMENTED UNVERIFIED | `ForgotPasswordPage.tsx`, `ResetPasswordPage.tsx`; `utils/resetToken.test.ts` covers the token check. No browser run |
+| Rate limit on password reset requests (4) | IMPLEMENTED UNVERIFIED | `passwordResetRateLimiter` (5 per hour per IP), `authRateLimiter` on reset; not exercised against a running server |
+| Admin-only UI guard and navbar link (4, 10) | IMPLEMENTED UNVERIFIED | `AdminRoute.tsx` (hides the pages for non-admins; real protection is the server). No browser run |
+| Frontend helpers: labels, form values, payload builders (10) | TESTED | `adminLabels.test.ts`, `adminForms.test.ts`, `resetToken.test.ts` |
+| Kosharot URL (6) | TESTED | Admin-only `kosharotUrl` (http/https only): `adminSchemas.test.js`, `adminRestaurantService.test.js`. Not shown publicly yet (Milestone 4) |
+| Real admin flow against MongoDB + Cloudinary + Resend (15) | BLOCKED | No connection string, accounts or `backend/.env` here |
 
 ## Milestone 4 — Search and restaurant pages
 
