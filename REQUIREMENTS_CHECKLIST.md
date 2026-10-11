@@ -3,7 +3,7 @@
 Statuses: `NOT STARTED`, `IN PROGRESS`, `IMPLEMENTED UNVERIFIED`, `TESTED`, `BLOCKED`. `TESTED` requires evidence (a passing test or a real run), recorded in the Evidence column.
 Source of requirements: `PROJECT_SPEC.md`.
 
-Evidence below comes from `npm test` runs on `main` after merging both feature branches: backend 4 files / 40 tests passed; frontend 1 file / 11 tests passed; frontend `npm run typecheck`, `npm run build` and `npm run lint` succeeded.
+Evidence for Milestone 1 came from `npm test` runs on `main` after merging both feature branches (backend 4 files / 40 tests, frontend 1 file / 11 tests). After the Milestone 2 merges, `main` runs backend 13 files / 150 tests and frontend 4 files / 24 tests, all passing; frontend `npm run typecheck`, `npm run build` and `npm run lint` succeed. No MongoDB, Cloudinary account or browser was available, so nothing was verified against real services.
 
 ## Milestone 1 — Foundation and auth
 
@@ -35,11 +35,34 @@ Evidence below comes from `npm test` runs on `main` after merging both feature b
 
 ## Milestone 2 — Submissions and image upload
 
-| Requirement | Status | Notes |
+"Unit tests" below means Vitest with mocked repositories; none of these ran against a real MongoDB.
+
+| Requirement (spec section) | Status | Files / tests / evidence |
 | --- | --- | --- |
-| Restaurant/teuda/report submission workflows (6, 10) | NOT STARTED | |
-| Cloudinary upload and validation (2) | NOT STARTED | |
-| Manual entry, initial duplicate warning (6) | NOT STARTED | |
+| New restaurant submission, saved PENDING, client cannot set status/owner (6) | TESTED | `restaurantSubmissionService.js`; `restaurantSubmissionService.test.js` (PENDING even for an ADMIN user), `restaurantSchemas.test.js` (extra fields ignored). Unit tests only |
+| Restaurant submitted together with a first teuda (6) | TESTED | `restaurantSubmissionService.test.js` (teuda PENDING, `submittedWithNewRestaurant: true`; restaurant and photo removed if the teuda cannot be saved). Unit tests only |
+| New teuda for an existing APPROVED restaurant, PENDING, existing teudot untouched (6) | TESTED | `teudaSubmissionService.js`; `teudaSubmissionService.test.js` (404 for pending/rejected restaurant; only creates one new record). Unit tests only |
+| Report / correction submission, PENDING, no correction applied (6) | TESTED | `reportSubmissionService.js`; `reportSubmissionService.test.js`, schema tests. Unit tests only |
+| Users cannot approve, edit or delete (4) | TESTED | `submissionRoutes.test.js` (only the expected routes exist; every create route uses `authMiddleware`). Admin approval itself is Milestone 3 |
+| Anonymous users are prompted to log in (10) | IMPLEMENTED UNVERIFIED | Submission pages sit behind the existing `ProtectedRoute`; not run in a browser |
+| Cloudinary upload through Express, server-only credentials (2) | IMPLEMENTED UNVERIFIED | `config/cloudinary.js`, `imageUploadService.js`; `imageUpload.test.js` uses a mocked SDK (URL + public id saved, failure gives 502, missing config gives 503). **No real Cloudinary upload was done** |
+| Photo validation: JPG/PNG/WebP by real bytes, max 5 MB, server side (2) | TESTED | `utils/imageType.js`, `imageUpload.test.js` (renamed script, PDF, GIF, empty file rejected; >5 MB gives 413). A throwaway HTTP run through multer + Zod also gave 400/413 as expected (script not committed) |
+| Photo validation client side (2) | TESTED | `frontend/src/utils/imageCheck.test.ts`; the file picker UI itself was not run in a browser |
+| Upload and submission rate limits (4) | IMPLEMENTED UNVERIFIED | `middleware/rateLimiters.js`; not exercised against a running server |
+| Upload progress and success/error feedback (10) | IMPLEMENTED UNVERIFIED | `SubmitTeudaPage.tsx`, `SubmitRestaurantPage.tsx`; compiled only |
+| Honest failure: no fake certificate when upload fails (12) | TESTED | `teudaSubmissionService.test.js`, `restaurantSubmissionService.test.js` (nothing saved when upload fails; photo deleted when saving fails) |
+| Manual entry; coordinates never invented (10, 12) | TESTED | `models.test.js` (no `location` without coordinates), `restaurantSchemas.test.js` (both or neither, inside Israel). Address geocoding is Milestone 5 |
+| Expiration is a date-only value in Israel time (3, 5) | TESTED | `utils/israelDate.js`, `teudaRulesService.test.js` (UTC+2 and UTC+3 cases, calendar-month math) |
+| Submitted teuda must still be valid, at most 5 years ahead (3) | TESTED | `teudaRulesService.test.js` (`checkExpirationForSubmission`) |
+| Reports blocked against admin-only (>6 months expired) teudot (5.3) | TESTED | `reportSubmissionService.test.js`; `getTeudaVisibility` boundary tests. Only the date helper exists; full status derivation is Milestone 3 |
+| Standard hechsher list + Other free text (3) | IMPLEMENTED UNVERIFIED | `config/constants.js`, `GET /api/options`, schema tests for OTHER. **The list of names was written by the agent and has not been reviewed by the team** |
+| Initial duplicate warning, never blocks (6) | TESTED | `duplicateService.js`; `duplicateService.test.js`, `restaurantSubmissionService.test.js`. The MongoDB queries (`$or` on indexed fields, `$geoWithin`) were not run against a real database |
+| Guard against accidental double submits (4) | TESTED | 409 tests for restaurant, teuda and report. Unit tests only |
+| Zod validation, NoSQL-injection-safe inputs, safe URLs (4) | TESTED | `submissionSchemas.test.js`, `restaurantSchemas.test.js` (objects instead of strings, `javascript:` links, bad ids) |
+| No points awarded at submission (7) | IMPLEMENTED UNVERIFIED | No points code exists in Milestone 2 and no test asserts it. `submittedWithNewRestaurant` is stored for the Milestone 3 +3 / +2 decision |
+| Submission pages (restaurant, certificate, report) (10) | IMPLEMENTED UNVERIFIED | `SubmitRestaurantPage.tsx`, `SubmitTeudaPage.tsx`, `SubmitReportPage.tsx`; typecheck, lint and build pass, API payload builders tested; **no browser run**. English only until Milestone 5 |
+| Entry points for certificate/report pages (10) | NOT STARTED | Needs the restaurant detail page (Milestone 4); until then only reachable by URL |
+| Real submission flow against MongoDB + Cloudinary (15) | BLOCKED | No MongoDB connection string, Cloudinary account, or `backend/.env` here |
 
 ## Milestone 3 — Admin and kashrut business rules
 
@@ -47,7 +70,7 @@ Evidence below comes from `npm test` runs on `main` after merging both feature b
 | --- | --- | --- |
 | Moderation dashboard tabs (6) | NOT STARTED | |
 | Approve / reject (reason required) / edit / delete (6) | NOT STARTED | |
-| Kashrut status derivation, six-month rule (5) | NOT STARTED | |
+| Kashrut status derivation, six-month rule (5) | IN PROGRESS | Date rule `getTeudaVisibility` exists and is tested (Milestone 2). Verified/unverified/unknown status and priority are not built |
 | Conflict warning, overrideable (5.8) | NOT STARTED | |
 | Rejection emails via Resend, failure does not roll back (6, 12) | NOT STARTED | |
 | Private contribution points, idempotent (7) | NOT STARTED | |
