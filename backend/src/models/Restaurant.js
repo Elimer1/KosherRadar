@@ -7,6 +7,7 @@ import {
   SUBMISSION_STATUSES,
 } from '../config/constants.js';
 import { normalizePhone, normalizeText } from '../utils/normalizeText.js';
+import { buildRestaurantSearchFields } from '../utils/searchFields.js';
 
 // GeoJSON point. It is a sub-document so it simply does not exist when a restaurant has no
 // coordinates; an empty location would break the 2dsphere index.
@@ -75,6 +76,12 @@ const restaurantSchema = new mongoose.Schema(
     nameNormalized: { type: String, index: true },
     addressNormalized: { type: String },
     phoneNormalized: { type: String },
+
+    // NEW (Milestone 4): search copies, always derived from the names and the food keywords (see utils/searchFields.js).
+    // חדש (אבן דרך 4): עותקי חיפוש, תמיד נגזרים מהשמות ומילות המפתח של האוכל.
+    nameTokens: { type: [String], default: [] },
+    foodTokens: { type: [String], default: [] },
+    foodGroups: { type: [String], default: [] },
   },
   { timestamps: true }
 );
@@ -90,6 +97,13 @@ restaurantSchema.pre('validate', function syncDerivedFields() {
   this.nameNormalized = normalizeText(this.name);
   this.addressNormalized = normalizeText(this.address);
   this.phoneNormalized = normalizePhone(this.phone) || undefined;
+
+  // NEW (Milestone 4): rebuild the search copies on every save, so an admin edit keeps search correct.
+  // חדש (אבן דרך 4): בונים מחדש את עותקי החיפוש בכל שמירה, כך שעריכת מנהל לא שוברת את החיפוש.
+  const searchFields = buildRestaurantSearchFields(this);
+  this.nameTokens = searchFields.nameTokens;
+  this.foodTokens = searchFields.foodTokens;
+  this.foodGroups = searchFields.foodGroups;
 });
 
 restaurantSchema.index({ location: '2dsphere' });
@@ -100,5 +114,10 @@ restaurantSchema.index({ geoapifyPlaceId: 1 }, { sparse: true });
 restaurantSchema.index({ phoneNormalized: 1 }, { sparse: true });
 restaurantSchema.index({ addressNormalized: 1 });
 restaurantSchema.index({ submittedBy: 1 });
+// NEW (Milestone 4): multikey indexes behind the public search (anchored prefix matches use them).
+// חדש (אבן דרך 4): אינדקסים לחיפוש הציבורי (התאמות תחילת מילה משתמשות בהם).
+restaurantSchema.index({ status: 1, nameTokens: 1 });
+restaurantSchema.index({ status: 1, foodTokens: 1 });
+restaurantSchema.index({ status: 1, foodGroups: 1 });
 
 export const Restaurant = mongoose.model('Restaurant', restaurantSchema);
