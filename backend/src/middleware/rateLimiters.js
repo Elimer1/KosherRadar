@@ -23,3 +23,13 @@ export const uploadRateLimiter = rateLimit({
   legacyHeaders: false,
   message: { message: 'Too many photo uploads. Please try again later.' },
 });
+
+// For routes where the photo is optional. It runs after the file is read and only counts requests that have one.
+export const optionalUploadRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 15,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  skip: (req) => !req.file,
+  message: { message: 'Too many photo uploads. Please try again later.' },
+});
