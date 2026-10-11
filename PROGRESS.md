@@ -4,7 +4,7 @@ Authoritative requirements: `PROJECT_SPEC.md` (do not edit without approval). Re
 
 ## Active milestone
 
-**Milestone 1 — Foundation and auth** (in progress)
+**Milestone 1 — Foundation and auth**: code complete and merged to `main`; one item BLOCKED (real-database flow). Waiting for approval before Milestone 2.
 
 ## Feature ownership (Milestone 1)
 
@@ -15,20 +15,41 @@ Recorded before implementation, per section 19. Commits use `--author` for the r
 | `feature/project-foundation` | Eli Mermelstein | `PROJECT_SPEC.md`, progress/checklist/style docs, repo setup |
 | `feature/authentication` | Eli Mermelstein | Backend package, config, Mongoose models, auth endpoints, middleware, seed-admin, Vitest tests |
 | `feature/frontend-auth-session` | Moshe Silber | Frontend package, Axios instance + interceptors, persisted Zustand auth, login/register/account pages, protected routes, frontend tests |
+| `feature/milestone-1-docs` | Eli Mermelstein | Root `README.md`, updated progress and checklist files |
 
 ## Work log
 
 - Repository was empty (`main` with no commits). Initial commit adds `.gitignore`.
 - `PROJECT_SPEC.md` saved at the root; it matches the supplied `prompt.md` byte-for-byte (after trimming).
 - `CODING_STYLE_NOTES.md`: no verified JS/TS samples for either developer (see file).
+- `feature/authentication` and `feature/frontend-auth-session` were merged into `main` with `--no-ff`.
+- `feature/milestone-1-docs` adds the root `README.md` and updates this file and the checklist.
+- `review/all-code` is a throwaway review snapshot ("do not merge"). It was not merged.
+- `prompt.md` at the repo root is untracked and was left as is.
 
 ## Tests and builds
 
-Not yet run (updated at the end of the milestone).
+Run on `main` after both merges:
+
+| Command | Result |
+| --- | --- |
+| `cd backend; npm install; npm test` | 4 test files, 40 tests passed |
+| `cd frontend; npm install` | 0 vulnerabilities reported |
+| `cd frontend; npm run typecheck` | passed |
+| `cd frontend; npm test` | 1 test file, 11 tests passed |
+| `cd frontend; npm run build` | passed (95 modules, `dist/` produced) |
+| `cd frontend; npm run lint` | passed (no findings reported) |
+
+Not run: either server against a real MongoDB, and the frontend in a browser. Both backend and frontend tests use mocked data or pure functions; no component or HTTP-level tests exist yet.
 
 ## Blockers / setup needed
 
-- A MongoDB Atlas connection string in `backend/.env` is required for real-database verification.
+- **BLOCKED:** the real frontend -> Express -> MongoDB flow (register, login, `/auth/me`, `/users/me`, admin check, expired-token logout in the browser) was NOT verified. It needs a MongoDB Atlas connection string, `JWT_SECRET` and the seed-admin credentials in `backend/.env`. Nothing in this environment provided them.
+- Seed-admin was not run against a real database (its service logic is covered by unit tests).
+- Login/register rate limiting and CORS are implemented but were not exercised against a running server.
+- Not used yet (later milestones): Cloudinary, Geoapify, Resend, Atlas Search.
+
+To finish the blocked item: copy `backend/.env.example` to `backend/.env`, fill in the values, run `cd backend; npm run seed:admin`, start `npm run dev` in both `backend/` and `frontend/`, then try registering, logging in, opening `/account`, and calling `GET /api/admin/check` as the admin.
 
 ## Next milestone
 
