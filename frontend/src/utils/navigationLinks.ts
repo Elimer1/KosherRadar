@@ -12,6 +12,16 @@ export const buildTelUrl = (phone: string | null) => {
   return cleaned === '' ? null : `tel:${cleaned}`;
 };
 
+// NEW (Milestone 4): Google Maps link for the detail page. Exact coordinates are preferred; without them the
+// address text is searched. The text is encoded, so it cannot add parameters to the link.
+// חדש (אבן דרך 4): קישור Google Maps. עדיפות לקואורדינטות מדויקות; בלי אותן מחפשים לפי הכתובת (מקודדת).
+export const buildGoogleMapsUrl = (latitude: number | null, longitude: number | null, address: string) => {
+  const query =
+    typeof latitude === 'number' && typeof longitude === 'number' ? `${latitude},${longitude}` : address.trim();
+
+  return query === '' ? null : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+};
+
 // Waze opens the route to exact coordinates. A restaurant without coordinates has no Waze link.
 export const buildWazeUrl = (latitude: number | null, longitude: number | null) => {
   if (typeof latitude !== 'number' || typeof longitude !== 'number') {

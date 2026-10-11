@@ -7,6 +7,7 @@
 
 import { HECHSHER_OTHER } from '../config/constants.js';
 import { dateToDateOnly, todayInIsrael } from '../utils/israelDate.js';
+import { toSafeHttpUrl } from '../utils/safeUrl.js';
 import { getTeudaVisibility, isTeudaPublic } from './teudaRulesService.js';
 
 // Lower number = more important in the preview (spec 5.6):
@@ -152,7 +153,9 @@ export const toPublicTeuda = (teuda, today = todayInIsrael()) => {
     kashrutLevel: teuda.kashrutLevel,
     expirationDate: dateToDateOnly(teuda.expirationDate),
     visibility: getTeudaVisibility(teuda.expirationDate, today),
-    photoUrl: teuda.photoUrl,
+    // NEW (Milestone 4): the link is re-checked before it is sent (only http/https), see utils/safeUrl.js
+    // חדש (אבן דרך 4): הקישור נבדק שוב לפני השליחה (רק http/https)
+    photoUrl: toSafeHttpUrl(teuda.photoUrl),
     mashgiachName: teuda.mashgiachName,
     mashgiachPhone: teuda.mashgiachPhone,
   };
