@@ -6,6 +6,9 @@ import { connectDb } from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import optionsRoutes from './routes/optionsRoutes.js';
+import restaurantRoutes from './routes/restaurantRoutes.js';
+import reportRoutes from './routes/reportRoutes.js';
 import { errorMiddleware, notFoundMiddleware } from './middleware/errorMiddleware.js';
 
 const startServer = async () => {
@@ -28,6 +31,9 @@ const startServer = async () => {
     app.use('/api/auth', authRoutes);
     app.use('/api/users', userRoutes);
     app.use('/api/admin', adminRoutes);
+    app.use('/api/options', optionsRoutes);
+    app.use('/api/restaurants', restaurantRoutes);
+    app.use('/api/reports', reportRoutes);
 
     app.use(notFoundMiddleware);
     app.use(errorMiddleware);

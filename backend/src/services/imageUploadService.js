@@ -1,0 +1,62 @@
+import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '../config/constants.js';
+import { getCloudinary, isCloudinaryConfigured } from '../config/cloudinary.js';
+import { appError } from '../utils/appError.js';
+import { detectImageType } from '../utils/imageType.js';
+
+const TEUDA_FOLDER = 'kosherradar/teudot';
+
+// Checks the real file contents, not just the file name or the type the browser reported.
+export const checkImageFile = (file) => {
+  if (!file || !file.buffer) {
+    throw appError('A certificate photo is required', 400);
+  }
+
+  if (file.size > MAX_IMAGE_BYTES) {
+    throw appError('The photo is larger than 5 MB', 413);
+  }
+
+  const realType = detectImageType(file.buffer);
+
+  if (!realType || !ALLOWED_IMAGE_TYPES.includes(realType)) {
+    throw appError('The photo must be a JPG, PNG or WebP image', 400);
+  }
+};
+
+export const uploadTeudaImageService = async (file) => {
+  checkImageFile(file);
+
+  if (!isCloudinaryConfigured()) {
+    throw appError('Image upload is not available right now. Please try again later.', 503);
+  }
+
+  const cloudinary = getCloudinary();
+
+  try {
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: TEUDA_FOLDER, resource_type: 'image', allowed_formats: ['jpg', 'png', 'webp'] },
+        (error, uploadResult) => (error ? reject(error) : resolve(uploadResult))
+      );
+      stream.end(file.buffer);
+    });
+
+    return { photoUrl: result.secure_url, cloudinaryPublicId: result.public_id };
+  } catch (error) {
+    console.error('Cloudinary upload failed:', error.message || error);
+    throw appError('Could not upload the photo. Please try again later.', 502);
+  }
+};
+
+// Used to clean up an uploaded photo when saving to the database fails afterwards.
+// A failure here is only logged: the original error is the one the user needs to see.
+export const deleteImageService = async (cloudinaryPublicId) => {
+  if (!cloudinaryPublicId || !isCloudinaryConfigured()) {
+    return;
+  }
+
+  try {
+    await getCloudinary().uploader.destroy(cloudinaryPublicId, { resource_type: 'image' });
+  } catch (error) {
+    console.error('Could not delete orphaned Cloudinary image:', cloudinaryPublicId, error.message);
+  }
+};

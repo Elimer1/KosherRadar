@@ -2,9 +2,21 @@ import mongoose from 'mongoose';
 import {
   CATEGORIES,
   FOOD_TYPES,
+  HECHSHER_VALUES,
   KASHRUT_LEVELS,
   SUBMISSION_STATUSES,
 } from '../config/constants.js';
+import { normalizePhone, normalizeText } from '../utils/normalizeText.js';
+
+// GeoJSON point. It is a sub-document so it simply does not exist when a restaurant has no
+// coordinates; an empty location would break the 2dsphere index.
+const pointSchema = new mongoose.Schema(
+  {
+    type: { type: String, enum: ['Point'], required: true },
+    coordinates: { type: [Number], required: true },
+  },
+  { _id: false }
+);
 
 const restaurantSchema = new mongoose.Schema(
   {
@@ -17,12 +29,11 @@ const restaurantSchema = new mongoose.Schema(
     addressEn: { type: String, trim: true, maxlength: 250 },
     city: { type: String, trim: true, maxlength: 100 },
 
-    latitude: { type: Number, required: true, min: -90, max: 90 },
-    longitude: { type: Number, required: true, min: -180, max: 180 },
-    location: {
-      type: { type: String, enum: ['Point'], default: 'Point' },
-      coordinates: { type: [Number] },
-    },
+    // Optional: coordinates are never invented. A restaurant without them cannot be placed on the map
+    // until an admin adds them (or the address is geocoded in a later milestone).
+    latitude: { type: Number, min: -90, max: 90 },
+    longitude: { type: Number, min: -180, max: 180 },
+    location: { type: pointSchema },
 
     geoapifyPlaceId: { type: String, trim: true },
     phone: { type: String, trim: true, maxlength: 30 },
@@ -32,7 +43,8 @@ const restaurantSchema = new mongoose.Schema(
     categories: { type: [{ type: String, enum: CATEGORIES }], default: [] },
     foodKeywords: { type: [String], default: [] },
 
-    claimedHechsher: { type: String, trim: true, maxlength: 100 },
+    claimedHechsher: { type: String, enum: HECHSHER_VALUES },
+    claimedHechsherOther: { type: String, trim: true, maxlength: 100 },
     claimedKashrutLevel: { type: String, enum: KASHRUT_LEVELS },
 
     status: { type: String, enum: SUBMISSION_STATUSES, default: 'PENDING' },
@@ -50,20 +62,34 @@ const restaurantSchema = new mongoose.Schema(
 
     kosharotUrl: { type: String, trim: true, maxlength: 300 },
 
+    // Filled by the duplicate check. Only admins see it; it never blocks a submission.
     possibleDuplicates: [
       {
+        _id: false,
         restaurant: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant' },
         reasons: [String],
       },
     ],
+
+    // Lookup copies used by the duplicate check. Always derived from name, address and phone.
+    nameNormalized: { type: String, index: true },
+    addressNormalized: { type: String },
+    phoneNormalized: { type: String },
   },
   { timestamps: true }
 );
 
-restaurantSchema.pre('validate', function syncLocation() {
-  if (this.latitude !== undefined && this.longitude !== undefined) {
-    this.location = { type: 'Point', coordinates: [this.longitude, this.latitude] };
-  }
+restaurantSchema.pre('validate', function syncDerivedFields() {
+  const hasCoordinates = typeof this.latitude === 'number' && typeof this.longitude === 'number';
+
+  // GeoJSON order is [longitude, latitude].
+  this.location = hasCoordinates
+    ? { type: 'Point', coordinates: [this.longitude, this.latitude] }
+    : undefined;
+
+  this.nameNormalized = normalizeText(this.name);
+  this.addressNormalized = normalizeText(this.address);
+  this.phoneNormalized = normalizePhone(this.phone) || undefined;
 });
 
 restaurantSchema.index({ location: '2dsphere' });
@@ -71,6 +97,8 @@ restaurantSchema.index({ status: 1, name: 1 });
 restaurantSchema.index({ status: 1, city: 1 });
 restaurantSchema.index({ status: 1, foodType: 1 });
 restaurantSchema.index({ geoapifyPlaceId: 1 }, { sparse: true });
+restaurantSchema.index({ phoneNormalized: 1 }, { sparse: true });
+restaurantSchema.index({ addressNormalized: 1 });
 restaurantSchema.index({ submittedBy: 1 });
 
 export const Restaurant = mongoose.model('Restaurant', restaurantSchema);

@@ -44,6 +44,34 @@ describe('Restaurant model', () => {
     expect(restaurant.location.coordinates).toEqual([35.22, 31.78]);
   });
 
+  it('has no location at all when coordinates are not given (nothing is invented)', async () => {
+    const { latitude, longitude, ...withoutCoordinates } = validData();
+    const restaurant = new Restaurant(withoutCoordinates);
+    await restaurant.validate();
+
+    expect(restaurant.location).toBeUndefined();
+    expect(restaurant.toObject().location).toBeUndefined();
+  });
+
+  it('stores normalized copies of name, address and phone for the duplicate check', async () => {
+    const restaurant = new Restaurant({
+      ...validData(),
+      name: "  Joe's CAFE ",
+      phone: '+972-50-123-4567',
+    });
+    await restaurant.validate();
+
+    expect(restaurant.nameNormalized).toBe('joes cafe');
+    expect(restaurant.addressNormalized).toBe('1 main st jerusalem');
+    expect(restaurant.phoneNormalized).toBe('0501234567');
+  });
+
+  it('only accepts known hechsher values as a claim', async () => {
+    const restaurant = new Restaurant({ ...validData(), claimedHechsher: 'MADE_UP' });
+
+    await expect(restaurant.validate()).rejects.toThrow(/claimedHechsher/);
+  });
+
   it('requires a rejection reason when REJECTED', async () => {
     const restaurant = new Restaurant({ ...validData(), status: 'REJECTED' });
 

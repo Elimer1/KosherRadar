@@ -1,5 +1,10 @@
 import mongoose from 'mongoose';
-import { KASHRUT_LEVELS, REPORT_STATUSES, REPORT_TYPES } from '../config/constants.js';
+import {
+  HECHSHER_VALUES,
+  KASHRUT_LEVELS,
+  REPORT_STATUSES,
+  REPORT_TYPES,
+} from '../config/constants.js';
 
 const reportSchema = new mongoose.Schema(
   {
@@ -9,7 +14,8 @@ const reportSchema = new mongoose.Schema(
 
     type: { type: String, enum: REPORT_TYPES, default: 'GENERAL' },
     description: { type: String, required: true, trim: true, maxlength: 2000 },
-    proposedHechsher: { type: String, trim: true, maxlength: 100 },
+    proposedHechsher: { type: String, enum: HECHSHER_VALUES },
+    proposedHechsherOther: { type: String, trim: true, maxlength: 100 },
     proposedKashrutLevel: { type: String, enum: KASHRUT_LEVELS },
 
     status: { type: String, enum: REPORT_STATUSES, default: 'PENDING' },
@@ -24,6 +30,7 @@ const reportSchema = new mongoose.Schema(
       },
     },
 
+    // Stays false when an admin only marks the report RESOLVED. Only an applied correction earns points.
     correctionApplied: { type: Boolean, default: false },
   },
   { timestamps: true }

@@ -12,8 +12,18 @@ function HomePage() {
         Verified certificates, unverified claims and expired certificates are always shown separately.
       </p>
       <p className="mx-auto mt-4 max-w-xl text-sm text-gray-500">
-        Restaurant search is not available yet. This version only includes accounts and login.
+        Restaurant search is not available yet. You can already log in and send restaurants and certificates for
+        admin review.
       </p>
+
+      <div className="mt-6">
+        <Link
+          to="/submit-restaurant"
+          className="inline-block rounded bg-green-600 px-5 py-2.5 font-medium text-white hover:bg-green-700"
+        >
+          Add a restaurant
+        </Link>
+      </div>
 
       {!user && (
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
