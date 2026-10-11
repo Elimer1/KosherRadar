@@ -84,7 +84,14 @@ function LoginPage() {
         </button>
       </form>
 
+      {/* NEW (Milestone 3): link to the password reset / חדש (אבן דרך 3): קישור לאיפוס סיסמה */}
       <p className="mt-4 text-sm text-gray-600">
+        <Link to="/forgot-password" className="font-medium text-green-700 hover:underline">
+          Forgot your password?
+        </Link>
+      </p>
+
+      <p className="mt-2 text-sm text-gray-600">
         No account yet?{' '}
         <Link to="/register" className="font-medium text-green-700 hover:underline">
           Sign up
