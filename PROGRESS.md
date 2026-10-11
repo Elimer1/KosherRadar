@@ -6,7 +6,7 @@ Authoritative requirements: `PROJECT_SPEC.md` (do not edit without approval). Re
 
 **Milestone 4 — Search and restaurant pages** (DONE and merged to `main`; waiting for your approval before Milestone 5). Scope from `PROJECT_SPEC.md` section 16: Atlas Search with a working Mongoose fallback, `ATLAS_SEARCH_SETUP.md` with the exact index JSON, bilingual food search, autocomplete, filters, pagination, restaurant details, status presentation, related tests.
 
-Milestones 1 to 4 are merged to `main`. Their real-database, Atlas Search, Cloudinary, Resend and real-backend browser checks are still BLOCKED (see "Blockers"). Milestone 4 has **not been pushed** to `origin` yet.
+Milestones 1 to 4 are merged to `main`. Their real-database, Atlas Search, Cloudinary, Resend and real-backend browser checks are still BLOCKED (see "Blockers"). Milestone 4 (`main` and its three feature branches) has been pushed to `origin`.
 
 Before this milestone started, the leftover working-tree change on `main` (deleted `project.zip`, a snapshot archive that had been committed by mistake) was committed, and `main` plus the Milestone 3 feature branches were pushed to `origin`. The six duplicate-detection files had already been committed in an earlier "share snapshot" commit, so they are no longer uncommitted.
 
