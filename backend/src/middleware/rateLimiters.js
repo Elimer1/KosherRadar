@@ -33,3 +33,13 @@ export const optionalUploadRateLimiter = rateLimit({
   skip: (req) => !req.file,
   message: { message: 'Too many photo uploads. Please try again later.' },
 });
+
+// NEW (Milestone 3): a stricter limit for "forgot password", so nobody can use it to flood an inbox with emails.
+// חדש (אבן דרך 3): מגבלה קשוחה יותר ל"שכחתי סיסמה", כדי שאי אפשר יהיה להציף תיבת מייל.
+export const passwordResetRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { message: 'Too many password reset requests. Please try again later.' },
+});

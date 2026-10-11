@@ -16,3 +16,14 @@ export const loginSchema = z.object({
   email: emailField,
   password: z.string().min(1, 'Password is required').max(72),
 });
+
+// NEW (Milestone 3): password reset bodies. The token is the 64-character hex string from the emailed link.
+// חדש (אבן דרך 3): גופי הבקשות לאיפוס סיסמה. הטוקן הוא מחרוזת hex של 64 תווים מהקישור שנשלח במייל.
+export const forgotPasswordSchema = z.object({
+  email: emailField,
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().trim().regex(/^[a-f0-9]{64}$/i, 'This reset link is not valid'),
+  password: newPasswordField,
+});
