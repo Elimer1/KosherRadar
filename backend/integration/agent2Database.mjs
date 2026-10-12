@@ -40,11 +40,12 @@ async function loadApp() {
     applyAgent2ProcessEnv();
     const mongoose = (await import(pathToFileURL(require.resolve('mongoose')).href)).default;
     const bcrypt = (await import(pathToFileURL(require.resolve('bcrypt')).href)).default;
-    const [restaurant, teuda, user, submission] = await Promise.all([
+    const [restaurant, teuda, user, submission, teudaSubmission] = await Promise.all([
       import('../src/models/Restaurant.js'),
       import('../src/models/Teuda.js'),
       import('../src/models/User.js'),
       import('../src/services/restaurantSubmissionService.js'),
+      import('../src/services/teudaSubmissionService.js'),
     ]);
 
     loaded = {
@@ -54,6 +55,7 @@ async function loadApp() {
       Teuda: teuda.Teuda,
       User: user.User,
       submitRestaurantService: submission.submitRestaurantService,
+      submitTeudaService: teudaSubmission.submitTeudaService,
     };
   }
 
@@ -140,6 +142,11 @@ export async function deleteAgent2Records() {
 export async function ensureRestaurantIndexes() {
   const { Restaurant } = await loadApp();
   await Restaurant.createIndexes();
+}
+
+export async function ensureTeudaIndexes() {
+  const { Teuda } = await loadApp();
+  await Teuda.createIndexes();
 }
 
 export async function agent2Models() {
