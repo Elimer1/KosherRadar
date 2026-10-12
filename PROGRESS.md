@@ -4,9 +4,18 @@ Authoritative requirements: `PROJECT_SPEC.md` (do not edit without approval). Re
 
 ## Active milestone
 
-**Milestone 6 — Full verification and fixes** (DONE and merged to `main`; waiting for your approval before Milestone 7). Scope from `PROJECT_SPEC.md` section 16: end-to-end checks, Vitest and build checks, a security and data-leak review, fixes, README completion, and a reconciliation of the requirements. Kashrut status and filters keep using `kashrutStatusService.js` and `restaurantSearchService.js`.
+**Milestone 7 — Hebrew academic project book** (DONE and merged to `main`). Scope from `PROJECT_SPEC.md` section 16: `PROJECT_BOOK.md` in Hebrew from the actual implementation. It does not claim Atlas Search, Cloudinary, Resend or Geoapify were verified. The local MongoDB checks in Milestone 6 are not Atlas. No application behavior was changed. Kashrut status and filters stay in `kashrutStatusService.js` and `restaurantSearchService.js`.
 
-Milestones 1 to 6 are merged to `main`. This milestone has not been pushed. Checks that need only MongoDB were run against a MongoDB already listening on `127.0.0.1:27017` (database `kosherradar`). That is not MongoDB Atlas, and it is not Atlas Search. Cloudinary, Resend, Geoapify and Atlas Search are still without credentials (see "Blockers").
+Milestones 1 to 7 are merged to `main`, including the later product update on public forms and the account page (`e483c2e`). This milestone has not been pushed. Cloudinary, Resend, Geoapify and Atlas Search are still without credentials (see "Blockers").
+
+## Feature ownership (Milestone 7)
+
+Recorded before implementation, per section 19. `--author` follows the responsible teammate. The book is AI-generated and must be reviewed by its owner. It is documentation of the whole system, not new application code. Merge order: `feature/project-book`, then this docs branch.
+
+| Feature branch | Responsible teammate | Scope |
+| --- | --- | --- |
+| `feature/project-book` | Eli Mermelstein | `PROJECT_BOOK.md` in Hebrew: goals, roles, architecture, schemas, data flow, REST endpoints, auth and security, kashrut rules, external services, tests, setup, limitations, and screenshot placeholders where no images exist |
+| `feature/milestone-7-docs` | Eli Mermelstein | Progress and checklist files, and a README pointer to the book |
 
 ## Feature ownership (Milestone 6)
 
@@ -268,6 +277,16 @@ Run on `main` after the Milestone 6 feature merges (this docs commit only change
 
 The same `main` was then exercised against the local MongoDB described in the Milestone 6 work log, and the home page, map popup and restaurant page were used in the browser. New tests: `returnPath` (a login return path must stay inside the site). The public-details leak test now also rejects a `"rank"` field. The submission-route test expects the rate limiter on the submission-context route.
 
+Run again on 12 October 2026 while writing the project book (documentation only; application code was not changed):
+
+| Command | Result |
+| --- | --- |
+| `cd backend; npm test` | 37 test files, 466 tests passed |
+| `cd frontend; npm test` | 14 test files, 89 tests passed |
+| `cd frontend; npm run typecheck` | passed |
+| `cd frontend; npm run lint` | passed (no findings) |
+| `cd frontend; npm run build` | passed (the production JavaScript bundle is about 716 kB; Vite warns above 500 kB) |
+
 New Milestone 5 backend tests: `mapSearchService`, bounds cases in `restaurantSearchRepository` and `geo`, map cases in `searchRoutesHttp`, public suggest/geocode cases in `placesService`. New frontend tests: `mapView`, `language`, `locales` (the two languages have the same keys and Hebrew strings are not empty), share cases in `navigationLinks`.
 
 New Milestone 4 backend tests: `searchFields`, `geo`, `searchSchemas`, `kashrutFilters`, `restaurantSearchService`, `restaurantSearchRepository` (the built query, repository mocked), `searchRoutesHttp` (real HTTP, service mocked), `restaurantDetailsService`, `restaurantDetailsRoutesHttp`, `safeUrl`. New frontend tests: `searchApi`, `kashrutText`, `navigationLinks`, `safeUrl`.
@@ -314,10 +333,18 @@ Requested in one session and applied on the working tree. This is not a new mile
 
 Checks after this update: `cd backend; npm test` (37 files, 466 tests passed), `cd frontend; npm test` (14 files, 89 tests passed; the two report-payload tests were removed with that payload), `cd frontend; npm run typecheck` passed, `cd frontend; npm run lint` passed.
 
+### Milestone 7
+
+- Ownership was recorded first (`feature/milestone-7-docs`, not merged until this docs update). Then `feature/project-book` (Eli) was written and merged into `main` with `--no-ff`. `feature/milestone-7-docs` is merged last. Branches were not deleted. The book is AI-generated and must be reviewed by its owner. The feature commit uses `--author` for Eli Mermelstein. The merge commits carry the git-configured identity.
+- **`PROJECT_BOOK.md`** is in Hebrew and follows the code on `main`, including the form and account changes after Milestone 6. It covers goals, roles, architecture, the five Mongoose models, data flow, the central routes, auth and security, kashrut rules and points, search and the map, external services, the test commands from this session, setup, and limitations.
+- **Screenshots.** There are no image files in the repository. Section 14 of the book is a table of placeholders. It does not pretend those screens were captured for the book.
+- **Not claimed.** Atlas Search, a real Cloudinary upload, Resend delivery, and a real Geoapify lookup stay blocked. The Milestone 6 local MongoDB run is described as local MongoDB, not Atlas. The user restaurant form does not ask for a kashrut level, so a photo on that form is not stored; the hechsher is an unverified claim. The separate add-certificate page still asks for a level.
+- No application source was changed. The suites above were run again and still pass.
+
 ## Next milestone
 
-Milestone 7 — Hebrew academic project book (needs your explicit approval, in a fresh conversation). Spec section 16: write `PROJECT_BOOK.md` in Hebrew from the actual implementation. Do not claim Atlas Search, Cloudinary, Resend or Geoapify were verified. The local MongoDB checks in Milestone 6 are not Atlas.
+Section 16 has no Milestone 8. Do not start new product work. The book is waiting for the team's review. Atlas Search, Cloudinary, Resend and Geoapify are still blocked until credentials exist (see "Blockers").
 
 ## Continuation prompt (copy into a new Cursor Agent conversation)
 
-> Read the complete repository-root `PROJECT_SPEC.md` (authoritative master specification), `PROGRESS.md`, `REQUIREMENTS_CHECKLIST.md`, and the recent Git commits. Do not modify `PROJECT_SPEC.md` without my approval. Implement **only Milestone 7** from section 16, preserving all existing functionality. Work autonomously within that milestone; test, fix, update both tracking files, make real incremental, appropriately attributed feature-branch commits and merge verified work as specified in section 19, then STOP and ask for approval before any further work. Do not claim untested integrations work (Atlas Search, Cloudinary, Resend and Geoapify were not verified; a local MongoDB was, see "Blockers"). Reuse `kashrutStatusService.js` and `restaurantSearchService.js` for every public status and filter. Follow the "Comment convention for new code" section in `PROGRESS.md`. The book must be in Hebrew and must match the code that exists.
+> Read `PROJECT_SPEC.md`, `PROGRESS.md`, `REQUIREMENTS_CHECKLIST.md`, and `PROJECT_BOOK.md`. Milestones 1 to 7 are done. Do not modify `PROJECT_SPEC.md` without approval, and do not start a new feature. If asked to correct the Hebrew book, change only `PROJECT_BOOK.md` so it still matches the code, and do not claim Atlas Search, Cloudinary, Resend or Geoapify were verified. A local MongoDB was used in Milestone 6; that is not Atlas.

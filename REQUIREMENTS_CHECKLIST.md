@@ -3,7 +3,7 @@
 Statuses: `NOT STARTED`, `IN PROGRESS`, `IMPLEMENTED UNVERIFIED`, `TESTED`, `BLOCKED`. `TESTED` requires evidence (a passing test or a real run), recorded in the Evidence column.
 Source of requirements: `PROJECT_SPEC.md`.
 
-After Milestone 6, `main` runs backend 37 files / 466 tests and frontend 15 files / 91 tests, all passing; frontend lint and build succeed. The API and the browser were also used against a local MongoDB (`127.0.0.1:27017`, database `kosherradar`). That is not Atlas. Atlas Search, a real Cloudinary upload, Resend delivery and a real Geoapify lookup remain blocked. (After Milestone 5: backend 37 files / 466 tests, frontend 14 files / 89 tests. After Milestone 4: backend 34 files / 448 tests, frontend 11 files / 76 tests. After Milestone 3: backend 24 files / 324 tests, frontend 7 files / 40 tests.)
+After Milestone 7, `main` still runs backend 37 files / 466 tests and frontend 14 files / 89 tests, all passing; frontend lint, typecheck and build succeed. The drop from 15 files / 91 tests to 14 / 89 happened in the form update after Milestone 6, when the old report-payload tests were removed. The API and the browser were used in Milestone 6 against a local MongoDB (`127.0.0.1:27017`, database `kosherradar`). That is not Atlas. Atlas Search, a real Cloudinary upload, Resend delivery and a real Geoapify lookup remain blocked. (After Milestone 6, before that form update: frontend 15 files / 91 tests. After Milestone 5: backend 37 files / 466 tests, frontend 14 files / 89 tests. After Milestone 4: backend 34 files / 448 tests, frontend 11 files / 76 tests. After Milestone 3: backend 24 files / 324 tests, frontend 7 files / 40 tests.)
 
 Evidence for Milestone 1 came from `npm test` runs on `main` after merging both feature branches (backend 4 files / 40 tests, frontend 1 file / 11 tests). After the Milestone 2 merges, `main` runs backend 13 files / 150 tests and frontend 4 files / 24 tests, all passing; frontend `npm run typecheck`, `npm run build` and `npm run lint` succeed. No MongoDB, Cloudinary account or browser was available, so nothing was verified against real services.
 
@@ -144,4 +144,4 @@ Evidence for Milestone 1 came from `npm test` runs on `main` after merging both 
 
 | Requirement | Status | Notes |
 | --- | --- | --- |
-| `PROJECT_BOOK.md` in Hebrew based on actual implementation (16) | NOT STARTED | |
+| `PROJECT_BOOK.md` in Hebrew based on actual implementation (16) | TESTED | `PROJECT_BOOK.md` written from the models, routes and services on `main` (including the later form and account changes). Screenshot section is placeholders only: the repo has no image files. Suites re-run on 12 October 2026: backend 37 files / 466 tests, frontend 14 files / 89 tests, typecheck, lint and build passed. Atlas Search, Cloudinary, Resend and Geoapify are still described as not verified |
