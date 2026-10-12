@@ -10,7 +10,7 @@ This file is the only progress log for the design overhaul. Do not edit `PROGRES
 
 Agent 2 owns `feature/ux-functionality` in `C:\FS\projects\KosherRadar-ux-functionality`.
 
-Checked on 12 October 2026: that worktree was at `3bbb1e2` with a clean status and no `UX_FUNCTIONALITY_PROGRESS.md` yet. Work Package 1A was not committed. Do not merge or rebase that branch.
+Checked again on 12 October 2026, after the independent-page pass: `git worktree list` still shows `C:\FS\projects\KosherRadar-ux-functionality` at `3bbb1e2` on `feature/ux-functionality`. `UX_FUNCTIONALITY_PROGRESS.md` is not in that worktree. Work Package 1A is not committed. Do not merge, rebase, or cherry-pick that branch.
 
 Until Agent 2 commits the search-state hook and action interface, do not substantially edit:
 
@@ -171,6 +171,31 @@ Do not implement these here:
 
 `displayName.ts` is ready for Hebrew and English stored names. Wire it only when the discovery files are safe to edit, using Agent 2's components if those components own the name rendering.
 
+## Visual QA of the independent pages
+
+Dev server for this worktree: `http://127.0.0.1:5177/` (port 5176 was already taken). The API was not required for these screens. Account and admin were not opened because that needs a signed-in session, and a new account was not created against the local database.
+
+Checked in the browser:
+
+- English login at 390px: no horizontal overflow. Language control sits on the logo row and shows `עב`. The log-in button label is centered. Email and password fields are labeled.
+- Hebrew login at 390px and 375px: `dir="rtl"`. Logo is on the right, `EN` is on the left. No horizontal overflow. The show-password control stays at the inline end of the field.
+- Hebrew register at 1280px: heading `יצירת חשבון`, no horizontal overflow.
+- Hebrew forgot-password at 390px: heading and reset action are present, no horizontal overflow.
+- Hebrew missing page at 768px: heading `הדף לא נמצא`, no horizontal overflow.
+- Hebrew home at 390px and 1440px: the shell does not overflow. The search controls are still the previous interface. They were not restyled.
+
+Not checked: a signed-in account page, the admin dashboard, certificate upload with a real file, and a populated restaurant card.
+
+## How discovery should use Agent 2's interface
+
+Do not invent a parallel store while the interface is missing. When `UX_FUNCTIONALITY_PROGRESS.md` names the hook and its actions:
+
+- Read search text, filters, and the list/map choice from that hook. Do not add another `useState` for them.
+- Render applied filters with `filterChipClassName`. Removal calls the documented clear action for that filter, not a local copy of the filter object.
+- Pass the stored restaurant through `localizedRestaurantName` and `localizedAddress` in the card, suggestion, and details title. Do not translate names that were not stored.
+- Keep Leaflet `direction: ltr`. Popup text can follow the page.
+- Leave list/map side-by-side and a mobile filter drawer undocumented as implementations until the actions exist and a side-by-side layout is approved.
+
 ## Deferred until Work Package 1A is committed
 
 - Homepage composition, search field, filters, applied-filter chips, result cards, details page, and map/list layout.
@@ -194,8 +219,8 @@ Likely if Agent 2 also edits presentation in the same files:
 **Current position**
 
 - Branch `feature/design-overhaul`, worktree `C:\FS\projects\KosherRadar-design`.
-- Stage 1 and the independent pages are in progress and verified by tests, lint, typecheck, and build.
-- Discovery screens are the next stage, and they are blocked on Agent 2.
+- Stage 1 and the independent pages are committed (`c32efd7`, `61a05a1`) and checked with tests, lint, typecheck, build, and the browser notes above.
+- Discovery screens are the next stage. They stay blocked while `feature/ux-functionality` has no committed interface.
 
 **Exact next step**
 
