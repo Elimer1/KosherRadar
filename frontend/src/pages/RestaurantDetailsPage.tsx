@@ -10,7 +10,8 @@ import type { PublicTeuda, RestaurantDetails } from '../types/restaurantDetails'
 import type { HechsherOption } from '../types/submissions';
 import { describeEvidenceName, formatDateOnly } from '../utils/kashrutText';
 import { getCategoryLabel, getFoodTypeLabel, getHechsherLabel, getKashrutLevelLabel } from '../utils/labels';
-import { buildGoogleMapsUrl, buildTelUrl, buildWazeUrl } from '../utils/navigationLinks';
+import { buildGoogleMapsUrl, buildTelUrl, buildWazeUrl, restaurantPageUrl } from '../utils/navigationLinks';
+import ShareButton from '../components/ShareButton';
 import { isSafeHttpUrl } from '../utils/safeUrl';
 
 // NEW (Milestone 4): the public page of one restaurant. It shows the status in words and, below it, all the
@@ -284,6 +285,11 @@ function RestaurantDetailsPage() {
               Waze
             </a>
           )}
+          <ShareButton
+            title={restaurant.name}
+            url={restaurantPageUrl(restaurant.id, window.location.origin)}
+            className={actionClassName}
+          />
         </div>
       </section>
 

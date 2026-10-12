@@ -1,7 +1,7 @@
 // NEW (Milestone 4): API functions for the public restaurant search and autocomplete.
 // חדש (אבן דרך 4): פונקציות API לחיפוש מסעדות ציבורי ולהשלמה אוטומטית.
 import { api } from './axiosInstance';
-import type { RestaurantSuggestion, SearchFilters, SearchResult } from '../types/search';
+import type { MapBounds, MapSearchResult, RestaurantSuggestion, SearchFilters, SearchResult } from '../types/search';
 
 // Turns the filters into the query string the server validates. Empty or default choices are left out,
 // and a radius is only sent together with a location.
@@ -52,6 +52,26 @@ export const buildSearchParams = (filters: SearchFilters, page?: number) => {
   }
 
   return params;
+};
+
+// NEW (Milestone 5): the map query is the list filters plus the visible rectangle. No page number:
+// the map loads the restaurants inside the box, not the next 20 list rows.
+// חדש (אבן דרך 5): שאילתת המפה היא מסנני הרשימה ועוד המלבן הנראה. בלי מספר עמוד.
+export const buildMapParams = (filters: SearchFilters, bounds: MapBounds) => {
+  return {
+    ...buildSearchParams(filters),
+    north: String(bounds.north),
+    south: String(bounds.south),
+    east: String(bounds.east),
+    west: String(bounds.west),
+  };
+};
+
+export const searchRestaurantsInBounds = async (filters: SearchFilters, bounds: MapBounds) => {
+  const response = await api.get<MapSearchResult>('/restaurants/map', {
+    params: buildMapParams(filters, bounds),
+  });
+  return response.data;
 };
 
 export const searchRestaurants = async (filters: SearchFilters, page: number) => {
