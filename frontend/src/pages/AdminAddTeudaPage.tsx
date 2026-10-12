@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { createTeudaAsAdmin, getRestaurantDetails } from '../api/adminApi';
 import { getErrorMessage } from '../api/errors';
 import FormAlert from '../components/FormAlert';
@@ -18,6 +18,7 @@ import type { TeudaFormValues } from '../types/submissions';
 
 function AdminAddTeudaPage() {
   const { t } = useTranslation();
+  const location = useLocation();
   const { restaurantId = '' } = useParams();
   const { options, error: optionsError } = useFormOptions();
 
@@ -80,7 +81,7 @@ function AdminAddTeudaPage() {
       <div className="mx-auto max-w-lg space-y-4">
         <h1 className="text-2xl font-bold text-gray-900">{t('desk.certificateAdded')}</h1>
         <FormAlert kind="success" message={t('desk.certificateApprovedFor', { name: restaurant.name })} />
-        <Link to={`/admin/restaurants/${restaurant.id}`} className="font-medium text-green-700 underline">
+        <Link to={`/admin/restaurants/${restaurant.id}`} state={location.state} className="font-medium text-green-700 underline">
           {t('desk.backRestaurant')}
         </Link>
       </div>
@@ -89,7 +90,7 @@ function AdminAddTeudaPage() {
 
   return (
     <div className="mx-auto max-w-lg">
-      <Link to={`/admin/restaurants/${restaurant.id}`} className="text-sm font-medium text-green-700 underline">
+      <Link to={`/admin/restaurants/${restaurant.id}`} state={location.state} className="text-sm font-medium text-green-700 underline">
         {t('desk.backRestaurant')}
       </Link>
       <h1 className="mt-2 text-2xl font-bold text-gray-900">{t('desk.addCertificateAdmin')}</h1>

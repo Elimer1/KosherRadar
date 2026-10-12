@@ -78,6 +78,7 @@ function PendingRestaurantsTab({ hechsherOptions }: PendingRestaurantsTabProps) 
               </div>
               <Link
                 to={`/admin/restaurants/${restaurant.id}`}
+                state={{ adminTab: 'restaurants' }}
                 className="text-sm font-medium text-green-700 underline"
               >
                 {t('desk.viewEdit')}
@@ -111,7 +112,7 @@ function PendingRestaurantsTab({ hechsherOptions }: PendingRestaurantsTabProps) 
                   {restaurant.possibleDuplicates.map((duplicate, index) => (
                     <li key={index}>
                       {duplicate.restaurant?.id ? (
-                        <Link to={`/admin/restaurants/${duplicate.restaurant.id}`} className="underline">
+                        <Link to={`/admin/restaurants/${duplicate.restaurant.id}`} state={{ adminTab: 'restaurants' }} className="underline">
                           {duplicate.restaurant.name || t('desk.aRestaurant')}
                         </Link>
                       ) : (

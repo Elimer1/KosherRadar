@@ -9,22 +9,22 @@ This file is the handoff for `feature/ux-functionality`. Shared `PROGRESS.md` an
 - Branch: `feature/ux-functionality`
 - Worktree: `C:\FS\projects\KosherRadar-ux-functionality`
 - Baseline: `main` at `3bbb1e2da84215e62c82010de755be2b574aa6bf` (`main` had not moved; it was 12 commits ahead of `origin/main`)
-- Package: **1C — Filter actions and navigation polish**
-- Checkpoint: **1A, 1B, and 1C complete**
-- Next package: **2 — Authentication and admin navigation**
+- Package: **2 — Authentication and admin navigation**
+- Checkpoint: **1A, 1B, 1C, and 2 complete**
+- Next package: **3 — Localization and minor UX**
 
 ## NEXT AGENT ONBOARDING
 
 Resume in `C:\FS\projects\KosherRadar-ux-functionality` on `feature/ux-functionality`. Read this file before changing code. Do not edit the design, QA, UI, or UX-review worktrees. Do not merge, rebase, or push.
 
-Work Packages 1A, 1B, and 1C are implemented. Do not rewrite the search-state model. The next task is Work Package 2.
+Work Packages 1A through 2 are implemented. Do not rewrite the search-state model. The next task is Work Package 3.
 
-### Exact next task (Work Package 2)
+### Exact next task (Work Package 3)
 
-1. When login was opened for a page inside this site, say that an account is required and name the return path's purpose when it is a known contribution route. Pass that same path to registration with router state. After sign-up, open that path instead of `/account`.
-2. Reuse `readInternalPath` through `safeReturnPath`. Do not add a second validator.
-3. Remember the open admin tab in the address (`?tab=`), so leaving a restaurant and coming back can open Pending reports again. Allowed values: `restaurants`, `teudot`, `reports`, `expiring`, `manage`. Unknown values fall back to restaurants.
-4. Do not change who can open admin, and do not change report submission fields.
+1. When the interface is Hebrew and `nameHe` is stored, use it as the heading on cards, suggestions, the map popup, and the restaurant page. Show the other stored name second. Do the same for English and `nameEn`. Do not invent a translation.
+2. Under the kashrut badge, list each unverified claim with the existing `details.claimSays` and `details.claimNote` sentences. Keep certificates in their own list. Do not change status words.
+3. Restore the previous document title when a page that set one unmounts, so Back to search does not keep the restaurant name in the tab.
+4. Hebrew added in earlier packages still needs native-speaker review. Do not change kashrut status labels.
 
 ### Do not repeat
 
@@ -289,10 +289,39 @@ Clear actions stay on the existing filter panel and the result line. There is no
 
 New tests: scroll memory strips coordinates, and a non-search path or a bad restaurant id is not stored.
 
+## Work Package 2
+
+Login and registration reuse `safeReturnPath` (`readInternalPath`). No second validator.
+
+- `ProtectedRoute` and `AdminRoute` pass `pathname` plus `search` as `from`.
+- When that path is a known page, login says why an account is needed: add a restaurant, add a certificate, report a problem, open the account, or open the admin area. Other internal paths use a general sentence. A direct visit to login says nothing extra.
+- Sign up receives the same `from` state. After a successful registration it opens that path. With no return path it still opens `/account`. The register page shows the same sentence, and its log-in link keeps the path.
+- The Hebrew sentences need native-speaker review.
+- Admin tabs are `?tab=` with `restaurants`, `teudot`, `reports`, `expiring`, or `manage`. The default restaurants tab omits the parameter. Any other value is replaced with `/admin`. Choosing a tab pushes a history entry. Links from a tab to a restaurant carry `adminTab` in router state, and Back to dashboard uses that tab. Browser Back still returns to the dashboard URL that held the tab.
+- Report fields, roles, and who may open admin were not changed.
+
+### Browser (12 October 2026, `http://localhost:5181`)
+
+| Action | Observed |
+| --- | --- |
+| Open Add a restaurant while logged out | Login showed "An account is required to add a restaurant." |
+| Sign up from that login page | Register showed the same sentence. |
+| Open `/login` directly | No extra sentence. |
+| Open `/admin?tab=reports` while logged out | Login showed "An account is required to open the admin area." |
+
+The admin dashboard itself was not opened. This browser has no admin session, and creating one would write to the shared database. Tab parsing is covered by `adminTab.test.ts`.
+
+### Tests after 2
+
+| Command | Exit | Result |
+| --- | --- | --- |
+| `npm test` | 0 | 20 files, 122 tests passed |
+| `npm run lint` | 0 | oxlint, no warnings after removing the unused tab type |
+| `npm run typecheck` | 0 | `tsc -b` |
+
 ## Later packages
 
-1. **2 — Authentication and admin navigation.** Reuse `readInternalPath`. Do not add a second validator. Login explains a return path, registration keeps that path, and the admin tab is in the address.
-2. **3 — Localization and minor UX.** Restaurant display names, existing claim copy, document titles.
+1. **3 — Localization and minor UX.** Restaurant display names, existing claim copy, document titles.
 
 ## Commits
 

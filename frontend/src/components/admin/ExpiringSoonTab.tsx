@@ -51,7 +51,7 @@ function ExpiringSoonTab({ hechsherOptions }: ExpiringSoonTabProps) {
             </div>
             <TeudaFacts teuda={teuda} hechsherOptions={hechsherOptions} />
             {teuda.restaurant && (
-              <Link to={`/admin/restaurants/${teuda.restaurant.id}`} className="text-sm font-medium text-green-700 underline">
+              <Link to={`/admin/restaurants/${teuda.restaurant.id}`} state={{ adminTab: 'expiring' }} className="text-sm font-medium text-green-700 underline">
                 {t('desk.openRestaurant')}
               </Link>
             )}

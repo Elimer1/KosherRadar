@@ -1,7 +1,8 @@
 // NEW (Milestone 3): the admin moderation dashboard with its five tabs (spec section 6).
 // חדש (אבן דרך 3): לוח הניהול עם חמש הלשוניות שלו (סעיף 6 במסמך האפיון).
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import ExpiringSoonTab from '../components/admin/ExpiringSoonTab';
 import ManageRestaurantsTab from '../components/admin/ManageRestaurantsTab';
 import PendingReportsTab from '../components/admin/PendingReportsTab';
@@ -9,6 +10,7 @@ import PendingRestaurantsTab from '../components/admin/PendingRestaurantsTab';
 import PendingTeudotTab from '../components/admin/PendingTeudotTab';
 import FormAlert from '../components/FormAlert';
 import { useFormOptions } from '../hooks/useFormOptions';
+import { parseAdminTab, type AdminTabId } from '../utils/adminTab';
 
 const TABS = [
   { id: 'restaurants', labelKey: 'admin.tabRestaurants' },
@@ -18,11 +20,21 @@ const TABS = [
   { id: 'manage', labelKey: 'admin.tabManage' },
 ] as const;
 
-type TabId = (typeof TABS)[number]['id'];
-
 function AdminDashboardPage() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<TabId>('restaurants');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawTab = searchParams.get('tab');
+  const activeTab = parseAdminTab(rawTab);
+
+  useEffect(() => {
+    if (rawTab !== null && rawTab !== activeTab) {
+      setSearchParams({}, { replace: true });
+    }
+  }, [activeTab, rawTab, setSearchParams]);
+
+  const selectTab = (tab: AdminTabId) => {
+    setSearchParams(tab === 'restaurants' ? {} : { tab });
+  };
   // The hechsher names for the screens come from the same list the forms use.
   const { options, error } = useFormOptions();
 
@@ -47,7 +59,7 @@ function AdminDashboardPage() {
             role="tab"
             aria-selected={activeTab === tab.id}
             aria-controls={`panel-${tab.id}`}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => selectTab(tab.id)}
             className={
               activeTab === tab.id
                 ? 'rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white'

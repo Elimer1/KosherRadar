@@ -92,7 +92,7 @@ function PendingReportsTab({ hechsherOptions }: PendingReportsTabProps) {
                 </span>
               </h3>
               {report.restaurant && (
-                <Link to={`/admin/restaurants/${report.restaurant.id}`} className="text-sm font-medium text-green-700 underline">
+                <Link to={`/admin/restaurants/${report.restaurant.id}`} state={{ adminTab: 'reports' }} className="text-sm font-medium text-green-700 underline">
                   {t('desk.viewRestaurant')}
                 </Link>
               )}

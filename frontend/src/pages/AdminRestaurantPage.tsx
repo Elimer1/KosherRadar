@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   approveRestaurant,
   deleteRestaurant,
@@ -26,8 +26,11 @@ import type { AdminRestaurantDetails, RestaurantExtrasValues } from '../types/ad
 import type { RestaurantFormValues } from '../types/submissions';
 import { restaurantToExtrasValues, restaurantToFormValues } from '../utils/adminForms';
 import { describeEmailStatus, describePreviewItem, getDuplicateReasonLabel, getStatusLabel } from '../utils/adminLabels';
+import { adminTabFromState, adminTabPath } from '../utils/adminTab';
 
 function AdminRestaurantPage() {
+  const location = useLocation();
+  const dashboardPath = adminTabPath(adminTabFromState(location.state));
   const { t } = useTranslation();
   const { restaurantId = '' } = useParams();
   const navigate = useNavigate();
@@ -170,7 +173,7 @@ function AdminRestaurantPage() {
 
     try {
       await deleteRestaurant(restaurantId);
-      navigate('/admin');
+      navigate(dashboardPath);
     } catch (err) {
       setDecisionNotices([{ kind: 'error', message: getErrorMessage(err, t('desk.deleteFailed')) }]);
       setBusy(false);
@@ -196,7 +199,7 @@ function AdminRestaurantPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <div>
-        <Link to="/admin" className="text-sm font-medium text-green-700 underline">
+        <Link to={dashboardPath} className="text-sm font-medium text-green-700 underline">
           {t('desk.backDashboard')}
         </Link>
         <div className="mt-2 flex flex-wrap items-center gap-3">
@@ -315,6 +318,7 @@ function AdminRestaurantPage() {
           {restaurantApproved && (
             <Link
               to={`/admin/restaurants/${restaurant.id}/add-teuda`}
+              state={location.state}
               className="text-sm font-medium text-green-700 underline"
             >
               {t('forms.addCertificate')}
