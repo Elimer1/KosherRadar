@@ -182,7 +182,7 @@ Priority: Critical
 - **Planned solution:** Let an admin save an edit of a restaurant that has no food type or category, without forcing those fields, while admin-created restaurants can keep their own required rules. Show the report photo on the pending report card. Keep private notes off the public page.
 - **Files changed:** `frontend/src/pages/AdminRestaurantPage.tsx`, `frontend/src/components/RestaurantFields.tsx`, `backend/src/schemas/adminSchemas.js`.
 - **Tests added or modified:** `backend/tests/adminSchemas.test.js`. Edit accepts a blank food type and empty categories. Create still rejects that.
-- **Verification:** `cd backend; npm test` exit 0, 38 files, 485 tests passed. `cd frontend; npm run typecheck` exit 0. The admin screen was not opened in a browser.
+- **Verification:** `cd backend; npm test` exit 0, 38 files, 485 tests passed. `cd frontend; npm test` exit 0, 14 files, 90 tests passed. `cd frontend; npm run typecheck` exit 0. `cd frontend; npm run lint` exit 0. The admin screen was not opened in a browser.
 - **Blockers:** Report photos stay a link rather than an inline preview. That is cosmetic and was left for later. Before/after history stays M2-004.
 
 ### M2-004 — Audit history

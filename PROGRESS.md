@@ -417,36 +417,102 @@ Verification for M1-001, M1-002, M1-003, M6-003, and M8-002:
 | `cd frontend; npm run lint` | exit 0 |
 | `cd frontend; npm run build` | exit 0 (bundle about 722 kB; Vite warns above 500 kB) |
 
+Close-out verification on `feature/audit-must-fix`, after every MUST FIX NOW change was committed:
+
+| Command | Result |
+| --- | --- |
+| `cd backend; npm test` | exit 0, 38 files, 485 tests passed |
+| `cd frontend; npm test` | exit 0, 14 files, 90 tests passed |
+| `cd frontend; npm run typecheck` | exit 0 |
+| `cd frontend; npm run lint` | exit 0 |
+
+The admin restaurant screen was not opened in a browser. No live Geoapify, Cloudinary, Resend, or Atlas call was made.
+
 ## NEXT AGENT ONBOARDING
 
 **Current position**
 
-- Branch: `feature/audit-must-fix`
-- Priority band: MUST FIX NOW is complete
-- Last verified fixes: M2-002, M2-003, M4-001, M5-002 (after M1-001, M1-002, M1-003, M6-003, M8-002)
-- Next issue: none in MUST FIX NOW
-- Do not start LATER issues unless the user asks
+- Branch: `feature/audit-must-fix` (not pushed). It starts from `main` at `430d4e2`.
+- Current batch: MUST FIX NOW in `FIX_TRACKER.md`. It is complete. This was not a walk through all 11 milestones.
+- Last verified fixes: M5-002, then M4-001, M2-003, M2-002, and the certificate batch M1-001, M1-002, M1-003, M6-003, M8-002.
+- Next issue: none until the user asks. Do not start a LATER issue or the next numbered milestone on your own.
+- Tracker counts: 9 VERIFIED, 8 ALREADY WORKING, 13 NOT STARTED, 5 BLOCKED, 1 DEFERRED. Total 36.
 
-**Completed after the certificate checkpoint**
+**Completed work**
 
-- M2-002: a report is claimed before the certificate or restaurant claim is written. A lost claim does not write. A failed write reopens the report. `CORRECTION_ALREADY_MADE` still awards +1.
-- M2-003: an admin can save a restaurant that has no food type or categories. Admin create still requires both. Report photos remain a link. That preview was left as cosmetic.
-- M4-001: `User.tokenVersion` defaults to 0 and is included in new JWTs as `tv`. A missing claim or a missing field means 0, so existing sessions stay valid until a password reset. Reset increments the version in the same update as the new hash.
-- M5-002: if the password is not saved, the consumed reset link is released. A cleanup failure after a successful save does not release it.
+Certificate submission (M1-001, M1-002, M1-003, M6-003, M8-002), commit `5fb9a10`:
 
-**Tests:** `cd backend; npm test` exit 0, 38 files, 485 tests passed. `cd frontend; npm run typecheck` exit 0. Browser not used. Live Geoapify, Cloudinary, Resend, and Atlas were not called.
+- A user can submit a photo or partial certificate details as PENDING evidence. The user does not choose a kashrut level. `kashrutLevel` sent by a user is stripped.
+- An admin must set the kashrut level and expiration before approve. Until then the evidence is not public and does not award points. Approval still uses the existing +3 / +2 helper, once.
+- Hechsher alone does not create a certificate. A photo without a hechsher is rejected. Mashgiach name and phone are optional on admin edit so photo-only evidence can be classified.
+- User restaurant form requires name, address, city, and hechsher. Phone, website, photo, expiration, and mashgiach are optional. City is filled from a picked address when that suggestion includes a city. Food type and categories were removed from the user form only. Admin create still requires them.
+- A typed address is pinned only when Geoapify returns one precise hit: confidence at least 0.8 and match type `full_match`, `inner_part`, or `match_by_building`, or one precise hit at least 0.2 ahead of the next. Otherwise the text is saved with no coordinates. A picked suggestion is trusted. The first hit is never used. Autocomplete and submit pass `lang` `en` or `he`.
+
+Report corrections (M2-002), commit `8875a90`, with a small unset follow-up inside `b6e87ff`:
+
+- `resolveReportService` checks that Apply has a real proposal, then claims the PENDING report, then writes the certificate or restaurant claim.
+- If another admin already claimed it, the write does not run and the caller gets 409.
+- If the write fails, `reopenResolvedReportRepo` sets the report back to PENDING, `correctionApplied` false, and unsets `adminNote`.
+- `CORRECTION_ALREADY_MADE` still awards +1. That points rule was not changed.
+
+Admin save (M2-003), commit `e43e699`:
+
+- `AdminRestaurantPage` no longer refuses to save when categories are empty. The edit form does not require food type.
+- `adminEditRestaurantSchema` no longer requires food type or categories. `adminCreateRestaurantSchema` still does.
+- Report photos remain a link. Before/after history remains M2-004.
+
+Password reset sessions (M4-001), commit `f87e665`:
+
+- `User.tokenVersion` is additive, default 0. Missing on an old account means 0. No backfill.
+- New JWTs include `tv`. `getUserFromTokenService` rejects a token whose `tv` does not match. A missing `tv` means 0, so this deploy does not log everyone out.
+- `setUserPasswordHashRepo` sets `passwordHash` and `$inc` `tokenVersion` in one update.
+
+Reset link (M5-002), commit `b6e87ff`:
+
+- The reset token is still consumed before the password write, so two requests cannot both succeed.
+- If hashing or saving the password fails, or the user row is gone, `releaseResetTokenRepo` sets `usedAt` back to null.
+- If cancelling other unused links fails after the password was saved, the link stays used.
+
+**Files a next agent should read first**
+
+- `FIX_TRACKER.md` for status. `AUDIT_FINDINGS.md` for the original evidence.
+- Certificate path: `backend/src/services/teudaSubmissionService.js`, `restaurantSubmissionService.js`, `placesService.js`, `adminTeudaService.js`, `frontend/src/pages/SubmitRestaurantPage.tsx`, `SubmitTeudaPage.tsx`.
+- Reports: `backend/src/services/adminReportService.js`, `backend/src/repositories/adminReportRepository.js`.
+- Admin edit: `frontend/src/pages/AdminRestaurantPage.tsx`, `backend/src/schemas/adminSchemas.js`.
+- Auth: `backend/src/models/User.js`, `backend/src/services/authService.js`, `backend/src/services/passwordResetService.js`, `backend/src/repositories/userRepository.js`, `backend/src/repositories/passwordResetRepository.js`.
+
+**Tests executed**
+
+- `cd backend; npm test` exit 0, 38 files, 485 tests passed. Mocks only.
+- `cd frontend; npm test` exit 0, 14 files, 90 tests passed.
+- `cd frontend; npm run typecheck` exit 0.
+- `cd frontend; npm run lint` exit 0.
+- Frontend build was run for the certificate change only: exit 0, bundle about 722 kB. It was not re-run after the later fixes. Those later fixes did not change the frontend except M2-003, which is covered by typecheck, lint, and the frontend unit tests.
+- Browser was not used. Live Geoapify, Cloudinary, Resend, and Atlas were not called.
 
 **Do not repeat**
 
-- Do not require a kashrut level from users.
-- Do not display pending evidence as verified.
+- Do not require a kashrut level from users, and do not show pending evidence as verified.
 - Do not accept the first Geoapify hit.
-- Do not change point amounts or who gets +1 for `CORRECTION_ALREADY_MADE`.
-- Do not change public status labels.
-- Do not install packages.
-- Do not add a transaction library.
-- Do not switch auth storage to cookies.
+- Do not change point amounts, public status labels, or who gets +1 for `CORRECTION_ALREADY_MADE`.
+- Do not install packages, add a transaction library, or switch auth storage to cookies.
+- Do not read or commit `.env` files.
+
+**Known limits**
+
+- If reopening a report fails, the report can stay resolved without the correction. The original error is still thrown and the reopen failure is logged.
+- If releasing a reset token fails, the password error is still returned and the link can stay used.
+- Restaurant submit still compensates by deleting the restaurant when the certificate insert fails. Restaurant rejection still rejects certificates in a later call. Restaurant deletion is still a sequence of deletes. Those are LATER (M5-001 and the rest of M5-002).
+- Logout still only clears the token in the browser. It does not bump `tokenVersion`.
+- Hebrew strings added on the certificate form need native-speaker review (M8-004). That does not block the code.
+- The admin restaurant screen was not opened in a browser.
+
+**Remaining work**
+
+LATER, do not start unless the user asks: M2-004, M3-003, M4-003, M4-004, M5-001, M5-003, M5-004, M6-001, M6-002, M6-004, M8-003, M8-004, M9-001, M9-002, M9-003, M9-004, M10A-001, M10B-001, M11-001.
+
+If the user asks to continue, the next priority is M4-003 (security headers without a new package unless they approve `helmet`). After that, M5-001 (restaurant deletion writes) only if they want more data-integrity work. Do not add Playwright, `helmet`, or `mongodb-memory-server` without approval.
 
 **Exact next task**
 
-Stop. The high-priority batch is done. LATER items are listed in `FIX_TRACKER.md`. Restaurant deletion and restaurant rejection still use separate writes; they were not the confirmed password-reset defect. If reopening a report fails after a failed correction, the report can stay resolved without the data write; that is logged. Hebrew copy from the certificate form still needs native-speaker review (M8-004). The admin restaurant screen was not opened in a browser.
+Stop. The MUST FIX NOW batch is verified and committed. Wait for the user.
