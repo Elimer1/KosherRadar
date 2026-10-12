@@ -216,4 +216,4 @@ Baseline before this work was 14 files and 90 tests. New tests cover parsing and
 
 ## Commits
 
-Recorded after the commit at the bottom of this section. The commit hash is filled in once `git rev-parse HEAD` returns it.
+- `03293d47e06ca1c8a4342dd74bae791d432690a8` — `feat(ux-1a): persist applied search in the URL`
