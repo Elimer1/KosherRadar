@@ -12,6 +12,7 @@ interface RestaurantFieldsProps {
   variant?: 'user' | 'admin';
   invalidName?: boolean;
   invalidAddress?: boolean;
+  invalidCity?: boolean;
   onChange: (field: keyof RestaurantFormValues, value: string) => void;
   onToggleCategory: (category: string) => void;
 }
@@ -23,6 +24,7 @@ function RestaurantFields({
   variant = 'admin',
   invalidName = false,
   invalidAddress = false,
+  invalidCity = false,
   onChange,
   onToggleCategory,
 }: RestaurantFieldsProps) {
@@ -57,8 +59,9 @@ function RestaurantFields({
           city={values.city}
           latitude={values.latitude}
           disabled={disabled}
-          cityRequired={false}
+          cityRequired={forUser}
           invalid={invalidAddress}
+          invalidCity={invalidCity}
           onAddressChange={(value) => onChange('address', value)}
           onCityChange={(value) => onChange('city', value)}
           onLocationChange={(location) => {
@@ -101,7 +104,7 @@ function RestaurantFields({
         </div>
       </section>
 
-      <section className="space-y-4">
+      {!forUser && <section className="space-y-4">
         <h2 className="text-lg font-semibold text-gray-900">{t('forms.food')}</h2>
 
         <div>
@@ -159,7 +162,7 @@ function RestaurantFields({
             />
           </div>
         )}
-      </section>
+      </section>}
 
       {!forUser && (
       <section className="space-y-4">

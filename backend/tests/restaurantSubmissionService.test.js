@@ -25,6 +25,10 @@ vi.mock('../src/services/imageUploadService.js', () => ({
   deleteImageService: vi.fn(),
 }));
 
+vi.mock('../src/services/placesService.js', () => ({
+  geocodeAddressService: vi.fn(async () => ({ status: 'unavailable' })),
+}));
+
 import {
   createRestaurantRepo,
   deleteRestaurantByIdRepo,
@@ -33,6 +37,7 @@ import {
 import { createTeudaRepo } from '../src/repositories/teudaRepository.js';
 import { findPossibleDuplicatesService } from '../src/services/duplicateService.js';
 import { deleteImageService, uploadTeudaImageService } from '../src/services/imageUploadService.js';
+import { geocodeAddressService } from '../src/services/placesService.js';
 import { submitRestaurantService } from '../src/services/restaurantSubmissionService.js';
 
 const user = { _id: 'user-1', role: 'USER' };
@@ -78,6 +83,7 @@ describe('submitRestaurantService', () => {
       restaurant: { id: 'rest-1', status: 'PENDING' },
       teuda: null,
       possibleDuplicateCount: 0,
+      locationStatus: 'unavailable',
     });
     expect(createRestaurantRepo.mock.calls[0][0]).toMatchObject({
       name: 'Pizza Hut',
@@ -113,6 +119,45 @@ describe('submitRestaurantService', () => {
       submittedWithNewRestaurant: true,
       photoUrl: 'https://res.cloudinary.com/photo.jpg',
     });
+    expect(createTeudaRepo.mock.calls[0][0].kashrutLevel).toBeUndefined();
+  });
+
+  it('stores a photo without a kashrut level as pending evidence', async () => {
+    const result = await submitRestaurantService({
+      restaurantData: restaurantData(),
+      teudaData: { hechsher: 'BADATZ_BEIT_YOSEF', kashrutLevel: 'MEHADRIN' },
+      file,
+      user,
+    });
+
+    expect(result.teuda.status).toBe('PENDING');
+    expect(createTeudaRepo.mock.calls[0][0]).toMatchObject({
+      hechsher: 'BADATZ_BEIT_YOSEF',
+      status: 'PENDING',
+      photoUrl: 'https://res.cloudinary.com/photo.jpg',
+    });
+    expect(createTeudaRepo.mock.calls[0][0].kashrutLevel).toBeUndefined();
+    expect(createTeudaRepo.mock.calls[0][0].expirationDate).toBeUndefined();
+  });
+
+  it('keeps coordinates the user already chose and does not geocode them again', async () => {
+    const result = await submitRestaurantService({
+      restaurantData: { ...restaurantData(), latitude: 31.78, longitude: 35.22 },
+      user,
+    });
+
+    expect(geocodeAddressService).not.toHaveBeenCalled();
+    expect(result.locationStatus).toBe('selected');
+    expect(createRestaurantRepo.mock.calls[0][0]).toMatchObject({ latitude: 31.78, longitude: 35.22 });
+  });
+
+  it('saves a typed address without coordinates when the geocode is ambiguous', async () => {
+    geocodeAddressService.mockResolvedValueOnce({ status: 'ambiguous' });
+
+    const result = await submitRestaurantService({ restaurantData: restaurantData(), user });
+
+    expect(result.locationStatus).toBe('ambiguous');
+    expect(createRestaurantRepo.mock.calls[0][0].latitude).toBeUndefined();
   });
 
   it('saves the restaurant and reports possible duplicates without blocking it', async () => {

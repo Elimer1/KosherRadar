@@ -2,7 +2,8 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { submitRestaurant } from '../api/restaurantApi';
+import { hasCertificateEvidence, submitRestaurant } from '../api/restaurantApi';
+import { activeLanguage } from '../i18n';
 import { getErrorMessage } from '../api/errors';
 import FormAlert from '../components/FormAlert';
 import RestaurantFields from '../components/RestaurantFields';
@@ -22,7 +23,7 @@ function SubmitRestaurantPage() {
   const [restaurant, setRestaurant] = useState<RestaurantFormValues>(emptyRestaurantForm);
   const [teuda, setTeuda] = useState<TeudaFormValues>(emptyTeudaForm);
   const [error, setError] = useState('');
-  const [invalid, setInvalid] = useState({ name: false, address: false, hechsher: false });
+  const [invalid, setInvalid] = useState({ name: false, address: false, city: false, hechsher: false });
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<RestaurantSubmitResult | null>(null);
@@ -55,29 +56,28 @@ function SubmitRestaurantPage() {
     const missing = {
       name: restaurant.name.trim() === '',
       address: restaurant.address.trim() === '',
+      city: restaurant.city.trim() === '',
       hechsher: !teuda.hechsher || otherMissing,
     };
     setInvalid(missing);
 
-    if (missing.name || missing.address || missing.hechsher) {
+    if (photoError) {
+      setError(photoError);
+      return;
+    }
+
+    if (missing.name || missing.address || missing.city || missing.hechsher) {
       const messages = [
         missing.name ? t('forms.missingName') : '',
         missing.address ? t('forms.missingAddress') : '',
+        missing.city ? t('forms.missingCity') : '',
         missing.hechsher ? (otherMissing ? t('forms.missingKashrutName') : t('forms.missingKashrut')) : '',
       ].filter((message) => message !== '');
       setError(messages.join(' '));
       return;
     }
 
-    // A certificate is saved only when every certificate field is present. Anything less still sends the restaurant.
-    const certificateComplete = Boolean(
-      teuda.kashrutLevel &&
-        teuda.expirationDate &&
-        teuda.mashgiachName.trim() &&
-        teuda.mashgiachPhone.trim() &&
-        photo &&
-        !photoError
-    );
+    const evidence = hasCertificateEvidence(teuda, photo);
 
     setLoading(true);
     setProgress(0);
@@ -87,12 +87,15 @@ function SubmitRestaurantPage() {
         {
           ...restaurant,
           foodKeywords: '',
+          foodType: '',
+          categories: [],
           claimedHechsher: teuda.hechsher,
           claimedHechsherOther: teuda.hechsherOther,
           claimedKashrutLevel: '',
         },
-        certificateComplete ? teuda : null,
-        certificateComplete ? photo : null,
+        evidence ? teuda : null,
+        evidence ? photo : null,
+        activeLanguage(),
         setProgress
       );
       setResult(submitted);
@@ -119,6 +122,12 @@ function SubmitRestaurantPage() {
           kind="success"
           message={result.teuda ? t('forms.thanksWithCertificate') : t('forms.thanksRestaurant')}
         />
+        {(result.locationStatus === 'ambiguous' || result.locationStatus === 'not_found') && (
+          <FormAlert kind="warning" message={t('forms.notPlaced')} />
+        )}
+        {result.locationStatus === 'unavailable' && (
+          <FormAlert kind="warning" message={t('forms.lookupUnavailableSaved')} />
+        )}
         {result.possibleDuplicateCount > 0 && <FormAlert kind="warning" message={t('forms.similarWarning')} />}
         <Link to="/account" className="inline-block font-medium text-green-700 hover:underline">
           {t('forms.seeSubmissions')}
@@ -142,9 +151,30 @@ function SubmitRestaurantPage() {
           variant="user"
           invalidName={invalid.name}
           invalidAddress={invalid.address}
+          invalidCity={invalid.city}
           onChange={handleRestaurantChange}
           onToggleCategory={handleToggleCategory}
         />
+
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold text-gray-900">{t('forms.kashrutClaim')}</h2>
+          <p className="text-sm text-gray-600">{t('forms.kashrutClaimBody')}</p>
+          <TeudaFields
+            idPrefix="new-restaurant-claim"
+            values={teuda}
+            options={options}
+            photo={null}
+            photoError=""
+            disabled={loading}
+            hidePhoto
+            showDetails={false}
+            showLevel={false}
+            hechsherRequired
+            invalidHechsher={invalid.hechsher}
+            onChange={handleTeudaChange}
+            onPhotoChange={() => undefined}
+          />
+        </section>
 
         <section className="space-y-4">
           <h2 className="text-lg font-semibold text-gray-900">{t('forms.certificateOptional')}</h2>
@@ -157,8 +187,9 @@ function SubmitRestaurantPage() {
             photoError={photoError}
             disabled={loading}
             fieldsRequired={false}
+            showHechsher={false}
             showLevel={false}
-            invalidHechsher={invalid.hechsher}
+            markOptional
             onChange={handleTeudaChange}
             onPhotoChange={handlePhotoChange}
           />

@@ -114,8 +114,8 @@ function PendingReportsTab({ hechsherOptions }: PendingReportsTabProps) {
               <p className="text-sm text-gray-700">
                 {t('desk.aboutCertificate', {
                   name: getHechsherLabel(report.teuda.hechsher, report.teuda.hechsherOther, hechsherOptions),
-                  level: getKashrutLevelLabel(report.teuda.kashrutLevel),
-                  date: report.teuda.expirationDate,
+                  level: report.teuda.kashrutLevel ? getKashrutLevelLabel(report.teuda.kashrutLevel) : t('desk.notSet'),
+                  date: report.teuda.expirationDate || t('desk.notSet'),
                 })}
               </p>
             )}

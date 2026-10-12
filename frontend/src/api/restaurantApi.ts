@@ -33,6 +33,33 @@ export const buildRestaurantPayload = (values: RestaurantFormValues) => {
   };
 };
 
+// NEW (Audit M1): the hechsher is the claim. A level is never sent. Empty certificate details are left out.
+// חדש (ביקורת M1): ההכשר הוא הטענה. רמה לא נשלחת. פרטי תעודה ריקים לא נשלחים.
+export const hasCertificateEvidence = (values: TeudaFormValues, photo: File | null) =>
+  Boolean(photo || values.expirationDate || values.mashgiachName.trim() || values.mashgiachPhone.trim());
+
+export const buildPendingTeudaPayload = (values: TeudaFormValues) => {
+  const payload: Record<string, string> = { hechsher: values.hechsher };
+
+  if (values.hechsherOther.trim()) {
+    payload.hechsherOther = values.hechsherOther.trim();
+  }
+
+  if (values.expirationDate) {
+    payload.expirationDate = values.expirationDate;
+  }
+
+  if (values.mashgiachName.trim()) {
+    payload.mashgiachName = values.mashgiachName.trim();
+  }
+
+  if (values.mashgiachPhone.trim()) {
+    payload.mashgiachPhone = values.mashgiachPhone.trim();
+  }
+
+  return payload;
+};
+
 const reportProgress = (onProgress?: (percent: number) => void) => (event: { loaded: number; total?: number }) => {
   if (onProgress && event.total) {
     onProgress(Math.round((event.loaded / event.total) * 100));
@@ -43,13 +70,18 @@ export const submitRestaurant = async (
   values: RestaurantFormValues,
   teuda: TeudaFormValues | null,
   photo: File | null,
+  lang: 'en' | 'he',
   onProgress?: (percent: number) => void
 ) => {
   const formData = new FormData();
   formData.append('restaurant', JSON.stringify(buildRestaurantPayload(values)));
+  formData.append('lang', lang);
 
-  if (teuda && photo) {
-    formData.append('teuda', JSON.stringify(teuda));
+  if (teuda) {
+    formData.append('teuda', JSON.stringify(buildPendingTeudaPayload(teuda)));
+  }
+
+  if (photo) {
     formData.append('photo', photo);
   }
 
@@ -68,12 +100,15 @@ export const getSubmissionContext = async (restaurantId: string) => {
 export const submitTeuda = async (
   restaurantId: string,
   values: TeudaFormValues,
-  photo: File,
+  photo: File | null,
   onProgress?: (percent: number) => void
 ) => {
   const formData = new FormData();
-  formData.append('teuda', JSON.stringify(values));
-  formData.append('photo', photo);
+  formData.append('teuda', JSON.stringify(buildPendingTeudaPayload(values)));
+
+  if (photo) {
+    formData.append('photo', photo);
+  }
 
   const response = await api.post<TeudaSubmitResult>(`/restaurants/${restaurantId}/teudot`, formData, {
     onUploadProgress: reportProgress(onProgress),

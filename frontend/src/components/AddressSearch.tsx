@@ -17,6 +17,7 @@ interface AddressSearchProps {
   disabled: boolean;
   cityRequired: boolean;
   invalid?: boolean;
+  invalidCity?: boolean;
   onAddressChange: (value: string) => void;
   onCityChange: (value: string) => void;
   onLocationChange: (location: AddressLocation) => void;
@@ -31,11 +32,12 @@ function AddressSearch({
   disabled,
   cityRequired,
   invalid = false,
+  invalidCity = false,
   onAddressChange,
   onCityChange,
   onLocationChange,
 }: AddressSearchProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [searching, setSearching] = useState(false);
   const [manual, setManual] = useState(false);
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
@@ -55,7 +57,7 @@ function AddressSearch({
     let cancelled = false;
     const timer = window.setTimeout(async () => {
       try {
-        const result = await searchAddresses(text);
+        const result = await searchAddresses(text, i18n.language.startsWith('he') ? 'he' : 'en');
 
         if (cancelled) {
           return;
@@ -80,7 +82,7 @@ function AddressSearch({
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [address, searching, manual, t]);
+  }, [address, searching, manual, t, i18n.language]);
 
   const handleAddressType = (value: string) => {
     setSearching(true);
@@ -152,12 +154,13 @@ function AddressSearch({
             required={cityRequired}
             maxLength={100}
             disabled={disabled}
+            aria-invalid={invalidCity}
             value={city}
             onChange={(event) => {
               onCityChange(event.target.value);
               onLocationChange(emptyLocation);
             }}
-            className={inputClassName}
+            className={`${inputClassName} ${invalidCity ? 'border-red-500' : ''}`}
           />
         </div>
       </div>

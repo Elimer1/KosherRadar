@@ -52,7 +52,11 @@ describe('getTeudaVisibility', () => {
 });
 
 describe('isTeudaPublic', () => {
-  const approved = (dateOnly) => ({ status: 'APPROVED', expirationDate: dateOnlyToDate(dateOnly) });
+  const approved = (dateOnly) => ({
+    status: 'APPROVED',
+    kashrutLevel: 'MEHADRIN',
+    expirationDate: dateOnlyToDate(dateOnly),
+  });
 
   it('shows approved valid and recently expired teudot', () => {
     expect(isTeudaPublic(approved('2026-12-01'), TODAY)).toBe(true);
@@ -65,8 +69,13 @@ describe('isTeudaPublic', () => {
 
   it('never shows pending or rejected teudot, even when they are not expired', () => {
     const expirationDate = dateOnlyToDate('2026-12-01');
-    expect(isTeudaPublic({ status: 'PENDING', expirationDate }, TODAY)).toBe(false);
-    expect(isTeudaPublic({ status: 'REJECTED', expirationDate }, TODAY)).toBe(false);
+    expect(isTeudaPublic({ status: 'PENDING', kashrutLevel: 'MEHADRIN', expirationDate }, TODAY)).toBe(false);
+    expect(isTeudaPublic({ status: 'REJECTED', kashrutLevel: 'MEHADRIN', expirationDate }, TODAY)).toBe(false);
+  });
+
+  it('never shows an approved teuda that has no kashrut level or no expiration date', () => {
+    expect(isTeudaPublic({ status: 'APPROVED', expirationDate: dateOnlyToDate('2026-12-01') }, TODAY)).toBe(false);
+    expect(isTeudaPublic({ status: 'APPROVED', kashrutLevel: 'MEHADRIN' }, TODAY)).toBe(false);
   });
 });
 

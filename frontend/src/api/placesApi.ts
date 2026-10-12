@@ -9,9 +9,9 @@ export interface AddressSuggestion {
   placeId: string;
 }
 
-export const searchAddresses = async (text: string) => {
+export const searchAddresses = async (text: string, lang: PlaceLanguage) => {
   const response = await api.get<{ available: boolean; suggestions: AddressSuggestion[] }>('/places/autocomplete', {
-    params: { text },
+    params: { text, lang },
   });
   return response.data;
 };
@@ -29,7 +29,11 @@ export const suggestPlaces = async (text: string, lang: PlaceLanguage, signal: A
 };
 
 export const geocodePlace = async (text: string, lang: PlaceLanguage) => {
-  const response = await api.get<{ available: boolean; place: AddressSuggestion | null }>('/places/geocode', {
+  const response = await api.get<{
+    available: boolean;
+    place: AddressSuggestion | null;
+    reason?: 'matched' | 'ambiguous' | 'not_found' | 'unavailable';
+  }>('/places/geocode', {
     params: { text, lang },
   });
   return response.data;

@@ -13,27 +13,65 @@ import {
   isTeudaPublic,
 } from './teudaRulesService.js';
 
+// A photo, an expiration date, or a mashgiach is certificate evidence. The hechsher alone is the restaurant claim.
+export const hasCertificateEvidence = (teudaData, file) =>
+  Boolean(file || teudaData?.expirationDate || teudaData?.mashgiachName || teudaData?.mashgiachPhone);
+
+// NEW (Audit M1): users cannot classify a certificate. A level sent by the client is ignored.
+// חדש (ביקורת M1): משתמש לא מסווג תעודה. רמה שנשלחה מהדפדפן מתעלמים ממנה.
+export const withoutUserKashrutLevel = (teudaData) => {
+  if (!teudaData) {
+    return teudaData;
+  }
+
+  const { kashrutLevel, ...evidence } = teudaData;
+  return evidence;
+};
+
 // Checks that do not touch the database or Cloudinary. Run before anything is uploaded or saved.
+// A missing date or a missing photo is allowed. A date that is present must still be valid.
 export const validateTeudaSubmission = (teudaData, file) => {
-  checkExpirationForSubmission(teudaData.expirationDate);
-  checkImageFile(file);
+  if (teudaData?.expirationDate) {
+    checkExpirationForSubmission(teudaData.expirationDate);
+  }
+
+  if (file) {
+    checkImageFile(file);
+  }
 };
 
 export const buildTeudaRecord = ({ teudaData, image, restaurantId, userId, withNewRestaurant }) => {
-  return {
+  const record = {
     restaurant: restaurantId,
     hechsher: teudaData.hechsher,
     hechsherOther: teudaData.hechsherOther,
-    kashrutLevel: teudaData.kashrutLevel,
-    expirationDate: dateOnlyToDate(teudaData.expirationDate),
-    photoUrl: image.photoUrl,
-    cloudinaryPublicId: image.cloudinaryPublicId,
-    mashgiachName: teudaData.mashgiachName,
-    mashgiachPhone: teudaData.mashgiachPhone,
     status: 'PENDING',
     submittedBy: userId,
     submittedWithNewRestaurant: withNewRestaurant,
   };
+
+  if (teudaData.kashrutLevel) {
+    record.kashrutLevel = teudaData.kashrutLevel;
+  }
+
+  if (teudaData.expirationDate) {
+    record.expirationDate = dateOnlyToDate(teudaData.expirationDate);
+  }
+
+  if (image) {
+    record.photoUrl = image.photoUrl;
+    record.cloudinaryPublicId = image.cloudinaryPublicId;
+  }
+
+  if (teudaData.mashgiachName) {
+    record.mashgiachName = teudaData.mashgiachName;
+  }
+
+  if (teudaData.mashgiachPhone) {
+    record.mashgiachPhone = teudaData.mashgiachPhone;
+  }
+
+  return record;
 };
 
 // A user can add a teuda only to an approved restaurant. The new teuda is PENDING and does not
@@ -45,16 +83,21 @@ export const submitTeudaService = async ({ restaurantId, teudaData, file, user }
     throw appError('Restaurant not found', 404);
   }
 
+  if (!hasCertificateEvidence(teudaData, file)) {
+    throw appError('Add a photo or at least one certificate detail', 400);
+  }
+
   validateTeudaSubmission(teudaData, file);
 
-  const expirationDate = dateOnlyToDate(teudaData.expirationDate);
+  const evidence = withoutUserKashrutLevel(teudaData);
+  const expirationDate = evidence.expirationDate ? dateOnlyToDate(evidence.expirationDate) : null;
 
   const alreadySent = await findSimilarPendingTeudaRepo({
     restaurant: restaurant._id,
     submittedBy: user._id,
-    hechsher: teudaData.hechsher,
-    hechsherOther: teudaData.hechsherOther,
-    kashrutLevel: teudaData.kashrutLevel,
+    hechsher: evidence.hechsher,
+    hechsherOther: evidence.hechsherOther,
+    kashrutLevel: null,
     expirationDate,
   });
 
@@ -62,12 +105,12 @@ export const submitTeudaService = async ({ restaurantId, teudaData, file, user }
     throw appError('You already submitted this certificate and it is waiting for review', 409);
   }
 
-  const image = await uploadTeudaImageService(file);
+  const image = file ? await uploadTeudaImageService(file) : null;
 
   try {
     const teuda = await createTeudaRepo(
       buildTeudaRecord({
-        teudaData,
+        teudaData: evidence,
         image,
         restaurantId: restaurant._id,
         userId: user._id,
@@ -77,7 +120,9 @@ export const submitTeudaService = async ({ restaurantId, teudaData, file, user }
 
     return { id: String(teuda._id), status: teuda.status };
   } catch (error) {
-    await deleteImageService(image.cloudinaryPublicId);
+    if (image) {
+      await deleteImageService(image.cloudinaryPublicId);
+    }
     throw error;
   }
 };

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildRestaurantPayload } from './restaurantApi';
-import { emptyRestaurantForm } from '../types/submissions';
+import { buildPendingTeudaPayload, buildRestaurantPayload, hasCertificateEvidence } from './restaurantApi';
+import { emptyRestaurantForm, emptyTeudaForm } from '../types/submissions';
 
 const filledForm = () => ({
   ...emptyRestaurantForm,
@@ -40,5 +40,20 @@ describe('buildRestaurantPayload', () => {
 
     expect(Object.keys(payload)).not.toContain('status');
     expect(Object.keys(payload)).not.toContain('submittedBy');
+  });
+});
+
+describe('pending certificate payload', () => {
+  it('sends a photo-only certificate without a kashrut level', () => {
+    const values = { ...emptyTeudaForm, hechsher: 'LOCAL_RABBANUT', kashrutLevel: 'MEHADRIN' };
+    const photo = new File(['x'], 'cert.jpg', { type: 'image/jpeg' });
+
+    expect(hasCertificateEvidence(values, photo)).toBe(true);
+    expect(hasCertificateEvidence(values, null)).toBe(false);
+    expect(buildPendingTeudaPayload(values)).toEqual({ hechsher: 'LOCAL_RABBANUT' });
+    expect(buildPendingTeudaPayload({ ...values, expirationDate: '2027-01-01' })).toEqual({
+      hechsher: 'LOCAL_RABBANUT',
+      expirationDate: '2027-01-01',
+    });
   });
 });

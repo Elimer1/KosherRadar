@@ -100,6 +100,10 @@ function PendingTeudotTab({ hechsherOptions }: PendingTeudotTabProps) {
 
             <TeudaFacts teuda={teuda} hechsherOptions={hechsherOptions} />
 
+            {(!teuda.kashrutLevel || !teuda.expirationDate) && (
+              <FormAlert kind="warning" message={t('desk.classifyBeforeApprove')} />
+            )}
+
             {!teuda.restaurantApproved && (
               <FormAlert
                 kind="warning"
@@ -111,7 +115,7 @@ function PendingTeudotTab({ hechsherOptions }: PendingTeudotTabProps) {
               <FormAlert
                 kind="warning"
                 message={t('desk.conflictDetail', {
-                  level: getKashrutLevelLabel(teuda.kashrutLevel),
+                  level: teuda.kashrutLevel ? getKashrutLevelLabel(teuda.kashrutLevel) : t('desk.notSet'),
                   details: teuda.conflicts
                     .map(
                       (conflict) =>
@@ -133,7 +137,7 @@ function PendingTeudotTab({ hechsherOptions }: PendingTeudotTabProps) {
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  disabled={busyId === teuda.id || !teuda.restaurantApproved}
+                  disabled={busyId === teuda.id || !teuda.restaurantApproved || !teuda.kashrutLevel || !teuda.expirationDate}
                   onClick={() => handleApprove(teuda.id)}
                   className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >

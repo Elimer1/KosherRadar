@@ -12,7 +12,7 @@ import {
   phoneField,
   requireOtherTextWhenOther,
 } from './commonSchemas.js';
-import { teudaFieldsSchema } from './teudaSchemas.js';
+import { pendingEvidenceSchema } from './teudaSchemas.js';
 
 // Forms send "" for an untouched optional input. Treat that the same as "not provided".
 const emptyToUndefined = (value) => (value === '' || value === null ? undefined : value);
@@ -81,14 +81,25 @@ export const restaurantFieldsSchema = z
   .superRefine(requireOtherTextWhenOther('claimedHechsher', 'claimedHechsherOther'))
   .transform(dropOtherTextUnlessOther('claimedHechsher', 'claimedHechsherOther'));
 
-// NEW (update): a user submission needs a name, an address and a hechsher. City is optional.
-// חדש (עדכון): הגשת משתמש דורשת שם, כתובת והכשר. עיר אינה חובה.
+// NEW (Audit M1): a user submission needs a name, an address, a city and a hechsher.
+// City is filled from a chosen address when that address includes one. Admin create still uses
+// restaurantFieldsSchema, where city stays optional so an older restaurant can be saved.
+// חדש (ביקורת M1): הגשת משתמש דורשת שם, כתובת, עיר והכשר. עיר מושלמת מכתובת שנבחרה כשיש בה עיר.
 export const submitRestaurantSchema = z
   .object({
     restaurant: restaurantFieldsSchema,
-    teuda: teudaFieldsSchema.optional(),
+    teuda: pendingEvidenceSchema.optional(),
+    lang: z.enum(['en', 'he']).optional(),
   })
   .superRefine((data, context) => {
+    if (!data.restaurant.city) {
+      context.addIssue({
+        code: 'custom',
+        path: ['restaurant', 'city'],
+        message: 'Enter the city',
+      });
+    }
+
     if (!data.restaurant.claimedHechsher) {
       context.addIssue({
         code: 'custom',

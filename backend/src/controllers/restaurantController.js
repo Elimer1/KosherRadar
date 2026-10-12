@@ -10,6 +10,7 @@ export const submitRestaurantController = async (req, res) => {
     teudaData: req.body.teuda,
     file: req.file,
     user: req.user,
+    lang: req.body.lang,
   });
 
   res.status(201).json(result);

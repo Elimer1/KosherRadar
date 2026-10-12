@@ -35,6 +35,7 @@ const teudaExpiring = (dateOnly, overrides = {}) => ({
   _id: TEUDA_ID,
   restaurant: RESTAURANT_ID,
   status: 'APPROVED',
+  kashrutLevel: 'MEHADRIN',
   expirationDate: dateOnlyToDate(dateOnly),
   ...overrides,
 });

@@ -35,16 +35,18 @@ describe('submitTeudaSchema', () => {
     expect(standard.teuda.hechsherOther).toBeUndefined();
   });
 
-  it('rejects an unknown hechsher, kashrut level, impossible date and bad phone', () => {
+  it('rejects an unknown hechsher, an impossible date and a bad phone, and drops a kashrut level', () => {
     expect(() => submitTeudaSchema.parse({ teuda: { ...validTeuda(), hechsher: 'MADE_UP' } })).toThrow();
-    expect(() => submitTeudaSchema.parse({ teuda: { ...validTeuda(), kashrutLevel: 'SUPER' } })).toThrow();
     expect(() => submitTeudaSchema.parse({ teuda: { ...validTeuda(), expirationDate: '2026-02-30' } })).toThrow();
     expect(() => submitTeudaSchema.parse({ teuda: { ...validTeuda(), mashgiachPhone: 'call me' } })).toThrow();
+
+    const parsed = submitTeudaSchema.parse({ teuda: { ...validTeuda(), kashrutLevel: 'SUPER' } });
+    expect(parsed.teuda.kashrutLevel).toBeUndefined();
   });
 
-  it('requires the mashgiach name and phone', () => {
-    const { mashgiachName, ...withoutName } = validTeuda();
-    expect(() => submitTeudaSchema.parse({ teuda: withoutName })).toThrow();
+  it('allows a certificate without a mashgiach, and still rejects a blank name', () => {
+    const { mashgiachName, mashgiachPhone, ...withoutMashgiach } = validTeuda();
+    expect(submitTeudaSchema.parse({ teuda: withoutMashgiach }).teuda.mashgiachName).toBeUndefined();
     expect(() => submitTeudaSchema.parse({ teuda: { ...validTeuda(), mashgiachName: '   ' } })).toThrow();
   });
 

@@ -16,7 +16,11 @@ const insideIsrael = (latitude, longitude) =>
   longitude >= ISRAEL_BOUNDS.minLng &&
   longitude <= ISRAEL_BOUNDS.maxLng;
 
-const toSuggestion = (result) => {
+const PRECISE_MATCH_TYPES = new Set(['full_match', 'inner_part', 'match_by_building']);
+const MIN_CONFIDENCE = 0.8;
+const CLEAR_CONFIDENCE_GAP = 0.2;
+
+const toPlace = (result) => {
   const latitude = result.lat;
   const longitude = result.lon;
 
@@ -31,6 +35,8 @@ const toSuggestion = (result) => {
     return null;
   }
 
+  const confidence = typeof result.rank?.confidence === 'number' ? result.rank.confidence : null;
+
   return {
     label: String(result.formatted || address).slice(0, 300),
     address,
@@ -38,7 +44,45 @@ const toSuggestion = (result) => {
     latitude,
     longitude,
     placeId: String(result.place_id || '').slice(0, 200),
+    confidence,
+    matchType: typeof result.rank?.match_type === 'string' ? result.rank.match_type : '',
   };
+};
+
+const toPublicSuggestion = (place) => ({
+  label: place.label,
+  address: place.address,
+  city: place.city,
+  latitude: place.latitude,
+  longitude: place.longitude,
+  placeId: place.placeId,
+});
+
+const isPrecisePlace = (place) =>
+  place.confidence !== null && place.confidence >= MIN_CONFIDENCE && PRECISE_MATCH_TYPES.has(place.matchType);
+
+// NEW (Audit M1): a pin is stored only for one precise Geoapify hit, or a precise hit clearly ahead of the next.
+// Confidence is Geoapify's 0–1 rank.confidence. A street-only or city-only match is not a building pin.
+// A result with no rank is refused. The first row is never accepted just because it is first.
+// חדש (ביקורת M1): נשמרת נקודה רק להתאמה מדויקת אחת, או להתאמה מדויקת שברור שהיא טובה מהבאה.
+export const selectUnambiguousPlace = (places) => {
+  const precise = places
+    .filter(isPrecisePlace)
+    .sort((left, right) => right.confidence - left.confidence || left.placeId.localeCompare(right.placeId));
+
+  if (precise.length === 0) {
+    return null;
+  }
+
+  if (precise.length === 1) {
+    return precise[0];
+  }
+
+  if (precise[0].confidence - precise[1].confidence >= CLEAR_CONFIDENCE_GAP) {
+    return precise[0];
+  }
+
+  return null;
 };
 
 // NEW (Milestone 5): `lang` asks Geoapify for a Hebrew or English place name when it has one.
@@ -60,7 +104,7 @@ const requestGeoapify = async (kind, text, lang = 'en') => {
   }
 
   const data = await response.json();
-  return (data.results || []).map(toSuggestion).filter(Boolean);
+  return (data.results || []).map(toPlace).filter(Boolean);
 };
 
 export const autocompleteAddressesService = async (text, lang = 'en') => {
@@ -69,7 +113,7 @@ export const autocompleteAddressesService = async (text, lang = 'en') => {
   }
 
   try {
-    const suggestions = await requestGeoapify('autocomplete', text, lang);
+    const suggestions = (await requestGeoapify('autocomplete', text, lang)).map(toPublicSuggestion);
     return { available: true, suggestions };
   } catch (error) {
     console.error('Address search failed:', error.message);
@@ -81,41 +125,53 @@ export const autocompleteAddressesService = async (text, lang = 'en') => {
 // חדש (אבן דרך 5): מקום אחד למיקום החיפוש הציבורי. החטאה היא null. לא ממציאים קואורדינטות.
 export const geocodePlaceService = async (text, lang = 'en') => {
   if (!env.geoapifyApiKey) {
-    return { available: false, place: null };
+    return { available: false, place: null, reason: 'unavailable' };
   }
 
   try {
-    const [place] = await requestGeoapify('search', text, lang);
-    return { available: true, place: place || null };
+    const places = await requestGeoapify('search', text, lang);
+    const match = selectUnambiguousPlace(places);
+
+    if (!match) {
+      return {
+        available: true,
+        place: null,
+        reason: places.length === 0 ? 'not_found' : 'ambiguous',
+      };
+    }
+
+    return { available: true, place: toPublicSuggestion(match), reason: 'matched' };
   } catch (error) {
     console.error('Place geocoding failed:', error.message);
-    return { available: false, place: null };
+    return { available: false, place: null, reason: 'unavailable' };
   }
 };
 
-// Fills coordinates for a typed address. Returns null when search is off or nothing in Israel matched.
-// Never invents a point: a miss stays without coordinates.
-export const geocodeAddressService = async ({ address, city }) => {
+// NEW (Audit M1): a typed address is pinned only by selectUnambiguousPlace. The caller saves the text either way.
+// חדש (ביקורת M1): כתובת שהוקלדה מקבלת נקודה רק דרך selectUnambiguousPlace. הטקסט נשמר בכל מקרה.
+export const geocodeAddressService = async ({ address, city, lang = 'en' }) => {
   if (!env.geoapifyApiKey) {
-    return null;
+    return { status: 'unavailable' };
   }
 
   const text = [address, city, 'Israel'].filter(Boolean).join(', ');
 
   try {
-    const [match] = await requestGeoapify('search', text);
+    const places = await requestGeoapify('search', text, lang);
+    const match = selectUnambiguousPlace(places);
 
     if (!match) {
-      return null;
+      return { status: places.length === 0 ? 'not_found' : 'ambiguous' };
     }
 
     return {
+      status: 'matched',
       latitude: match.latitude,
       longitude: match.longitude,
       geoapifyPlaceId: match.placeId || undefined,
     };
   } catch (error) {
     console.error('Address geocoding failed:', error.message);
-    return null;
+    return { status: 'unavailable' };
   }
 };

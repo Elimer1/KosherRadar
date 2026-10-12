@@ -7,14 +7,17 @@ const teudaSchema = new mongoose.Schema(
 
     hechsher: { type: String, required: true, trim: true, maxlength: 100 },
     hechsherOther: { type: String, trim: true, maxlength: 100 },
-    kashrutLevel: { type: String, enum: KASHRUT_LEVELS, required: true },
+    // NEW (Audit M1): optional on pending evidence. Existing certificates already have a level, so no backfill.
+    // A missing level must never be treated as verified. An admin sets it before approval.
+    // חדש (ביקורת M1): אופציונלי בראיה ממתינה. תעודות קיימות כבר כוללות רמה, בלי מילוי לאחור.
+    kashrutLevel: { type: String, enum: KASHRUT_LEVELS },
 
-    expirationDate: { type: Date, required: true },
+    expirationDate: { type: Date },
 
-    photoUrl: { type: String, required: true, trim: true },
-    cloudinaryPublicId: { type: String, required: true, trim: true },
-    mashgiachName: { type: String, required: true, trim: true, maxlength: 100 },
-    mashgiachPhone: { type: String, required: true, trim: true, maxlength: 30 },
+    photoUrl: { type: String, trim: true },
+    cloudinaryPublicId: { type: String, trim: true },
+    mashgiachName: { type: String, trim: true, maxlength: 100 },
+    mashgiachPhone: { type: String, trim: true, maxlength: 30 },
 
     status: { type: String, enum: SUBMISSION_STATUSES, default: 'PENDING' },
     submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },

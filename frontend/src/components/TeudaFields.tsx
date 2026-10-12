@@ -13,12 +13,17 @@ interface TeudaFieldsProps {
   disabled: boolean;
   onChange: (field: keyof TeudaFormValues, value: string) => void;
   onPhotoChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  // The new-restaurant form shows these fields all the time. They are required only when a certificate is included.
+  // Required only on forms that demand a complete certificate, such as an admin creating one.
   fieldsRequired?: boolean;
   hidePhoto?: boolean;
-  // NEW (update): a new restaurant asks for the hechsher only. The level stays for a full certificate.
-  // חדש (עדכון): מסעדה חדשה מבקשת רק הכשר. הרמה נשארת כשמוסיפים תעודה מלאה.
+  showHechsher?: boolean;
+  showDetails?: boolean;
+  // NEW (Audit M1): users do not choose a kashrut level. Admin edit and admin create still show it.
+  // חדש (ביקורת M1): משתמש לא בוחר רמת כשרות. עריכה ויצירה של מנהל עדיין מציגות אותה.
   showLevel?: boolean;
+  hechsherRequired?: boolean;
+  mashgiachRequired?: boolean;
+  markOptional?: boolean;
   invalidHechsher?: boolean;
 }
 
@@ -34,22 +39,29 @@ function TeudaFields({
   onPhotoChange,
   fieldsRequired = true,
   hidePhoto = false,
+  showHechsher = true,
+  showDetails = true,
   showLevel = true,
+  hechsherRequired = fieldsRequired,
+  mashgiachRequired = fieldsRequired,
+  markOptional = false,
   invalidHechsher = false,
 }: TeudaFieldsProps) {
   const { t } = useTranslation();
   const isOther = values.hechsher === options.hechsherOtherValue;
   const maxMegabytes = Math.round(options.maxImageBytes / (1024 * 1024));
+  const optionalLabel = (text: string, optional: boolean) => (optional ? `${text} (${t('forms.optionalMark')})` : text);
 
   return (
     <div className="space-y-4">
+      {showHechsher && (
       <div>
         <label htmlFor={`${idPrefix}-hechsher`} className={labelClassName}>
           {t('forms.hechsher')}
         </label>
         <select
           id={`${idPrefix}-hechsher`}
-          required={fieldsRequired}
+          required={hechsherRequired}
           disabled={disabled}
           aria-invalid={invalidHechsher}
           value={values.hechsher}
@@ -65,8 +77,9 @@ function TeudaFields({
           <option value={options.hechsherOtherValue}>{t('common.otherType')}</option>
         </select>
       </div>
+      )}
 
-      {isOther && (
+      {showHechsher && isOther && (
         <div>
           <label htmlFor={`${idPrefix}-hechsher-other`} className={labelClassName}>
             {t('forms.hechsherName')}
@@ -74,7 +87,7 @@ function TeudaFields({
           <input
             id={`${idPrefix}-hechsher-other`}
             type="text"
-            required={fieldsRequired}
+            required={hechsherRequired}
             maxLength={100}
             disabled={disabled}
             value={values.hechsherOther}
@@ -105,9 +118,9 @@ function TeudaFields({
         </select>
       </div>}
 
-      <div>
+      {showDetails && <div>
         <label htmlFor={`${idPrefix}-expiration`} className={labelClassName}>
-          {t('forms.expiration')}
+          {optionalLabel(t('forms.expiration'), markOptional && !fieldsRequired)}
         </label>
         <input
           id={`${idPrefix}-expiration`}
@@ -118,17 +131,17 @@ function TeudaFields({
           onChange={(event) => onChange('expirationDate', event.target.value)}
           className={inputClassName}
         />
-      </div>
+      </div>}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      {showDetails && <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor={`${idPrefix}-mashgiach-name`} className={labelClassName}>
-            {t('forms.mashgiachName')}
+            {optionalLabel(t('forms.mashgiachName'), !mashgiachRequired)}
           </label>
           <input
             id={`${idPrefix}-mashgiach-name`}
             type="text"
-            required={fieldsRequired}
+            required={mashgiachRequired}
             maxLength={100}
             disabled={disabled}
             value={values.mashgiachName}
@@ -138,12 +151,12 @@ function TeudaFields({
         </div>
         <div>
           <label htmlFor={`${idPrefix}-mashgiach-phone`} className={labelClassName}>
-            {t('forms.mashgiachPhone')}
+            {optionalLabel(t('forms.mashgiachPhone'), !mashgiachRequired)}
           </label>
           <input
             id={`${idPrefix}-mashgiach-phone`}
             type="tel"
-            required={fieldsRequired}
+            required={mashgiachRequired}
             maxLength={30}
             disabled={disabled}
             value={values.mashgiachPhone}
@@ -151,12 +164,12 @@ function TeudaFields({
             className={inputClassName}
           />
         </div>
-      </div>
+      </div>}
 
       {!hidePhoto && (
       <div>
         <label htmlFor={`${idPrefix}-photo`} className={labelClassName}>
-          {t('forms.photo')}
+          {optionalLabel(t('forms.photo'), markOptional && !fieldsRequired)}
         </label>
         <input
           id={`${idPrefix}-photo`}

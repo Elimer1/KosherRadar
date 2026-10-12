@@ -69,7 +69,16 @@ export const rejectPendingTeudotOfRestaurantRepo = async (restaurantId, reason) 
 };
 
 export const saveTeudaChangesRepo = async (teuda, changes) => {
-  teuda.set(changes);
+  const next = { ...changes };
+
+  for (const key of Object.keys(next)) {
+    if (next[key] === null) {
+      teuda.set(key, undefined);
+      delete next[key];
+    }
+  }
+
+  teuda.set(next);
   return teuda.save();
 };
 

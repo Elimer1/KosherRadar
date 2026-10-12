@@ -24,33 +24,46 @@ function TeudaFacts({ teuda, hechsherOptions }: TeudaFactsProps) {
       </div>
       <div>
         <dt className="inline text-gray-500">{t('desk.level')} </dt>
-        <dd className="inline font-medium text-gray-900">{getKashrutLevelLabel(teuda.kashrutLevel)}</dd>
+        <dd className="inline font-medium text-gray-900">
+          {teuda.kashrutLevel ? getKashrutLevelLabel(teuda.kashrutLevel) : t('desk.notSet')}
+        </dd>
       </div>
       <div>
         <dt className="inline text-gray-500">{t('desk.expires')} </dt>
-        <dd className="inline font-medium text-gray-900">{teuda.expirationDate}</dd>
+        <dd className="inline font-medium text-gray-900">{teuda.expirationDate || t('desk.notSet')}</dd>
       </div>
       <div>
         <dt className="inline text-gray-500">{t('desk.visibility')} </dt>
-        <dd className="inline font-medium text-gray-900">{getVisibilityLabel(teuda.visibility)}</dd>
+        <dd className="inline font-medium text-gray-900">
+          {teuda.visibility ? getVisibilityLabel(teuda.visibility) : t('desk.notSet')}
+        </dd>
       </div>
       <div>
         <dt className="inline text-gray-500">{t('desk.mashgiach')} </dt>
         <dd className="inline font-medium text-gray-900">
-          {teuda.mashgiachName}, {teuda.mashgiachPhone}
+          {teuda.mashgiachName || teuda.mashgiachPhone
+            ? [teuda.mashgiachName, teuda.mashgiachPhone].filter(Boolean).join(', ')
+            : t('desk.notSet')}
         </dd>
       </div>
       <div>
         <dt className="inline text-gray-500">{t('desk.photo')} </dt>
         <dd className="inline">
-          <a
-            href={teuda.photoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-green-700 underline"
-          >
-            {t('desk.openFull')}
-          </a>
+          {teuda.photoUrl ? (
+            <span className="inline-flex flex-col gap-2">
+              <a
+                href={teuda.photoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-green-700 underline"
+              >
+                {t('desk.openFull')}
+              </a>
+              <img src={teuda.photoUrl} alt={t('forms.photo')} className="max-h-48 max-w-full rounded border border-gray-200" />
+            </span>
+          ) : (
+            <span className="font-medium text-gray-900">{t('desk.notSet')}</span>
+          )}
         </dd>
       </div>
       {teuda.submittedBy && (

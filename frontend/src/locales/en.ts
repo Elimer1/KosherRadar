@@ -97,6 +97,7 @@ export const en = {
     clear: 'Clear location',
     unavailable: 'Place search is unavailable. You can use your current location, or browse without one.',
     noMatch: 'No matching place in Israel. Nothing was guessed, so this search stays without a location.',
+    ambiguous: 'More than one place matches. Choose a suggestion from the list.',
     noGeo: 'Your browser cannot share your location. You can still type a place or browse without one.',
     denied: 'Location permission was denied. You can still type a place or browse without one.',
     failed: 'Could not find your location. You can still type a place or browse without one.',
@@ -338,6 +339,15 @@ export const en = {
     typeIt: "Can't find the address? Type it in",
     missingName: 'Enter the restaurant name.',
     missingAddress: 'Enter the address.',
+    missingCity: 'Enter the city.',
+    optionalMark: 'optional',
+    kashrutClaim: 'Kashrut',
+    kashrutClaimBody:
+      'Choose the hechsher this place uses. You do not choose a kashrut level. An admin classifies a certificate before it can be shown as verified.',
+    notPlaced:
+      'The address was saved, but it was not precise enough to place on the map. An admin can correct the location.',
+    lookupUnavailableSaved: 'Address search is unavailable, so this place was saved without a map location.',
+    needEvidence: 'Add a photo or at least one certificate detail.',
     missingKashrut: 'Choose the kashrut.',
     missingKashrutName: 'Enter the name of the kashrut.',
     missingReport: 'Describe the problem.',
@@ -357,7 +367,7 @@ export const en = {
       'Share a restaurant or food business in Israel. An admin reviews every submission before it is shown. Only add facts you know; a certificate photo makes the listing verifiable.',
     certificateOptional: 'Kashrut certificate (optional)',
     certificateOptionalBody:
-      'Add the certificate details and a photo on this form. Leave every certificate field empty to send the restaurant without one.',
+      'A photo, an expiration date, or a mashgiach can be saved for review. You can leave these empty. Pending evidence is not shown as a verified certificate.',
     uploading: 'Uploading... {{progress}}%',
     uploadingPhoto: 'Uploading photo... {{progress}}%',
     sendRestaurant: 'Send restaurant for review',
@@ -511,6 +521,9 @@ export const en = {
     deleteCertificateFailed: 'Could not delete the certificate.',
     deleteCertificateConfirm: 'Delete this certificate for good? This cannot be undone.',
     cannotApproveYet: 'This restaurant is not approved yet, so this certificate cannot be approved.',
+    notSet: 'Not set yet',
+    classifyBeforeApprove:
+      'Set the kashrut level and expiration date, then you can approve. Until then this stays pending and is not shown as verified.',
     conflictShort:
       'Possible conflict: this restaurant already has a valid approved certificate with the same level. You can still approve.',
     approveFirstTitle: 'Approve the restaurant first',

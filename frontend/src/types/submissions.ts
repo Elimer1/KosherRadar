@@ -68,10 +68,13 @@ export const emptyRestaurantForm: RestaurantFormValues = {
   geoapifyPlaceId: '',
 };
 
+export type LocationStatus = 'selected' | 'matched' | 'ambiguous' | 'not_found' | 'unavailable';
+
 export interface RestaurantSubmitResult {
   restaurant: { id: string; status: string };
   teuda: { id: string; status: string } | null;
   possibleDuplicateCount: number;
+  locationStatus: LocationStatus;
 }
 
 export interface ReportFormValues {

@@ -154,8 +154,9 @@ export const updateTeudaByAdminService = async ({ teudaId, teudaData }) => {
     hechsherOther: teudaData.hechsherOther,
     kashrutLevel: teudaData.kashrutLevel,
     expirationDate: dateOnlyToDate(teudaData.expirationDate),
-    mashgiachName: teudaData.mashgiachName,
-    mashgiachPhone: teudaData.mashgiachPhone,
+    // null asks the repository to clear a mashgiach the admin left blank.
+    mashgiachName: teudaData.mashgiachName || null,
+    mashgiachPhone: teudaData.mashgiachPhone || null,
     adminNote: teudaData.adminNote,
   });
 
@@ -172,6 +173,13 @@ export const approveTeudaService = async ({ teudaId }) => {
 
   if (teuda.status === 'REJECTED') {
     throw appError('A rejected certificate cannot be approved. Ask the user to submit it again.', 409);
+  }
+
+  // NEW (Audit M1): approval is the verification step. Points are awarded only after this succeeds,
+  // and only once, by the existing award helper. Unclassified evidence stays pending.
+  // חדש (ביקורת M1): האישור הוא שלב האימות. ניקוד ניתן רק אחרי הצלחה, ופעם אחת, בעזרה הקיימת.
+  if (teuda.status === 'PENDING' && (!teuda.kashrutLevel || !teuda.expirationDate)) {
+    throw appError('Set the kashrut level and expiration date before approving this certificate.', 400);
   }
 
   const restaurant = await findRestaurantByIdRepo(teuda.restaurant);

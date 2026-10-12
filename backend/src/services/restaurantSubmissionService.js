@@ -8,45 +8,60 @@ import {
 import { createTeudaRepo } from '../repositories/teudaRepository.js';
 import { findPossibleDuplicatesService } from './duplicateService.js';
 import { deleteImageService, uploadTeudaImageService } from './imageUploadService.js';
-import { buildTeudaRecord, validateTeudaSubmission } from './teudaSubmissionService.js';
+import {
+  buildTeudaRecord,
+  hasCertificateEvidence,
+  validateTeudaSubmission,
+  withoutUserKashrutLevel,
+} from './teudaSubmissionService.js';
 import { geocodeAddressService } from './placesService.js';
 
-// A typed address has no pin yet. Use Geoapify when it can match one. A miss stays without coordinates.
-const withGeocodedLocation = async (restaurantData) => {
+// NEW (Audit M1): coordinates already chosen by the user are kept. A typed address is geocoded only when
+// the match is unambiguous. Anything else is saved with no pin and a status the form can explain.
+// חדש (ביקורת M1): קואורדינטות שהמשתמש בחר נשמרות. כתובת שהוקלדה ממוקמת רק כשההתאמה חד-משמעית.
+const withGeocodedLocation = async (restaurantData, lang) => {
   const hasLatitude = restaurantData.latitude !== undefined;
   const hasLongitude = restaurantData.longitude !== undefined;
 
   if (hasLatitude && hasLongitude) {
-    return restaurantData;
+    return { restaurantData, locationStatus: 'selected' };
   }
 
   const located = await geocodeAddressService({
     address: restaurantData.address,
     city: restaurantData.city,
+    lang,
   });
 
-  if (!located) {
-    return restaurantData;
+  if (located.status !== 'matched') {
+    return { restaurantData, locationStatus: located.status };
   }
 
   return {
-    ...restaurantData,
-    latitude: located.latitude,
-    longitude: located.longitude,
-    geoapifyPlaceId: restaurantData.geoapifyPlaceId || located.geoapifyPlaceId,
+    restaurantData: {
+      ...restaurantData,
+      latitude: located.latitude,
+      longitude: located.longitude,
+      geoapifyPlaceId: restaurantData.geoapifyPlaceId || located.geoapifyPlaceId,
+    },
+    locationStatus: 'matched',
   };
 };
 
 // A signed-in user proposes a new restaurant, optionally with its first certificate.
 // Everything starts as PENDING: only an admin can approve, and the user never chooses status or points.
-export const submitRestaurantService = async ({ restaurantData, teudaData, file, user }) => {
-  if (teudaData) {
-    validateTeudaSubmission(teudaData, file);
-  } else if (file) {
+export const submitRestaurantService = async ({ restaurantData, teudaData, file, user, lang }) => {
+  const evidence = hasCertificateEvidence(teudaData, file) ? withoutUserKashrutLevel(teudaData) : null;
+
+  if (file && !evidence?.hechsher) {
     throw appError('A photo can only be sent together with certificate details', 400);
   }
 
-  const locatedRestaurant = await withGeocodedLocation(restaurantData);
+  if (evidence) {
+    validateTeudaSubmission(evidence, file);
+  }
+
+  const { restaurantData: locatedRestaurant, locationStatus } = await withGeocodedLocation(restaurantData, lang);
 
   const alreadySent = await findPendingRestaurantBySubmitterRepo({
     submittedBy: user._id,
@@ -61,7 +76,7 @@ export const submitRestaurantService = async ({ restaurantData, teudaData, file,
   // Duplicates are only recorded for the admin. They never stop the submission.
   const possibleDuplicates = await findPossibleDuplicatesService(locatedRestaurant);
 
-  const image = teudaData ? await uploadTeudaImageService(file) : null;
+  const image = evidence && file ? await uploadTeudaImageService(file) : null;
 
   let restaurant;
 
@@ -79,18 +94,19 @@ export const submitRestaurantService = async ({ restaurantData, teudaData, file,
     throw error;
   }
 
-  if (!teudaData) {
+  if (!evidence) {
     return {
       restaurant: { id: String(restaurant._id), status: restaurant.status },
       teuda: null,
       possibleDuplicateCount: possibleDuplicates.length,
+      locationStatus,
     };
   }
 
   try {
     const teuda = await createTeudaRepo(
       buildTeudaRecord({
-        teudaData,
+        teudaData: evidence,
         image,
         restaurantId: restaurant._id,
         userId: user._id,
@@ -102,6 +118,7 @@ export const submitRestaurantService = async ({ restaurantData, teudaData, file,
       restaurant: { id: String(restaurant._id), status: restaurant.status },
       teuda: { id: String(teuda._id), status: teuda.status },
       possibleDuplicateCount: possibleDuplicates.length,
+      locationStatus,
     };
   } catch (error) {
     // Do not leave a restaurant behind that the user believes was sent together with a certificate.
@@ -112,7 +129,9 @@ export const submitRestaurantService = async ({ restaurantData, teudaData, file,
       console.error('Could not delete orphaned restaurant:', restaurant._id, cleanupError.message);
     }
 
-    await deleteImageService(image.cloudinaryPublicId);
+    if (image) {
+      await deleteImageService(image.cloudinaryPublicId);
+    }
     throw error;
   }
 };

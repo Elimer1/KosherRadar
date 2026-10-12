@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
-import { getSubmissionContext, submitTeuda } from '../api/restaurantApi';
+import { getSubmissionContext, hasCertificateEvidence, submitTeuda } from '../api/restaurantApi';
 import { getErrorMessage } from '../api/errors';
 import FormAlert from '../components/FormAlert';
 import TeudaFields from '../components/TeudaFields';
@@ -49,8 +49,20 @@ function SubmitTeudaPage() {
     event.preventDefault();
     setError('');
 
-    if (!photo) {
-      setError(t('forms.needPhoto'));
+    const otherMissing = values.hechsher === options?.hechsherOtherValue && !values.hechsherOther.trim();
+
+    if (!values.hechsher || otherMissing) {
+      setError(otherMissing ? t('forms.missingKashrutName') : t('forms.missingKashrut'));
+      return;
+    }
+
+    if (photoError) {
+      setError(photoError);
+      return;
+    }
+
+    if (!hasCertificateEvidence(values, photo)) {
+      setError(t('forms.needEvidence'));
       return;
     }
 
@@ -107,6 +119,10 @@ function SubmitTeudaPage() {
           photo={photo}
           photoError={photoError}
           disabled={loading}
+          fieldsRequired={false}
+          showLevel={false}
+          hechsherRequired
+          markOptional
           onChange={handleFieldChange}
           onPhotoChange={handlePhotoChange}
         />

@@ -1,7 +1,8 @@
 import { autocompleteAddressesService, geocodePlaceService } from '../services/placesService.js';
 
 export const autocompleteAddressesController = async (req, res) => {
-  const result = await autocompleteAddressesService(req.validatedQuery.text);
+  const { text, lang } = req.validatedQuery;
+  const result = await autocompleteAddressesService(text, lang);
   res.status(200).json(result);
 };
 

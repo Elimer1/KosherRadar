@@ -179,6 +179,11 @@ export const getPublicTeudot = (teudot, today = todayInIsrael()) => {
 // This is only a warning for the admin (spec 5.8): it never blocks an approval.
 // חדש (אבן דרך 3): תעודות מאושרות ותקפות באותה רמת כשרות כמו התעודה המוצעת. אזהרה בלבד, לא חוסמת אישור.
 export const findConflictingTeudot = (proposed, approvedTeudot, today = todayInIsrael()) => {
+  // Unclassified pending evidence has no level or date yet, so it cannot conflict with a verified certificate.
+  if (!proposed.kashrutLevel || !proposed.expirationDate) {
+    return [];
+  }
+
   // A certificate that is already expired cannot conflict with anything.
   if (getTeudaVisibility(proposed.expirationDate, today) !== 'VALID') {
     return [];

@@ -14,7 +14,6 @@ import { authMiddleware } from '../middleware/authMiddleware.js';
 import { parseJsonFields } from '../middleware/parseJsonFields.js';
 import {
   submissionRateLimiter,
-  uploadRateLimiter,
   optionalUploadRateLimiter,
   searchRateLimiter,
 } from '../middleware/rateLimiters.js';
@@ -73,8 +72,8 @@ router.post(
   authMiddleware,
   validateObjectIdParam('restaurantId'),
   submissionRateLimiter,
-  uploadRateLimiter,
   uploadPhotoMiddleware,
+  optionalUploadRateLimiter,
   parseJsonFields(['teuda']),
   validateBody(submitTeudaSchema),
   submitTeudaController

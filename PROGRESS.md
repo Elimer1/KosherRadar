@@ -348,3 +348,102 @@ Section 16 has no Milestone 8. Do not start new product work. The book is waitin
 ## Continuation prompt (copy into a new Cursor Agent conversation)
 
 > Read `PROJECT_SPEC.md`, `PROGRESS.md`, `REQUIREMENTS_CHECKLIST.md`, and `PROJECT_BOOK.md`. Milestones 1 to 7 are done. Do not modify `PROJECT_SPEC.md` without approval, and do not start a new feature. If asked to correct the Hebrew book, change only `PROJECT_BOOK.md` so it still matches the code, and do not claim Atlas Search, Cloudinary, Resend or Geoapify were verified. A local MongoDB was used in Milestone 6; that is not Atlas.
+
+## Code audit (12 October 2026)
+
+Read-only audit of the application. No application code, tests, schemas, dependencies, configuration, or database data were changed. Live Cloudinary, Resend, Geoapify, and Atlas were not called. `.env` files were not read. The historical milestones above stay as they were. This section is the current position for the improvement program.
+
+Standing rules for later sessions are in `AGENTS.md`. Issue status is only in `FIX_TRACKER.md`. Evidence is in `AUDIT_FINDINGS.md`. Counts below are copied from the tracker at the end of the audit (36 issues: 22 `NOT STARTED`, 8 `ALREADY WORKING`, 5 `BLOCKED`, 1 `DEFERRED`, 0 `VERIFIED`).
+
+### Current position
+
+- **Current milestone:** audit complete. Implementation has not started. Milestone 1 is next only after the user reviews the findings and answers the M1-001 question.
+- **Current issue:** none in progress.
+- **Last verified fix:** none from this audit. Eight investigations are `ALREADY WORKING` in the tracker (M2-001, M3-001, M3-002, M4-002, M7-001, M7-002, M7-003, M8-001). That means the suspected gap was not in the code. It is not a new test run.
+- **Next outstanding issue:** M1-001, after approval.
+
+### What the audit found
+
+Four confirmed defects:
+
+- **M1-001.** The new-restaurant form hides kashrut level and then sends the certificate and photo only when that level is set. It never is, so the photo and the other certificate fields are dropped and the user still sees success. The hechsher is saved as an unverified claim. The add-certificate page still asks for a level and still uploads.
+- **M2-002.** Applying a proposed report correction writes the teuda or claim before the report row is claimed. A lost race does not roll the data write back.
+- **M4-001.** Password reset does not invalidate existing JWTs. They last until `JWT_EXPIRES_IN` (default 24h).
+- **M5-002.** The reset token is consumed before the new password is saved. A failed password write burns the link.
+
+The old "approve from the restaurant screen does nothing" report does not match the current code: both approve buttons call `approveRestaurant`, and the detail button is outside the edit form (M2-001). Saving that edit can still be blocked when a user left food type or categories empty (M2-003). Public kashrut status is still derived only in `kashrutStatusService.js` (M3-001). Do not rename verified / unverified / expired / unknown without approval (M3-002).
+
+### Blockers and decisions
+
+Do not start Milestone 1 until the user chooses how M1-001 should behave: store a pending certificate with no kashrut level (additive schema, no backfill expected), or refuse the photo with a visible error. Do not invent a hechsher-to-level map.
+
+Other questions are listed in `AUDIT_FINDINGS.md`: city optional (current code says yes), points for "already corrected" without a field change, admin history, Hebrew native-speaker review, which isolated Atlas / Geoapify / Cloudinary / Resend resources may be used, whether to add Playwright, and who backs up the database. `helmet`, `mongodb-memory-server`, and Playwright are not approved. HttpOnly cookies stay deferred (M4-004).
+
+### Verification commands
+
+Not run in this audit. From the package scripts: `cd backend; npm test`. `cd frontend; npm test`, `npm run lint`, `npm run typecheck`, `npm run build`. The backend has no lint, typecheck, or build script. There is no end-to-end script. Full table: `AUDIT_FINDINGS.md`, "Verification commands".
+
+### Handoff for the next agent
+
+Read `AGENTS.md`, this file, and `FIX_TRACKER.md`. Check Git status. Application source should match this audit; only `AGENTS.md`, `FIX_TRACKER.md`, `AUDIT_FINDINGS.md`, and this progress section were added for the audit.
+
+Exact next task after the user says to start: Milestone 1 only, beginning with M1-001 using the approved storage rule. Then M1-002 and M1-003. Stop at the end of Milestone 1. Do not call live Geoapify, Cloudinary, Resend, or Atlas. Do not install packages. Hebrew UI text that you add must be flagged for native-speaker review.
+
+### Next recommended action
+
+The acceleration on 12 October 2026 replaced "wait, then do one milestone" with the MUST FIX NOW list in `FIX_TRACKER.md`. M1-001, M1-002, and M1-003 are verified. Continue with M2-002.
+
+## Acceleration (12 October 2026)
+
+The user asked to finish important fixes and to leave low-impact work, cosmetic work, end-to-end infrastructure, and production hardening for later. `FIX_TRACKER.md` now has MUST FIX NOW and LATER. Issue IDs were kept.
+
+Decisions applied without another question:
+
+- Partial certificate evidence is stored as PENDING. The user does not choose a kashrut level. An admin sets the level and expiration before approval. Until then it is not public and points are not awarded. Approval still uses the existing +3 / +2 helper, once.
+- City is required on a user submission and is filled from a picked address when that address includes a city.
+- The user form no longer asks for food type or categories. Those fields stay on the admin form and in the API.
+- A typed address is pinned only when Geoapify returns one precise hit (confidence at least 0.8 and match type `full_match`, `inner_part`, or `match_by_building`) or one precise hit at least 0.2 ahead of the next. Otherwise the text is saved with no coordinates. A picked suggestion is trusted. No live Geoapify call was made.
+- `CORRECTION_ALREADY_MADE` still awards +1. That points rule was not changed.
+
+Hebrew strings added or edited in this pass need native-speaker review (M8-004). The form was not opened in a browser.
+
+Verification for M1-001, M1-002, M1-003, M6-003, and M8-002:
+
+| Command | Result |
+| --- | --- |
+| `cd backend; npm test` | exit 0, 37 files, 477 tests passed |
+| `cd frontend; npm test` | exit 0, 14 files, 90 tests passed |
+| `cd frontend; npm run typecheck` | exit 0 |
+| `cd frontend; npm run lint` | exit 0 |
+| `cd frontend; npm run build` | exit 0 (bundle about 722 kB; Vite warns above 500 kB) |
+
+## NEXT AGENT ONBOARDING
+
+**Current position**
+
+- Priority band: MUST FIX NOW
+- Last verified fixes: M1-001, M1-002, M1-003, M6-003, M8-002
+- Next issue: M2-002, then M2-003, M4-001, and the token-order bug in M5-002
+- Do not start LATER issues
+
+**Completed in this session**
+
+- Pending certificate photos and partial details are stored. The user cannot set a kashrut level. Admins must set the level and expiration before approve. Pending evidence is not public and does not award points.
+- User restaurant form: required name, address, city, hechsher. Optional phone, website, photo, expiration, mashgiach. Food type and categories removed from the user form only.
+- Geocoding no longer accepts the first hit. City is required and filled from a selected address when possible.
+- Files: `AGENTS.md`, `FIX_TRACKER.md`, `PROGRESS.md`, teuda model and schemas, submission services, places service, kashrut public check, admin teuda approve/serializer, restaurant and teuda forms, locales `en.ts` and `he.ts`, and the tests named in the tracker.
+
+**Tests:** backend 477 passed, frontend 90 passed, typecheck, lint, and build passed. Browser not used. Live Geoapify, Cloudinary, Resend, and Atlas were not called.
+
+**Do not repeat**
+
+- Do not require a kashrut level from users.
+- Do not display pending evidence as verified.
+- Do not accept the first Geoapify hit.
+- Do not change point amounts.
+- Do not change public status labels.
+- Do not install packages.
+
+**Exact next task**
+
+M2-002 in `backend/src/services/adminReportService.js`. Claim the PENDING report before applying the correction, and reopen it if the write fails. Keep +1 for `CORRECTION_ALREADY_MADE`. Add a test where `resolvePendingReportRepo` returns null and the teuda is not written. Then M2-003: admin edit must save a restaurant with no food type or categories (`AdminRestaurantPage.tsx` and `adminEditRestaurantSchema` only; keep admin create strict). Then M4-001: additive `tokenVersion` on `User`, default 0, included in new JWTs; a missing `tv` claim means 0 so deploy does not log everyone out; password reset increments it in the same update as the hash. Then M5-002: if the password write fails after the reset token is consumed, release the token. Do not add a transaction library.

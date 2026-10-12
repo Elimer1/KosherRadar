@@ -71,6 +71,16 @@ describe('buildKashrutSummary: status', () => {
     expect(summary.items[0].kashrutLevel).toBe('RABBANUT');
   });
 
+  it('ignores an approved certificate that still has no kashrut level', () => {
+    const summary = buildKashrutSummary(
+      restaurant(),
+      [teuda('2027-01-01', { kashrutLevel: undefined })],
+      TODAY
+    );
+
+    expect(summary.status).toBe('UNKNOWN');
+  });
+
   it('ignores certificates that are not approved', () => {
     const summary = buildKashrutSummary(
       restaurant(),

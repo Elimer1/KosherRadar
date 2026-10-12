@@ -34,7 +34,9 @@ function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: Admin
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  const title = `${getHechsherLabel(teuda.hechsher, teuda.hechsherOther, options.hechsherOptions)} (${teuda.expirationDate})`;
+  const hechsherTitle = getHechsherLabel(teuda.hechsher, teuda.hechsherOther, options.hechsherOptions);
+  const title = teuda.expirationDate ? `${hechsherTitle} (${teuda.expirationDate})` : hechsherTitle;
+  const needsClassification = teuda.status === 'PENDING' && (!teuda.kashrutLevel || !teuda.expirationDate);
 
   const run = async (action: () => Promise<Notice[]>, fallback: string) => {
     setBusy(true);
@@ -118,6 +120,7 @@ function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: Admin
             photoError=""
             disabled={busy}
             hidePhoto
+            mashgiachRequired={false}
             onChange={(field, value) => setValues((current) => ({ ...current, [field]: value }))}
             onPhotoChange={() => undefined}
           />
@@ -161,6 +164,10 @@ function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: Admin
             <p className="text-sm text-gray-700">{t('desk.rejectionReason', { reason: teuda.rejectionReason })}</p>
           )}
 
+          {needsClassification && (
+            <FormAlert kind="warning" message={t('desk.classifyBeforeApprove')} />
+          )}
+
           {teuda.status === 'PENDING' && !restaurantApproved && (
             <FormAlert
               kind="warning"
@@ -188,7 +195,7 @@ function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: Admin
                 <>
                   <button
                     type="button"
-                    disabled={busy || !restaurantApproved}
+                    disabled={busy || !restaurantApproved || needsClassification}
                     onClick={handleApprove}
                     title={restaurantApproved ? undefined : t('desk.approveFirstTitle')}
                     className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"

@@ -27,8 +27,14 @@ export const getTeudaVisibility = (expirationDate, today = todayInIsrael()) => {
   return 'ADMIN_ONLY';
 };
 
+// NEW (Audit M1): pending evidence, and an approved row that still has no level or date, stay off the public page.
+// חדש (ביקורת M1): ראיה ממתינה, וגם שורה מאושרת בלי רמה או תאריך, לא מוצגות לציבור.
 export const isTeudaPublic = (teuda, today = todayInIsrael()) => {
-  return teuda.status === 'APPROVED' && getTeudaVisibility(teuda.expirationDate, today) !== 'ADMIN_ONLY';
+  if (teuda.status !== 'APPROVED' || !teuda.kashrutLevel || !teuda.expirationDate) {
+    return false;
+  }
+
+  return getTeudaVisibility(teuda.expirationDate, today) !== 'ADMIN_ONLY';
 };
 
 // NEW (Milestone 3): admins may enter certificates that already expired (old or recently expired),

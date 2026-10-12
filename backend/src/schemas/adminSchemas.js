@@ -44,18 +44,28 @@ export const restaurantExtrasSchema = z
   })
   .default({});
 
-export const adminTeudaFieldsSchema = z
-  .object({
-    hechsher: z.enum(HECHSHER_VALUES, 'Choose a hechsher'),
-    hechsherOther: z.string().trim().min(1).max(100).optional(),
-    kashrutLevel: z.enum(KASHRUT_LEVELS, 'Choose a kashrut level'),
-    expirationDate: dateOnlyField,
-    mashgiachName: z.string().trim().min(1, 'Mashgiach name is required').max(100),
-    mashgiachPhone: phoneField,
-    adminNote: optionalText(1000),
-  })
-  .superRefine(requireOtherTextWhenOther('hechsher', 'hechsherOther'))
-  .transform(dropOtherTextUnlessOther('hechsher', 'hechsherOther'));
+// NEW (Audit M1): creating an approved certificate still needs a full record. Editing pending evidence
+// can leave the mashgiach blank, because the user may not have known it. The level and the date stay required.
+// חדש (ביקורת M1): יצירת תעודה מאושרת עדיין דורשת רשומה מלאה. בעריכת ראיה ממתינה המשגיח יכול להישאר ריק.
+const adminTeudaShape = (mashgiachRequired) =>
+  z
+    .object({
+      hechsher: z.enum(HECHSHER_VALUES, 'Choose a hechsher'),
+      hechsherOther: z.string().trim().min(1).max(100).optional(),
+      kashrutLevel: z.enum(KASHRUT_LEVELS, 'Choose a kashrut level'),
+      expirationDate: dateOnlyField,
+      mashgiachName: mashgiachRequired
+        ? z.string().trim().min(1, 'Mashgiach name is required').max(100)
+        : optionalText(100),
+      mashgiachPhone: mashgiachRequired ? phoneField : z.preprocess(emptyToUndefined, phoneField.optional()),
+      adminNote: optionalText(1000),
+    })
+    .superRefine(requireOtherTextWhenOther('hechsher', 'hechsherOther'))
+    .transform(dropOtherTextUnlessOther('hechsher', 'hechsherOther'));
+
+export const adminTeudaFieldsSchema = adminTeudaShape(true);
+
+export const adminEditTeudaFieldsSchema = adminTeudaShape(false);
 
 // NEW (update): the admin form still requires food type and a category. The public submit form does not.
 // חדש (עדכון): טופס המנהל עדיין דורש סוג אוכל וקטגוריה. טופס ההגשה הציבורי לא.
@@ -99,7 +109,7 @@ export const adminCreateTeudaSchema = z.object({
 });
 
 export const adminEditTeudaSchema = z.object({
-  teuda: adminTeudaFieldsSchema,
+  teuda: adminEditTeudaFieldsSchema,
 });
 
 export const resolveReportSchema = z.object({

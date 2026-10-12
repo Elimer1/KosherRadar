@@ -91,7 +91,7 @@ function LocationField({ filters, onChange, lang }: LocationFieldProps) {
     }
 
     if (!result.place) {
-      setNote(t('location.noMatch'));
+      setNote(t(result.reason === 'ambiguous' ? 'location.ambiguous' : 'location.noMatch'));
       onChange({ ...filters, location: null, radiusKm: null });
       setSelectedLabel('');
       return;

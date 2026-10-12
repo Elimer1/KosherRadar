@@ -79,6 +79,33 @@ describe('submitTeudaService', () => {
       cloudinaryPublicId: 'kosherradar/teudot/photo',
     });
     expect(saved.expirationDate).toEqual(dateOnlyToDate('2026-12-31'));
+    expect(saved.kashrutLevel).toBeUndefined();
+  });
+
+  it('stores a photo without a level or an expiration date', async () => {
+    await submitTeudaService({
+      restaurantId: 'rest-1',
+      teudaData: { hechsher: 'BADATZ_BEIT_YOSEF', kashrutLevel: 'RABBANUT' },
+      file,
+      user,
+    });
+
+    const saved = createTeudaRepo.mock.calls[0][0];
+    expect(saved.photoUrl).toBe('https://res.cloudinary.com/photo.jpg');
+    expect(saved.kashrutLevel).toBeUndefined();
+    expect(saved.expirationDate).toBeUndefined();
+    expect(saved.status).toBe('PENDING');
+  });
+
+  it('rejects a certificate that has no photo and no details', async () => {
+    await expect(
+      submitTeudaService({
+        restaurantId: 'rest-1',
+        teudaData: { hechsher: 'BADATZ_BEIT_YOSEF' },
+        user,
+      })
+    ).rejects.toMatchObject({ statusCode: 400 });
+    expect(createTeudaRepo).not.toHaveBeenCalled();
   });
 
   it('does not touch existing approved teudot (only creates a new pending record)', async () => {

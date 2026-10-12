@@ -37,9 +37,9 @@ export const teudaToFormValues = (teuda: AdminTeuda): TeudaFormValues => {
   return {
     hechsher: teuda.hechsher,
     hechsherOther: teuda.hechsherOther || '',
-    kashrutLevel: teuda.kashrutLevel,
-    expirationDate: teuda.expirationDate,
-    mashgiachName: teuda.mashgiachName,
-    mashgiachPhone: teuda.mashgiachPhone,
+    kashrutLevel: teuda.kashrutLevel || '',
+    expirationDate: teuda.expirationDate || '',
+    mashgiachName: teuda.mashgiachName || '',
+    mashgiachPhone: teuda.mashgiachPhone || '',
   };
 };

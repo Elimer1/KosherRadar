@@ -120,6 +120,14 @@ afterEach(() => {
 });
 
 describe('approveTeudaService', () => {
+  it('refuses to approve evidence that still has no kashrut level, and awards no points', async () => {
+    findTeudaByIdRepo.mockResolvedValue(teuda({ kashrutLevel: undefined, expirationDate: undefined }));
+
+    await expect(approveTeudaService({ teudaId: 'teuda-1' })).rejects.toMatchObject({ statusCode: 400 });
+    expect(approvePendingTeudaRepo).not.toHaveBeenCalled();
+    expect(awardPointsOnceRepo).not.toHaveBeenCalled();
+  });
+
   it('cannot approve a certificate while its restaurant is not approved', async () => {
     findTeudaByIdRepo.mockResolvedValue(teuda());
     findRestaurantByIdRepo.mockResolvedValue({ ...approvedRestaurant, status: 'PENDING' });

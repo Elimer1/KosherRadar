@@ -20,10 +20,16 @@ describe('submitRestaurantSchema', () => {
     expect(result.teuda).toBeUndefined();
   });
 
-  it('allows a blank city, food type and categories, and still requires a hechsher', () => {
+  it('requires a city, allows a blank food type and categories, and still requires a hechsher', () => {
+    expect(() =>
+      parse({
+        ...validRestaurant(),
+        city: '',
+      })
+    ).toThrow(/Enter the city/);
+
     const result = parse({
       ...validRestaurant(),
-      city: '',
       foodType: '',
       categories: [],
       latitude: '',
@@ -33,7 +39,7 @@ describe('submitRestaurantSchema', () => {
       claimedKashrutLevel: '',
     });
 
-    expect(result.restaurant.city).toBeUndefined();
+    expect(result.restaurant.city).toBe('Jerusalem');
     expect(result.restaurant.foodType).toBeUndefined();
     expect(result.restaurant.categories).toEqual([]);
     expect(result.restaurant.claimedHechsher).toBe('LOCAL_RABBANUT');
@@ -113,16 +119,20 @@ describe('submitRestaurantSchema', () => {
     expect(result.restaurant.possibleDuplicates).toBeUndefined();
   });
 
-  it('validates a nested teuda with the same rules as the standalone certificate form', () => {
+  it('accepts partial certificate evidence and drops a user-supplied kashrut level', () => {
     const teuda = {
       hechsher: 'BADATZ_BEIT_YOSEF',
       kashrutLevel: 'MEHADRIN',
-      expirationDate: '2026-12-31',
-      mashgiachName: 'Moshe',
-      mashgiachPhone: '050-1234567',
+      expirationDate: '',
+      mashgiachName: '',
+      mashgiachPhone: '',
     };
 
-    expect(parse(validRestaurant(), teuda).teuda.kashrutLevel).toBe('MEHADRIN');
-    expect(() => parse(validRestaurant(), { ...teuda, kashrutLevel: 'NONE' })).toThrow();
+    const parsed = parse(validRestaurant(), teuda);
+
+    expect(parsed.teuda.hechsher).toBe('BADATZ_BEIT_YOSEF');
+    expect(parsed.teuda.kashrutLevel).toBeUndefined();
+    expect(parsed.teuda.expirationDate).toBeUndefined();
+    expect(() => parse(validRestaurant(), { hechsher: 'BADATZ_BEIT_YOSEF', expirationDate: 'not-a-date' })).toThrow();
   });
 });
