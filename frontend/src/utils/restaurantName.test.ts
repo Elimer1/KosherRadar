@@ -29,6 +29,14 @@ describe('restaurantDisplayNames', () => {
     });
   });
 
+  it('keeps the submitted name in Hebrew when no Hebrew name was stored', async () => {
+    await i18n.changeLanguage('he');
+    expect(restaurantDisplayNames({ name: 'Claimed Grill', nameHe: null, nameEn: null })).toEqual({
+      primary: 'Claimed Grill',
+      secondary: [],
+    });
+  });
+
   it('uses a stored English name as the heading and does not invent the other language', async () => {
     await i18n.changeLanguage('en');
     expect(
