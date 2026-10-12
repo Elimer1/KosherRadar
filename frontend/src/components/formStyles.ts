@@ -33,3 +33,18 @@ export const dangerButtonClassName =
 // Appearance only. Search state and chip removal stay with feature/ux-functionality.
 export const filterChipClassName =
   'inline-flex min-h-11 items-center gap-1.5 rounded-full border border-soft bg-mist ps-3 pe-2.5 text-sm text-ink';
+
+export const metaChipClassName =
+  'inline-flex min-h-7 max-w-full items-center rounded-full border border-soft bg-mist px-2.5 py-1 text-xs font-medium text-ink';
+
+export const quietChipClassName =
+  'inline-flex min-h-7 max-w-full items-center rounded-full border border-soft bg-white px-2.5 py-1 text-xs font-medium text-muted';
+
+export const choiceClassName =
+  'kr-choice flex min-h-11 items-center gap-3 rounded-lg px-2 py-1 text-sm text-ink';
+
+export const noticeClassName = 'rounded-xl border px-3 py-2 text-sm';
+
+export const warningNoticeClassName = `${noticeClassName} border-amber-300 bg-amber-50 text-amber-ink`;
+
+export const errorNoticeClassName = `${noticeClassName} border-red-200 bg-red-50 text-red-900`;
