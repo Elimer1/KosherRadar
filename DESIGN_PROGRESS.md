@@ -61,7 +61,7 @@ Shared classes live in `frontend/src/components/formStyles.ts`: inputs, labels, 
 - Design tokens and focus, selection, map pin, and cluster colors in `frontend/src/index.css`. Leaflet stays left-to-right.
 - Header: one language control on the logo row, with a visible `EN` / `עב` label for the language it switches to. The accessible name is still `nav.switchLanguage`. Page width stays `max-w-5xl` so the untouched homepage grid does not reflow.
 - Footer uses the forest bar and the existing disclaimer.
-- Login, register, forgot-password, reset-password, and the missing page use the same card, title, and link treatment.
+- Login, register, forgot-password, reset-password, and the missing page use the same card, title, and link treatment. Forgot-password and reset-password were given that card in a follow-up after the first visual pass.
 - Account shows the existing points sentences (`account.pointsHint`, `points3`, `points2`, `points1`, `pointsPrivate`).
 - Submission rows use the same card surface. A resolved report shows `forms.correctionApplied` when points were awarded and `forms.closedWithoutChange` otherwise. That reads the existing `points` field. It does not add a restaurant link.
 - Restaurant submission explains that food type is added during review (`forms.foodReviewed`). Fields, payloads, and the rule that users do not choose a kashrut level are unchanged.
@@ -124,7 +124,7 @@ Dev server: `http://127.0.0.1:5176/` from this worktree. The API was not reachab
 
 Inspected:
 
-- English login at a desktop width: mark, visible `עב` language control, card, password reveal, forest primary button, footer contrast.
+- English login and forgot-password at a desktop width: mark, visible `עב` language control, card, forest primary button, footer contrast. Login also shows the password reveal.
 - Hebrew login at about 390px: `dir=rtl`, logo on the right, `EN` on the logo row, two header rows, form and footer.
 - Hebrew register: heading, password hint, confirm field.
 - English homepage after switching language back: existing search, filters, list/map controls still present. The error sentence stayed in Hebrew until a new request because that string was already stored. That behavior was not changed.

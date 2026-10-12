@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 import { requestPasswordReset } from '../api/authApi';
 import { getErrorMessage } from '../api/errors';
 import FormAlert from '../components/FormAlert';
-import { inputClassName, labelClassName, primaryButtonClassName } from '../components/formStyles';
+import { inputClassName, labelClassName, panelClassName, primaryButtonClassName } from '../components/formStyles';
 
 function ForgotPasswordPage() {
   const { t } = useTranslation();
@@ -33,7 +33,7 @@ function ForgotPasswordPage() {
 
   if (message) {
     return (
-      <div className="mx-auto max-w-md space-y-4">
+      <div className={`mx-auto max-w-md space-y-4 p-6 sm:p-8 ${panelClassName}`}>
         <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('auth.checkEmail')}</h1>
         <FormAlert kind="success" message={message} />
         <p className="text-sm text-muted">{t('auth.linkOnce')}</p>
@@ -45,7 +45,7 @@ function ForgotPasswordPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md">
+    <div className={`mx-auto max-w-md p-6 sm:p-8 ${panelClassName}`}>
       <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('auth.forgotTitle')}</h1>
       <p className="mt-2 text-sm text-muted">{t('auth.forgotBody')}</p>
 
