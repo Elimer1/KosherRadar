@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { env } from '../src/config/env.js';
-import { autocompleteAddressesService, geocodeAddressService } from '../src/services/placesService.js';
+import { autocompleteAddressesService, geocodeAddressService, geocodePlaceService } from '../src/services/placesService.js';
+import { publicPlaceQuerySchema } from '../src/schemas/placesSchemas.js';
 
 const jerusalem = {
   formatted: 'King George 1, Jerusalem, Israel',
@@ -78,5 +79,51 @@ describe('placesService', () => {
 
     expect(located).toEqual({ latitude: 31.78, longitude: 35.22, geoapifyPlaceId: 'place-1' });
     expect(missed).toBeNull();
+  });
+
+  // NEW (Milestone 5): the public search asks Geoapify for a language and never invents a miss.
+  // חדש (אבן דרך 5): החיפוש הציבורי מבקש שפה מ-Geoapify, ולא ממציא תוצאה כשאין התאמה.
+  it('asks Geoapify for Hebrew names and returns one place or null', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ results: [jerusalem] }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ results: [] }) });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const found = await geocodePlaceService('ירושלים', 'he');
+    const missed = await geocodePlaceService('nowhere', 'he');
+
+    expect(String(fetchMock.mock.calls[0][0])).toContain('lang=he');
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/geocode/search');
+    expect(found).toEqual({
+      available: true,
+      place: {
+        label: 'King George 1, Jerusalem, Israel',
+        address: 'King George 1',
+        city: 'Jerusalem',
+        latitude: 31.78,
+        longitude: 35.22,
+        placeId: 'place-1',
+      },
+    });
+    expect(missed).toEqual({ available: true, place: null });
+  });
+
+  it('does not geocode a search place when the key is missing', async () => {
+    env.geoapifyApiKey = '';
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    expect(await geocodePlaceService('Jerusalem', 'en')).toEqual({ available: false, place: null });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('publicPlaceQuerySchema', () => {
+  it('defaults the language to English and rejects a short query', () => {
+    expect(publicPlaceQuerySchema.parse({ text: '  Tel Aviv  ' })).toEqual({ text: 'Tel Aviv', lang: 'en' });
+    expect(publicPlaceQuerySchema.parse({ text: 'חיפה', lang: 'he' }).lang).toBe('he');
+    expect(() => publicPlaceQuerySchema.parse({ text: 'a' })).toThrow();
+    expect(() => publicPlaceQuerySchema.parse({ text: 'Haifa', lang: 'fr' })).toThrow();
   });
 });

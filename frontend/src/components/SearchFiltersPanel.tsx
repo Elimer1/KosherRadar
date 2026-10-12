@@ -3,7 +3,6 @@
 // (1 / 5 / 10 / 25 / 50 km), which only exists once a search location was chosen.
 // The filters only collect choices; the server filters and sorts.
 // חדש (אבן דרך 4): מסנני החיפוש. הרדיוס קיים רק אחרי שנבחר מיקום. המסננים רק אוספים בחירות; השרת מסנן וממיין.
-import { useState } from 'react';
 import type { FormOptions } from '../types/submissions';
 import { RADIUS_OPTIONS_KM } from '../types/search';
 import type { SearchFilters } from '../types/search';
@@ -20,44 +19,6 @@ interface SearchFiltersPanelProps {
 const checkboxLabelClassName = 'flex items-center gap-2 text-sm text-gray-800';
 
 function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelProps) {
-  const [locating, setLocating] = useState(false);
-  const [locationError, setLocationError] = useState('');
-
-  // Location is optional and only asked for when the visitor presses the button; nothing needs it to browse.
-  const handleUseMyLocation = () => {
-    if (!navigator.geolocation) {
-      setLocationError('Your browser cannot share your location.');
-      return;
-    }
-
-    setLocating(true);
-    setLocationError('');
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLocating(false);
-        onChange({
-          ...filters,
-          location: { lat: position.coords.latitude, lng: position.coords.longitude },
-        });
-      },
-      (error) => {
-        setLocating(false);
-        setLocationError(
-          error.code === error.PERMISSION_DENIED
-            ? 'Location permission was denied. You can still search without a location.'
-            : 'Could not find your location. You can still search without it.'
-        );
-      },
-      { timeout: 10000 }
-    );
-  };
-
-  const handleClearLocation = () => {
-    setLocationError('');
-    onChange({ ...filters, location: null, radiusKm: null });
-  };
-
   return (
     <div className="space-y-5 rounded-lg border border-gray-200 bg-white p-4">
       <div>
@@ -159,56 +120,28 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
       </div>
 
       <div>
-        <p className={labelClassName}>Near me</p>
-
+        <label htmlFor="filter-radius" className={labelClassName}>
+          Distance
+        </label>
         {filters.location ? (
-          <div className="mt-1 space-y-2">
-            <p className="text-sm text-gray-700">Sorted by distance from your location.</p>
-            <div>
-              <label htmlFor="filter-radius" className="block text-sm text-gray-700">
-                Distance
-              </label>
-              <select
-                id="filter-radius"
-                value={filters.radiusKm === null ? '' : String(filters.radiusKm)}
-                onChange={(event) =>
-                  onChange({ ...filters, radiusKm: event.target.value === '' ? null : Number(event.target.value) })
-                }
-                className={inputClassName}
-              >
-                <option value="">Any distance</option>
-                {RADIUS_OPTIONS_KM.map((radius) => (
-                  <option key={radius} value={radius}>
-                    Within {radius} km
-                  </option>
-                ))}
-              </select>
-            </div>
-            <button
-              type="button"
-              onClick={handleClearLocation}
-              className="rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
-            >
-              Clear my location
-            </button>
-          </div>
+          <select
+            id="filter-radius"
+            value={filters.radiusKm === null ? '' : String(filters.radiusKm)}
+            onChange={(event) =>
+              onChange({ ...filters, radiusKm: event.target.value === '' ? null : Number(event.target.value) })
+            }
+            className={inputClassName}
+          >
+            <option value="">Any distance</option>
+            {RADIUS_OPTIONS_KM.map((radius) => (
+              <option key={radius} value={radius}>
+                Within {radius} km
+              </option>
+            ))}
+          </select>
         ) : (
-          <div className="mt-1">
-            <button
-              type="button"
-              onClick={handleUseMyLocation}
-              disabled={locating}
-              className="rounded border border-green-600 px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {locating ? 'Finding your location...' : 'Use my current location'}
-            </button>
-            <p className="mt-1 text-xs text-gray-500">Optional. Your location is only used for this search.</p>
-          </div>
-        )}
-
-        {locationError && (
-          <p role="alert" className="mt-2 text-sm text-red-700">
-            {locationError}
+          <p id="filter-radius" className="mt-1 text-sm text-gray-600">
+            Choose a location above to filter by distance.
           </p>
         )}
       </div>

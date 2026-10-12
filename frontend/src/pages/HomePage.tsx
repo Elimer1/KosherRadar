@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import LocationField from '../components/LocationField';
 import RestaurantCard from '../components/RestaurantCard';
 import RestaurantMap from '../components/RestaurantMap';
 import SearchBar from '../components/SearchBar';
@@ -39,6 +40,7 @@ function HomePage() {
   // NEW (Milestone 5): list and map are never shown together. The choice is remembered on this browser.
   // חדש (אבן דרך 5): רשימה ומפה לא מוצגות יחד. הבחירה נשמרת בדפדפן הזה.
   const [view, setView] = useState<DiscoveryView>(() => readSavedView());
+  const [locationReset, setLocationReset] = useState(0);
 
   const search = useRestaurantSearch(filters, view === 'list');
   const activeFilterCount = countActiveFilters(filters);
@@ -52,6 +54,7 @@ function HomePage() {
   const handleClearAll = () => {
     setText('');
     setFilters(emptySearchFilters);
+    setLocationReset((current) => current + 1);
   };
 
   const handleViewChange = (next: DiscoveryView) => {
@@ -83,6 +86,7 @@ function HomePage() {
           filters={filters}
           hechsherOptions={hechsherOptions}
         />
+        <LocationField key={locationReset} filters={filters} onChange={setFilters} />
         <p className="mt-2 text-xs text-gray-500">
           Search by restaurant name or food. KosherRadar does not certify anything: every status shows its source.
         </p>
