@@ -99,6 +99,20 @@ function assertSinglePendingWinner(results) {
   return winners[0].value;
 }
 
+test('the pending identity index exists before concurrent submissions run', async () => {
+  const indexes = await models.Restaurant.collection.indexes();
+  const pendingIndex = indexes.find((index) => index.name === 'pending_submitter_name_address');
+
+  assert.ok(pendingIndex, 'pending_submitter_name_address was not built');
+  assert.equal(pendingIndex.unique, true);
+  assert.deepEqual(pendingIndex.key, {
+    submittedBy: 1,
+    nameNormalized: 1,
+    addressNormalized: 1,
+  });
+  assert.deepEqual(pendingIndex.partialFilterExpression, { status: 'PENDING' });
+});
+
 test('two concurrent identical submissions leave one pending restaurant', async () => {
   const runs = [];
 

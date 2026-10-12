@@ -57,6 +57,20 @@ describe('Restaurant model', () => {
     expect(restaurant.toObject().location).toBeUndefined();
   });
 
+  it('keeps one pending submission per user, normalized name, and address', () => {
+    const pendingIdentity = Restaurant.schema.indexes().find(([, options]) => options.name === 'pending_submitter_name_address');
+
+    expect(pendingIdentity[0]).toEqual({
+      submittedBy: 1,
+      nameNormalized: 1,
+      addressNormalized: 1,
+    });
+    expect(pendingIdentity[1]).toMatchObject({
+      unique: true,
+      partialFilterExpression: { status: 'PENDING' },
+    });
+  });
+
   it('stores normalized copies of name, address and phone for the duplicate check', async () => {
     const restaurant = new Restaurant({
       ...validData(),
