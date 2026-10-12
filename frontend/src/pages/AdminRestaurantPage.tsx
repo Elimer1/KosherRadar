@@ -3,6 +3,7 @@
 // חדש (אבן דרך 3): דף המנהל של מסעדה אחת: פרטים ועריכה, אישור/דחייה, מחיקה, כל התעודות, ותצוגה של מה שהציבור רואה.
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   approveRestaurant,
@@ -27,6 +28,7 @@ import { restaurantToExtrasValues, restaurantToFormValues } from '../utils/admin
 import { describeEmailStatus, describePreviewItem, getDuplicateReasonLabel, getStatusLabel } from '../utils/adminLabels';
 
 function AdminRestaurantPage() {
+  const { t } = useTranslation();
   const { restaurantId = '' } = useParams();
   const navigate = useNavigate();
   const { options, error: optionsError } = useFormOptions();
@@ -56,7 +58,7 @@ function AdminRestaurantPage() {
         setExtras(restaurantToExtrasValues(loaded.restaurant));
         setLoadError('');
       } catch (err) {
-        const message = getErrorMessage(err, 'Could not load this restaurant.');
+        const message = getErrorMessage(err, t('forms.loadRestaurant'));
         if (hasDetails.current) {
           setDecisionNotices([{ kind: 'error', message }]);
         } else {
@@ -66,7 +68,7 @@ function AdminRestaurantPage() {
     };
 
     loadRestaurant();
-  }, [restaurantId, reloadKey]);
+  }, [restaurantId, reloadKey, t]);
 
   const handleToggleCategory = (category: string) => {
     setValues((current) => {
@@ -89,7 +91,7 @@ function AdminRestaurantPage() {
     }
 
     if (values.categories.length === 0) {
-      setNotices([{ kind: 'error', message: 'Please choose at least one category.' }]);
+      setNotices([{ kind: 'error', message: t('forms.chooseCategory') }]);
       return;
     }
 
@@ -98,10 +100,10 @@ function AdminRestaurantPage() {
 
     try {
       await updateRestaurant(restaurantId, values, extras);
-      setNotices([{ kind: 'success', message: 'Restaurant saved.' }]);
+      setNotices([{ kind: 'success', message: t('desk.saved') }]);
       load();
     } catch (err) {
-      setNotices([{ kind: 'error', message: getErrorMessage(err, 'Could not save the restaurant.') }]);
+      setNotices([{ kind: 'error', message: getErrorMessage(err, t('desk.saveFailed')) }]);
     } finally {
       setBusy(false);
     }
@@ -116,11 +118,11 @@ function AdminRestaurantPage() {
       setDetails((current) =>
         current ? { ...current, restaurant: { ...current.restaurant, status: result.restaurant.status } } : current
       );
-      setDecisionNotices([{ kind: 'success', message: 'Restaurant approved. It is now public and has left the pending list.' }]);
+      setDecisionNotices([{ kind: 'success', message: t('desk.approvedLeft') }]);
       setRejecting(false);
       load();
     } catch (err) {
-      setDecisionNotices([{ kind: 'error', message: getErrorMessage(err, 'Could not approve the restaurant.') }]);
+      setDecisionNotices([{ kind: 'error', message: getErrorMessage(err, t('desk.approveFailed')) }]);
     } finally {
       setBusy(false);
     }
@@ -145,13 +147,13 @@ function AdminRestaurantPage() {
           : current
       );
       setDecisionNotices([
-        { kind: 'success', message: 'Restaurant rejected. It has left the pending list.' },
+        { kind: 'success', message: t('desk.rejectedLeft') },
         describeEmailStatus(result.emailStatus),
       ]);
       setRejecting(false);
       load();
     } catch (err) {
-      setDecisionNotices([{ kind: 'error', message: getErrorMessage(err, 'Could not reject the restaurant.') }]);
+      setDecisionNotices([{ kind: 'error', message: getErrorMessage(err, t('desk.rejectFailed')) }]);
     } finally {
       setBusy(false);
     }
@@ -161,7 +163,7 @@ function AdminRestaurantPage() {
     const count = details?.teudot.length || 0;
     // Deleting is permanent and also removes the certificates and reports of this restaurant.
     const confirmed = window.confirm(
-      `Delete this restaurant for good? Its ${count} certificate(s) and its reports are deleted too. This cannot be undone.`
+      t('desk.deleteConfirm', { count })
     );
 
     if (!confirmed) {
@@ -175,7 +177,7 @@ function AdminRestaurantPage() {
       await deleteRestaurant(restaurantId);
       navigate('/admin');
     } catch (err) {
-      setDecisionNotices([{ kind: 'error', message: getErrorMessage(err, 'Could not delete the restaurant.') }]);
+      setDecisionNotices([{ kind: 'error', message: getErrorMessage(err, t('desk.deleteFailed')) }]);
       setBusy(false);
     }
   };
@@ -190,7 +192,7 @@ function AdminRestaurantPage() {
   }
 
   if (!details || !values || !extras || !options) {
-    return <p className="text-gray-600">Loading...</p>;
+    return <p className="text-gray-600">{t('common.loading')}</p>;
   }
 
   const { restaurant, teudot, publicKashrutPreview } = details;
@@ -200,7 +202,7 @@ function AdminRestaurantPage() {
     <div className="mx-auto max-w-3xl space-y-8">
       <div>
         <Link to="/admin" className="text-sm font-medium text-green-700 underline">
-          Back to the admin dashboard
+          {t('desk.backDashboard')}
         </Link>
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-bold text-gray-900">{restaurant.name}</h1>
@@ -213,10 +215,10 @@ function AdminRestaurantPage() {
           {restaurant.city ? `, ${restaurant.city}` : ''}
         </p>
         {restaurant.submittedBy && (
-          <p className="text-sm text-gray-500">Sent by: {restaurant.submittedBy.email}</p>
+          <p className="text-sm text-gray-500">{t('desk.sentByColon', { email: restaurant.submittedBy.email })}</p>
         )}
         {restaurant.status === 'REJECTED' && restaurant.rejectionReason && (
-          <p className="mt-1 text-sm text-gray-700">Rejection reason: {restaurant.rejectionReason}</p>
+          <p className="mt-1 text-sm text-gray-700">{t('desk.rejectionReason', { reason: restaurant.rejectionReason })}</p>
         )}
       </div>
 
@@ -224,7 +226,7 @@ function AdminRestaurantPage() {
 
       {restaurant.possibleDuplicates.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-gray-900">Possible duplicates</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('desk.possibleDuplicates')}</h2>
           <ul className="space-y-1 text-sm">
             {restaurant.possibleDuplicates.map((duplicate, index) => (
               <li key={index} className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
@@ -233,7 +235,7 @@ function AdminRestaurantPage() {
                     {duplicate.restaurant.name}
                   </Link>
                 ) : (
-                  'A restaurant that no longer exists'
+                  t('desk.gone')
                 )}
                 {duplicate.restaurant?.address ? `, ${duplicate.restaurant.address}` : ''}
                 {': '}
@@ -245,7 +247,7 @@ function AdminRestaurantPage() {
       )}
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-gray-900">Decision</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{t('desk.decision')}</h2>
         <Notices notices={decisionNotices} onDismiss={() => setDecisionNotices([])} />
         {restaurant.status === 'PENDING' &&
           (rejecting ? (
@@ -263,7 +265,7 @@ function AdminRestaurantPage() {
                 onClick={handleApprove}
                 className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-60"
               >
-                Approve restaurant
+                {t('desk.approveRestaurant')}
               </button>
               <button
                 type="button"
@@ -271,12 +273,12 @@ function AdminRestaurantPage() {
                 onClick={() => setRejecting(true)}
                 className="rounded border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50"
               >
-                Reject...
+                {t('common.reject')}
               </button>
             </div>
           ))}
         {restaurant.status !== 'PENDING' && (
-          <p className="text-sm text-gray-600">This restaurant was already {getStatusLabel(restaurant.status).toLowerCase()}.</p>
+          <p className="text-sm text-gray-600">{t('desk.alreadyDecided', { status: getStatusLabel(restaurant.status) })}</p>
         )}
         <button
           type="button"
@@ -284,22 +286,22 @@ function AdminRestaurantPage() {
           onClick={handleDelete}
           className="rounded border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
         >
-          Delete restaurant
+          {t('desk.deleteRestaurant')}
         </button>
       </section>
 
       <section className="space-y-2">
-        <h2 className="text-lg font-semibold text-gray-900">What the public sees</h2>
-        {!restaurantApproved && (
-          <p className="text-sm text-gray-600">Nothing is shown to the public until the restaurant is approved.</p>
-        )}
+        <h2 className="text-lg font-semibold text-gray-900">{t('desk.publicSees')}</h2>
+        {!restaurantApproved && <p className="text-sm text-gray-600">{t('desk.hiddenUntilApproved')}</p>}
         {restaurantApproved && publicKashrutPreview && (
           <>
             <p className="text-sm font-medium text-gray-900">
-              Status:{' '}
-              {publicKashrutPreview.status === 'UNKNOWN'
-                ? 'Unknown (no kashrut information)'
-                : publicKashrutPreview.status}
+              {t('desk.publicStatus', {
+                status:
+                  publicKashrutPreview.status === 'UNKNOWN'
+                    ? t('desk.unknownStatus')
+                    : t(`kashrut.${publicKashrutPreview.status}`, { defaultValue: publicKashrutPreview.status }),
+              })}
             </p>
             {publicKashrutPreview.items.length > 0 && (
               <ul className="list-disc space-y-1 ps-5 text-sm text-gray-700">
@@ -314,17 +316,17 @@ function AdminRestaurantPage() {
 
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold text-gray-900">Certificates ({teudot.length})</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('desk.certificateCount', { count: teudot.length })}</h2>
           {restaurantApproved && (
             <Link
               to={`/admin/restaurants/${restaurant.id}/add-teuda`}
               className="text-sm font-medium text-green-700 underline"
             >
-              Add a certificate
+              {t('forms.addCertificate')}
             </Link>
           )}
         </div>
-        {teudot.length === 0 && <p className="text-sm text-gray-600">This restaurant has no certificates.</p>}
+        {teudot.length === 0 && <p className="text-sm text-gray-600">{t('desk.noCertificatesYet')}</p>}
         <ul className="space-y-4">
           {teudot.map((teuda) => (
             <AdminTeudaCard
@@ -339,7 +341,7 @@ function AdminRestaurantPage() {
       </section>
 
       <form onSubmit={handleSave} className="space-y-8">
-        <h2 className="text-xl font-bold text-gray-900">Edit the restaurant</h2>
+        <h2 className="text-xl font-bold text-gray-900">{t('desk.editRestaurant')}</h2>
         <RestaurantFields
           values={values}
           options={options}
@@ -353,7 +355,7 @@ function AdminRestaurantPage() {
           onChange={(field, value) => setExtras((current) => (current ? { ...current, [field]: value } : current))}
         />
         <button type="submit" disabled={busy} className={primaryButtonClassName}>
-          {busy ? 'Saving...' : 'Save changes'}
+          {busy ? t('auth.saving') : t('desk.saveChanges')}
         </button>
       </form>
     </div>

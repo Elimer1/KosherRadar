@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import LocationField from '../components/LocationField';
 import RestaurantCard from '../components/RestaurantCard';
@@ -30,6 +31,7 @@ const countActiveFilters = (filters: SearchFilters) => {
 };
 
 function HomePage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { options } = useFormOptions();
 
@@ -70,11 +72,8 @@ function HomePage() {
   return (
     <div>
       <section className="py-4 text-center sm:py-8">
-        <h1 className="text-3xl font-bold text-green-700 sm:text-4xl">KosherRadar</h1>
-        <p className="mx-auto mt-3 max-w-2xl text-gray-600">
-          Find restaurants in Israel and see the evidence behind their kashrut: verified certificates, unverified
-          claims and expired certificates are always shown separately.
-        </p>
+        <h1 className="text-3xl font-bold text-green-700 sm:text-4xl">{t('home.title')}</h1>
+        <p className="mx-auto mt-3 max-w-2xl text-gray-600">{t('home.intro')}</p>
       </section>
 
       <div className="mx-auto max-w-3xl">
@@ -87,9 +86,7 @@ function HomePage() {
           hechsherOptions={hechsherOptions}
         />
         <LocationField key={locationReset} filters={filters} onChange={setFilters} />
-        <p className="mt-2 text-xs text-gray-500">
-          Search by restaurant name or food. KosherRadar does not certify anything: every status shows its source.
-        </p>
+        <p className="mt-2 text-xs text-gray-500">{t('home.hint')}</p>
       </div>
 
       <div className="mt-6 lg:grid lg:grid-cols-[18rem_1fr] lg:gap-6">
@@ -101,7 +98,7 @@ function HomePage() {
             aria-controls="search-filters"
             className="w-full rounded border border-green-600 px-3 py-2 font-medium text-green-700 hover:bg-green-50 lg:hidden"
           >
-            {showFilters ? 'Hide filters' : 'Filters'}
+            {showFilters ? t('home.hideFilters') : t('home.filters')}
             {activeFilterCount > 0 && ` (${activeFilterCount})`}
           </button>
 
@@ -110,15 +107,15 @@ function HomePage() {
           </div>
         </aside>
 
-        <section aria-live="polite" aria-label="Search results">
-          <div role="group" aria-label="Results view" className="mb-3 flex gap-2">
+        <section aria-live="polite" aria-label={t('home.results')}>
+          <div role="group" aria-label={t('home.view')} className="mb-3 flex gap-2">
             <button
               type="button"
               aria-pressed={view === 'list'}
               onClick={() => handleViewChange('list')}
               className={viewButtonClass(view === 'list')}
             >
-              List
+              {t('home.list')}
             </button>
             <button
               type="button"
@@ -126,7 +123,7 @@ function HomePage() {
               onClick={() => handleViewChange('map')}
               className={viewButtonClass(view === 'map')}
             >
-              Map
+              {t('home.map')}
             </button>
           </div>
 
@@ -134,12 +131,11 @@ function HomePage() {
 
           {view === 'list' && search.atlasUnavailable && (
             <p role="status" className="mb-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-              Typo-tolerant search is temporarily unavailable. Results show restaurants whose name or food starts
-              with what you typed.
+              {t('home.atlasDown')}
             </p>
           )}
 
-          {view === 'list' && search.loading && <p className="py-8 text-center text-gray-600">Searching...</p>}
+          {view === 'list' && search.loading && <p className="py-8 text-center text-gray-600">{t('home.searching')}</p>}
 
           {view === 'list' && !search.loading && search.error && search.items.length === 0 && (
             <div role="alert" className="rounded border border-red-200 bg-red-50 p-4 text-red-800">
@@ -149,7 +145,7 @@ function HomePage() {
                 onClick={search.retry}
                 className="mt-2 rounded border border-red-300 px-3 py-1.5 text-sm font-medium hover:bg-red-100"
               >
-                Try again
+                {t('common.tryAgain')}
               </button>
             </div>
           )}
@@ -158,26 +154,23 @@ function HomePage() {
             <div className="rounded-lg border border-dashed border-gray-300 p-8 text-center text-gray-700">
               {hasAnySearchChoice ? (
                 <>
-                  <p className="font-medium">No restaurants match your search.</p>
-                  <p className="mt-1 text-sm">
-                    Try different words or fewer filters. Restaurants whose kashrut is unknown are hidden unless you
-                    include them.
-                  </p>
+                  <p className="font-medium">{t('home.noMatchTitle')}</p>
+                  <p className="mt-1 text-sm">{t('home.noMatchBody')}</p>
                   <button
                     type="button"
                     onClick={handleClearAll}
                     className="mt-3 rounded border border-green-600 px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50"
                   >
-                    Clear search and filters
+                    {t('home.clear')}
                   </button>
                 </>
               ) : (
                 <>
-                  <p className="font-medium">No restaurants to show yet.</p>
+                  <p className="font-medium">{t('home.emptyTitle')}</p>
                   <p className="mt-1 text-sm">
-                    Restaurants appear here after an admin approves them.{' '}
+                    {t('home.emptyBody')}{' '}
                     <Link to="/submit-restaurant" className="font-medium text-green-700 underline">
-                      Add a restaurant
+                      {t('home.addRestaurant')}
                     </Link>
                   </p>
                 </>
@@ -188,12 +181,12 @@ function HomePage() {
           {view === 'list' && search.items.length > 0 && (
             <>
               <p className="mb-3 text-sm text-gray-600">
-                {search.total} {search.total === 1 ? 'restaurant' : 'restaurants'} found
+                {search.total === 1 ? t('home.foundOne', { count: search.total }) : t('home.foundMany', { count: search.total })}
               </p>
 
               {search.capped && (
                 <p role="status" className="mb-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                  There are very many matches, so this list may be incomplete. Add words or filters to narrow it down.
+                  {t('home.capped')}
                 </p>
               )}
 
@@ -217,7 +210,7 @@ function HomePage() {
                     disabled={search.loadingMore}
                     className="rounded bg-green-600 px-6 py-2.5 font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {search.loadingMore ? 'Loading...' : 'Load more'}
+                    {search.loadingMore ? t('home.loadingMore') : t('home.loadMore')}
                   </button>
                 </div>
               )}

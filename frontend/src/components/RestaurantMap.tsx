@@ -3,6 +3,7 @@
 // חדש (אבן דרך 5): תצוגת המפה. טוענת מסעדות מאושרות בתוך המלבן הנראה, עם אותם מסננים כמו הרשימה.
 // הזזת המפה לא משנה את מיקום החיפוש שנבחר.
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import L from 'leaflet';
 import { Circle, MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
@@ -105,6 +106,7 @@ function FollowSearchLocation({ location, radiusKm }: { location: SearchFilters[
 }
 
 function MapPopup({ restaurant, hechsherOptions }: { restaurant: RestaurantCardData; hechsherOptions: HechsherOption[] }) {
+  const { t } = useTranslation();
   const telUrl = buildTelUrl(restaurant.phone);
   const wazeUrl = buildWazeUrl(restaurant.latitude, restaurant.longitude);
   const pageUrl = restaurantPageUrl(restaurant.id, window.location.origin);
@@ -116,16 +118,16 @@ function MapPopup({ restaurant, hechsherOptions }: { restaurant: RestaurantCardD
       <KashrutBadge kashrut={restaurant.kashrut} hechsherOptions={hechsherOptions} />
       <div className="flex flex-wrap gap-2 pt-1">
         <Link to={`/restaurants/${restaurant.id}`} className="inline-flex min-h-11 items-center rounded bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700">
-          View details
+          {t('card.viewDetails')}
         </Link>
         {telUrl && (
           <a href={telUrl} className={actionClassName}>
-            Call
+            {t('card.call')}
           </a>
         )}
         {wazeUrl && (
           <a href={wazeUrl} target="_blank" rel="noopener noreferrer" className={actionClassName}>
-            Waze
+            {t('card.waze')}
           </a>
         )}
         <ShareButton title={restaurant.name} url={pageUrl} className={actionClassName} />
@@ -135,6 +137,7 @@ function MapPopup({ restaurant, hechsherOptions }: { restaurant: RestaurantCardD
 }
 
 function RestaurantMap({ filters, hechsherOptions }: RestaurantMapProps) {
+  const { t } = useTranslation();
   const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [items, setItems] = useState<RestaurantCardData[]>([]);
   const [capped, setCapped] = useState(false);
@@ -169,7 +172,7 @@ function RestaurantMap({ filters, hechsherOptions }: RestaurantMapProps) {
         if (!ignore) {
           setItems([]);
           setCapped(false);
-          setError(getErrorMessage(err, 'Could not load the map.'));
+          setError(getErrorMessage(err, t('map.loadError')));
         }
       } finally {
         if (!ignore) {
@@ -245,7 +248,7 @@ function RestaurantMap({ filters, hechsherOptions }: RestaurantMapProps) {
 
         {loading && (
           <p className="pointer-events-none absolute top-2 left-2 z-[500] rounded bg-white/95 px-2 py-1 text-xs text-gray-700 shadow-sm">
-            Loading map...
+            {t('map.loading')}
           </p>
         )}
       </div>
@@ -253,29 +256,29 @@ function RestaurantMap({ filters, hechsherOptions }: RestaurantMapProps) {
       <div className="mt-2 space-y-2 text-sm text-gray-600">
         {tooWide && (
           <p role="status" className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900">
-            Zoom in to see restaurants. A view this wide is not searched.
+            {t('map.zoomIn')}
           </p>
         )}
         {error !== '' && (
           <p role="alert" className="rounded border border-red-200 bg-red-50 px-3 py-2 text-red-800">
             {error}{' '}
             <button type="button" onClick={() => setRetryCounter((current) => current + 1)} className="font-medium underline">
-              Try again
+              {t('common.tryAgain')}
             </button>
           </p>
         )}
         {capped && (
           <p role="status" className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900">
-            Too many restaurants in this area to show them all. Zoom in. This map is not a complete list.
+            {t('map.capped')}
           </p>
         )}
         {!loading && !tooWide && error === '' && markers.length === 0 && (
-          <p>No restaurants with a saved location match in this area.</p>
+          <p>{t('map.empty')}</p>
         )}
         {filters.location && filters.radiusKm !== null && (
-          <p>The selected radius still applies. Restaurants outside it stay hidden even if that area is on screen.</p>
+          <p>{t('map.radius')}</p>
         )}
-        <p>Restaurants without a saved location are not on the map. Moving the map does not change your search location.</p>
+        <p>{t('map.note')}</p>
       </div>
     </div>
   );

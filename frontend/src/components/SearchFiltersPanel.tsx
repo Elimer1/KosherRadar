@@ -3,10 +3,11 @@
 // (1 / 5 / 10 / 25 / 50 km), which only exists once a search location was chosen.
 // The filters only collect choices; the server filters and sorts.
 // חדש (אבן דרך 4): מסנני החיפוש. הרדיוס קיים רק אחרי שנבחר מיקום. המסננים רק אוספים בחירות; השרת מסנן וממיין.
+import { useTranslation } from 'react-i18next';
 import type { FormOptions } from '../types/submissions';
 import { RADIUS_OPTIONS_KM } from '../types/search';
 import type { SearchFilters } from '../types/search';
-import { getCategoryLabel, getFoodTypeLabel, getKashrutLevelLabel } from '../utils/labels';
+import { getCategoryLabel, getFoodTypeLabel, getHechsherOptionLabel, getKashrutLevelLabel } from '../utils/labels';
 import { toggleValue } from '../utils/searchResults';
 import { inputClassName, labelClassName } from './formStyles';
 
@@ -19,11 +20,13 @@ interface SearchFiltersPanelProps {
 const checkboxLabelClassName = 'flex items-center gap-2 text-sm text-gray-800';
 
 function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-5 rounded-lg border border-gray-200 bg-white p-4">
       <div>
         <label htmlFor="filter-level" className={labelClassName}>
-          Kashrut level
+          {t('filters.level')}
         </label>
         <select
           id="filter-level"
@@ -31,7 +34,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
           onChange={(event) => onChange({ ...filters, level: event.target.value })}
           className={inputClassName}
         >
-          <option value="">Any</option>
+          <option value="">{t('filters.any')}</option>
           {(options?.kashrutLevels || []).map((level) => (
             <option key={level} value={level}>
               {getKashrutLevelLabel(level)}
@@ -41,7 +44,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
       </div>
 
       <fieldset>
-        <legend className={labelClassName}>Hechsher</legend>
+        <legend className={labelClassName}>{t('filters.hechsher')}</legend>
         <div className="mt-1 grid max-h-44 gap-1.5 overflow-y-auto">
           {(options?.hechsherOptions || []).map((option) => (
             <label key={option.value} className={checkboxLabelClassName}>
@@ -50,7 +53,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
                 checked={filters.hechsher.includes(option.value)}
                 onChange={() => onChange({ ...filters, hechsher: toggleValue(filters.hechsher, option.value) })}
               />
-              {option.labelEn}
+              {getHechsherOptionLabel(option)}
             </label>
           ))}
           {options && (
@@ -62,14 +65,14 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
                   onChange({ ...filters, hechsher: toggleValue(filters.hechsher, options.hechsherOtherValue) })
                 }
               />
-              Other
+              {t('common.other')}
             </label>
           )}
         </div>
       </fieldset>
 
       <fieldset>
-        <legend className={labelClassName}>Food type</legend>
+        <legend className={labelClassName}>{t('filters.foodType')}</legend>
         <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1.5">
           {(options?.foodTypes || []).map((foodType) => (
             <label key={foodType} className={checkboxLabelClassName}>
@@ -85,7 +88,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
       </fieldset>
 
       <fieldset>
-        <legend className={labelClassName}>Category</legend>
+        <legend className={labelClassName}>{t('filters.category')}</legend>
         <div className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1.5">
           {(options?.categories || []).map((category) => (
             <label key={category} className={checkboxLabelClassName}>
@@ -107,7 +110,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
             checked={filters.hideExpired}
             onChange={(event) => onChange({ ...filters, hideExpired: event.target.checked })}
           />
-          Hide expired certificates
+          {t('filters.hideExpired')}
         </label>
         <label className={checkboxLabelClassName}>
           <input
@@ -115,13 +118,13 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
             checked={filters.includeUnknown}
             onChange={(event) => onChange({ ...filters, includeUnknown: event.target.checked })}
           />
-          Include restaurants with unknown kashrut
+          {t('filters.includeUnknown')}
         </label>
       </div>
 
       <div>
         <label htmlFor="filter-radius" className={labelClassName}>
-          Distance
+          {t('filters.distance')}
         </label>
         {filters.location ? (
           <select
@@ -132,16 +135,16 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
             }
             className={inputClassName}
           >
-            <option value="">Any distance</option>
+            <option value="">{t('filters.anyDistance')}</option>
             {RADIUS_OPTIONS_KM.map((radius) => (
               <option key={radius} value={radius}>
-                Within {radius} km
+                {t('filters.withinKm', { km: radius })}
               </option>
             ))}
           </select>
         ) : (
           <p id="filter-radius" className="mt-1 text-sm text-gray-600">
-            Choose a location above to filter by distance.
+            {t('filters.needLocation')}
           </p>
         )}
       </div>

@@ -1,5 +1,6 @@
 // NEW (Milestone 3): result messages shown after an admin action (email status, points, warnings).
 // חדש (אבן דרך 3): הודעות תוצאה שמוצגות אחרי פעולת מנהל (מצב המייל, נקודות, אזהרות).
+import { useTranslation } from 'react-i18next';
 import FormAlert from '../FormAlert';
 
 export interface Notice {
@@ -13,6 +14,8 @@ interface NoticesProps {
 }
 
 function Notices({ notices, onDismiss }: NoticesProps) {
+  const { t } = useTranslation();
+
   if (notices.length === 0) {
     return null;
   }
@@ -23,7 +26,7 @@ function Notices({ notices, onDismiss }: NoticesProps) {
         <FormAlert key={index} kind={notice.kind} message={notice.message} />
       ))}
       <button type="button" onClick={onDismiss} className="text-xs font-medium text-gray-600 underline">
-        Dismiss messages
+        {t('common.dismiss')}
       </button>
     </div>
   );

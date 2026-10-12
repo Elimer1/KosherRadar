@@ -3,6 +3,7 @@
 // חדש (אבן דרך 3): מנהל מוסיף מסעדה ישירות. היא מאושרת מיד, וגם התעודה האופציונלית. תאריך התעודה יכול להיות בעבר.
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { createRestaurantAsAdmin } from '../api/adminApi';
 import { getErrorMessage } from '../api/errors';
@@ -19,6 +20,7 @@ import { emptyRestaurantForm, emptyTeudaForm } from '../types/submissions';
 import type { RestaurantFormValues, TeudaFormValues } from '../types/submissions';
 
 function AdminCreateRestaurantPage() {
+  const { t } = useTranslation();
   const { options, error: optionsError } = useFormOptions();
 
   const [restaurant, setRestaurant] = useState<RestaurantFormValues>(emptyRestaurantForm);
@@ -49,12 +51,12 @@ function AdminCreateRestaurantPage() {
     setError('');
 
     if (restaurant.categories.length === 0) {
-      setError('Please choose at least one category.');
+      setError(t('forms.chooseCategory'));
       return;
     }
 
     if (withCertificate && !photo) {
-      setError('Please choose a photo of the certificate, or untick the certificate option.');
+      setError(t('desk.needCertificatePhoto'));
       return;
     }
 
@@ -76,7 +78,7 @@ function AdminCreateRestaurantPage() {
         duplicates: result.possibleDuplicateCount,
       });
     } catch (err) {
-      setError(getErrorMessage(err, 'Could not create the restaurant.'));
+      setError(getErrorMessage(err, t('desk.createFailed')));
     } finally {
       setLoading(false);
     }
@@ -87,29 +89,27 @@ function AdminCreateRestaurantPage() {
   }
 
   if (!options) {
-    return <p className="text-gray-600">Loading...</p>;
+    return <p className="text-gray-600">{t('common.loading')}</p>;
   }
 
   if (created) {
     return (
       <div className="mx-auto max-w-lg space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">Restaurant created</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('desk.created')}</h1>
         <FormAlert
           kind="success"
-          message={`${created.restaurant.name} is approved and public${created.hasTeuda ? ', together with its certificate' : ''}.`}
+          message={t('desk.createdPublic', {
+            name: created.restaurant.name,
+            extra: created.hasTeuda ? t('desk.createdWithCertificate') : '',
+          })}
         />
-        {created.duplicates > 0 && (
-          <FormAlert
-            kind="warning"
-            message="A similar restaurant may already exist. Open the restaurant page to see the possible duplicates."
-          />
-        )}
+        {created.duplicates > 0 && <FormAlert kind="warning" message={t('desk.similarExists')} />}
         <div className="flex gap-4">
           <Link to={`/admin/restaurants/${created.restaurant.id}`} className="font-medium text-green-700 underline">
-            Open the restaurant
+            {t('desk.openTheRestaurant')}
           </Link>
           <Link to="/admin" className="font-medium text-green-700 underline">
-            Back to the dashboard
+            {t('desk.backDash')}
           </Link>
         </div>
       </div>
@@ -119,12 +119,10 @@ function AdminCreateRestaurantPage() {
   return (
     <div className="mx-auto max-w-2xl">
       <Link to="/admin" className="text-sm font-medium text-green-700 underline">
-        Back to the admin dashboard
+        {t('desk.backDashboard')}
       </Link>
-      <h1 className="mt-2 text-2xl font-bold text-gray-900">Add a restaurant (admin)</h1>
-      <p className="mt-2 text-sm text-gray-600">
-        The restaurant is approved right away and shown to the public. A certificate added here is approved too.
-      </p>
+      <h1 className="mt-2 text-2xl font-bold text-gray-900">{t('desk.addAdmin')}</h1>
+      <p className="mt-2 text-sm text-gray-600">{t('desk.addAdminBody')}</p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-8">
         <FormAlert message={error} />
@@ -144,7 +142,7 @@ function AdminCreateRestaurantPage() {
         />
 
         <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">Kashrut certificate (optional)</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('forms.certificateOptional')}</h2>
 
           <label className="flex items-center gap-2 text-sm text-gray-700">
             <input
@@ -154,7 +152,7 @@ function AdminCreateRestaurantPage() {
               onChange={(event) => setWithCertificate(event.target.checked)}
               className="h-4 w-4 accent-green-600"
             />
-            Add a certificate with a photo
+            {t('desk.addWithPhoto')}
           </label>
 
           {withCertificate && (
@@ -171,7 +169,7 @@ function AdminCreateRestaurantPage() {
               />
               <div>
                 <label htmlFor="admin-new-teuda-note" className={labelClassName}>
-                  Private note about the certificate
+                  {t('desk.certificateNote')}
                 </label>
                 <textarea
                   id="admin-new-teuda-note"
@@ -189,7 +187,7 @@ function AdminCreateRestaurantPage() {
 
         {loading && withCertificate && (
           <div role="status" className="text-sm text-gray-600">
-            {progress < 100 ? `Uploading... ${progress}%` : 'Saving...'}
+            {progress < 100 ? t('forms.uploading', { progress }) : t('auth.saving')}
             <div className="mt-1 h-2 rounded bg-green-100">
               <div className="h-2 rounded bg-green-600" style={{ width: `${progress}%` }} />
             </div>
@@ -197,7 +195,7 @@ function AdminCreateRestaurantPage() {
         )}
 
         <button type="submit" disabled={loading || Boolean(photoError)} className={primaryButtonClassName}>
-          {loading ? 'Creating...' : 'Create restaurant'}
+          {loading ? t('desk.creating') : t('desk.createRestaurant')}
         </button>
       </form>
     </div>

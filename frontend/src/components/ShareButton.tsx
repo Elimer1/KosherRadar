@@ -1,6 +1,7 @@
 // NEW (Milestone 5): share control for the restaurant page and the map popup.
 // חדש (אבן דרך 5): כפתור שיתוף לדף המסעדה ולחלון הסמן במפה.
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { sharePage } from '../utils/navigationLinks';
 
 interface ShareButtonProps {
@@ -10,18 +11,19 @@ interface ShareButtonProps {
 }
 
 function ShareButton({ title, url, className }: ShareButtonProps) {
+  const { t } = useTranslation();
   const [message, setMessage] = useState('');
 
   const handleShare = async () => {
     const result = await sharePage(title, url);
 
     if (result === 'copied') {
-      setMessage('Link copied');
+      setMessage(t('share.copied'));
       return;
     }
 
     if (result === 'failed') {
-      setMessage('Could not share this page');
+      setMessage(t('share.failed'));
       return;
     }
 
@@ -31,7 +33,7 @@ function ShareButton({ title, url, className }: ShareButtonProps) {
   return (
     <span className="inline-flex flex-col items-start">
       <button type="button" onClick={handleShare} className={className}>
-        Share
+        {t('share.share')}
       </button>
       {message !== '' && (
         <span role="status" className="mt-1 text-xs text-gray-600">

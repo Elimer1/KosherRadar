@@ -2,6 +2,7 @@
 // The status is always written in words (and a symbol), never only a color, so it is clear for everyone.
 // A claim is never styled like a certificate, and KosherRadar never presents itself as the certifier.
 // חדש (אבן דרך 4): מציג את סטטוס הכשרות. הסטטוס תמיד כתוב במילים (וסמל), לא רק בצבע. טענה לעולם לא נראית כתעודה.
+import { useTranslation } from 'react-i18next';
 import type { KashrutPreview, KashrutStatus } from '../types/search';
 import type { HechsherOption } from '../types/submissions';
 import {
@@ -24,6 +25,7 @@ const STYLES: Record<KashrutStatus, { symbol: string; box: string }> = {
 };
 
 function KashrutBadge({ kashrut, hechsherOptions }: KashrutBadgeProps) {
+  const { t } = useTranslation();
   const style = STYLES[kashrut.status];
   const moreText = formatMoreCount(kashrut.moreCount);
   // An expired certificate hidden behind a better item must not disappear from the preview (spec 5.6).
@@ -40,11 +42,11 @@ function KashrutBadge({ kashrut, hechsherOptions }: KashrutBadgeProps) {
         <p className="mt-0.5">
           {describeEvidenceName(kashrut.primary, hechsherOptions)}
           {describeValidity(kashrut.primary) && <span> · {describeValidity(kashrut.primary)}</span>}
-          {moreText && <span className="ml-2 font-medium">({moreText})</span>}
+          {moreText && <span className="ms-2 font-medium">({moreText})</span>}
         </p>
       )}
 
-      {mentionsHiddenExpired && <p className="mt-0.5 font-medium">Also has an EXPIRED certificate.</p>}
+      {mentionsHiddenExpired && <p className="mt-0.5 font-medium">{t('kashrut.alsoExpired')}</p>}
     </div>
   );
 }

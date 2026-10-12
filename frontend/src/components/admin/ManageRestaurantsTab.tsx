@@ -2,6 +2,7 @@
 // חדש (אבן דרך 3): לשונית "ניהול מסעדות": מציאת כל מסעדה, ואז פתיחה לעריכה או מחיקה.
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { searchRestaurants } from '../../api/adminApi';
 import { usePagedList } from '../../hooks/usePagedList';
@@ -11,6 +12,7 @@ import { inputClassName, labelClassName } from '../formStyles';
 import Pagination from './Pagination';
 
 function ManageRestaurantsTab() {
+  const { t } = useTranslation();
   const [searchText, setSearchText] = useState('');
   const [status, setStatus] = useState('APPROVED');
   // The list only searches when the admin submits the form, not on every key press.
@@ -27,11 +29,11 @@ function ManageRestaurantsTab() {
   };
 
   return (
-    <section className="space-y-4" aria-label="Manage restaurants">
+    <section className="space-y-4" aria-label={t('desk.manage')}>
       <form onSubmit={handleSearch} className="flex flex-wrap items-end gap-3">
         <div className="min-w-48 flex-1">
           <label htmlFor="manage-search" className={labelClassName}>
-            Search by name or address
+            {t('desk.searchName')}
           </label>
           <input
             id="manage-search"
@@ -44,7 +46,7 @@ function ManageRestaurantsTab() {
         </div>
         <div>
           <label htmlFor="manage-status" className={labelClassName}>
-            Status
+            {t('desk.status')}
           </label>
           <select
             id="manage-status"
@@ -52,29 +54,29 @@ function ManageRestaurantsTab() {
             onChange={(event) => setStatus(event.target.value)}
             className={inputClassName}
           >
-            <option value="">All</option>
-            <option value="APPROVED">Approved</option>
-            <option value="PENDING">Pending</option>
-            <option value="REJECTED">Rejected</option>
+            <option value="">{t('common.all')}</option>
+            <option value="APPROVED">{t('admin.status.APPROVED')}</option>
+            <option value="PENDING">{t('admin.status.PENDING')}</option>
+            <option value="REJECTED">{t('admin.status.REJECTED')}</option>
           </select>
         </div>
         <button
           type="submit"
           className="rounded bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700"
         >
-          Search
+          {t('common.search')}
         </button>
         <Link
           to="/admin/restaurants/new"
           className="rounded border border-green-600 px-4 py-2 font-medium text-green-700 hover:bg-green-50"
         >
-          Add a restaurant
+          {t('nav.addRestaurant')}
         </Link>
       </form>
 
       <FormAlert message={error} />
-      {loading && !data && <p className="text-gray-600">Loading...</p>}
-      {data && data.items.length === 0 && <p className="text-gray-600">No restaurants match.</p>}
+      {loading && !data && <p className="text-gray-600">{t('common.loading')}</p>}
+      {data && data.items.length === 0 && <p className="text-gray-600">{t('desk.noMatch')}</p>}
 
       <ul className="divide-y divide-green-100 rounded border border-green-100">
         {data?.items.map((restaurant) => (
@@ -91,7 +93,7 @@ function ManageRestaurantsTab() {
                 {getStatusLabel(restaurant.status)}
               </span>
               <Link to={`/admin/restaurants/${restaurant.id}`} className="text-sm font-medium text-green-700 underline">
-                Open
+                {t('common.open')}
               </Link>
             </div>
           </li>

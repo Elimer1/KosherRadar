@@ -2,7 +2,9 @@
 // A suggestion or Enter looks the place up. A miss does not invent coordinates.
 // חדש (אבן דרך 5): מיקום החיפוש, נפרד מתיבת השם והאוכל. הצעה או Enter מחפשים את המקום. החטאה לא ממציאה קואורדינטות.
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { geocodePlace, suggestPlaces } from '../api/placesApi';
+import { activeLanguage } from '../i18n';
 import type { AddressSuggestion, PlaceLanguage } from '../api/placesApi';
 import type { SearchFilters } from '../types/search';
 import { inputClassName, labelClassName } from './formStyles';
@@ -13,7 +15,9 @@ interface LocationFieldProps {
   lang?: PlaceLanguage;
 }
 
-function LocationField({ filters, onChange, lang = 'en' }: LocationFieldProps) {
+function LocationField({ filters, onChange, lang }: LocationFieldProps) {
+  const { t } = useTranslation();
+  const placeLanguage = lang ?? activeLanguage();
   const [text, setText] = useState('');
   const [selectedLabel, setSelectedLabel] = useState('');
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
@@ -30,7 +34,7 @@ function LocationField({ filters, onChange, lang = 'en' }: LocationFieldProps) {
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       try {
-        const result = await suggestPlaces(query, lang, controller.signal);
+        const result = await suggestPlaces(query, placeLanguage, controller.signal);
 
         if (controller.signal.aborted) {
           return;
@@ -39,12 +43,12 @@ function LocationField({ filters, onChange, lang = 'en' }: LocationFieldProps) {
         setSuggestions(result.suggestions);
 
         if (!result.available) {
-          setNote('Place search is unavailable. You can use your current location, or browse without one.');
+          setNote(t('location.unavailable'));
         }
       } catch {
         if (!controller.signal.aborted) {
           setSuggestions([]);
-          setNote('Place search is unavailable. You can use your current location, or browse without one.');
+          setNote(t('location.unavailable'));
         }
       }
     }, 300);
@@ -53,7 +57,7 @@ function LocationField({ filters, onChange, lang = 'en' }: LocationFieldProps) {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [text, lang, selectedLabel]);
+  }, [text, placeLanguage, selectedLabel, t]);
 
   const applyPlace = (place: AddressSuggestion) => {
     setText(place.label);
@@ -79,15 +83,15 @@ function LocationField({ filters, onChange, lang = 'en' }: LocationFieldProps) {
     }
 
     setSuggestions([]);
-    const result = await geocodePlace(query, lang);
+    const result = await geocodePlace(query, placeLanguage);
 
     if (!result.available) {
-      setNote('Place search is unavailable. You can use your current location, or browse without one.');
+      setNote(t('location.unavailable'));
       return;
     }
 
     if (!result.place) {
-      setNote('No matching place in Israel. Nothing was guessed, so this search stays without a location.');
+      setNote(t('location.noMatch'));
       onChange({ ...filters, location: null, radiusKm: null });
       setSelectedLabel('');
       return;
@@ -98,7 +102,7 @@ function LocationField({ filters, onChange, lang = 'en' }: LocationFieldProps) {
 
   const handleUseMyLocation = () => {
     if (!navigator.geolocation) {
-      setNote('Your browser cannot share your location. You can still type a place or browse without one.');
+      setNote(t('location.noGeo'));
       return;
     }
 
@@ -109,7 +113,7 @@ function LocationField({ filters, onChange, lang = 'en' }: LocationFieldProps) {
       (position) => {
         setLocating(false);
         setText('');
-        setSelectedLabel('Current location');
+        setSelectedLabel(t('location.current'));
         setSuggestions([]);
         onChange({
           ...filters,
@@ -118,11 +122,7 @@ function LocationField({ filters, onChange, lang = 'en' }: LocationFieldProps) {
       },
       (error) => {
         setLocating(false);
-        setNote(
-          error.code === error.PERMISSION_DENIED
-            ? 'Location permission was denied. You can still type a place or browse without one.'
-            : 'Could not find your location. You can still type a place or browse without one.'
-        );
+        setNote(error.code === error.PERMISSION_DENIED ? t('location.denied') : t('location.failed'));
       },
       { timeout: 10000 }
     );
@@ -131,7 +131,7 @@ function LocationField({ filters, onChange, lang = 'en' }: LocationFieldProps) {
   return (
     <div className="mt-3">
       <label htmlFor="search-location" className={labelClassName}>
-        Location
+        {t('location.label')}
       </label>
       <div className="mt-1 flex flex-col gap-2 sm:flex-row">
         <input
@@ -150,7 +150,7 @@ function LocationField({ filters, onChange, lang = 'en' }: LocationFieldProps) {
               void handleLookupTyped();
             }
           }}
-          placeholder="City or address in Israel"
+          placeholder={t('location.placeholder')}
           autoComplete="off"
           className={`${inputClassName} mt-0 sm:flex-1`}
         />
@@ -160,12 +160,11 @@ function LocationField({ filters, onChange, lang = 'en' }: LocationFieldProps) {
           disabled={locating}
           className="min-h-11 rounded border border-green-600 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {locating ? 'Finding your location...' : 'Use my current location'}
+          {locating ? t('location.finding') : t('location.useMine')}
         </button>
       </div>
       <p className="mt-1 text-xs text-gray-500">
-        Optional. Choose a suggestion, or press Enter to look up what you typed. This is not part of the restaurant
-        name search.
+        {t('location.hint')}
       </p>
 
       {suggestions.length > 0 && (
@@ -186,9 +185,9 @@ function LocationField({ filters, onChange, lang = 'en' }: LocationFieldProps) {
 
       {selectedLabel !== '' && filters.location && (
         <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-700">
-          <span>Using: {selectedLabel}</span>
+          <span>{t('location.using', { place: selectedLabel })}</span>
           <button type="button" onClick={handleClear} className="font-medium text-green-700 underline">
-            Clear location
+            {t('location.clear')}
           </button>
         </p>
       )}

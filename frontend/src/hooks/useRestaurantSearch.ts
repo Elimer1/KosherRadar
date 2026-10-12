@@ -3,6 +3,7 @@
 // חדש (אבן דרך 4): טוען את העמוד הראשון בכל שינוי של טקסט או מסנן, ואת העמוד הבא ב"טען עוד". השרת מסנן וממיין.
 import { useEffect, useRef, useState } from 'react';
 import { getErrorMessage } from '../api/errors';
+import i18n from '../i18n';
 import { searchRestaurants } from '../api/searchApi';
 import type { RestaurantCardData, SearchFilters, SearchResult } from '../types/search';
 import { appendNewRestaurants } from '../utils/searchResults';
@@ -73,7 +74,7 @@ export const useRestaurantSearch = (filters: SearchFilters, enabled = true) => {
         }
       } catch (err) {
         if (!ignore) {
-          setError(getErrorMessage(err, 'Could not load restaurants.'));
+          setError(getErrorMessage(err, i18n.t('home.loadError')));
         }
       } finally {
         if (!ignore) {
@@ -109,7 +110,7 @@ export const useRestaurantSearch = (filters: SearchFilters, enabled = true) => {
       }
     } catch (err) {
       if (latestFiltersKey.current === keyWhenStarted) {
-        setError(getErrorMessage(err, 'Could not load more restaurants.'));
+        setError(getErrorMessage(err, i18n.t('home.moreError')));
       }
     } finally {
       if (latestFiltersKey.current === keyWhenStarted) {

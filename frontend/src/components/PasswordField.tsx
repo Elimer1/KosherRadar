@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { inputClassName, labelClassName } from './formStyles';
 
 interface PasswordFieldProps {
@@ -13,6 +14,7 @@ interface PasswordFieldProps {
 }
 
 function PasswordField({ id, label, value, onChange, autoComplete, minLength, maxLength, hint }: PasswordFieldProps) {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
 
   return (
@@ -35,7 +37,7 @@ function PasswordField({ id, label, value, onChange, autoComplete, minLength, ma
         <button
           type="button"
           onClick={() => setVisible((current) => !current)}
-          aria-label={visible ? 'Hide password' : 'Show password'}
+          aria-label={visible ? t('common.hidePassword') : t('common.showPassword')}
           aria-pressed={visible}
           className="absolute inset-y-0 end-0 mt-1 flex items-center px-3 text-gray-500 hover:text-gray-800"
         >

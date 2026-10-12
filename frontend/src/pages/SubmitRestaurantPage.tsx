@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { submitRestaurant } from '../api/restaurantApi';
 import { getErrorMessage } from '../api/errors';
@@ -8,12 +9,15 @@ import RestaurantFields from '../components/RestaurantFields';
 import TeudaFields from '../components/TeudaFields';
 import { primaryButtonClassName } from '../components/formStyles';
 import { useFormOptions } from '../hooks/useFormOptions';
+import { usePageMeta } from '../hooks/usePageMeta';
 import { usePhotoField } from '../hooks/usePhotoField';
 import { emptyRestaurantForm, emptyTeudaForm } from '../types/submissions';
 import type { RestaurantFormValues, RestaurantSubmitResult, TeudaFormValues } from '../types/submissions';
 
 function SubmitRestaurantPage() {
+  const { t } = useTranslation();
   const { options, error: optionsError } = useFormOptions();
+  usePageMeta(t('forms.addRestaurant'), t('forms.addRestaurantBody'));
 
   const [restaurant, setRestaurant] = useState<RestaurantFormValues>(emptyRestaurantForm);
   const [teuda, setTeuda] = useState<TeudaFormValues>(emptyTeudaForm);
@@ -47,7 +51,7 @@ function SubmitRestaurantPage() {
     setError('');
 
     if (restaurant.categories.length === 0) {
-      setError('Please choose at least one category.');
+      setError(t('forms.chooseCategory'));
       return;
     }
 
@@ -75,7 +79,7 @@ function SubmitRestaurantPage() {
       );
 
       if (!certificateComplete) {
-        setError('Fill in every certificate field and add a photo, or leave the certificate blank.');
+        setError(t('forms.certificateIncomplete'));
         return;
       }
     }
@@ -98,7 +102,7 @@ function SubmitRestaurantPage() {
       );
       setResult(submitted);
     } catch (err) {
-      setError(getErrorMessage(err, 'Could not send the restaurant. Please try again.'));
+      setError(getErrorMessage(err, t('forms.sendRestaurantFailed')));
     } finally {
       setLoading(false);
     }
@@ -109,29 +113,20 @@ function SubmitRestaurantPage() {
   }
 
   if (!options) {
-    return <p className="text-gray-600">Loading...</p>;
+    return <p className="text-gray-600">{t('common.loading')}</p>;
   }
 
   if (result) {
     return (
       <div className="mx-auto max-w-lg space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">Restaurant sent</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('forms.restaurantSent')}</h1>
         <FormAlert
           kind="success"
-          message={
-            result.teuda
-              ? 'Thank you. The restaurant and its certificate are waiting for admin review. Nothing is shown on the site until an admin approves it.'
-              : 'Thank you. The restaurant is waiting for admin review. It will not appear on the site until an admin approves it.'
-          }
+          message={result.teuda ? t('forms.thanksWithCertificate') : t('forms.thanksRestaurant')}
         />
-        {result.possibleDuplicateCount > 0 && (
-          <FormAlert
-            kind="warning"
-            message="A similar restaurant may already be listed. This does not stop your submission; an admin will check it."
-          />
-        )}
+        {result.possibleDuplicateCount > 0 && <FormAlert kind="warning" message={t('forms.similarWarning')} />}
         <Link to="/account/submissions" className="inline-block font-medium text-green-700 hover:underline">
-          See your submissions
+          {t('forms.seeSubmissions')}
         </Link>
       </div>
     );
@@ -139,11 +134,8 @@ function SubmitRestaurantPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-bold text-gray-900">Add a restaurant</h1>
-      <p className="mt-2 text-sm text-gray-600">
-        Share a restaurant or food business in Israel. An admin reviews every submission before it is shown. Only
-        add facts you know; a certificate photo makes the listing verifiable.
-      </p>
+      <h1 className="text-2xl font-bold text-gray-900">{t('forms.addRestaurant')}</h1>
+      <p className="mt-2 text-sm text-gray-600">{t('forms.addRestaurantBody')}</p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-8">
         <FormAlert message={error} />
@@ -158,11 +150,8 @@ function SubmitRestaurantPage() {
         />
 
         <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">Kashrut certificate (optional)</h2>
-          <p className="text-sm text-gray-600">
-            Add the certificate details and a photo on this form. Leave every certificate field empty to send the
-            restaurant without one.
-          </p>
+          <h2 className="text-lg font-semibold text-gray-900">{t('forms.certificateOptional')}</h2>
+          <p className="text-sm text-gray-600">{t('forms.certificateOptionalBody')}</p>
           <TeudaFields
             idPrefix="new-restaurant-teuda"
             values={teuda}
@@ -178,7 +167,7 @@ function SubmitRestaurantPage() {
 
         {loading && photo && (
           <div role="status" className="text-sm text-gray-600">
-            {progress < 100 ? `Uploading... ${progress}%` : 'Saving...'}
+            {progress < 100 ? t('forms.uploading', { progress }) : t('auth.saving')}
             <div className="mt-1 h-2 rounded bg-green-100">
               <div className="h-2 rounded bg-green-600" style={{ width: `${progress}%` }} />
             </div>
@@ -186,7 +175,7 @@ function SubmitRestaurantPage() {
         )}
 
         <button type="submit" disabled={loading} className={primaryButtonClassName}>
-          {loading ? 'Sending...' : 'Send restaurant for review'}
+          {loading ? t('auth.sending') : t('forms.sendRestaurant')}
         </button>
       </form>
     </div>

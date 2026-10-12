@@ -3,6 +3,7 @@
 // חדש (אבן דרך 3): מנהל מוסיף תעודה מאושרת למסעדה מאושרת. תאריך התפוגה יכול להיות בעבר.
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import { createTeudaAsAdmin, getRestaurantDetails } from '../api/adminApi';
 import { getErrorMessage } from '../api/errors';
@@ -16,6 +17,7 @@ import { emptyTeudaForm } from '../types/submissions';
 import type { TeudaFormValues } from '../types/submissions';
 
 function AdminAddTeudaPage() {
+  const { t } = useTranslation();
   const { restaurantId = '' } = useParams();
   const { options, error: optionsError } = useFormOptions();
 
@@ -36,19 +38,19 @@ function AdminAddTeudaPage() {
         const details = await getRestaurantDetails(restaurantId);
         setRestaurant(details.restaurant);
       } catch (err) {
-        setLoadError(getErrorMessage(err, 'Could not load this restaurant.'));
+        setLoadError(getErrorMessage(err, t('forms.loadRestaurant')));
       }
     };
 
     loadRestaurant();
-  }, [restaurantId]);
+  }, [restaurantId, t]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError('');
 
     if (!photo) {
-      setError('Please choose a photo of the certificate.');
+      setError(t('forms.needPhoto'));
       return;
     }
 
@@ -59,7 +61,7 @@ function AdminAddTeudaPage() {
       await createTeudaAsAdmin(restaurantId, values, adminNote, photo, setProgress);
       setDone(true);
     } catch (err) {
-      setError(getErrorMessage(err, 'Could not add the certificate.'));
+      setError(getErrorMessage(err, t('desk.addCertificateFailed')));
     } finally {
       setLoading(false);
     }
@@ -70,16 +72,16 @@ function AdminAddTeudaPage() {
   }
 
   if (!restaurant || !options) {
-    return <p className="text-gray-600">Loading...</p>;
+    return <p className="text-gray-600">{t('common.loading')}</p>;
   }
 
   if (done) {
     return (
       <div className="mx-auto max-w-lg space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">Certificate added</h1>
-        <FormAlert kind="success" message={`The certificate for ${restaurant.name} is approved.`} />
+        <h1 className="text-2xl font-bold text-gray-900">{t('desk.certificateAdded')}</h1>
+        <FormAlert kind="success" message={t('desk.certificateApprovedFor', { name: restaurant.name })} />
         <Link to={`/admin/restaurants/${restaurant.id}`} className="font-medium text-green-700 underline">
-          Back to the restaurant
+          {t('desk.backRestaurant')}
         </Link>
       </div>
     );
@@ -88,9 +90,9 @@ function AdminAddTeudaPage() {
   return (
     <div className="mx-auto max-w-lg">
       <Link to={`/admin/restaurants/${restaurant.id}`} className="text-sm font-medium text-green-700 underline">
-        Back to the restaurant
+        {t('desk.backRestaurant')}
       </Link>
-      <h1 className="mt-2 text-2xl font-bold text-gray-900">Add a certificate (admin)</h1>
+      <h1 className="mt-2 text-2xl font-bold text-gray-900">{t('desk.addCertificateAdmin')}</h1>
       <p className="mt-1 text-gray-600">
         {restaurant.name} &middot; {restaurant.address}
       </p>
@@ -111,7 +113,7 @@ function AdminAddTeudaPage() {
 
         <div>
           <label htmlFor="admin-teuda-note" className={labelClassName}>
-            Private note (only admins see it)
+            {t('desk.privateAdmins')}
           </label>
           <textarea
             id="admin-teuda-note"
@@ -126,7 +128,7 @@ function AdminAddTeudaPage() {
 
         {loading && (
           <div role="status" className="text-sm text-gray-600">
-            {progress < 100 ? `Uploading photo... ${progress}%` : 'Saving...'}
+            {progress < 100 ? t('forms.uploadingPhoto', { progress }) : t('auth.saving')}
             <div className="mt-1 h-2 rounded bg-green-100">
               <div className="h-2 rounded bg-green-600" style={{ width: `${progress}%` }} />
             </div>
@@ -134,7 +136,7 @@ function AdminAddTeudaPage() {
         )}
 
         <button type="submit" disabled={loading || Boolean(photoError)} className={primaryButtonClassName}>
-          {loading ? 'Saving...' : 'Add approved certificate'}
+          {loading ? t('auth.saving') : t('desk.addApproved')}
         </button>
       </form>
     </div>

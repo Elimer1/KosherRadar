@@ -5,18 +5,10 @@
 // במפורש, כך שההבדל לא תלוי רק בצבע. תרגום מלא מגיע באבן דרך 5.
 import type { HechsherOption } from '../types/submissions';
 import type { KashrutPreview, KashrutPrimary, KashrutStatus } from '../types/search';
+import i18n, { activeLanguage } from '../i18n';
 import { getHechsherLabel, getKashrutLevelLabel } from './labels';
 
-export const getStatusHeadline = (status: KashrutStatus) => {
-  const headlines: Record<KashrutStatus, string> = {
-    VERIFIED: 'Verified certificate',
-    UNVERIFIED: 'Unverified claim (no certificate)',
-    EXPIRED: 'EXPIRED certificate',
-    UNKNOWN: 'Kashrut status unknown',
-  };
-
-  return headlines[status];
-};
+export const getStatusHeadline = (status: KashrutStatus) => i18n.t(`kashrut.${status}`);
 
 // "Local Rabbinate, Mehadrin". A claim may name only a hechsher or only a level, or neither.
 export const describeEvidenceName = (
@@ -33,7 +25,7 @@ export const describeEvidenceName = (
     parts.push(getKashrutLevelLabel(evidence.kashrutLevel));
   }
 
-  return parts.length > 0 ? parts.join(', ') : 'No hechsher named';
+  return parts.length > 0 ? parts.join(', ') : i18n.t('kashrut.noHechsher');
 };
 
 // One line for an autocomplete row: "Verified certificate: Local Rabbinate, Mehadrin (+1 more)".
@@ -49,7 +41,8 @@ export const describeKashrutShort = (kashrut: KashrutPreview, hechsherOptions: H
   return `${headline}: ${describeEvidenceName(kashrut.primary, hechsherOptions)}${more ? ` (${more})` : ''}`;
 };
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTHS_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTHS_HE = ['ינו׳', 'פבר׳', 'מרץ', 'אפר׳', 'מאי', 'יוני', 'יולי', 'אוג׳', 'ספט׳', 'אוק׳', 'נוב׳', 'דצמ׳'];
 
 // "2026-10-11" -> "11 Oct 2026". Built from the text, not from a Date object, so the day can never shift
 // with the browser's time zone (expiration dates are plain calendar dates in Israel).
@@ -61,7 +54,8 @@ export const formatDateOnly = (dateOnly: string) => {
     return dateOnly;
   }
 
-  const month = MONTHS[Number(match[2]) - 1];
+  const months = activeLanguage() === 'he' ? MONTHS_HE : MONTHS_EN;
+  const month = months[Number(match[2]) - 1];
   return month ? `${Number(match[3])} ${month} ${match[1]}` : dateOnly;
 };
 
@@ -71,9 +65,10 @@ export const describeValidity = (primary: KashrutPrimary) => {
   }
 
   const date = formatDateOnly(primary.expirationDate);
-  return primary.kind === 'EXPIRED' ? `Expired on ${date}` : `Valid until ${date}`;
+  return primary.kind === 'EXPIRED' ? i18n.t('kashrut.expiredOn', { date }) : i18n.t('kashrut.validUntil', { date });
 };
 
-export const formatMoreCount = (moreCount: number) => (moreCount > 0 ? `+${moreCount} more` : '');
+export const formatMoreCount = (moreCount: number) => (moreCount > 0 ? i18n.t('kashrut.more', { count: moreCount }) : '');
 
-export const formatDistance = (distanceKm: number | null) => (distanceKm === null ? '' : `${distanceKm} km away`);
+export const formatDistance = (distanceKm: number | null) =>
+  distanceKm === null ? '' : i18n.t('kashrut.kmAway', { km: distanceKm });

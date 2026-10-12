@@ -5,6 +5,7 @@
 // מילישניות, ובקשות ישנות מבוטלות. לחיצה על הצעה פותחת את המסעדה; Enter בלי בחירה מריץ חיפוש.
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { FormEvent, KeyboardEvent } from 'react';
 import { getRestaurantSuggestions } from '../api/searchApi';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
@@ -28,6 +29,7 @@ interface SearchBarProps {
 }
 
 function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, hechsherOptions }: SearchBarProps) {
+  const { t } = useTranslation();
   // The last answer, together with the text it was for.
   const [answer, setAnswer] = useState<{ query: string; rows: RestaurantSuggestion[] }>({ query: '', rows: [] });
   const [open, setOpen] = useState(false);
@@ -107,9 +109,9 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
   };
 
   return (
-    <form onSubmit={handleSubmit} role="search" className="relative" aria-label="Search restaurants">
+    <form onSubmit={handleSubmit} role="search" className="relative" aria-label={t('search.form')}>
       <label htmlFor="restaurant-search" className="sr-only">
-        Search by restaurant name or food
+        {t('search.label')}
       </label>
       <div className="flex gap-2">
         <input
@@ -118,7 +120,7 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
           value={text}
           maxLength={100}
           autoComplete="off"
-          placeholder="Restaurant name or food"
+          placeholder={t('search.placeholder')}
           className={`${inputClassName} mt-0`}
           role="combobox"
           aria-expanded={showList}
@@ -137,7 +139,7 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
           type="submit"
           className="rounded bg-green-600 px-5 py-2 font-medium text-white hover:bg-green-700"
         >
-          Search
+          {t('search.button')}
         </button>
       </div>
 

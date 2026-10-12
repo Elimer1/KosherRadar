@@ -1,5 +1,6 @@
+import { useTranslation } from 'react-i18next';
 import type { FormOptions, RestaurantFormValues } from '../types/submissions';
-import { getCategoryLabel, getFoodTypeLabel, getKashrutLevelLabel } from '../utils/labels';
+import { getCategoryLabel, getFoodTypeLabel, getHechsherOptionLabel, getKashrutLevelLabel } from '../utils/labels';
 import AddressSearch from './AddressSearch';
 import { inputClassName, labelClassName } from './formStyles';
 
@@ -21,17 +22,18 @@ function RestaurantFields({
   onChange,
   onToggleCategory,
 }: RestaurantFieldsProps) {
+  const { t } = useTranslation();
   const claimIsOther = values.claimedHechsher === options.hechsherOtherValue;
   const forUser = variant === 'user';
 
   return (
     <div className="space-y-8">
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Restaurant details</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{t('forms.restaurantDetails')}</h2>
 
         <div>
           <label htmlFor="restaurant-name" className={labelClassName}>
-            Name
+            {t('forms.name')}
           </label>
           <input
             id="restaurant-name"
@@ -63,7 +65,7 @@ function RestaurantFields({
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="restaurant-phone" className={labelClassName}>
-              Phone (optional)
+              {t('forms.phoneOptional')}
             </label>
             <input
               id="restaurant-phone"
@@ -77,7 +79,7 @@ function RestaurantFields({
           </div>
           <div>
             <label htmlFor="restaurant-website" className={labelClassName}>
-              Website (optional)
+              {t('forms.websiteOptional')}
             </label>
             <input
               id="restaurant-website"
@@ -94,11 +96,11 @@ function RestaurantFields({
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Food</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{t('forms.food')}</h2>
 
         <div>
           <label htmlFor="restaurant-food-type" className={labelClassName}>
-            Meat, dairy or pareve
+            {t('forms.foodType')}
           </label>
           <select
             id="restaurant-food-type"
@@ -108,7 +110,7 @@ function RestaurantFields({
             onChange={(event) => onChange('foodType', event.target.value)}
             className={inputClassName}
           >
-            <option value="">Choose...</option>
+            <option value="">{t('common.choose')}</option>
             {options.foodTypes.map((foodType) => (
               <option key={foodType} value={foodType}>
                 {getFoodTypeLabel(foodType)}
@@ -118,7 +120,7 @@ function RestaurantFields({
         </div>
 
         <fieldset>
-          <legend className={labelClassName}>Categories (choose at least one)</legend>
+          <legend className={labelClassName}>{t('forms.categories')}</legend>
           <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
             {options.categories.map((category) => (
               <label key={category} className="flex items-center gap-2 text-sm text-gray-700">
@@ -138,12 +140,12 @@ function RestaurantFields({
         {!forUser && (
           <div>
             <label htmlFor="restaurant-keywords" className={labelClassName}>
-              What do they serve? (optional, separated by commas)
+              {t('forms.keywords')}
             </label>
             <input
               id="restaurant-keywords"
               type="text"
-              placeholder="pizza, pasta, salads"
+              placeholder={t('forms.keywordsPlaceholder')}
               disabled={disabled}
               value={values.foodKeywords}
               onChange={(event) => onChange('foodKeywords', event.target.value)}
@@ -155,15 +157,12 @@ function RestaurantFields({
 
       {!forUser && (
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Kashrut claim (optional)</h2>
-        <p className="text-sm text-gray-600">
-          If you know which hechsher the place says it has but you have no photo of the certificate, enter it here.
-          It will be shown as an unverified claim, not as a verified certificate.
-        </p>
+        <h2 className="text-lg font-semibold text-gray-900">{t('forms.claimTitle')}</h2>
+        <p className="text-sm text-gray-600">{t('forms.claimBody')}</p>
 
         <div>
           <label htmlFor="restaurant-claimed-hechsher" className={labelClassName}>
-            Claimed hechsher
+            {t('forms.claimedHechsher')}
           </label>
           <select
             id="restaurant-claimed-hechsher"
@@ -172,20 +171,20 @@ function RestaurantFields({
             onChange={(event) => onChange('claimedHechsher', event.target.value)}
             className={inputClassName}
           >
-            <option value="">No claim</option>
+            <option value="">{t('forms.noClaim')}</option>
             {options.hechsherOptions.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.labelEn}
+                {getHechsherOptionLabel(option)}
               </option>
             ))}
-            <option value={options.hechsherOtherValue}>Other (type below)</option>
+            <option value={options.hechsherOtherValue}>{t('common.otherType')}</option>
           </select>
         </div>
 
         {claimIsOther && (
           <div>
             <label htmlFor="restaurant-claimed-other" className={labelClassName}>
-              Name of the hechsher
+              {t('forms.hechsherName')}
             </label>
             <input
               id="restaurant-claimed-other"
@@ -202,7 +201,7 @@ function RestaurantFields({
 
         <div>
           <label htmlFor="restaurant-claimed-level" className={labelClassName}>
-            Claimed kashrut level
+            {t('forms.claimedLevel')}
           </label>
           <select
             id="restaurant-claimed-level"
@@ -211,7 +210,7 @@ function RestaurantFields({
             onChange={(event) => onChange('claimedKashrutLevel', event.target.value)}
             className={inputClassName}
           >
-            <option value="">No claim</option>
+            <option value="">{t('forms.noClaim')}</option>
             {options.kashrutLevels.map((level) => (
               <option key={level} value={level}>
                 {getKashrutLevelLabel(level)}

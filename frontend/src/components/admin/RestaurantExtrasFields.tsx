@@ -1,6 +1,7 @@
 // NEW (Milestone 3): the admin-only restaurant fields: Hebrew/English names and addresses, a private note
 // and the link to the official kosharot page. They sit under the normal restaurant fields.
 // חדש (אבן דרך 3): שדות המסעדה שרק מנהל רואה: שמות וכתובות בעברית ובאנגלית, הערה פרטית וקישור לדף הרשמי.
+import { useTranslation } from 'react-i18next';
 import type { RestaurantExtrasValues } from '../../types/admin';
 import { inputClassName, labelClassName } from '../formStyles';
 
@@ -11,14 +12,16 @@ interface RestaurantExtrasFieldsProps {
 }
 
 function RestaurantExtrasFields({ values, disabled, onChange }: RestaurantExtrasFieldsProps) {
+  const { t } = useTranslation();
+
   return (
     <section className="space-y-4">
-      <h2 className="text-lg font-semibold text-gray-900">Admin details (optional)</h2>
+      <h2 className="text-lg font-semibold text-gray-900">{t('desk.adminDetails')}</h2>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="extras-name-he" className={labelClassName}>
-            Name in Hebrew
+            {t('desk.nameHe')}
           </label>
           <input
             id="extras-name-he"
@@ -33,7 +36,7 @@ function RestaurantExtrasFields({ values, disabled, onChange }: RestaurantExtras
         </div>
         <div>
           <label htmlFor="extras-name-en" className={labelClassName}>
-            Name in English
+            {t('desk.nameEn')}
           </label>
           <input
             id="extras-name-en"
@@ -47,7 +50,7 @@ function RestaurantExtrasFields({ values, disabled, onChange }: RestaurantExtras
         </div>
         <div>
           <label htmlFor="extras-address-he" className={labelClassName}>
-            Address in Hebrew
+            {t('desk.addressHe')}
           </label>
           <input
             id="extras-address-he"
@@ -62,7 +65,7 @@ function RestaurantExtrasFields({ values, disabled, onChange }: RestaurantExtras
         </div>
         <div>
           <label htmlFor="extras-address-en" className={labelClassName}>
-            Address in English
+            {t('desk.addressEn')}
           </label>
           <input
             id="extras-address-en"
@@ -78,7 +81,7 @@ function RestaurantExtrasFields({ values, disabled, onChange }: RestaurantExtras
 
       <div>
         <label htmlFor="extras-kosharot-url" className={labelClassName}>
-          Link to the official kosharot page
+          {t('desk.kosharotLink')}
         </label>
         <input
           id="extras-kosharot-url"
@@ -93,7 +96,7 @@ function RestaurantExtrasFields({ values, disabled, onChange }: RestaurantExtras
 
       <div>
         <label htmlFor="extras-admin-note" className={labelClassName}>
-          Private note (only admins see it)
+          {t('desk.privateAdmins')}
         </label>
         <textarea
           id="extras-admin-note"

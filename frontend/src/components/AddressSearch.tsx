@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { searchAddresses } from '../api/placesApi';
 import type { AddressSuggestion } from '../api/placesApi';
 import { inputClassName, labelClassName } from './formStyles';
@@ -32,6 +33,7 @@ function AddressSearch({
   onCityChange,
   onLocationChange,
 }: AddressSearchProps) {
+  const { t } = useTranslation();
   const [searching, setSearching] = useState(false);
   const [manual, setManual] = useState(false);
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
@@ -60,12 +62,12 @@ function AddressSearch({
         setSuggestions(result.suggestions);
 
         if (!result.available) {
-          setLookupNote('Address search is unavailable right now. Type the street and city.');
+          setLookupNote(t('forms.lookupDown'));
           setManual(true);
         }
       } catch {
         if (!cancelled) {
-          setLookupNote('Address search is unavailable right now. Type the street and city.');
+          setLookupNote(t('forms.lookupDown'));
           setSuggestions([]);
           setManual(true);
         }
@@ -76,7 +78,7 @@ function AddressSearch({
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [address, searching, manual]);
+  }, [address, searching, manual, t]);
 
   const handleAddressType = (value: string) => {
     setSearching(true);
@@ -108,7 +110,7 @@ function AddressSearch({
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="relative">
           <label htmlFor="restaurant-address" className={labelClassName}>
-            Street address
+            {t('forms.street')}
           </label>
           <input
             id="restaurant-address"
@@ -127,7 +129,7 @@ function AddressSearch({
                 <li key={`${suggestion.placeId}-${suggestion.label}`}>
                   <button
                     type="button"
-                    className="w-full px-3 py-2 text-left text-sm text-gray-800 hover:bg-green-50"
+                    className="w-full px-3 py-2 text-start text-sm text-gray-800 hover:bg-green-50"
                     onClick={() => handlePick(suggestion)}
                   >
                     {suggestion.label}
@@ -139,7 +141,7 @@ function AddressSearch({
         </div>
         <div>
           <label htmlFor="restaurant-city" className={labelClassName}>
-            {cityRequired ? 'City' : 'City (optional)'}
+            {cityRequired ? t('forms.city') : t('forms.cityOptional')}
           </label>
           <input
             id="restaurant-city"
@@ -158,9 +160,7 @@ function AddressSearch({
       </div>
 
       <p className="text-sm text-gray-600">
-        {latitude
-          ? 'This address is placed on the map.'
-          : 'If the address is not in the list, type the street and city. An admin will review it, and it may not appear on the map until then.'}
+        {latitude ? t('forms.placed') : t('forms.manualHint')}
       </p>
       {lookupNote && <p className="text-sm text-amber-800">{lookupNote}</p>}
       {!manual && (
@@ -174,7 +174,7 @@ function AddressSearch({
           }}
           className="text-sm font-medium text-green-700 underline"
         >
-          Can&apos;t find the address? Type it in
+          {t('forms.typeIt')}
         </button>
       )}
     </div>
