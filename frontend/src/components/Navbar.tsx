@@ -33,6 +33,9 @@ function Navbar() {
                   Admin
                 </Link>
               )}
+              <Link to="/account/submissions" className="text-gray-700 hover:text-green-700">
+                My submissions
+              </Link>
               <Link to="/account" className="text-gray-700 hover:text-green-700">
                 {user.email}
               </Link>

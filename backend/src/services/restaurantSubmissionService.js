@@ -9,6 +9,33 @@ import { createTeudaRepo } from '../repositories/teudaRepository.js';
 import { findPossibleDuplicatesService } from './duplicateService.js';
 import { deleteImageService, uploadTeudaImageService } from './imageUploadService.js';
 import { buildTeudaRecord, validateTeudaSubmission } from './teudaSubmissionService.js';
+import { geocodeAddressService } from './placesService.js';
+
+// A typed address has no pin yet. Use Geoapify when it can match one. A miss stays without coordinates.
+const withGeocodedLocation = async (restaurantData) => {
+  const hasLatitude = restaurantData.latitude !== undefined;
+  const hasLongitude = restaurantData.longitude !== undefined;
+
+  if (hasLatitude && hasLongitude) {
+    return restaurantData;
+  }
+
+  const located = await geocodeAddressService({
+    address: restaurantData.address,
+    city: restaurantData.city,
+  });
+
+  if (!located) {
+    return restaurantData;
+  }
+
+  return {
+    ...restaurantData,
+    latitude: located.latitude,
+    longitude: located.longitude,
+    geoapifyPlaceId: restaurantData.geoapifyPlaceId || located.geoapifyPlaceId,
+  };
+};
 
 // A signed-in user proposes a new restaurant, optionally with its first certificate.
 // Everything starts as PENDING: only an admin can approve, and the user never chooses status or points.
@@ -18,6 +45,8 @@ export const submitRestaurantService = async ({ restaurantData, teudaData, file,
   } else if (file) {
     throw appError('A photo can only be sent together with certificate details', 400);
   }
+
+  const locatedRestaurant = await withGeocodedLocation(restaurantData);
 
   const alreadySent = await findPendingRestaurantBySubmitterRepo({
     submittedBy: user._id,
@@ -30,7 +59,7 @@ export const submitRestaurantService = async ({ restaurantData, teudaData, file,
   }
 
   // Duplicates are only recorded for the admin. They never stop the submission.
-  const possibleDuplicates = await findPossibleDuplicatesService(restaurantData);
+  const possibleDuplicates = await findPossibleDuplicatesService(locatedRestaurant);
 
   const image = teudaData ? await uploadTeudaImageService(file) : null;
 
@@ -38,7 +67,7 @@ export const submitRestaurantService = async ({ restaurantData, teudaData, file,
 
   try {
     restaurant = await createRestaurantRepo({
-      ...restaurantData,
+      ...locatedRestaurant,
       status: 'PENDING',
       submittedBy: user._id,
       possibleDuplicates,

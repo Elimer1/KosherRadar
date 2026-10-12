@@ -4,6 +4,7 @@ import { submitRestaurantSchema } from '../src/schemas/restaurantSchemas.js';
 const validRestaurant = () => ({
   name: 'Pizza Hut',
   address: '1 Main St, Jerusalem',
+  city: 'Jerusalem',
   foodType: 'DAIRY',
   categories: ['RESTAURANT'],
 });
@@ -18,10 +19,11 @@ describe('submitRestaurantSchema', () => {
     expect(result.teuda).toBeUndefined();
   });
 
-  it('treats empty optional inputs from the form as missing', () => {
+  it('requires a city and treats other empty optional inputs as missing', () => {
+    expect(() => parse({ ...validRestaurant(), city: '' })).toThrow(/City is required/);
+
     const result = parse({
       ...validRestaurant(),
-      city: '',
       latitude: '',
       longitude: '',
       phone: '',
@@ -30,7 +32,7 @@ describe('submitRestaurantSchema', () => {
       claimedKashrutLevel: '',
     });
 
-    expect(result.restaurant.city).toBeUndefined();
+    expect(result.restaurant.city).toBe('Jerusalem');
     expect(result.restaurant.latitude).toBeUndefined();
     expect(result.restaurant.phone).toBeUndefined();
     expect(result.restaurant.website).toBeUndefined();

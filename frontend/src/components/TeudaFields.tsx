@@ -12,8 +12,8 @@ interface TeudaFieldsProps {
   disabled: boolean;
   onChange: (field: keyof TeudaFormValues, value: string) => void;
   onPhotoChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  // NEW (Milestone 3): the admin edit form changes the details only; the photo cannot be replaced there.
-  // חדש (אבן דרך 3): טופס העריכה של המנהל משנה רק פרטים; אי אפשר להחליף בו את התמונה.
+  // The new-restaurant form shows these fields all the time. They are required only when a certificate is included.
+  fieldsRequired?: boolean;
   hidePhoto?: boolean;
 }
 
@@ -27,6 +27,7 @@ function TeudaFields({
   disabled,
   onChange,
   onPhotoChange,
+  fieldsRequired = true,
   hidePhoto = false,
 }: TeudaFieldsProps) {
   const isOther = values.hechsher === options.hechsherOtherValue;
@@ -40,7 +41,7 @@ function TeudaFields({
         </label>
         <select
           id={`${idPrefix}-hechsher`}
-          required
+          required={fieldsRequired}
           disabled={disabled}
           value={values.hechsher}
           onChange={(event) => onChange('hechsher', event.target.value)}
@@ -64,7 +65,7 @@ function TeudaFields({
           <input
             id={`${idPrefix}-hechsher-other`}
             type="text"
-            required
+            required={fieldsRequired}
             maxLength={100}
             disabled={disabled}
             value={values.hechsherOther}
@@ -80,7 +81,7 @@ function TeudaFields({
         </label>
         <select
           id={`${idPrefix}-level`}
-          required
+          required={fieldsRequired}
           disabled={disabled}
           value={values.kashrutLevel}
           onChange={(event) => onChange('kashrutLevel', event.target.value)}
@@ -102,7 +103,7 @@ function TeudaFields({
         <input
           id={`${idPrefix}-expiration`}
           type="date"
-          required
+          required={fieldsRequired}
           disabled={disabled}
           value={values.expirationDate}
           onChange={(event) => onChange('expirationDate', event.target.value)}
@@ -118,7 +119,7 @@ function TeudaFields({
           <input
             id={`${idPrefix}-mashgiach-name`}
             type="text"
-            required
+            required={fieldsRequired}
             maxLength={100}
             disabled={disabled}
             value={values.mashgiachName}
@@ -133,7 +134,7 @@ function TeudaFields({
           <input
             id={`${idPrefix}-mashgiach-phone`}
             type="tel"
-            required
+            required={fieldsRequired}
             maxLength={30}
             disabled={disabled}
             value={values.mashgiachPhone}
@@ -151,7 +152,7 @@ function TeudaFields({
         <input
           id={`${idPrefix}-photo`}
           type="file"
-          required
+          required={fieldsRequired}
           accept="image/jpeg,image/png,image/webp"
           disabled={disabled}
           onChange={onPhotoChange}

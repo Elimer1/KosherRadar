@@ -188,6 +188,7 @@ function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: Admin
                     type="button"
                     disabled={busy || !restaurantApproved}
                     onClick={handleApprove}
+                    title={restaurantApproved ? undefined : 'Approve the restaurant first'}
                     className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     Approve

@@ -79,7 +79,18 @@ export const restaurantFieldsSchema = z
   .superRefine(requireOtherTextWhenOther('claimedHechsher', 'claimedHechsherOther'))
   .transform(dropOtherTextUnlessOther('claimedHechsher', 'claimedHechsherOther'));
 
-export const submitRestaurantSchema = z.object({
-  restaurant: restaurantFieldsSchema,
-  teuda: teudaFieldsSchema.optional(),
-});
+// City is required only when a user submits a restaurant. Admin edit still allows a blank city.
+export const submitRestaurantSchema = z
+  .object({
+    restaurant: restaurantFieldsSchema,
+    teuda: teudaFieldsSchema.optional(),
+  })
+  .superRefine((data, context) => {
+    if (!data.restaurant.city) {
+      context.addIssue({
+        code: 'custom',
+        path: ['restaurant', 'city'],
+        message: 'City is required',
+      });
+    }
+  });

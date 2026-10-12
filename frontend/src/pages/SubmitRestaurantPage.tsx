@@ -17,7 +17,6 @@ function SubmitRestaurantPage() {
 
   const [restaurant, setRestaurant] = useState<RestaurantFormValues>(emptyRestaurantForm);
   const [teuda, setTeuda] = useState<TeudaFormValues>(emptyTeudaForm);
-  const [withCertificate, setWithCertificate] = useState(false);
   const [error, setError] = useState('');
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -52,16 +51,51 @@ function SubmitRestaurantPage() {
       return;
     }
 
-    if (withCertificate && !photo) {
-      setError('Please choose a photo of the certificate, or untick the certificate option.');
-      return;
+    const certificateStarted = Boolean(
+      photo ||
+        teuda.hechsher ||
+        teuda.hechsherOther.trim() ||
+        teuda.kashrutLevel ||
+        teuda.expirationDate ||
+        teuda.mashgiachName.trim() ||
+        teuda.mashgiachPhone.trim()
+    );
+
+    if (certificateStarted) {
+      const otherMissing = teuda.hechsher === options?.hechsherOtherValue && !teuda.hechsherOther.trim();
+      const certificateComplete = Boolean(
+        teuda.hechsher &&
+          !otherMissing &&
+          teuda.kashrutLevel &&
+          teuda.expirationDate &&
+          teuda.mashgiachName.trim() &&
+          teuda.mashgiachPhone.trim() &&
+          photo &&
+          !photoError
+      );
+
+      if (!certificateComplete) {
+        setError('Fill in every certificate field and add a photo, or leave the certificate blank.');
+        return;
+      }
     }
 
     setLoading(true);
     setProgress(0);
 
     try {
-      const submitted = await submitRestaurant(restaurant, withCertificate ? teuda : null, photo, setProgress);
+      const submitted = await submitRestaurant(
+        {
+          ...restaurant,
+          foodKeywords: '',
+          claimedHechsher: '',
+          claimedHechsherOther: '',
+          claimedKashrutLevel: '',
+        },
+        certificateStarted ? teuda : null,
+        photo,
+        setProgress
+      );
       setResult(submitted);
     } catch (err) {
       setError(getErrorMessage(err, 'Could not send the restaurant. Please try again.'));
@@ -96,8 +130,8 @@ function SubmitRestaurantPage() {
             message="A similar restaurant may already be listed. This does not stop your submission; an admin will check it."
           />
         )}
-        <Link to="/" className="inline-block font-medium text-green-700 hover:underline">
-          Back to home
+        <Link to="/account/submissions" className="inline-block font-medium text-green-700 hover:underline">
+          See your submissions
         </Link>
       </div>
     );
@@ -118,39 +152,31 @@ function SubmitRestaurantPage() {
           values={restaurant}
           options={options}
           disabled={loading}
+          variant="user"
           onChange={handleRestaurantChange}
           onToggleCategory={handleToggleCategory}
         />
 
         <section className="space-y-4">
           <h2 className="text-lg font-semibold text-gray-900">Kashrut certificate (optional)</h2>
-
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              disabled={loading}
-              checked={withCertificate}
-              onChange={(event) => setWithCertificate(event.target.checked)}
-              className="h-4 w-4 accent-green-600"
-            />
-            I have a photo of the kashrut certificate (teuda)
-          </label>
-
-          {withCertificate && (
-            <TeudaFields
-              idPrefix="new-restaurant-teuda"
-              values={teuda}
-              options={options}
-              photo={photo}
-              photoError={photoError}
-              disabled={loading}
-              onChange={handleTeudaChange}
-              onPhotoChange={handlePhotoChange}
-            />
-          )}
+          <p className="text-sm text-gray-600">
+            Add the certificate details and a photo on this form. Leave every certificate field empty to send the
+            restaurant without one.
+          </p>
+          <TeudaFields
+            idPrefix="new-restaurant-teuda"
+            values={teuda}
+            options={options}
+            photo={photo}
+            photoError={photoError}
+            disabled={loading}
+            fieldsRequired={false}
+            onChange={handleTeudaChange}
+            onPhotoChange={handlePhotoChange}
+          />
         </section>
 
-        {loading && withCertificate && (
+        {loading && photo && (
           <div role="status" className="text-sm text-gray-600">
             {progress < 100 ? `Uploading... ${progress}%` : 'Saving...'}
             <div className="mt-1 h-2 rounded bg-green-100">
@@ -159,7 +185,7 @@ function SubmitRestaurantPage() {
           </div>
         )}
 
-        <button type="submit" disabled={loading || Boolean(photoError)} className={primaryButtonClassName}>
+        <button type="submit" disabled={loading} className={primaryButtonClassName}>
           {loading ? 'Sending...' : 'Send restaurant for review'}
         </button>
       </form>

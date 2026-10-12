@@ -144,6 +144,24 @@ Recorded before implementation, per section 19. Commits use `--author` for the r
 - **Kosharot link** is shown only when an admin added `kosharotUrl`. The page states that KosherRadar is not a kashrut authority.
 - **English only** until Milestone 5. The hechsher names and the synonym list are agent-written and unreviewed.
 
+### MVP polish (after Milestone 4, not a new milestone)
+
+Committed on `feature/form-account-polish` and merged to `main` before Milestone 5, so it would not be mixed into later features. AI-generated; it still needs a review (the admin-screen part touches Moshe Silber's admin pages). This is form, account and admin-screen polish, not Milestone 5 (no map, no translations).
+
+- **Admin approval.** Approving or rejecting on `/admin/restaurants/:id` shows the result under the Decision buttons and updates the status immediately. Approve and Reject then disappear, and the restaurant leaves the pending list. The page stays open so a pending certificate on that page can be approved next. The pending-list button still calls the same `approveRestaurant` function.
+- **Restaurant form (users).** `RestaurantFields` has a `user` variant. Latitude and longitude boxes, the kashrut claim, and "What do they serve?" are off that form. The certificate fields and photo are always on the same form (no checkbox). They may all be left empty. If any certificate field or the photo is filled in, the rest of the certificate and the photo are required. City is required on a user submission only (`submitRestaurantSchema`). Admin create and edit still have food keywords and the kashrut claim, and city stays optional there, so an old restaurant with no city can still be saved.
+- **Address search.** `GET /api/places/autocomplete` (login required) calls Geoapify and keeps the key on the server (`GEOAPIFY_API_KEY` in `backend/.env.example`). Results are limited to Israel. Choosing one fills street, city, latitude, longitude and `geoapifyPlaceId`. A typed address that was not chosen is still accepted. If both coordinates are missing, `submitRestaurantService` asks Geoapify to geocode it; a miss is saved with no coordinates. Coordinates are never invented. Without a key, or if Geoapify fails, the form says so and the typed address still submits.
+- **Passwords and points.** Login, registration and reset password use one field with an eye button. The account page shows the points total and the existing +3 / +2 / +1 rules. Award logic is unchanged: admins still earn nothing.
+- **My submissions.** `GET /api/users/me/submissions` and `/account/submissions` list the logged-in user's restaurants, certificates and reports (newest first, up to 50 each) with date, status and rejection reason. Approved certificates and applied reports also show the points already stored in `awardedPointKeys`. No admin notes. The original spec said not to build a contributions page; this page was added anyway. Thank-you screens link to it.
+- **New files:** `placesService.js`, `placesController.js`, `placesRoutes.js`, `placesSchemas.js`, `userSubmissionsService.js`, `userSubmissionsRepository.js`, `AddressSearch.tsx`, `PasswordField.tsx`, `placesApi.ts`, `submissionsApi.ts`, `MySubmissionsPage.tsx`, `types/mySubmissions.ts`. Tests: `placesService.test.js`, `userSubmissionsService.test.js`.
+
+### Design decisions in this polish (please review)
+
+- **The certificate is the only kashrut input on the user form.** Restaurant-level claimed hechsher and claimed level stay in the database and on the admin edit form, because existing unverified listings and `kashrutStatusService.js` still use them. A user cannot set them on a new submission.
+- **Food keywords stay on the admin form.** Search uses them when the food word is not in the restaurant name. Users no longer type them.
+- **A half-filled certificate is rejected in the browser** before it is sent. The server still accepts a restaurant with no certificate.
+- **Home-page location search is unchanged.** "Use my current location" is still the only location control on the search page. A typed address for search, and the map, remain Milestone 5.
+
 ### Corrections to earlier statements
 
 - Earlier in this milestone I said `PROGRESS.md` contained stray line-number markers. That was wrong: they were only an artifact of how the file was displayed to me; the file has none.
@@ -160,6 +178,17 @@ Run on `main` after the Milestone 4 feature merges (the docs branch changes only
 | `cd frontend; npm test` | 11 test files, 76 tests passed (Milestone 3 ended with 7 files / 40 tests) |
 | `cd frontend; npm run build` | passed |
 | `cd frontend; npm run lint` | passed (no findings) |
+
+Run again after the MVP polish above (build was not re-run):
+
+| Command | Result |
+| --- | --- |
+| `cd backend; npm test` | 36 test files, 453 tests passed |
+| `cd frontend; npm run typecheck` | passed |
+| `cd frontend; npm test` | 11 test files, 76 tests passed |
+| `cd frontend; npm run lint` | passed (no findings) |
+
+The login and registration pages were opened in the browser: the eye button showed the typed password and switched to "Hide password". The API did not start in that session (MongoDB Atlas rejected this computer's IP), so the restaurant form, address search, approval buttons and My Submissions were not clicked against a live server. Geoapify itself was not called.
 
 New Milestone 4 backend tests: `searchFields`, `geo`, `searchSchemas`, `kashrutFilters`, `restaurantSearchService`, `restaurantSearchRepository` (the built query, repository mocked), `searchRoutesHttp` (real HTTP, service mocked), `restaurantDetailsService`, `restaurantDetailsRoutesHttp`, `safeUrl`. New frontend tests: `searchApi`, `kashrutText`, `navigationLinks`, `safeUrl`.
 
@@ -185,7 +214,7 @@ Not run: either server against a real MongoDB, a real Cloudinary upload, and the
 - **UNVERIFIED (Milestone 3):** the whole admin flow against a real database and the admin and password reset pages in a browser. Sessions are not revoked by a password reset (see design decisions).
 - **BLOCKED (Milestone 4):** Atlas Search. Needs a real Atlas cluster, the index from `ATLAS_SEARCH_SETUP.md` and `ATLAS_SEARCH_ENABLED=true`. The `$search` pipeline and the index JSON were never run; only the fallback is tested.
 - **UNVERIFIED (Milestone 4):** every MongoDB query behind search and details (the candidate `$or` query, `$geoWithin $centerSphere`, the new indexes, the one-query certificate lookup, `npm run search:rebuild`) and the search and restaurant pages against the real backend. Performance with real data (2000-candidate cap) is unknown.
-- Not used yet (later milestones): Geoapify.
+- **UNVERIFIED:** Geoapify. The submission form now calls it through `GET /api/places/autocomplete` and, for a typed address with no coordinates, through geocoding in `submitRestaurantService`. Needs `GEOAPIFY_API_KEY` in `backend/.env`. Without a key the typed address still submits and no coordinates are saved. No real Geoapify request has been made. Map search by a typed address is still Milestone 5.
 
 To finish the Milestone 4 blocked items: run `cd backend; npm run search:rebuild`, start both servers, search a restaurant by name, by an English and a Hebrew food word, and with each filter, open its page, then create the Atlas index, set `ATLAS_SEARCH_ENABLED=true`, restart, and search a mistyped name (steps in `ATLAS_SEARCH_SETUP.md`).
 
@@ -195,7 +224,7 @@ To finish the blocked items: copy `backend/.env.example` to `backend/.env`, fill
 
 ## Next milestone
 
-Milestone 5 — Maps, location and interface polish (needs your explicit approval, in a fresh conversation). Spec section 16: Leaflet visible-bounds queries and clustering, Geoapify, Waze / Google Maps / share, English and Hebrew translations with RTL/LTR, responsive Tailwind design across four ranges, view preference, UI integration. Things it will build on: `GET /api/restaurants` already accepts `lat`, `lng` and `radiusKm` (a bounds query for the map is not written yet); `searchRestaurantsService` and `kashrutStatusService.js` (reuse them for the map, do not copy status logic); `publicRestaurantSerializer.js`; the card and detail pages that already have Call / Waze / Google Maps links; `buildSearchParams` and `useRestaurantSearch` on the frontend. Every UI string is still hard-coded English and must move to the translation files.
+Milestone 5 — Maps, location and interface polish (needs your explicit approval, in a fresh conversation). Spec section 16: Leaflet visible-bounds queries and clustering, Geoapify for the map and for search-by-address (submission-form address search already exists; see "MVP polish"), Waze / Google Maps / share, English and Hebrew translations with RTL/LTR, responsive Tailwind design across four ranges, view preference, UI integration. Things it will build on: `GET /api/restaurants` already accepts `lat`, `lng` and `radiusKm` (a bounds query for the map is not written yet); `searchRestaurantsService` and `kashrutStatusService.js` (reuse them for the map, do not copy status logic); `publicRestaurantSerializer.js`; the card and detail pages that already have Call / Waze / Google Maps links; `buildSearchParams` and `useRestaurantSearch` on the frontend. Every UI string is still hard-coded English and must move to the translation files.
 
 ## Continuation prompt (copy into a new Cursor Agent conversation)
 

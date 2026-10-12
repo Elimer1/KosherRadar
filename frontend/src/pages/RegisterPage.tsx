@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { registerUser } from '../api/authApi';
 import { getErrorMessage } from '../api/errors';
+import PasswordField from '../components/PasswordField';
 import { useAuthStore } from '../stores/authStore';
 
 function RegisterPage() {
@@ -64,38 +65,24 @@ function RegisterPage() {
           />
         </div>
 
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            required
-            minLength={8}
-            maxLength={72}
-            autoComplete="new-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
-          />
-          <p className="mt-1 text-xs text-gray-500">At least 8 characters.</p>
-        </div>
+        <PasswordField
+          id="password"
+          label="Password"
+          autoComplete="new-password"
+          minLength={8}
+          maxLength={72}
+          hint="At least 8 characters."
+          value={password}
+          onChange={setPassword}
+        />
 
-        <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-            Confirm password
-          </label>
-          <input
-            id="confirmPassword"
-            type="password"
-            required
-            autoComplete="new-password"
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
-          />
-        </div>
+        <PasswordField
+          id="confirmPassword"
+          label="Confirm password"
+          autoComplete="new-password"
+          value={confirmPassword}
+          onChange={setConfirmPassword}
+        />
 
         <button
           type="submit"

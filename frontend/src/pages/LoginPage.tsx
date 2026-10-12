@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { loginUser } from '../api/authApi';
 import { getErrorMessage } from '../api/errors';
+import PasswordField from '../components/PasswordField';
 import { useAuthStore } from '../stores/authStore';
 
 function LoginPage() {
@@ -60,20 +61,13 @@ function LoginPage() {
           />
         </div>
 
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            required
-            autoComplete="current-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
-          />
-        </div>
+        <PasswordField
+          id="password"
+          label="Password"
+          autoComplete="current-password"
+          value={password}
+          onChange={setPassword}
+        />
 
         <button
           type="submit"

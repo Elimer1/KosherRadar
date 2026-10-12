@@ -29,6 +29,7 @@ export const buildRestaurantPayload = (values: RestaurantFormValues) => {
     claimedHechsher: values.claimedHechsher || undefined,
     claimedHechsherOther: values.claimedHechsherOther || undefined,
     claimedKashrutLevel: values.claimedKashrutLevel || undefined,
+    geoapifyPlaceId: values.geoapifyPlaceId || undefined,
   };
 };
 
