@@ -6,11 +6,11 @@ Counts below are derived from the issue statuses in this file.
 
 | Status | Count |
 | --- | ---: |
-| NOT STARTED | 14 |
+| NOT STARTED | 13 |
 | ALREADY WORKING | 8 |
 | BLOCKED | 5 |
 | DEFERRED | 1 |
-| VERIFIED | 8 |
+| VERIFIED | 9 |
 | Other | 0 |
 | **Total** | **36** |
 
@@ -28,7 +28,7 @@ The user asked to finish important fixes and to defer low-impact, cosmetic, end-
 | M2-002 | Confirmed bug: report correction can stick when the report does not | VERIFIED |
 | M2-003 | Admin cannot save a user restaurant that omitted food type or categories | VERIFIED |
 | M4-001 | Confirmed bug: password reset leaves existing JWTs valid | VERIFIED |
-| M5-002 | Confirmed bug: a failed password write burns the reset link | NOT STARTED |
+| M5-002 | Confirmed bug: a failed password write burns the reset link | VERIFIED |
 
 `CORRECTION_ALREADY_MADE` still awards +1 on the admin's word. Changing that would change the points rule and was not done.
 
@@ -40,7 +40,7 @@ M6-003 is verified with M1-003: the same unambiguous-match rule covers restauran
 
 Classification of those 36 issues: **4 confirmed bugs**, **12 risks**, **12 improvement or readiness items**, **8 already working**. Confirmed bugs are M1-001, M2-002, M4-001, and the token-ordering defect inside M5-002. Details and evidence are in `AUDIT_FINDINGS.md`.
 
-No application code was changed in the audit. No issue is `VERIFIED`. Blocked and deferred issues are not counted as verified.
+Blocked and deferred issues are not counted as verified. The sentence above is the audit classification; current statuses are in the tables.
 
 ## Milestone index
 
@@ -61,7 +61,7 @@ No application code was changed in the audit. No issue is `VERIFIED`. Blocked an
 | M4-003 | 4 Authentication and security | High | NOT STARTED | Security risk |
 | M4-004 | 4 Authentication and security | High | DEFERRED | Security risk |
 | M5-001 | 5 Database integrity | High | NOT STARTED | Reliability risk |
-| M5-002 | 5 Database integrity | High | NOT STARTED | Confirmed bug and reliability risk |
+| M5-002 | 5 Database integrity | High | VERIFIED | Confirmed bug and reliability risk |
 | M5-003 | 5 Database integrity | High | NOT STARTED | Reliability risk |
 | M5-004 | 5 Database integrity | High | NOT STARTED | Reliability risk |
 | M6-001 | 6 Search and map | High | NOT STARTED | Reliability risk |
@@ -182,7 +182,7 @@ Priority: Critical
 - **Planned solution:** Let an admin save an edit of a restaurant that has no food type or category, without forcing those fields, while admin-created restaurants can keep their own required rules. Show the report photo on the pending report card. Keep private notes off the public page.
 - **Files changed:** `frontend/src/pages/AdminRestaurantPage.tsx`, `frontend/src/components/RestaurantFields.tsx`, `backend/src/schemas/adminSchemas.js`.
 - **Tests added or modified:** `backend/tests/adminSchemas.test.js`. Edit accepts a blank food type and empty categories. Create still rejects that.
-- **Verification:** `cd backend; npm test -- tests/adminSchemas.test.js` exit 0, 18 tests passed. `cd frontend; npm run typecheck` exit 0. The admin screen was not opened in a browser.
+- **Verification:** `cd backend; npm test` exit 0, 38 files, 485 tests passed. `cd frontend; npm run typecheck` exit 0. The admin screen was not opened in a browser.
 - **Blockers:** Report photos stay a link rather than an inline preview. That is cosmetic and was left for later. Before/after history stays M2-004.
 
 ### M2-004 — Audit history
@@ -269,7 +269,7 @@ Priority: High
 - **Planned solution:** Add a numeric session version or a password-changed timestamp on `User`, put it in new tokens, and reject tokens whose value is older. Existing tokens without the claim can remain valid until they expire, which avoids logging everyone out at deploy. Set the version in the same update as the new password hash. This is an additive field with a default of `0`. No backfill is required if missing means `0`. Do not switch storage to cookies in this fix (M4-004).
 - **Files changed:** `backend/src/models/User.js`, `backend/src/services/authService.js`, `backend/src/repositories/userRepository.js`.
 - **Tests added or modified:** `backend/tests/authService.test.js`, `backend/tests/userRepository.test.js`. `passwordResetService.test.js` still passed.
-- **Verification:** `cd backend; npm test -- tests/authService.test.js tests/userRepository.test.js tests/passwordResetService.test.js` exit 0, 26 tests passed. Mocks only. No live database. Existing tokens with no `tv` stay valid while `tokenVersion` is missing or 0. Logout still only clears localStorage (M4-004).
+- **Verification:** `cd backend; npm test` exit 0, 38 files, 485 tests passed. Mocks only. No live database. Existing tokens with no `tv` stay valid while `tokenVersion` is missing or 0. Logout still only clears localStorage (M4-004).
 - **Blockers:** none. A missing `tokenVersion` on an old account is treated as 0, so this deploy does not log everyone out. No backfill.
 
 ### M4-002 — Authentication and authorization audit
@@ -342,16 +342,16 @@ Priority: High
 
 - **Milestone:** 5
 - **Priority:** High
-- **Status:** NOT STARTED
+- **Status:** VERIFIED
 - **Description:** Several flows write more than one document without a transaction. One of them is a confirmed defect: password reset marks the token used before the new password is saved. Report resolution is M2-002. Restaurant-plus-certificate submit has a compensating delete.
 - **Evidence:** `resetPasswordService` calls `consumeResetTokenRepo` and only then `setUserPasswordHashRepo`. If the password update throws, or the user row is gone, the token is already consumed and the password is unchanged. `submitRestaurantService` creates the restaurant, then the teuda, and deletes the restaurant and photo if the teuda insert fails; those compensations are not atomic. `rejectRestaurantService` rejects the restaurant, then rejects its pending certificates in a separate call that only logs a failure. No `startSession` or `withTransaction` usage was found under `backend/src`.
 - **Root cause:** Each step was written to be locally atomic (`findOneAndUpdate` with a status filter) without a multi-document transaction. The reset flow orders the token consume first so the token cannot be reused, and it does not put the password write in that same update.
 - **Relevant files/functions:** `backend/src/services/passwordResetService.js`; `backend/src/services/restaurantSubmissionService.js`; `backend/src/services/adminRestaurantService.js` (`rejectRestaurantService`); `backend/src/services/adminReportService.js`.
 - **Planned solution:** Consume the reset token and set the password in one transaction, or set the password first and consume the token in a way that still prevents two successful resets. Keep the identical forgot-password response. Fix report resolution under M2-002. Keep the restaurant/teuda compensation unless a transaction is approved and available. Do not install a memory-server package without approval.
-- **Files changed:** none
-- **Tests added or modified:** none
-- **Verification:** Static inspection only. The failure path was not executed.
-- **Blockers:** Transactions need a replica set. Compensating logic can be tested with mocks without a new package.
+- **Files changed:** `backend/src/services/passwordResetService.js`, `backend/src/repositories/passwordResetRepository.js`. The reset token is released when the password hash is not saved. A failure while cancelling other unused links, after the password is saved, does not release the token. Report claiming is M2-002. Restaurant and certificate compensation was left as it was.
+- **Tests added or modified:** `backend/tests/passwordResetService.test.js`. A thrown password write releases the token. A missing account releases it. A cleanup failure after a successful save does not.
+- **Verification:** `cd backend; npm test` exit 0, 38 files, 485 tests passed. Mocks only. No live database and no email was sent.
+- **Blockers:** Restaurant submit and restaurant rejection still use separate writes. Those were not the confirmed defect and stay in the rest of this issue's evidence as later work. No transaction library was added.
 
 ### M5-003 — Duplicate handling and indexes
 

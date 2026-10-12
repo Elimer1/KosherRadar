@@ -23,3 +23,13 @@ export const consumeResetTokenRepo = async (tokenHash, now) => {
     { new: true }
   );
 };
+
+// NEW (Audit M5): make a consumed link usable again when the new password was not saved.
+// חדש (ביקורת M5): מחזיר קישור שסומן כמנוצל לשימוש, כשהסיסמה החדשה לא נשמרה.
+export const releaseResetTokenRepo = async (tokenId) => {
+  return PasswordResetToken.findOneAndUpdate(
+    { _id: tokenId, usedAt: { $ne: null } },
+    { $set: { usedAt: null } },
+    { new: true }
+  );
+};

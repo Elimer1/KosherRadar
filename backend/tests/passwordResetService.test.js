@@ -19,6 +19,7 @@ vi.mock('../src/repositories/passwordResetRepository.js', () => ({
   consumeResetTokenRepo: vi.fn(),
   createResetTokenRepo: vi.fn(),
   deleteUnusedResetTokensRepo: vi.fn(),
+  releaseResetTokenRepo: vi.fn(),
 }));
 
 vi.mock('../src/services/emailService.js', () => ({
@@ -30,6 +31,7 @@ import {
   consumeResetTokenRepo,
   createResetTokenRepo,
   deleteUnusedResetTokensRepo,
+  releaseResetTokenRepo,
 } from '../src/repositories/passwordResetRepository.js';
 import { sendPasswordResetEmailService } from '../src/services/emailService.js';
 import {
@@ -138,6 +140,7 @@ describe('resetPasswordService', () => {
     expect(savedHash).not.toBe('brand-new-pass');
     expect(await bcrypt.compare('brand-new-pass', savedHash)).toBe(true);
     expect(deleteUnusedResetTokensRepo).toHaveBeenCalledWith('user-1');
+    expect(releaseResetTokenRepo).not.toHaveBeenCalled();
   });
 
   it('answers 400 and changes nothing for an unknown, used or expired token', async () => {
@@ -151,13 +154,30 @@ describe('resetPasswordService', () => {
     expect(setUserPasswordHashRepo).not.toHaveBeenCalled();
   });
 
-  it('answers 400 when the account no longer exists', async () => {
-    consumeResetTokenRepo.mockResolvedValue({ user: 'gone' });
+  it('answers 400 when the account no longer exists and releases the link', async () => {
+    consumeResetTokenRepo.mockResolvedValue({ _id: 'token-1', user: 'gone' });
     setUserPasswordHashRepo.mockResolvedValue(null);
 
     await expect(resetPasswordService({ token: TOKEN, password: 'brand-new-pass' })).rejects.toMatchObject({
       statusCode: 400,
     });
+    expect(releaseResetTokenRepo).toHaveBeenCalledWith('token-1');
+    expect(deleteUnusedResetTokensRepo).not.toHaveBeenCalled();
+  });
+
+  it('releases the link when saving the password throws, and keeps it used after a later cleanup failure', async () => {
+    consumeResetTokenRepo.mockResolvedValue({ _id: 'token-1', user: 'user-1' });
+    setUserPasswordHashRepo.mockRejectedValueOnce(new Error('database down'));
+
+    await expect(resetPasswordService({ token: TOKEN, password: 'brand-new-pass' })).rejects.toThrow('database down');
+    expect(releaseResetTokenRepo).toHaveBeenCalledWith('token-1');
+
+    releaseResetTokenRepo.mockClear();
+    setUserPasswordHashRepo.mockResolvedValue({ _id: 'user-1' });
+    deleteUnusedResetTokensRepo.mockRejectedValue(new Error('cleanup failed'));
+
+    await expect(resetPasswordService({ token: TOKEN, password: 'brand-new-pass' })).rejects.toThrow('cleanup failed');
+    expect(releaseResetTokenRepo).not.toHaveBeenCalled();
   });
 
   it('works only once: the second use of the same token is refused', async () => {

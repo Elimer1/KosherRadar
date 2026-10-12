@@ -11,6 +11,7 @@ import {
   consumeResetTokenRepo,
   createResetTokenRepo,
   deleteUnusedResetTokensRepo,
+  releaseResetTokenRepo,
 } from '../repositories/passwordResetRepository.js';
 import { findUserByEmailRepo, setUserPasswordHashRepo } from '../repositories/userRepository.js';
 import { sendPasswordResetEmailService } from './emailService.js';
@@ -66,13 +67,31 @@ export const resetPasswordService = async ({ token, password }) => {
     throw appError('This reset link is invalid or has expired. Please request a new one.', 400, 'INVALID_RESET_TOKEN');
   }
 
-  const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-  const user = await setUserPasswordHashRepo(consumed.user, passwordHash);
+  // NEW (Audit M5): if the password is not saved, put the link back. A later cleanup failure must not,
+  // because the new password is already stored.
+  // חדש (ביקורת M5): אם הסיסמה לא נשמרה, מחזירים את הקישור. כשל בניקוי שאחרי שמירה מוצלחת לא מחזיר אותו.
+  let passwordSaved = false;
 
-  if (!user) {
-    throw appError('This reset link is invalid or has expired. Please request a new one.', 400, 'INVALID_RESET_TOKEN');
+  try {
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+    const user = await setUserPasswordHashRepo(consumed.user, passwordHash);
+
+    if (!user) {
+      throw appError('This reset link is invalid or has expired. Please request a new one.', 400, 'INVALID_RESET_TOKEN');
+    }
+
+    passwordSaved = true;
+    // Any other link that was still waiting is cancelled too.
+    await deleteUnusedResetTokensRepo(user._id);
+  } catch (error) {
+    if (!passwordSaved) {
+      try {
+        await releaseResetTokenRepo(consumed._id);
+      } catch (releaseError) {
+        console.error('Could not release reset token after a failed password update:', consumed._id, releaseError.message);
+      }
+    }
+
+    throw error;
   }
-
-  // Any other link that was still waiting is cancelled too.
-  await deleteUnusedResetTokensRepo(user._id);
 };

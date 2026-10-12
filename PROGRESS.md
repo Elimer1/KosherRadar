@@ -391,7 +391,7 @@ Exact next task after the user says to start: Milestone 1 only, beginning with M
 
 ### Next recommended action
 
-The acceleration on 12 October 2026 replaced "wait, then do one milestone" with the MUST FIX NOW list in `FIX_TRACKER.md`. M1-001, M1-002, and M1-003 are verified. Continue with M2-002.
+The MUST FIX NOW list is complete. Do not start LATER issues unless the user asks.
 
 ## Acceleration (12 October 2026)
 
@@ -421,29 +421,32 @@ Verification for M1-001, M1-002, M1-003, M6-003, and M8-002:
 
 **Current position**
 
-- Priority band: MUST FIX NOW
-- Last verified fixes: M1-001, M1-002, M1-003, M6-003, M8-002
-- Next issue: M2-002, then M2-003, M4-001, and the token-order bug in M5-002
-- Do not start LATER issues
+- Branch: `feature/audit-must-fix`
+- Priority band: MUST FIX NOW is complete
+- Last verified fixes: M2-002, M2-003, M4-001, M5-002 (after M1-001, M1-002, M1-003, M6-003, M8-002)
+- Next issue: none in MUST FIX NOW
+- Do not start LATER issues unless the user asks
 
-**Completed in this session**
+**Completed after the certificate checkpoint**
 
-- Pending certificate photos and partial details are stored. The user cannot set a kashrut level. Admins must set the level and expiration before approve. Pending evidence is not public and does not award points.
-- User restaurant form: required name, address, city, hechsher. Optional phone, website, photo, expiration, mashgiach. Food type and categories removed from the user form only.
-- Geocoding no longer accepts the first hit. City is required and filled from a selected address when possible.
-- Files: `AGENTS.md`, `FIX_TRACKER.md`, `PROGRESS.md`, teuda model and schemas, submission services, places service, kashrut public check, admin teuda approve/serializer, restaurant and teuda forms, locales `en.ts` and `he.ts`, and the tests named in the tracker.
+- M2-002: a report is claimed before the certificate or restaurant claim is written. A lost claim does not write. A failed write reopens the report. `CORRECTION_ALREADY_MADE` still awards +1.
+- M2-003: an admin can save a restaurant that has no food type or categories. Admin create still requires both. Report photos remain a link. That preview was left as cosmetic.
+- M4-001: `User.tokenVersion` defaults to 0 and is included in new JWTs as `tv`. A missing claim or a missing field means 0, so existing sessions stay valid until a password reset. Reset increments the version in the same update as the new hash.
+- M5-002: if the password is not saved, the consumed reset link is released. A cleanup failure after a successful save does not release it.
 
-**Tests:** backend 477 passed, frontend 90 passed, typecheck, lint, and build passed. Browser not used. Live Geoapify, Cloudinary, Resend, and Atlas were not called.
+**Tests:** `cd backend; npm test` exit 0, 38 files, 485 tests passed. `cd frontend; npm run typecheck` exit 0. Browser not used. Live Geoapify, Cloudinary, Resend, and Atlas were not called.
 
 **Do not repeat**
 
 - Do not require a kashrut level from users.
 - Do not display pending evidence as verified.
 - Do not accept the first Geoapify hit.
-- Do not change point amounts.
+- Do not change point amounts or who gets +1 for `CORRECTION_ALREADY_MADE`.
 - Do not change public status labels.
 - Do not install packages.
+- Do not add a transaction library.
+- Do not switch auth storage to cookies.
 
 **Exact next task**
 
-M2-002 in `backend/src/services/adminReportService.js`. Claim the PENDING report before applying the correction, and reopen it if the write fails. Keep +1 for `CORRECTION_ALREADY_MADE`. Add a test where `resolvePendingReportRepo` returns null and the teuda is not written. Then M2-003: admin edit must save a restaurant with no food type or categories (`AdminRestaurantPage.tsx` and `adminEditRestaurantSchema` only; keep admin create strict). Then M4-001: additive `tokenVersion` on `User`, default 0, included in new JWTs; a missing `tv` claim means 0 so deploy does not log everyone out; password reset increments it in the same update as the hash. Then M5-002: if the password write fails after the reset token is consumed, release the token. Do not add a transaction library.
+Stop. The high-priority batch is done. LATER items are listed in `FIX_TRACKER.md`. Restaurant deletion and restaurant rejection still use separate writes; they were not the confirmed password-reset defect. If reopening a report fails after a failed correction, the report can stay resolved without the data write; that is logged. Hebrew copy from the certificate form still needs native-speaker review (M8-004). The admin restaurant screen was not opened in a browser.
