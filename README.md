@@ -2,9 +2,9 @@
 
 A crowdsourced, factual kashrut-information directory for restaurants in Israel. KosherRadar is not a rating app and does not certify anything itself. The authoritative requirements are in `PROJECT_SPEC.md`; current status is in `PROGRESS.md` and `REQUIREMENTS_CHECKLIST.md`.
 
-Current state: **Milestone 5 (maps, location and interface polish)** on top of Milestones 1 to 4. Anyone can search approved restaurants on the home page (by name or food, in Hebrew or English, with filters, autocomplete and 20 results per page) or switch to a map of the same results. A separate location field looks up a place in Israel. The restaurant page shows kashrut evidence: certificates, EXPIRED certificates and unverified claims, kept apart, and can be shared. The interface is English or Hebrew, and Hebrew is right-to-left. Logged-in users can submit restaurants (optionally with a certificate photo), add a certificate to an approved restaurant, and report a problem. Everything they send is saved as `PENDING`; admins review it in the admin dashboard (approve, reject with a reason, edit, delete, resolve reports), and users can reset a forgotten password by email.
+Current state: **Milestone 6 (verification and fixes)** on top of Milestones 1 to 5. Anyone can search approved restaurants on the home page (by name or food, in Hebrew or English, with filters, autocomplete and 20 results per page) or switch to a map of the same results. A separate location field looks up a place in Israel when Geoapify is configured. The restaurant page shows kashrut evidence: certificates, EXPIRED certificates and unverified claims, kept apart, and can be shared. The interface is English or Hebrew, and Hebrew is right-to-left. Logged-in users can submit restaurants (optionally with a certificate photo), add a certificate to an approved restaurant, and report a problem. Everything they send is saved as `PENDING`; admins review it in the admin dashboard (approve, reject with a reason, edit, delete, resolve reports), and users can reset a forgotten password by email.
 
-Nothing in this project has been run against a real MongoDB, Cloudinary or Resend account yet. See `PROGRESS.md` for what is tested and what is not.
+Search, the map bounds query, submissions without a photo, admin approve/reject, and the Hebrew interface were run against a **local MongoDB** on this computer. They were **not** run against MongoDB Atlas. A real Cloudinary upload, a Resend email, a Geoapify lookup and Atlas Search have not been run. See `PROGRESS.md`.
 
 ## Structure
 
@@ -36,7 +36,9 @@ Fill in `backend/.env`:
 
 - `RESEND_API_KEY` and `EMAIL_FROM` - from your Resend free account (see "Email (Resend)" below). Without them everything else works: moderation decisions are still saved and the admin sees that the email was not sent, but password reset emails are not delivered.
 
-- `ATLAS_SEARCH_ENABLED` (default `false`) and `ATLAS_SEARCH_INDEX` (default `restaurant_search`) - optional typo-tolerant search. Search works without it (it then uses a plain MongoDB query). To switch it on, create the Atlas Search index described in `ATLAS_SEARCH_SETUP.md`. **That guide was written but never run against a real Atlas cluster.**
+- `ATLAS_SEARCH_ENABLED` (default `false`) and `ATLAS_SEARCH_INDEX` (default `restaurant_search`) - optional typo-tolerant search. Search works without it (it then uses a plain MongoDB query). To switch it on, create the Atlas Search index described in `ATLAS_SEARCH_SETUP.md`. **That guide was written but never run against a real Atlas cluster.** A local MongoDB cannot provide Atlas Search.
+
+- `GEOAPIFY_API_KEY` - from your Geoapify free account (https://www.geoapify.com/). It stays on the server. It is used for the home-page location field and for the address field on the restaurant form. Without it, a typed address can still be submitted, the location field says lookup is unavailable, and no coordinates are invented. **No real Geoapify request has been made from this project.**
 
 `.env` is git-ignored. Never commit it.
 
@@ -180,4 +182,4 @@ To try the admin area: run `npm run seed:admin`, log in with that account, and o
 
 ## External services
 
-Cloudinary is used for certificate photos and Resend for emails (see setup above). Atlas Search is optional (see `ATLAS_SEARCH_SETUP.md`). Geoapify is used for address and place lookup when `GEOAPIFY_API_KEY` is set. The key stays on the server. Without it, a typed address can still be submitted, and the search location field explains that lookup is unavailable. No coordinates are invented. Geoapify itself has not been called from this project against a real key.
+Cloudinary is used for certificate photos and Resend for emails (see setup above). Atlas Search is optional (see `ATLAS_SEARCH_SETUP.md`). Geoapify is used for address and place lookup when `GEOAPIFY_API_KEY` is set. The key stays on the server. Without it, a typed address can still be submitted, and the search location field explains that lookup is unavailable. No coordinates are invented. A missing Geoapify key was checked and returned no coordinates. Geoapify itself has not been called with a real key. A missing Cloudinary account was checked: the upload answered 503 and no certificate was saved. A real Cloudinary upload has not been done.
