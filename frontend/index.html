@@ -15,6 +15,20 @@
       content="Find verified kashrut certificate information for restaurants in Israel."
     />
     <meta property="og:type" content="website" />
+    <script>
+      // NEW (Milestone 5): set direction before React loads, so Hebrew does not flash as left-to-right.
+      try {
+        var savedLanguage = localStorage.getItem('kosherradar-language');
+        var language =
+          savedLanguage === 'he' || savedLanguage === 'en'
+            ? savedLanguage
+            : (navigator.language || '').toLowerCase().indexOf('he') === 0
+              ? 'he'
+              : 'en';
+        document.documentElement.lang = language;
+        document.documentElement.dir = language === 'he' ? 'rtl' : 'ltr';
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { loginUser } from '../api/authApi';
@@ -7,6 +8,7 @@ import PasswordField from '../components/PasswordField';
 import { useAuthStore } from '../stores/authStore';
 
 function LoginPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -29,7 +31,7 @@ function LoginPage() {
       setAuth(result.token, result.user);
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      setError(getErrorMessage(err, 'Could not log in. Please try again.'));
+      setError(getErrorMessage(err, t('auth.loginFailed')));
     } finally {
       setLoading(false);
     }
@@ -37,7 +39,7 @@ function LoginPage() {
 
   return (
     <div className="mx-auto max-w-md">
-      <h1 className="text-2xl font-bold text-gray-900">Log in</h1>
+      <h1 className="text-2xl font-bold text-gray-900">{t('auth.loginTitle')}</h1>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         {error && (
@@ -48,7 +50,7 @@ function LoginPage() {
 
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-            Email
+            {t('common.email')}
           </label>
           <input
             id="email"
@@ -63,7 +65,7 @@ function LoginPage() {
 
         <PasswordField
           id="password"
-          label="Password"
+          label={t('common.password')}
           autoComplete="current-password"
           value={password}
           onChange={setPassword}
@@ -74,21 +76,21 @@ function LoginPage() {
           disabled={loading}
           className="w-full rounded bg-green-600 px-4 py-2.5 font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? 'Logging in...' : 'Log in'}
+          {loading ? t('auth.loggingIn') : t('auth.loginTitle')}
         </button>
       </form>
 
       {/* NEW (Milestone 3): link to the password reset / חדש (אבן דרך 3): קישור לאיפוס סיסמה */}
       <p className="mt-4 text-sm text-gray-600">
         <Link to="/forgot-password" className="font-medium text-green-700 hover:underline">
-          Forgot your password?
+          {t('auth.forgot')}
         </Link>
       </p>
 
       <p className="mt-2 text-sm text-gray-600">
-        No account yet?{' '}
+        {t('auth.noAccount')}{' '}
         <Link to="/register" className="font-medium text-green-700 hover:underline">
-          Sign up
+          {t('nav.signup')}
         </Link>
       </p>
     </div>

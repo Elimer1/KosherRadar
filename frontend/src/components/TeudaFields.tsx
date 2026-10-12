@@ -1,6 +1,7 @@
 import type { ChangeEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { FormOptions, TeudaFormValues } from '../types/submissions';
-import { getKashrutLevelLabel } from '../utils/labels';
+import { getHechsherOptionLabel, getKashrutLevelLabel } from '../utils/labels';
 import { inputClassName, labelClassName } from './formStyles';
 
 interface TeudaFieldsProps {
@@ -30,6 +31,7 @@ function TeudaFields({
   fieldsRequired = true,
   hidePhoto = false,
 }: TeudaFieldsProps) {
+  const { t } = useTranslation();
   const isOther = values.hechsher === options.hechsherOtherValue;
   const maxMegabytes = Math.round(options.maxImageBytes / (1024 * 1024));
 
@@ -37,7 +39,7 @@ function TeudaFields({
     <div className="space-y-4">
       <div>
         <label htmlFor={`${idPrefix}-hechsher`} className={labelClassName}>
-          Hechsher (kashrut supervision)
+          {t('forms.hechsher')}
         </label>
         <select
           id={`${idPrefix}-hechsher`}
@@ -47,20 +49,20 @@ function TeudaFields({
           onChange={(event) => onChange('hechsher', event.target.value)}
           className={inputClassName}
         >
-          <option value="">Choose...</option>
+          <option value="">{t('common.choose')}</option>
           {options.hechsherOptions.map((option) => (
             <option key={option.value} value={option.value}>
-              {option.labelEn}
+              {getHechsherOptionLabel(option)}
             </option>
           ))}
-          <option value={options.hechsherOtherValue}>Other (type below)</option>
+          <option value={options.hechsherOtherValue}>{t('common.otherType')}</option>
         </select>
       </div>
 
       {isOther && (
         <div>
           <label htmlFor={`${idPrefix}-hechsher-other`} className={labelClassName}>
-            Name of the hechsher
+            {t('forms.hechsherName')}
           </label>
           <input
             id={`${idPrefix}-hechsher-other`}
@@ -77,7 +79,7 @@ function TeudaFields({
 
       <div>
         <label htmlFor={`${idPrefix}-level`} className={labelClassName}>
-          Kashrut level
+          {t('forms.level')}
         </label>
         <select
           id={`${idPrefix}-level`}
@@ -87,7 +89,7 @@ function TeudaFields({
           onChange={(event) => onChange('kashrutLevel', event.target.value)}
           className={inputClassName}
         >
-          <option value="">Choose...</option>
+          <option value="">{t('common.choose')}</option>
           {options.kashrutLevels.map((level) => (
             <option key={level} value={level}>
               {getKashrutLevelLabel(level)}
@@ -98,7 +100,7 @@ function TeudaFields({
 
       <div>
         <label htmlFor={`${idPrefix}-expiration`} className={labelClassName}>
-          Expiration date on the certificate
+          {t('forms.expiration')}
         </label>
         <input
           id={`${idPrefix}-expiration`}
@@ -114,7 +116,7 @@ function TeudaFields({
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor={`${idPrefix}-mashgiach-name`} className={labelClassName}>
-            Mashgiach name
+            {t('forms.mashgiachName')}
           </label>
           <input
             id={`${idPrefix}-mashgiach-name`}
@@ -129,7 +131,7 @@ function TeudaFields({
         </div>
         <div>
           <label htmlFor={`${idPrefix}-mashgiach-phone`} className={labelClassName}>
-            Mashgiach phone
+            {t('forms.mashgiachPhone')}
           </label>
           <input
             id={`${idPrefix}-mashgiach-phone`}
@@ -147,7 +149,7 @@ function TeudaFields({
       {!hidePhoto && (
       <div>
         <label htmlFor={`${idPrefix}-photo`} className={labelClassName}>
-          Photo of the certificate
+          {t('forms.photo')}
         </label>
         <input
           id={`${idPrefix}-photo`}
@@ -156,10 +158,10 @@ function TeudaFields({
           accept="image/jpeg,image/png,image/webp"
           disabled={disabled}
           onChange={onPhotoChange}
-          className="mt-1 block w-full text-sm text-gray-700 file:mr-3 file:rounded file:border-0 file:bg-green-50 file:px-3 file:py-2 file:font-medium file:text-green-800 hover:file:bg-green-100"
+          className="mt-1 block w-full text-sm text-gray-700 file:me-3 file:rounded file:border-0 file:bg-green-50 file:px-3 file:py-2 file:font-medium file:text-green-800 hover:file:bg-green-100"
         />
-        <p className="mt-1 text-xs text-gray-500">JPG, PNG or WebP, up to {maxMegabytes} MB.</p>
-        {photo && !photoError && <p className="mt-1 text-xs text-gray-600">Selected: {photo.name}</p>}
+        <p className="mt-1 text-xs text-gray-500">{t('forms.photoHint', { max: maxMegabytes })}</p>
+        {photo && !photoError && <p className="mt-1 text-xs text-gray-600">{t('forms.selected', { name: photo.name })}</p>}
         {photoError && (
           <p role="alert" className="mt-1 text-sm text-red-700">
             {photoError}

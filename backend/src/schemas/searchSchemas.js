@@ -77,3 +77,31 @@ export const suggestionsQuerySchema = z
     q: z.string().trim().min(2, 'Type at least 2 characters').max(100),
   })
   .superRefine(checkLocation);
+
+// NEW (Milestone 5): the map asks for the rectangle currently on screen (north/south/east/west).
+// The same filters as the list apply, including a radius around the chosen search location.
+// חדש (אבן דרך 5): המפה מבקשת את המלבן שעל המסך. אותם מסננים כמו ברשימה, כולל רדיוס סביב מיקום החיפוש.
+const latitudeText = numberText.pipe(z.coerce.number().min(-90).max(90));
+const longitudeText = numberText.pipe(z.coerce.number().min(-180).max(180));
+
+export const mapQuerySchema = z
+  .object({
+    ...searchShape,
+    north: latitudeText,
+    south: latitudeText,
+    east: longitudeText,
+    west: longitudeText,
+  })
+  .superRefine((data, context) => {
+    checkLocation(data, context);
+
+    if (data.north <= data.south) {
+      context.addIssue({ code: 'custom', path: ['north'], message: 'north must be greater than south' });
+    }
+
+    // A box that crosses the date line is not used. The map asks the visitor to zoom in instead.
+    // תיבה שחוצה את קו התאריך לא בשימוש. המפה מבקשת להתקרב.
+    if (data.east <= data.west) {
+      context.addIssue({ code: 'custom', path: ['east'], message: 'east must be greater than west' });
+    }
+  });

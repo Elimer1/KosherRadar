@@ -2,6 +2,7 @@
 // A certificate cannot be approved while its restaurant is not approved. A level conflict is only a warning.
 // חדש (אבן דרך 3): לשונית "תעודות ממתינות". אי אפשר לאשר תעודה לפני שהמסעדה מאושרת. קונפליקט רמה הוא אזהרה בלבד.
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { approveTeuda, getPendingTeudot, rejectTeuda } from '../../api/adminApi';
 import { getErrorMessage } from '../../api/errors';
@@ -21,6 +22,7 @@ interface PendingTeudotTabProps {
 }
 
 function PendingTeudotTab({ hechsherOptions }: PendingTeudotTabProps) {
+  const { t } = useTranslation();
   const { data, page, setPage, error, loading, reload } = usePagedList(getPendingTeudot);
   const [busyId, setBusyId] = useState('');
   const [rejectingId, setRejectingId] = useState('');
@@ -33,21 +35,21 @@ function PendingTeudotTab({ hechsherOptions }: PendingTeudotTabProps) {
     try {
       const result = await approveTeuda(teudaId);
       const messages: Notice[] = [
-        { kind: 'success', message: 'Certificate approved. It is now public.' },
+        { kind: 'success', message: t('desk.certificateApproved') },
         { kind: 'success', message: describePoints(result.points) },
       ];
 
       if (result.conflictWarning.length > 0) {
         messages.push({
           kind: 'warning',
-          message: 'Note: another valid certificate with the same level already exists for this restaurant.',
+          message: t('desk.sameLevelNote'),
         });
       }
 
       setNotices(messages);
       reload();
     } catch (err) {
-      setNotices([{ kind: 'error', message: getErrorMessage(err, 'Could not approve the certificate.') }]);
+      setNotices([{ kind: 'error', message: getErrorMessage(err, t('desk.approveCertificateFailed')) }]);
     } finally {
       setBusyId('');
     }
@@ -59,39 +61,39 @@ function PendingTeudotTab({ hechsherOptions }: PendingTeudotTabProps) {
 
     try {
       const result = await rejectTeuda(teudaId, reason);
-      setNotices([{ kind: 'success', message: 'Certificate rejected.' }, describeEmailStatus(result.emailStatus)]);
+      setNotices([{ kind: 'success', message: t('desk.certificateRejected') }, describeEmailStatus(result.emailStatus)]);
       setRejectingId('');
       reload();
     } catch (err) {
-      setNotices([{ kind: 'error', message: getErrorMessage(err, 'Could not reject the certificate.') }]);
+      setNotices([{ kind: 'error', message: getErrorMessage(err, t('desk.rejectCertificateFailed')) }]);
     } finally {
       setBusyId('');
     }
   };
 
   return (
-    <section className="space-y-4" aria-label="Pending certificates">
+    <section className="space-y-4" aria-label={t('desk.pendingCertificates')}>
       <Notices notices={notices} onDismiss={() => setNotices([])} />
       <FormAlert message={error} />
 
-      {loading && !data && <p className="text-gray-600">Loading...</p>}
-      {data && data.items.length === 0 && <p className="text-gray-600">No certificates are waiting for review.</p>}
+      {loading && !data && <p className="text-gray-600">{t('common.loading')}</p>}
+      {data && data.items.length === 0 && <p className="text-gray-600">{t('desk.noneCertificates')}</p>}
 
       <ul className="space-y-4">
         {data?.items.map((teuda) => (
           <li key={teuda.id} className="space-y-3 rounded border border-green-100 p-4">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <h3 className="text-lg font-semibold text-gray-900">
-                {teuda.restaurant?.name || 'Unknown restaurant'}
+                {teuda.restaurant?.name || t('desk.unknownRestaurant')}
                 {teuda.submittedWithNewRestaurant && (
                   <span className="ms-2 rounded bg-green-50 px-2 py-0.5 text-xs font-medium text-green-800">
-                    Sent with a new restaurant
+                    {t('desk.sentWithNew')}
                   </span>
                 )}
               </h3>
               {teuda.restaurant && (
                 <Link to={`/admin/restaurants/${teuda.restaurant.id}`} className="text-sm font-medium text-green-700 underline">
-                  View restaurant
+                  {t('desk.viewRestaurant')}
                 </Link>
               )}
             </div>
@@ -101,21 +103,22 @@ function PendingTeudotTab({ hechsherOptions }: PendingTeudotTabProps) {
             {!teuda.restaurantApproved && (
               <FormAlert
                 kind="warning"
-                message="This restaurant is not approved yet. Approve the restaurant first; a certificate cannot be approved before it."
+                message={t('desk.approveRestaurantFirst')}
               />
             )}
 
             {teuda.conflicts.length > 0 && (
               <FormAlert
                 kind="warning"
-                message={`Possible conflict: this restaurant already has a valid approved ${getKashrutLevelLabel(
-                  teuda.kashrutLevel
-                )} certificate (${teuda.conflicts
-                  .map(
-                    (conflict) =>
-                      `${getHechsherLabel(conflict.hechsher, conflict.hechsherOther, hechsherOptions)}, until ${conflict.expirationDate}`
-                  )
-                  .join('; ')}). This is only a warning, you can still approve.`}
+                message={t('desk.conflictDetail', {
+                  level: getKashrutLevelLabel(teuda.kashrutLevel),
+                  details: teuda.conflicts
+                    .map(
+                      (conflict) =>
+                        `${getHechsherLabel(conflict.hechsher, conflict.hechsherOther, hechsherOptions)}, ${t('desk.until', { date: conflict.expirationDate })}`
+                    )
+                    .join('; '),
+                })}
               />
             )}
 
@@ -134,7 +137,11 @@ function PendingTeudotTab({ hechsherOptions }: PendingTeudotTabProps) {
                   onClick={() => handleApprove(teuda.id)}
                   className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {busyId === teuda.id ? 'Working...' : teuda.conflicts.length > 0 ? 'Approve anyway' : 'Approve'}
+                  {busyId === teuda.id
+                    ? t('common.working')
+                    : teuda.conflicts.length > 0
+                      ? t('common.approveAnyway')
+                      : t('common.approve')}
                 </button>
                 <button
                   type="button"
@@ -142,7 +149,7 @@ function PendingTeudotTab({ hechsherOptions }: PendingTeudotTabProps) {
                   onClick={() => setRejectingId(teuda.id)}
                   className="rounded border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Reject...
+                  {t('common.reject')}
                 </button>
               </div>
             )}

@@ -35,14 +35,14 @@ describe('checkPhotoFile', () => {
   });
 
   it('rejects a file over the size limit', async () => {
-    expect(await checkPhotoFile(makeFile([0xff, 0xd8, 0xff]), 10)).toMatch(/larger than/);
+    expect(await checkPhotoFile(makeFile([0xff, 0xd8, 0xff]), 10)).toBe('too-large');
   });
 
   it('rejects a non-image even when it is named .jpg', async () => {
     const fake = new File([new TextEncoder().encode('just some text content')], 'photo.jpg', {
       type: 'image/jpeg',
     });
-    expect(await checkPhotoFile(fake, MAX)).toMatch(/JPG, PNG or WebP/);
+    expect(await checkPhotoFile(fake, MAX)).toBe('bad-type');
   });
 });
 

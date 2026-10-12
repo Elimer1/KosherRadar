@@ -65,4 +65,9 @@ export const SEARCH_RADIUS_OPTIONS_KM = [1, 5, 10, 25, 50];
 export const MAX_SEARCH_CANDIDATES = 2000;
 export const ATLAS_SEARCH_HIT_LIMIT = 100;
 
+// NEW (Milestone 5): how many restaurants one map view may return. More than this is reported as capped
+// so a zoomed-out map is never presented as a complete list.
+// חדש (אבן דרך 5): כמה מסעדות תצוגת מפה אחת רשאית להחזיר. מעבר לזה מדווחים שהרשימה נחתכה.
+export const MAP_MARKER_LIMIT = 500;
+
 export const MAX_FUTURE_EXPIRATION_YEARS = 5;

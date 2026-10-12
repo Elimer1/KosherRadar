@@ -14,6 +14,7 @@ vi.mock('../src/services/restaurantDetailsService.js', () => ({
 vi.mock('../src/services/restaurantSearchService.js', () => ({
   searchRestaurantsService: vi.fn(),
   getRestaurantSuggestionsService: vi.fn(),
+  findMapRestaurantsService: vi.fn(),
 }));
 
 vi.mock('../src/services/restaurantSubmissionService.js', () => ({ submitRestaurantService: vi.fn() }));

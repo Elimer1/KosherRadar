@@ -25,13 +25,13 @@ export const detectImageType = (bytes: Uint8Array) => {
 // Returns an error message, or an empty string when the file looks fine.
 export const checkPhotoFile = async (file: File, maxBytes: number) => {
   if (file.size > maxBytes) {
-    return `The photo is larger than ${Math.round(maxBytes / (1024 * 1024))} MB.`;
+    return 'too-large';
   }
 
   const firstBytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
 
   if (!detectImageType(firstBytes)) {
-    return 'The photo must be a JPG, PNG or WebP image.';
+    return 'bad-type';
   }
 
   return '';

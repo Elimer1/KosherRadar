@@ -1,4 +1,5 @@
 import axios from 'axios';
+import i18n from '../i18n';
 
 interface ApiErrorBody {
   message?: string;
@@ -6,14 +7,16 @@ interface ApiErrorBody {
 }
 
 // Turns any error from an API call into a short message that is safe to show the user.
-export const getErrorMessage = (error: unknown, fallback = 'Something went wrong. Please try again.') => {
+export const getErrorMessage = (error: unknown, fallback?: string) => {
+  const generic = fallback || i18n.t('common.genericError');
+
   if (!axios.isAxiosError<ApiErrorBody>(error)) {
-    return fallback;
+    return generic;
   }
 
   // The request never got an answer: server is down, wrong URL, or blocked by CORS.
   if (!error.response) {
-    return 'Cannot reach the server. Check your connection and try again.';
+    return i18n.t('common.offline');
   }
 
   const body = error.response.data;
@@ -23,5 +26,5 @@ export const getErrorMessage = (error: unknown, fallback = 'Something went wrong
     return body.errors.map((item) => item.message).join('. ');
   }
 
-  return body?.message || fallback;
+  return body?.message || generic;
 };

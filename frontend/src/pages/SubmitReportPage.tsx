@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import { getSubmissionContext } from '../api/restaurantApi';
 import { submitReport } from '../api/reportApi';
@@ -7,12 +8,15 @@ import { getErrorMessage } from '../api/errors';
 import FormAlert from '../components/FormAlert';
 import { inputClassName, labelClassName, primaryButtonClassName } from '../components/formStyles';
 import { useFormOptions } from '../hooks/useFormOptions';
+import { usePageMeta } from '../hooks/usePageMeta';
 import { emptyReportForm } from '../types/submissions';
 import type { ReportFormValues, SubmissionContext } from '../types/submissions';
-import { getHechsherLabel, getKashrutLevelLabel } from '../utils/labels';
+import { getHechsherLabel, getHechsherOptionLabel, getKashrutLevelLabel } from '../utils/labels';
 
 function SubmitReportPage() {
+  const { t } = useTranslation();
   const { restaurantId = '' } = useParams();
+  usePageMeta(t('forms.reportTitle'), t('forms.thanksReport'));
   const { options, error: optionsError } = useFormOptions();
 
   const [context, setContext] = useState<SubmissionContext | null>(null);
@@ -27,12 +31,12 @@ function SubmitReportPage() {
       try {
         setContext(await getSubmissionContext(restaurantId));
       } catch (err) {
-        setLoadError(getErrorMessage(err, 'Could not load this restaurant.'));
+        setLoadError(getErrorMessage(err, t('forms.loadRestaurant')));
       }
     };
 
     loadContext();
-  }, [restaurantId]);
+  }, [restaurantId, t]);
 
   const handleFieldChange = (field: keyof ReportFormValues, value: string) => {
     setValues((current) => ({ ...current, [field]: value }));
@@ -47,7 +51,7 @@ function SubmitReportPage() {
       await submitReport(restaurantId, values);
       setSubmitted(true);
     } catch (err) {
-      setError(getErrorMessage(err, 'Could not send the report. Please try again.'));
+      setError(getErrorMessage(err, t('forms.sendReportFailed')));
     } finally {
       setLoading(false);
     }
@@ -58,19 +62,16 @@ function SubmitReportPage() {
   }
 
   if (!context || !options) {
-    return <p className="text-gray-600">Loading...</p>;
+    return <p className="text-gray-600">{t('common.loading')}</p>;
   }
 
   if (submitted) {
     return (
       <div className="mx-auto max-w-lg space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">Report sent</h1>
-        <FormAlert
-          kind="success"
-          message="Thank you. An admin will review your report. Nothing on the restaurant page changes until an admin decides to apply a correction."
-        />
+        <h1 className="text-2xl font-bold text-gray-900">{t('forms.reportSent')}</h1>
+        <FormAlert kind="success" message={t('forms.thanksReport')} />
         <Link to="/account/submissions" className="inline-block font-medium text-green-700 hover:underline">
-          See your submissions
+          {t('forms.seeSubmissions')}
         </Link>
       </div>
     );
@@ -81,7 +82,7 @@ function SubmitReportPage() {
 
   return (
     <div className="mx-auto max-w-lg">
-      <h1 className="text-2xl font-bold text-gray-900">Report a problem or correction</h1>
+      <h1 className="text-2xl font-bold text-gray-900">{t('forms.reportTitle')}</h1>
       <p className="mt-1 text-gray-600">
         {context.restaurant.name} &middot; {context.restaurant.address}
       </p>
@@ -91,7 +92,7 @@ function SubmitReportPage() {
 
         <div>
           <label htmlFor="report-type" className={labelClassName}>
-            What is this about?
+            {t('forms.about')}
           </label>
           <select
             id="report-type"
@@ -100,14 +101,14 @@ function SubmitReportPage() {
             onChange={(event) => handleFieldChange('type', event.target.value)}
             className={inputClassName}
           >
-            <option value="GENERAL">General problem (wrong details, closed, etc.)</option>
-            <option value="KASHRUT_UPDATE">The kashrut information is wrong</option>
+            <option value="GENERAL">{t('forms.generalProblem')}</option>
+            <option value="KASHRUT_UPDATE">{t('forms.kashrutWrong')}</option>
           </select>
         </div>
 
         <div>
           <label htmlFor="report-teuda" className={labelClassName}>
-            Which certificate? (optional)
+            {t('forms.whichCertificate')}
           </label>
           <select
             id="report-teuda"
@@ -116,12 +117,12 @@ function SubmitReportPage() {
             onChange={(event) => handleFieldChange('teudaId', event.target.value)}
             className={inputClassName}
           >
-            <option value="">Not about a specific certificate</option>
+            <option value="">{t('forms.notSpecific')}</option>
             {context.teudot.map((teuda) => (
               <option key={teuda.id} value={teuda.id}>
                 {getHechsherLabel(teuda.hechsher, teuda.hechsherOther, options.hechsherOptions)} -{' '}
                 {getKashrutLevelLabel(teuda.kashrutLevel)} -{' '}
-                {teuda.visibility === 'VALID' ? 'valid until' : 'EXPIRED on'} {teuda.expirationDate}
+                {teuda.visibility === 'VALID' ? t('forms.validUntil') : t('forms.expiredOn')} {teuda.expirationDate}
               </option>
             ))}
           </select>
@@ -129,11 +130,11 @@ function SubmitReportPage() {
 
         {isKashrutUpdate && (
           <div className="space-y-4 rounded border border-green-100 p-4">
-            <p className="text-sm text-gray-600">What do you think is correct?</p>
+            <p className="text-sm text-gray-600">{t('forms.thinkCorrect')}</p>
 
             <div>
               <label htmlFor="report-hechsher" className={labelClassName}>
-                Hechsher
+                {t('forms.hechsher')}
               </label>
               <select
                 id="report-hechsher"
@@ -142,20 +143,20 @@ function SubmitReportPage() {
                 onChange={(event) => handleFieldChange('proposedHechsher', event.target.value)}
                 className={inputClassName}
               >
-                <option value="">No change</option>
+                <option value="">{t('common.noChange')}</option>
                 {options.hechsherOptions.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.labelEn}
+                    {getHechsherOptionLabel(option)}
                   </option>
                 ))}
-                <option value={options.hechsherOtherValue}>Other (type below)</option>
+                <option value={options.hechsherOtherValue}>{t('common.otherType')}</option>
               </select>
             </div>
 
             {proposesOther && (
               <div>
                 <label htmlFor="report-hechsher-other" className={labelClassName}>
-                  Name of the hechsher
+                  {t('forms.hechsherName')}
                 </label>
                 <input
                   id="report-hechsher-other"
@@ -172,7 +173,7 @@ function SubmitReportPage() {
 
             <div>
               <label htmlFor="report-level" className={labelClassName}>
-                Kashrut level
+                {t('forms.level')}
               </label>
               <select
                 id="report-level"
@@ -181,7 +182,7 @@ function SubmitReportPage() {
                 onChange={(event) => handleFieldChange('proposedKashrutLevel', event.target.value)}
                 className={inputClassName}
               >
-                <option value="">No change</option>
+                <option value="">{t('common.noChange')}</option>
                 {options.kashrutLevels.map((level) => (
                   <option key={level} value={level}>
                     {getKashrutLevelLabel(level)}
@@ -194,7 +195,7 @@ function SubmitReportPage() {
 
         <div>
           <label htmlFor="report-description" className={labelClassName}>
-            Describe the problem
+            {t('forms.describe')}
           </label>
           <textarea
             id="report-description"
@@ -209,7 +210,7 @@ function SubmitReportPage() {
         </div>
 
         <button type="submit" disabled={loading} className={primaryButtonClassName}>
-          {loading ? 'Sending...' : 'Send report'}
+          {loading ? t('auth.sending') : t('forms.sendReport')}
         </button>
       </form>
     </div>

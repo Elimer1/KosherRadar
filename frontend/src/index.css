@@ -5,3 +5,38 @@ body {
   color: #1f2937;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Hebrew', Arial, sans-serif;
 }
+
+/* NEW (Milestone 5): branded map pin and cluster bubble. Drawn here so Leaflet's image files are not needed. */
+/* חדש (אבן דרך 5): סיכת מפה ובועת מקבץ. מצוירים כאן כדי שלא יהיה צורך בקובצי התמונה של Leaflet. */
+.kr-marker-wrap,
+.kr-cluster-wrap {
+  background: transparent;
+  border: none;
+}
+
+.kr-marker {
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin-left: 5px;
+  margin-top: 6px;
+  border-radius: 50% 50% 50% 0;
+  background: #15803d;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  transform: rotate(-45deg);
+}
+
+.kr-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  background: #15803d;
+  color: #ffffff;
+  font-weight: 700;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
