@@ -4,9 +4,18 @@ Authoritative requirements: `PROJECT_SPEC.md` (do not edit without approval). Re
 
 ## Active milestone
 
-**Milestone 6 — Full verification and fixes** (DONE and merged to `main`; waiting for your approval before Milestone 7). Scope from `PROJECT_SPEC.md` section 16: end-to-end checks, Vitest and build checks, a security and data-leak review, fixes, README completion, and a reconciliation of the requirements. Kashrut status and filters keep using `kashrutStatusService.js` and `restaurantSearchService.js`.
+**Milestone 7 — Hebrew academic project book** (IN PROGRESS). Scope from `PROJECT_SPEC.md` section 16: write `PROJECT_BOOK.md` in Hebrew from the actual implementation. Do not claim Atlas Search, Cloudinary, Resend or Geoapify were verified. The local MongoDB checks in Milestone 6 are not Atlas. Kashrut status and filters stay in `kashrutStatusService.js` and `restaurantSearchService.js`. No application behavior is changed in this milestone.
 
-Milestones 1 to 6 are merged to `main`. This milestone has not been pushed. Checks that need only MongoDB were run against a MongoDB already listening on `127.0.0.1:27017` (database `kosherradar`). That is not MongoDB Atlas, and it is not Atlas Search. Cloudinary, Resend, Geoapify and Atlas Search are still without credentials (see "Blockers").
+Milestones 1 to 6 are merged to `main`, including the later product update on public forms and the account page (`e483c2e`). This milestone has not been pushed. Cloudinary, Resend, Geoapify and Atlas Search are still without credentials (see "Blockers").
+
+## Feature ownership (Milestone 7)
+
+Recorded before implementation, per section 19. `--author` follows the responsible teammate. The book is AI-generated and must be reviewed by its owner. It is documentation of the whole system, not new application code. Merge order: `feature/project-book`, then this docs branch.
+
+| Feature branch | Responsible teammate | Scope |
+| --- | --- | --- |
+| `feature/project-book` | Eli Mermelstein | `PROJECT_BOOK.md` in Hebrew: goals, roles, architecture, schemas, data flow, REST endpoints, auth and security, kashrut rules, external services, tests, setup, limitations, and screenshot placeholders where no images exist |
+| `feature/milestone-7-docs` | Eli Mermelstein | Progress and checklist files, and a README pointer to the book |
 
 ## Feature ownership (Milestone 6)
 
