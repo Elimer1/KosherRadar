@@ -36,6 +36,16 @@ export const resolvePendingReportRepo = async (reportId, { correctionApplied, ad
   return Report.findOneAndUpdate({ _id: reportId, status: 'PENDING' }, { $set: changes }, { new: true });
 };
 
+// NEW (Audit M2): put a claimed report back to PENDING when the correction write fails.
+// חדש (ביקורת M2): מחזיר דיווח שכבר נתפס למצב ממתין כשכתיבת התיקון נכשלת.
+export const reopenResolvedReportRepo = async (reportId) => {
+  return Report.findOneAndUpdate(
+    { _id: reportId, status: 'RESOLVED' },
+    { $set: { status: 'PENDING', correctionApplied: false }, $unset: { adminNote: '' } },
+    { new: true }
+  );
+};
+
 export const rejectPendingReportRepo = async (reportId, reason) => {
   return Report.findOneAndUpdate(
     { _id: reportId, status: 'PENDING' },

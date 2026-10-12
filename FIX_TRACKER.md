@@ -6,11 +6,11 @@ Counts below are derived from the issue statuses in this file.
 
 | Status | Count |
 | --- | ---: |
-| NOT STARTED | 17 |
+| NOT STARTED | 16 |
 | ALREADY WORKING | 8 |
 | BLOCKED | 5 |
 | DEFERRED | 1 |
-| VERIFIED | 5 |
+| VERIFIED | 6 |
 | Other | 0 |
 | **Total** | **36** |
 
@@ -25,7 +25,7 @@ The user asked to finish important fixes and to defer low-impact, cosmetic, end-
 | M1-001 | Confirmed bug: certificate evidence was dropped | VERIFIED |
 | M1-002 | The user form has to match what is stored | VERIFIED |
 | M1-003 | A typed address must not take the first geocode hit | VERIFIED |
-| M2-002 | Confirmed bug: report correction can stick when the report does not | NOT STARTED |
+| M2-002 | Confirmed bug: report correction can stick when the report does not | VERIFIED |
 | M2-003 | Admin cannot save a user restaurant that omitted food type or categories | NOT STARTED |
 | M4-001 | Confirmed bug: password reset leaves existing JWTs valid | NOT STARTED |
 | M5-002 | Confirmed bug: a failed password write burns the reset link | NOT STARTED |
@@ -50,7 +50,7 @@ No application code was changed in the audit. No issue is `VERIFIED`. Blocked an
 | M1-002 | 1 Restaurant and certificate submission | Critical | VERIFIED | UX improvement |
 | M1-003 | 1 Restaurant and certificate submission | Critical | VERIFIED | Reliability risk |
 | M2-001 | 2 Admin moderation | Critical | ALREADY WORKING | Already implemented |
-| M2-002 | 2 Admin moderation | Critical | NOT STARTED | Confirmed bug |
+| M2-002 | 2 Admin moderation | Critical | VERIFIED | Confirmed bug |
 | M2-003 | 2 Admin moderation | Critical | NOT STARTED | UX improvement |
 | M2-004 | 2 Admin moderation | Critical | NOT STARTED | Architectural improvement |
 | M3-001 | 3 Kashrut status | Critical | ALREADY WORKING | Already implemented |
@@ -159,16 +159,16 @@ Priority: Critical
 
 - **Milestone:** 2
 - **Priority:** Critical
-- **Status:** NOT STARTED
+- **Status:** VERIFIED
 - **Description:** `APPLY_PROPOSED` writes the certificate or restaurant claim before the report row is claimed. A concurrent admin can leave the data changed while the report status and points do not match. `CORRECTION_ALREADY_MADE` grants +1 without checking that any field changed. New reports from the current form cannot carry a proposal, so Apply is hidden for them; the API still accepts old `KASHRUT_UPDATE` reports.
 - **Evidence:** `resolveReportService` calls `applyProposedCorrection` and only then `resolvePendingReportRepo`, which updates `{ status: 'PENDING' }`. If that update returns null, the service throws 409 and does not undo the teuda or restaurant write. `CORRECTION_ALREADY_MADE` sets `correctionApplied` true whenever the resolution is not `NO_CORRECTION`. `awardPointsForAppliedCorrectionService` then awards +1 from that flag. The award itself is idempotent per `REPORT:<id>`. `SubmitReportPage` sends only a note and optional photo. `submitReportSchema` forces type `GENERAL` and clears proposed fields unless the client sends `KASHRUT_UPDATE`. `PendingReportsTab` shows Apply only when `canApplyProposal` is true.
 - **Root cause:** The correction and the status change are two writes. The status write is atomic; the earlier write is not tied to it. Points trust `correctionApplied`, and "already corrected" sets that flag on the admin's word.
 - **Relevant files/functions:** `backend/src/services/adminReportService.js` (`applyProposedCorrection`, `resolveReportService`, `buildCorrectionChanges`); `backend/src/repositories/adminReportRepository.js` (`resolvePendingReportRepo`); `backend/src/services/pointsService.js` (`awardPointsForAppliedCorrectionService`); `frontend/src/components/admin/PendingReportsTab.tsx`; `frontend/src/pages/SubmitReportPage.tsx`; `backend/src/services/reportSubmissionService.js`.
 - **Planned solution:** Claim the PENDING report first, or apply the correction and the status change in one transaction, and roll back if the report was already taken. Keep +1 idempotent. Do not change the point amounts. Ask before requiring a real field diff for `CORRECTION_ALREADY_MADE`, because that changes when points are awarded. A transaction needs a replica set; do not add `mongodb-memory-server` without approval. Compensating updates are acceptable if they are tested.
-- **Files changed:** none
-- **Tests added or modified:** none. Existing `adminReportService.test.js` covers the happy path with mocks, not a lost race.
-- **Verification:** Static inspection only.
-- **Blockers:** Point-rule change for "already corrected" needs approval. Transactional tests need an approved isolated replica set if transactions are used.
+- **Files changed:** `backend/src/services/adminReportService.js`, `backend/src/repositories/adminReportRepository.js`.
+- **Tests added or modified:** `backend/tests/adminReportService.test.js`. The old test expected the certificate write to run before the claim and to skip the claim when the write failed. That assertion described the bug, so it was replaced: a lost claim does not write, and a failed write reopens the report. `CORRECTION_ALREADY_MADE` still awards +1.
+- **Verification:** `cd backend; npm test -- tests/adminReportService.test.js` exit 0, 18 tests passed. Mocks only. No browser. No live database.
+- **Blockers:** If reopening the report also fails, the report can stay resolved without the correction. That is logged and the original error is still thrown. A field-diff requirement for `CORRECTION_ALREADY_MADE` still needs approval because it changes who gets +1.
 
 ### M2-003 — Admin review experience
 

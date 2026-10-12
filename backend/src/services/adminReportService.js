@@ -11,6 +11,7 @@ import {
   findReportByIdRepo,
   listPendingReportsRepo,
   rejectPendingReportRepo,
+  reopenResolvedReportRepo,
   resolvePendingReportRepo,
 } from '../repositories/adminReportRepository.js';
 import { toAdminReport } from './adminSerializerService.js';
@@ -53,11 +54,10 @@ export const buildCorrectionChanges = (report, target) => {
   return changes;
 };
 
-// Applies the user's proposal to the certificate the report names, or to the restaurant's own claim when
-// the report names no certificate. Applying the same proposal twice gives the same result, so a retry
-// after a failure is safe.
-// מחיל את ההצעה של המשתמש על התעודה שהדיווח מציין, או על הטענה של המסעדה כשאין תעודה. הפעלה כפולה בטוחה.
-const applyProposedCorrection = async (report) => {
+// Checks that Apply has a real proposal and that the record still exists. Runs before the report is claimed,
+// so a bad request does not flip the status.
+// בודק שיש הצעה אמיתית ושהרשומה עדיין קיימת, לפני שתופסים את הדיווח, כדי שבקשה לא תקינה לא תשנה סטטוס.
+const assertProposedCorrection = async (report) => {
   const proposesSomething = report.proposedHechsher || report.proposedKashrutLevel;
 
   if (report.type !== 'KASHRUT_UPDATE' || !proposesSomething) {
@@ -71,7 +71,6 @@ const applyProposedCorrection = async (report) => {
       throw appError('The certificate in this report no longer exists. Resolve it without applying a correction.', 409);
     }
 
-    await saveTeudaChangesRepo(teuda, buildCorrectionChanges(report, 'TEUDA'));
     return;
   }
 
@@ -80,8 +79,35 @@ const applyProposedCorrection = async (report) => {
   if (!restaurant) {
     throw appError('The restaurant in this report no longer exists.', 409);
   }
+};
 
+// Applies the user's proposal to the certificate the report names, or to the restaurant's own claim when
+// the report names no certificate. Applying the same proposal twice gives the same result, so a retry
+// after a failure is safe.
+// מחיל את ההצעה של המשתמש על התעודה שהדיווח מציין, או על הטענה של המסעדה כשאין תעודה. הפעלה כפולה בטוחה.
+const applyProposedCorrection = async (report) => {
+  await assertProposedCorrection(report);
+
+  if (report.teuda) {
+    const teuda = await findTeudaByIdRepo(report.teuda);
+    await saveTeudaChangesRepo(teuda, buildCorrectionChanges(report, 'TEUDA'));
+    return;
+  }
+
+  const restaurant = await findRestaurantByIdRepo(report.restaurant);
   await saveRestaurantChangesRepo(restaurant, buildCorrectionChanges(report, 'RESTAURANT'));
+};
+
+// NEW (Audit M2): the report is already RESOLVED when this runs. Put it back if the data write failed.
+// חדש (ביקורת M2): הדיווח כבר סגור כשזה רץ. מחזירים אותו אם כתיבת הנתונים נכשלה.
+const reopenAfterFailedCorrection = async (reportId, error) => {
+  try {
+    await reopenResolvedReportRepo(reportId);
+  } catch (reopenError) {
+    console.error('Could not reopen report after a failed correction:', reportId, reopenError.message);
+  }
+
+  throw error;
 };
 
 // Resolve a report in one of three ways (spec 6 and 7):
@@ -103,14 +129,25 @@ export const resolveReportService = async ({ reportId, resolution, adminNote }) 
   if (!alreadyResolved) {
     const correctionApplied = resolution !== 'NO_CORRECTION';
 
+    // NEW (Audit M2): claim the PENDING row before writing the certificate or claim. The loser of a race
+    // gets null and must not write. If the write fails, the claim is put back.
+    // חדש (ביקורת M2): תופסים את הדיווח הממתין לפני כתיבת התעודה או הטענה. מי שמפסיד במרוץ מקבל null ולא כותב.
     if (resolution === 'APPLY_PROPOSED') {
-      await applyProposedCorrection(report);
+      await assertProposedCorrection(report);
     }
 
     resolved = await resolvePendingReportRepo(report._id, { correctionApplied, adminNote });
 
     if (!resolved) {
       throw appError('This report was just handled by another admin. Please refresh.', 409);
+    }
+
+    if (resolution === 'APPLY_PROPOSED') {
+      try {
+        await applyProposedCorrection(report);
+      } catch (error) {
+        await reopenAfterFailedCorrection(report._id, error);
+      }
     }
   }
 

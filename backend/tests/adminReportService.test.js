@@ -22,6 +22,7 @@ vi.mock('../src/repositories/adminReportRepository.js', () => ({
   findReportByIdRepo: vi.fn(),
   listPendingReportsRepo: vi.fn(),
   rejectPendingReportRepo: vi.fn(),
+  reopenResolvedReportRepo: vi.fn(),
   resolvePendingReportRepo: vi.fn(),
 }));
 
@@ -43,6 +44,7 @@ import {
   findReportByIdRepo,
   listPendingReportsRepo,
   rejectPendingReportRepo,
+  reopenResolvedReportRepo,
   resolvePendingReportRepo,
 } from '../src/repositories/adminReportRepository.js';
 import { awardPointsOnceRepo, findUserByIdRepo } from '../src/repositories/userRepository.js';
@@ -124,6 +126,9 @@ describe('resolveReportService', () => {
     expect(saveTeudaChangesRepo).toHaveBeenCalledTimes(1);
     expect(saveTeudaChangesRepo.mock.calls[0][1]).toEqual({ kashrutLevel: 'MEHADRIN' });
     expect(resolvePendingReportRepo).toHaveBeenCalledWith('report-1', { correctionApplied: true, adminNote: undefined });
+    expect(resolvePendingReportRepo.mock.invocationCallOrder[0]).toBeLessThan(
+      saveTeudaChangesRepo.mock.invocationCallOrder[0]
+    );
     expect(result.report).toMatchObject({ status: 'RESOLVED', correctionApplied: true });
     expect(result.points).toMatchObject({ awarded: true, points: 1 });
     expect(awardPointsOnceRepo).toHaveBeenCalledWith('user-1', 'REPORT:report-1', 1);
@@ -148,12 +153,28 @@ describe('resolveReportService', () => {
     expect(awardPointsOnceRepo).not.toHaveBeenCalled();
   });
 
-  it('does not mark the report resolved when the correction could not be applied', async () => {
+  it('reopens the report when the correction write fails after the claim', async () => {
     findReportByIdRepo.mockResolvedValue(report());
     saveTeudaChangesRepo.mockRejectedValue(new Error('database down'));
 
-    await expect(resolveReportService({ reportId: 'report-1', resolution: 'APPLY_PROPOSED' })).rejects.toThrow();
-    expect(resolvePendingReportRepo).not.toHaveBeenCalled();
+    await expect(resolveReportService({ reportId: 'report-1', resolution: 'APPLY_PROPOSED' })).rejects.toThrow(
+      'database down'
+    );
+    expect(resolvePendingReportRepo).toHaveBeenCalled();
+    expect(reopenResolvedReportRepo).toHaveBeenCalledWith('report-1');
+    expect(awardPointsOnceRepo).not.toHaveBeenCalled();
+  });
+
+  it('does not write the certificate when another admin already claimed the report', async () => {
+    findReportByIdRepo.mockResolvedValue(report());
+    resolvePendingReportRepo.mockResolvedValue(null);
+
+    await expect(resolveReportService({ reportId: 'report-1', resolution: 'APPLY_PROPOSED' })).rejects.toMatchObject({
+      statusCode: 409,
+    });
+    expect(saveTeudaChangesRepo).not.toHaveBeenCalled();
+    expect(saveRestaurantChangesRepo).not.toHaveBeenCalled();
+    expect(reopenResolvedReportRepo).not.toHaveBeenCalled();
     expect(awardPointsOnceRepo).not.toHaveBeenCalled();
   });
 
