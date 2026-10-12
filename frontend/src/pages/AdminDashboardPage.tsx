@@ -43,14 +43,14 @@ function AdminDashboardPage() {
   }
 
   if (!options) {
-    return <p className="text-gray-600">{t('admin.loading')}</p>;
+    return <p className="text-muted">{t('admin.loading')}</p>;
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">{t('admin.title')}</h1>
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('admin.title')}</h1>
 
-      <div role="tablist" aria-label={t('admin.sections')} className="flex flex-wrap gap-2 border-b border-green-100 pb-2">
+      <div role="tablist" aria-label={t('admin.sections')} className="-mx-1 flex gap-1 overflow-x-auto border-b border-soft">
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -62,8 +62,8 @@ function AdminDashboardPage() {
             onClick={() => selectTab(tab.id)}
             className={
               activeTab === tab.id
-                ? 'rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white'
-                : 'rounded border border-green-200 px-3 py-1.5 text-sm font-medium text-green-800 hover:bg-green-50'
+                ? 'min-h-11 shrink-0 border-b-2 border-forest px-3 text-sm font-semibold text-forest'
+                : 'min-h-11 shrink-0 border-b-2 border-transparent px-3 text-sm font-medium text-muted hover:text-ink'
             }
           >
             {t(tab.labelKey)}

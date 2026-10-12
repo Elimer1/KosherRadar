@@ -15,10 +15,10 @@ function Layout() {
         <Navbar />
 
         {sessionExpired && (
-          <div role="alert" className="border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-950">
+          <div role="alert" className="border-b border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-ink">
             <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
               <span>{t('layout.sessionExpired')}</span>
-              <button type="button" onClick={dismissSessionExpired} className="rounded-md px-2 py-1 font-medium underline">
+              <button type="button" onClick={dismissSessionExpired} className="min-h-11 rounded-md px-2 font-medium underline">
                 {t('layout.dismiss')}
               </button>
             </div>
@@ -29,8 +29,8 @@ function Layout() {
           <Outlet />
         </main>
 
-        <footer className="border-t border-green-100 bg-white px-4 py-5 text-center text-sm text-gray-600">
-          {t('layout.footer')}
+        <footer className="bg-forest px-4 py-5 text-center text-sm text-mist">
+          <p className="mx-auto max-w-5xl">{t('layout.footer')}</p>
         </footer>
       </div>
     </PageMetaProvider>

@@ -156,6 +156,7 @@ function TeudaFields({
           <input
             id={`${idPrefix}-mashgiach-phone`}
             type="tel"
+            dir="ltr"
             required={mashgiachRequired}
             maxLength={30}
             disabled={disabled}
@@ -178,10 +179,10 @@ function TeudaFields({
           accept="image/jpeg,image/png,image/webp"
           disabled={disabled}
           onChange={onPhotoChange}
-          className="mt-1 block w-full text-sm text-gray-700 file:me-3 file:rounded file:border-0 file:bg-green-50 file:px-3 file:py-2 file:font-medium file:text-green-800 hover:file:bg-green-100"
+          className="mt-1 block w-full cursor-pointer rounded-xl border border-dashed border-grove bg-mist px-3 py-4 text-sm text-ink file:me-3 file:min-h-11 file:cursor-pointer file:rounded-lg file:border-0 file:bg-forest file:px-3 file:py-2 file:font-medium file:text-white hover:file:bg-forest-deep"
         />
-        <p className="mt-1 text-xs text-gray-500">{t('forms.photoHint', { max: maxMegabytes })}</p>
-        {photo && !photoError && <p className="mt-1 text-xs text-gray-600">{t('forms.selected', { name: photo.name })}</p>}
+        <p className="mt-1 text-xs text-muted">{t('forms.photoHint', { max: maxMegabytes })}</p>
+        {photo && !photoError && <p className="mt-1 text-xs text-muted">{t('forms.selected', { name: photo.name })}</p>}
         {photoError && (
           <p role="alert" className="mt-1 text-sm text-red-700">
             {photoError}

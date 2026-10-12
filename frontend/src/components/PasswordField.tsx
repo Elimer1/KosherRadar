@@ -39,7 +39,7 @@ function PasswordField({ id, label, value, onChange, autoComplete, minLength, ma
           onClick={() => setVisible((current) => !current)}
           aria-label={visible ? t('common.hidePassword') : t('common.showPassword')}
           aria-pressed={visible}
-          className="absolute inset-y-0 end-0 mt-1 flex items-center px-3 text-gray-500 hover:text-gray-800"
+          className="absolute inset-y-0 end-0 mt-1 flex w-11 items-center justify-center text-muted hover:text-ink"
         >
           {visible ? (
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
@@ -56,7 +56,7 @@ function PasswordField({ id, label, value, onChange, autoComplete, minLength, ma
           )}
         </button>
       </div>
-      {hint && <p className="mt-1 text-xs text-gray-500">{hint}</p>}
+      {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
     </div>
   );
 }

@@ -36,7 +36,7 @@ function ShareButton({ title, url, className }: ShareButtonProps) {
         {t('share.share')}
       </button>
       {message !== '' && (
-        <span role="status" className="mt-1 text-xs text-gray-600">
+        <span role="status" className="mt-1 text-xs text-muted">
           {message}
         </span>
       )}

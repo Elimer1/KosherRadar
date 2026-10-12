@@ -41,7 +41,7 @@ function RejectForm({ idPrefix, busy, onConfirm, onCancel }: RejectFormProps) {
         <button
           type="submit"
           disabled={busy || reason.trim().length < 3}
-          className="rounded bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-11 items-center rounded-lg bg-red-800 px-3.5 text-sm font-medium text-white hover:bg-red-900 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {busy ? t('desk.rejecting') : t('desk.confirmReject')}
         </button>
@@ -49,7 +49,7 @@ function RejectForm({ idPrefix, busy, onConfirm, onCancel }: RejectFormProps) {
           type="button"
           disabled={busy}
           onClick={onCancel}
-          className="rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          className="rounded border border-soft px-3 py-1.5 text-sm font-medium text-ink hover:bg-gray-50"
         >
           {t('common.cancel')}
         </button>

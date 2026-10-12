@@ -50,9 +50,9 @@ function RegisterPage() {
   };
 
   return (
-    <div className="mx-auto max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
-      <h1 className="text-2xl font-bold text-gray-900">{t('auth.registerTitle')}</h1>
-      {reasonKey && <p className="mt-2 text-sm text-gray-700">{t(reasonKey)}</p>}
+    <div className="mx-auto max-w-md rounded-2xl border border-soft bg-white p-6 shadow-[0_8px_24px_rgba(23,75,58,0.06)] sm:p-8">
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('auth.registerTitle')}</h1>
+      {reasonKey && <p className="mt-2 text-sm text-ink">{t(reasonKey)}</p>}
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         {error && (
@@ -104,12 +104,12 @@ function RegisterPage() {
         </button>
       </form>
 
-      <p className="mt-4 text-sm text-gray-600">
+      <p className="mt-4 text-sm text-muted">
         {t('auth.haveAccount')}{' '}
         <Link
           to="/login"
           state={reasonKey && redirectTo ? { from: redirectTo } : undefined}
-          className="font-medium text-green-800 hover:underline"
+          className="font-medium text-forest hover:underline"
         >
           {t('nav.login')}
         </Link>

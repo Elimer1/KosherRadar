@@ -37,8 +37,8 @@ function RestaurantFields({
 
   return (
     <div className="space-y-8">
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">{t('forms.restaurantDetails')}</h2>
+      <section className="space-y-4 rounded-2xl border border-soft bg-white p-4 sm:p-5">
+        <h2 className="text-lg font-semibold tracking-tight text-ink">{t('forms.restaurantDetails')}</h2>
 
         <div>
           <label htmlFor="restaurant-name" className={labelClassName}>
@@ -82,6 +82,7 @@ function RestaurantFields({
             <input
               id="restaurant-phone"
               type="tel"
+              dir="ltr"
               maxLength={30}
               disabled={disabled}
               value={values.phone}
@@ -107,8 +108,8 @@ function RestaurantFields({
         </div>
       </section>
 
-      {!forUser && <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">{t('forms.food')}</h2>
+      {!forUser && <section className="space-y-4 rounded-2xl border border-soft bg-white p-4 sm:p-5">
+        <h2 className="text-lg font-semibold tracking-tight text-ink">{t('forms.food')}</h2>
 
         <div>
           <label htmlFor="restaurant-food-type" className={labelClassName}>
@@ -135,13 +136,13 @@ function RestaurantFields({
           <legend className={labelClassName}>{t('forms.categories')}</legend>
           <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
             {options.categories.map((category) => (
-              <label key={category} className="flex items-center gap-2 text-sm text-gray-700">
+              <label key={category} className="flex items-center gap-2 text-sm text-ink">
                 <input
                   type="checkbox"
                   disabled={disabled}
                   checked={values.categories.includes(category)}
                   onChange={() => onToggleCategory(category)}
-                  className="h-4 w-4 accent-green-600"
+                  className="size-5 accent-forest"
                 />
                 {getCategoryLabel(category)}
               </label>
@@ -168,9 +169,9 @@ function RestaurantFields({
       </section>}
 
       {!forUser && (
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">{t('forms.claimTitle')}</h2>
-        <p className="text-sm text-gray-600">{t('forms.claimBody')}</p>
+      <section className="space-y-4 rounded-2xl border border-soft bg-white p-4 sm:p-5">
+        <h2 className="text-lg font-semibold tracking-tight text-ink">{t('forms.claimTitle')}</h2>
+        <p className="text-sm text-muted">{t('forms.claimBody')}</p>
 
         <div>
           <label htmlFor="restaurant-claimed-hechsher" className={labelClassName}>

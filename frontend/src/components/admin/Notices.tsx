@@ -25,7 +25,7 @@ function Notices({ notices, onDismiss }: NoticesProps) {
       {notices.map((notice, index) => (
         <FormAlert key={index} kind={notice.kind} message={notice.message} />
       ))}
-      <button type="button" onClick={onDismiss} className="text-xs font-medium text-gray-600 underline">
+      <button type="button" onClick={onDismiss} className="text-xs font-medium text-muted underline">
         {t('common.dismiss')}
       </button>
     </div>

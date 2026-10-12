@@ -9,7 +9,7 @@ import { resetPassword } from '../api/authApi';
 import { getErrorMessage } from '../api/errors';
 import FormAlert from '../components/FormAlert';
 import PasswordField from '../components/PasswordField';
-import { primaryButtonClassName } from '../components/formStyles';
+import { panelClassName, primaryButtonClassName } from '../components/formStyles';
 import { readResetToken } from '../utils/resetToken';
 
 function ResetPasswordPage() {
@@ -46,10 +46,10 @@ function ResetPasswordPage() {
 
   if (!token) {
     return (
-      <div className="mx-auto max-w-md space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">{t('auth.resetInvalidTitle')}</h1>
+      <div className={`mx-auto max-w-md space-y-4 p-6 sm:p-8 ${panelClassName}`}>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('auth.resetInvalidTitle')}</h1>
         <FormAlert message={t('auth.resetInvalidBody')} />
-        <Link to="/forgot-password" className="inline-block font-medium text-green-700 hover:underline">
+        <Link to="/forgot-password" className="inline-block font-medium text-grove hover:underline">
           {t('auth.requestNewLink')}
         </Link>
       </div>
@@ -58,10 +58,10 @@ function ResetPasswordPage() {
 
   if (done) {
     return (
-      <div className="mx-auto max-w-md space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">{t('auth.passwordChanged')}</h1>
+      <div className={`mx-auto max-w-md space-y-4 p-6 sm:p-8 ${panelClassName}`}>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('auth.passwordChanged')}</h1>
         <FormAlert kind="success" message={t('auth.passwordChangedBody')} />
-        <Link to="/login" className="inline-block font-medium text-green-700 hover:underline">
+        <Link to="/login" className="inline-block font-medium text-grove hover:underline">
           {t('auth.goToLogin')}
         </Link>
       </div>
@@ -69,8 +69,8 @@ function ResetPasswordPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md">
-      <h1 className="text-2xl font-bold text-gray-900">{t('auth.newPassword')}</h1>
+    <div className={`mx-auto max-w-md p-6 sm:p-8 ${panelClassName}`}>
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('auth.newPassword')}</h1>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <FormAlert message={error} />
@@ -100,9 +100,9 @@ function ResetPasswordPage() {
       </form>
 
       {error && (
-        <p className="mt-4 text-sm text-gray-600">
+        <p className="mt-4 text-sm text-muted">
           {t('auth.linkUsed')}{' '}
-          <Link to="/forgot-password" className="font-medium text-green-700 hover:underline">
+          <Link to="/forgot-password" className="font-medium text-grove hover:underline">
             {t('auth.requestAnother')}
           </Link>
         </p>

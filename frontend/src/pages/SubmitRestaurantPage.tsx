@@ -111,13 +111,13 @@ function SubmitRestaurantPage() {
   }
 
   if (!options) {
-    return <p className="text-gray-600">{t('common.loading')}</p>;
+    return <p className="text-muted">{t('common.loading')}</p>;
   }
 
   if (result) {
     return (
       <div className="mx-auto max-w-lg space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">{t('forms.restaurantSent')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('forms.restaurantSent')}</h1>
         <FormAlert
           kind="success"
           message={result.teuda ? t('forms.thanksWithCertificate') : t('forms.thanksRestaurant')}
@@ -129,7 +129,7 @@ function SubmitRestaurantPage() {
           <FormAlert kind="warning" message={t('forms.lookupUnavailableSaved')} />
         )}
         {result.possibleDuplicateCount > 0 && <FormAlert kind="warning" message={t('forms.similarWarning')} />}
-        <Link to="/account" className="inline-block font-medium text-green-700 hover:underline">
+        <Link to="/account" className="inline-block font-medium text-grove hover:underline">
           {t('forms.seeSubmissions')}
         </Link>
       </div>
@@ -138,8 +138,9 @@ function SubmitRestaurantPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-bold text-gray-900">{t('forms.addRestaurant')}</h1>
-      <p className="mt-2 text-sm text-gray-600">{t('forms.addRestaurantBody')}</p>
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('forms.addRestaurant')}</h1>
+      <p className="mt-2 text-sm leading-relaxed text-muted">{t('forms.addRestaurantBody')}</p>
+      <p className="mt-2 text-sm leading-relaxed text-ink">{t('forms.foodReviewed')}</p>
 
       <form noValidate onSubmit={handleSubmit} className="mt-6 space-y-8">
         <FormAlert message={error} />
@@ -156,9 +157,9 @@ function SubmitRestaurantPage() {
           onToggleCategory={handleToggleCategory}
         />
 
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">{t('forms.kashrutClaim')}</h2>
-          <p className="text-sm text-gray-600">{t('forms.kashrutClaimBody')}</p>
+        <section className="space-y-4 rounded-2xl border border-soft bg-white p-4 sm:p-5">
+          <h2 className="text-lg font-semibold tracking-tight text-ink">{t('forms.kashrutClaim')}</h2>
+          <p className="text-sm text-muted">{t('forms.kashrutClaimBody')}</p>
           <TeudaFields
             idPrefix="new-restaurant-claim"
             values={teuda}
@@ -176,9 +177,9 @@ function SubmitRestaurantPage() {
           />
         </section>
 
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">{t('forms.certificateOptional')}</h2>
-          <p className="text-sm text-gray-600">{t('forms.certificateOptionalBody')}</p>
+        <section className="space-y-4 rounded-2xl border border-soft bg-white p-4 sm:p-5">
+          <h2 className="text-lg font-semibold tracking-tight text-ink">{t('forms.certificateOptional')}</h2>
+          <p className="text-sm text-muted">{t('forms.certificateOptionalBody')}</p>
           <TeudaFields
             idPrefix="new-restaurant-teuda"
             values={teuda}
@@ -196,10 +197,10 @@ function SubmitRestaurantPage() {
         </section>
 
         {loading && photo && (
-          <div role="status" className="text-sm text-gray-600">
+          <div role="status" className="text-sm text-muted">
             {progress < 100 ? t('forms.uploading', { progress }) : t('auth.saving')}
-            <div className="mt-1 h-2 rounded bg-green-100">
-              <div className="h-2 rounded bg-green-600" style={{ width: `${progress}%` }} />
+            <div className="mt-1 h-2 rounded bg-soft">
+              <div className="h-2 rounded bg-forest" style={{ width: `${progress}%` }} />
             </div>
           </div>
         )}

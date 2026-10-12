@@ -14,7 +14,15 @@ import { getCategoryLabel, getFoodTypeLabel, getHechsherLabel, getKashrutLevelLa
 import { restaurantDisplayNames } from '../utils/restaurantName';
 import { buildGoogleMapsUrl, buildTelUrl, buildWazeUrl, restaurantPageUrl } from '../utils/navigationLinks';
 import ShareButton from '../components/ShareButton';
-import { primaryButtonCompactClassName, secondaryButtonClassName } from '../components/formStyles';
+import {
+  metaChipClassName,
+  pageTitleClassName,
+  primaryButtonCompactClassName,
+  quietChipClassName,
+  secondaryButtonClassName,
+  sectionCardClassName,
+  textLinkClassName,
+} from '../components/formStyles';
 import { readRememberedLocation } from '../hooks/useSearchCriteria';
 import { resolveSearchReturnPath } from '../search/searchReturn';
 import { isSafeHttpUrl } from '../utils/safeUrl';
@@ -35,6 +43,13 @@ interface LoadResult {
 
 const actionClassName = secondaryButtonClassName;
 
+function placeLine(address: string, city: string | null) {
+  const street = address.trim();
+  const cityName = city?.trim() ?? '';
+  const showCity = cityName !== '' && !street.includes(cityName);
+  return [street, showCity ? cityName : ''].filter((part) => part !== '').join(', ');
+}
+
 function TeudaCard({ teuda, hechsherOptions }: { teuda: PublicTeuda; hechsherOptions: HechsherOption[] }) {
   const { t } = useTranslation();
   const isExpired = teuda.visibility === 'RECENT_EXPIRED';
@@ -43,37 +58,40 @@ function TeudaCard({ teuda, hechsherOptions }: { teuda: PublicTeuda; hechsherOpt
 
   return (
     <li
-      className={`rounded-xl border p-3 text-sm ${
-        isExpired ? 'border-red-400 bg-red-50 text-red-900' : 'border-green-700 bg-green-50 text-green-950'
+      className={`rounded-xl border p-3 text-sm leading-relaxed ${
+        isExpired ? 'border-red-800 bg-red-50 text-red-900' : 'border-forest bg-mist text-forest-deep'
       }`}
     >
       <p className="font-semibold">
         <span aria-hidden="true">{isExpired ? '✕ ' : '✓ '}</span>
         {isExpired ? t('details.expired') : t('details.verified')}
       </p>
-      <p className="mt-0.5">
-        {getHechsherLabel(teuda.hechsher, teuda.hechsherOther, hechsherOptions)},{' '}
-        {getKashrutLevelLabel(teuda.kashrutLevel)}
+      <p className="mt-1" dir="auto">
+        {getHechsherLabel(teuda.hechsher, teuda.hechsherOther, hechsherOptions)}, {getKashrutLevelLabel(teuda.kashrutLevel)}
       </p>
-      <p className="mt-0.5 font-medium">{isExpired ? t('kashrut.expiredOn', { date }) : t('kashrut.validUntil', { date })}</p>
+      <p className="mt-1 font-medium">{isExpired ? t('kashrut.expiredOn', { date }) : t('kashrut.validUntil', { date })}</p>
 
-      {teuda.mashgiachName && <p className="mt-1">{t('details.mashgiach', { name: teuda.mashgiachName })}</p>}
+      {teuda.mashgiachName && (
+        <p className="mt-2" dir="auto">
+          {t('details.mashgiach', { name: teuda.mashgiachName })}
+        </p>
+      )}
       {teuda.mashgiachPhone && (
         <p>
           {t('details.mashgiachPhone')}{' '}
           {mashgiachTel ? (
             <a href={mashgiachTel} className="font-medium underline">
-              {teuda.mashgiachPhone}
+              <bdi dir="ltr">{teuda.mashgiachPhone}</bdi>
             </a>
           ) : (
-            teuda.mashgiachPhone
+            <bdi dir="ltr">{teuda.mashgiachPhone}</bdi>
           )}
         </p>
       )}
 
       {isSafeHttpUrl(teuda.photoUrl) && (
         <p className="mt-2">
-          <a href={teuda.photoUrl} target="_blank" rel="noopener noreferrer" className="font-medium underline">
+          <a href={teuda.photoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center font-medium underline">
             {t('details.photo')}
           </a>
         </p>
@@ -138,14 +156,19 @@ function RestaurantDetailsPage() {
   const hechsherOptions = options?.hechsherOptions || [];
 
   if (!result || result.restaurantId !== restaurantId) {
-    return <p className="flex items-center justify-center gap-2 py-10 text-gray-600"><span className="kr-spinner" aria-hidden="true" />{t('details.loading')}</p>;
+    return (
+      <p className="flex items-center justify-center gap-2 py-16 text-muted">
+        <span className="kr-spinner" aria-hidden="true" />
+        {t('details.loading')}
+      </p>
+    );
   }
 
   if (result.notFound) {
     return (
-      <div className="mx-auto max-w-lg space-y-4 rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900">{t('details.notFoundTitle')}</h1>
-        <p className="text-gray-600">{t('details.notFoundBody')}</p>
+      <div className={`${sectionCardClassName} mx-auto max-w-lg space-y-4 text-center`}>
+        <h1 className={pageTitleClassName}>{t('details.notFoundTitle')}</h1>
+        <p className="text-muted">{t('details.notFoundBody')}</p>
         <Link to={backTo} state={backState} className={`${primaryButtonCompactClassName} mx-auto`}>
           {t('details.back')}
         </Link>
@@ -155,9 +178,12 @@ function RestaurantDetailsPage() {
 
   if (!result.details) {
     return (
-      <div className="mx-auto max-w-lg space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className={`${sectionCardClassName} mx-auto max-w-lg space-y-4`}>
         <FormAlert message={result.error} />
-        <Link to={backTo} state={backState} className="inline-flex min-h-11 items-center font-medium text-green-800 hover:underline">
+        <Link to={backTo} state={backState} className="kr-back inline-flex min-h-11 items-center gap-1 text-sm font-medium text-forest underline-offset-2 hover:underline">
+          <span aria-hidden="true" className="kr-back-mark">
+            ‹
+          </span>
           {t('details.back')}
         </Link>
       </div>
@@ -167,60 +193,62 @@ function RestaurantDetailsPage() {
   const restaurant = result.details;
   const telUrl = buildTelUrl(restaurant.phone);
   const wazeUrl = buildWazeUrl(restaurant.latitude, restaurant.longitude);
-  const showCity = restaurant.city && !restaurant.address.includes(restaurant.city);
-  const place = showCity ? `${restaurant.address}, ${restaurant.city}` : restaurant.address;
+  const place = placeLine(restaurant.address, restaurant.city);
   const names = restaurantDisplayNames(restaurant);
   const mapsUrl = buildGoogleMapsUrl(names.primary, place);
   const claims = restaurant.kashrut.items.filter((item) => item.kind === 'UNVERIFIED');
 
   return (
-    <article className="mx-auto max-w-3xl space-y-6">
-        <Link to={backTo} state={backState} className="inline-flex min-h-11 items-center text-sm font-medium text-green-800 hover:underline">
-          {/* NEW (Milestone 6): this link was English only. The missing-restaurant state already uses the translation. */}
-          {/* חדש (אבן דרך 6): הקישור הזה היה באנגלית בלבד. מצב "מסעדה לא נמצאה" כבר משתמש בתרגום. */}
-          {t('details.back')}
-        </Link>
+    <article className="mx-auto max-w-3xl space-y-5">
+      <Link to={backTo} state={backState} className="kr-back inline-flex min-h-11 items-center gap-1 text-sm font-medium text-forest underline-offset-2 hover:underline">
+        <span aria-hidden="true" className="kr-back-mark">
+          ‹
+        </span>
+        {/* NEW (Milestone 6): this link was English only. The missing-restaurant state already uses the translation. */}
+        {/* חדש (אבן דרך 6): הקישור הזה היה באנגלית בלבד. מצב "מסעדה לא נמצאה" כבר משתמש בתרגום. */}
+        {t('details.back')}
+      </Link>
 
-      <header className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-        <h1 className="text-3xl font-bold text-gray-900">{names.primary}</h1>
-        {names.secondary.length > 0 && <p className="text-gray-600">{names.secondary.join(' · ')}</p>}
-        <p className="mt-1 text-gray-700">{place}</p>
-        {(restaurant.foodType || restaurant.categories.length > 0) && (
-          <p className="mt-2 text-sm text-gray-700">
-            {restaurant.foodType && <span className="font-medium">{getFoodTypeLabel(restaurant.foodType)}</span>}
-            {restaurant.categories.length > 0 && (
-              <span>
-                {restaurant.foodType ? ' · ' : ''}
-                {restaurant.categories.map((category) => getCategoryLabel(category)).join(', ')}
-              </span>
-            )}
+      <header className={sectionCardClassName}>
+        <h1 className="break-words text-3xl font-semibold tracking-tight text-ink" dir="auto">
+          {names.primary}
+        </h1>
+        {names.secondary.length > 0 && (
+          <p className="mt-1 break-words text-muted" dir="auto">
+            {names.secondary.join(' · ')}
           </p>
         )}
-        {restaurant.foodKeywords.length > 0 && (
-          <p className="mt-1 text-sm text-gray-600">{t('details.serves', { food: restaurant.foodKeywords.join(', ') })}</p>
+        {place !== '' && (
+          <p className="mt-2 break-words text-ink" dir="auto">
+            {place}
+          </p>
         )}
-      </header>
-
-      <section aria-labelledby="kashrut-heading" className="space-y-3 rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-        <h2 id="kashrut-heading" className="text-xl font-semibold text-gray-900">
-          {t('details.kashrut')}
-        </h2>
-        <KashrutBadge kashrut={restaurant.kashrut} hechsherOptions={hechsherOptions} />
-
-        {claims.length > 0 && (
-          <ul className="space-y-2 text-sm text-gray-800">
-            {claims.map((claim, index) => (
-              <li key={`${claim.hechsher ?? 'claim'}-${claim.kashrutLevel ?? 'level'}-${index}`}>
-                <p>{t('details.claimSays', { name: describeEvidenceName(claim, hechsherOptions) })}</p>
-                <p className="text-gray-600">{t('details.claimNote')}</p>
+        {(restaurant.foodType || restaurant.categories.length > 0) && (
+          <ul className="mt-3 flex flex-wrap gap-1.5">
+            {restaurant.foodType && <li className={metaChipClassName}>{getFoodTypeLabel(restaurant.foodType)}</li>}
+            {restaurant.categories.map((category) => (
+              <li key={category} className={quietChipClassName}>
+                {getCategoryLabel(category)}
               </li>
             ))}
           </ul>
         )}
+        {restaurant.foodKeywords.length > 0 && (
+          <p className="mt-3 text-sm text-muted" dir="auto">
+            {t('details.serves', { food: restaurant.foodKeywords.join(', ') })}
+          </p>
+        )}
+      </header>
+
+      <section aria-labelledby="kashrut-heading" className={`${sectionCardClassName} space-y-4`}>
+        <h2 id="kashrut-heading" className="text-xl font-semibold text-ink">
+          {t('details.kashrut')}
+        </h2>
+        <KashrutBadge kashrut={restaurant.kashrut} hechsherOptions={hechsherOptions} />
 
         {restaurant.teudot.length > 0 && (
           <div>
-            <h3 className="mb-2 font-medium text-gray-900">{t('details.certificates')}</h3>
+            <h3 className="mb-2 font-semibold text-ink">{t('details.certificates')}</h3>
             <ul className="space-y-2">
               {restaurant.teudot.map((teuda) => (
                 <TeudaCard key={teuda.id} teuda={teuda} hechsherOptions={hechsherOptions} />
@@ -229,56 +257,65 @@ function RestaurantDetailsPage() {
           </div>
         )}
 
-        {restaurant.kashrut.status === 'UNKNOWN' && (
-          <p className="text-sm text-gray-600">
-            {t('details.unknown')}
-          </p>
+        {claims.length > 0 && (
+          <div>
+            <h3 className="mb-2 font-semibold text-ink">{t('details.claim')}</h3>
+            <ul className="space-y-2">
+              {claims.map((claim, index) => (
+                <li
+                  key={`${claim.hechsher ?? 'none'}-${claim.kashrutLevel ?? 'none'}-${index}`}
+                  className="rounded-xl border border-dashed border-amber-ink bg-white p-3 text-sm leading-relaxed text-amber-ink"
+                >
+                  <p className="font-semibold">
+                    <span aria-hidden="true" className="me-1">
+                      !
+                    </span>
+                    {t('details.claim')}
+                  </p>
+                  <p className="mt-1" dir="auto">
+                    {t('details.claimSays', { name: describeEvidenceName(claim, hechsherOptions) })}
+                  </p>
+                  <p className="mt-1">{t('details.claimNote')}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
+
+        {restaurant.kashrut.status === 'UNKNOWN' && <p className="text-sm text-muted">{t('details.unknown')}</p>}
 
         {isSafeHttpUrl(restaurant.kosharotUrl) && (
           <p>
-            <a
-              href={restaurant.kosharotUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-green-700 underline"
-            >
+            <a href={restaurant.kosharotUrl} target="_blank" rel="noopener noreferrer" className={textLinkClassName}>
               {t('details.kosharot')}
             </a>
           </p>
         )}
 
-        <p className="text-xs text-gray-500">
-          {t('details.disclaimer')}
-        </p>
+        <p className="text-xs leading-relaxed text-muted">{t('details.disclaimer')}</p>
       </section>
 
-      <section aria-labelledby="contact-heading" className="space-y-2 rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-        <h2 id="contact-heading" className="text-xl font-semibold text-gray-900">
+      <section aria-labelledby="contact-heading" className={`${sectionCardClassName} space-y-3`}>
+        <h2 id="contact-heading" className="text-xl font-semibold text-ink">
           {t('details.contact')}
         </h2>
         {restaurant.phone && (
-          <p className="text-gray-700">
+          <p className="text-ink">
             {t('details.phone')}{' '}
             {telUrl ? (
-              <a href={telUrl} className="font-medium text-green-700 underline">
-                {restaurant.phone}
+              <a href={telUrl} className={textLinkClassName}>
+                <bdi dir="ltr">{restaurant.phone}</bdi>
               </a>
             ) : (
-              restaurant.phone
+              <bdi dir="ltr">{restaurant.phone}</bdi>
             )}
           </p>
         )}
         {isSafeHttpUrl(restaurant.website) && (
-          <p className="text-gray-700">
+          <p className="break-all text-ink">
             {t('details.website')}{' '}
-            <a
-              href={restaurant.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-green-700 underline"
-            >
-              {restaurant.website}
+            <a href={restaurant.website} target="_blank" rel="noopener noreferrer" className={textLinkClassName}>
+              <bdi dir="ltr">{restaurant.website}</bdi>
             </a>
           </p>
         )}
@@ -306,16 +343,13 @@ function RestaurantDetailsPage() {
         </div>
       </section>
 
-      <section aria-labelledby="help-heading" className="space-y-2 rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-        <h2 id="help-heading" className="text-xl font-semibold text-gray-900">
+      <section aria-labelledby="help-heading" className={`${sectionCardClassName} space-y-3`}>
+        <h2 id="help-heading" className="text-xl font-semibold text-ink">
           {t('details.help')}
         </h2>
-        <p className="text-sm text-gray-600">{t('details.needAccount')}</p>
+        <p className="text-sm text-muted">{t('details.needAccount')}</p>
         <div className="flex flex-wrap gap-2">
-          <Link
-            to={`/restaurants/${restaurant.id}/add-teuda`}
-            className={primaryButtonCompactClassName}
-          >
+          <Link to={`/restaurants/${restaurant.id}/add-teuda`} className={primaryButtonCompactClassName}>
             {t('details.addCertificate')}
           </Link>
           <Link to={`/restaurants/${restaurant.id}/report`} className={actionClassName}>

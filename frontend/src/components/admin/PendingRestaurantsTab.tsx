@@ -62,16 +62,16 @@ function PendingRestaurantsTab({ hechsherOptions }: PendingRestaurantsTabProps) 
       <Notices notices={notices} onDismiss={() => setNotices([])} />
       <FormAlert message={error} />
 
-      {loading && !data && <p className="text-gray-600">{t('common.loading')}</p>}
-      {data && data.items.length === 0 && <p className="text-gray-600">{t('desk.nonePending')}</p>}
+      {loading && !data && <p className="text-muted">{t('common.loading')}</p>}
+      {data && data.items.length === 0 && <p className="text-muted">{t('desk.nonePending')}</p>}
 
       <ul className="space-y-4">
         {data?.items.map((restaurant) => (
-          <li key={restaurant.id} className="space-y-3 rounded border border-green-100 p-4">
+          <li key={restaurant.id} className="space-y-3 rounded border border-soft p-4">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">{restaurant.name}</h3>
-                <p className="text-sm text-gray-600">
+                <h3 className="text-lg font-semibold tracking-tight text-ink">{restaurant.name}</h3>
+                <p className="text-sm text-muted">
                   {restaurant.address}
                   {restaurant.city ? `, ${restaurant.city}` : ''}
                 </p>
@@ -79,23 +79,23 @@ function PendingRestaurantsTab({ hechsherOptions }: PendingRestaurantsTabProps) 
               <Link
                 to={`/admin/restaurants/${restaurant.id}`}
                 state={{ adminTab: 'restaurants' }}
-                className="text-sm font-medium text-green-700 underline"
+                className="text-sm font-medium text-grove underline"
               >
                 {t('desk.viewEdit')}
               </Link>
             </div>
 
-            <p className="text-sm text-gray-700">
+            <p className="text-sm text-ink">
               {restaurant.foodType ? `${getFoodTypeLabel(restaurant.foodType)} · ` : ''}
               {restaurant.categories.map(getCategoryLabel).join(', ')}
               {restaurant.phone ? ` · ${restaurant.phone}` : ''}
             </p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted">
               {t('desk.sentBy', { email: restaurant.submittedBy?.email || t('desk.unknownUser') })}
             </p>
 
             {(restaurant.claimedHechsher || restaurant.claimedKashrutLevel) && (
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-ink">
                 {t('desk.unverifiedClaim', {
                   name: restaurant.claimedHechsher
                     ? getHechsherLabel(restaurant.claimedHechsher, restaurant.claimedHechsherOther, hechsherOptions)
@@ -103,6 +103,13 @@ function PendingRestaurantsTab({ hechsherOptions }: PendingRestaurantsTabProps) 
                 })}
                 {restaurant.claimedKashrutLevel ? `, ${getKashrutLevelLabel(restaurant.claimedKashrutLevel)}` : ''}
               </p>
+            )}
+
+            {(!restaurant.foodType || restaurant.latitude === null || restaurant.longitude === null) && (
+              <div className="space-y-1 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-ink">
+                {!restaurant.foodType && <p>{t('desk.missingFood')}</p>}
+                {(restaurant.latitude === null || restaurant.longitude === null) && <p>{t('desk.missingPin')}</p>}
+              </div>
             )}
 
             {restaurant.possibleDuplicates.length > 0 && (
@@ -139,7 +146,7 @@ function PendingRestaurantsTab({ hechsherOptions }: PendingRestaurantsTabProps) 
                   type="button"
                   disabled={busyId === restaurant.id}
                   onClick={() => handleApprove(restaurant.id)}
-                  className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex min-h-11 items-center rounded-lg bg-forest px-3.5 text-sm font-medium text-white hover:bg-forest-deep disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {busyId === restaurant.id ? t('common.working') : t('common.approve')}
                 </button>
@@ -147,7 +154,7 @@ function PendingRestaurantsTab({ hechsherOptions }: PendingRestaurantsTabProps) 
                   type="button"
                   disabled={busyId === restaurant.id}
                   onClick={() => setRejectingId(restaurant.id)}
-                  className="rounded border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex min-h-11 items-center rounded-lg border border-red-800 bg-white px-3.5 text-sm font-medium text-red-800 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {t('common.reject')}
                 </button>

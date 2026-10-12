@@ -113,7 +113,7 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
       <label htmlFor="restaurant-search" className="sr-only">
         {t('search.label')}
       </label>
-      <div className="flex items-stretch overflow-hidden rounded-xl border border-gray-300 bg-white shadow-sm focus-within:border-green-700 focus-within:ring-2 focus-within:ring-green-700/30">
+      <div className="flex items-stretch overflow-hidden rounded-2xl border border-soft bg-white shadow-[0_8px_24px_rgba(23,75,58,0.06)] focus-within:border-forest focus-within:ring-2 focus-within:ring-forest/25">
         <input
           id="restaurant-search"
           type="search"
@@ -121,7 +121,8 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
           maxLength={100}
           autoComplete="off"
           placeholder={t('search.placeholder')}
-          className="min-h-12 min-w-0 flex-1 bg-transparent px-4 text-gray-900 outline-none placeholder:text-gray-500"
+          dir="auto"
+          className="min-h-12 min-w-0 flex-1 bg-transparent px-4 text-ink outline-none placeholder:text-muted"
           role="combobox"
           aria-expanded={showList}
           aria-controls={LIST_ID}
@@ -137,7 +138,7 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
         />
         <button
           type="submit"
-          className="m-1 inline-flex min-h-10 shrink-0 items-center rounded-lg bg-green-700 px-4 text-sm font-medium text-white hover:bg-green-800 focus-visible:outline-none"
+          className="m-1 inline-flex min-h-11 shrink-0 items-center rounded-xl bg-forest px-4 text-sm font-medium text-white hover:bg-forest-deep"
         >
           {t('search.button')}
         </button>
@@ -147,7 +148,7 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
         <ul
           id={LIST_ID}
           role="listbox"
-          className="absolute inset-x-0 z-20 mt-2 max-h-96 overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg"
+          className="absolute inset-x-0 z-20 mt-2 max-h-96 overflow-y-auto rounded-2xl border border-soft bg-white py-1 shadow-[0_8px_24px_rgba(23,75,58,0.12)]"
         >
           {suggestions.map((suggestion, index) => {
             const names = restaurantDisplayNames(suggestion);
@@ -163,14 +164,20 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
                   event.preventDefault();
                   onPickSuggestion(suggestion.id);
                 }}
-                className={`cursor-pointer px-4 py-2.5 ${
-                  index === activeIndex ? 'bg-green-50' : 'hover:bg-gray-50'
-                }`}
+                className={`min-h-11 cursor-pointer px-4 py-2.5 ${index === activeIndex ? 'bg-mist' : 'hover:bg-canvas'}`}
               >
-                <p className="font-medium text-gray-900">{names.primary}</p>
-                {names.secondary.length > 0 && <p className="text-sm text-gray-600">{names.secondary.join(' · ')}</p>}
-                <p className="text-sm text-gray-600">{suggestion.city || suggestion.address}</p>
-                <p className="text-sm text-gray-700">{describeKashrutShort(suggestion.kashrut, hechsherOptions)}</p>
+                <p className="break-words font-medium text-ink" dir="auto">
+                  {names.primary}
+                </p>
+                {names.secondary.length > 0 && (
+                  <p className="break-words text-sm text-muted" dir="auto">
+                    {names.secondary.join(' · ')}
+                  </p>
+                )}
+                <p className="break-words text-sm text-muted" dir="auto">
+                  {suggestion.city || suggestion.address}
+                </p>
+                <p className="text-sm text-ink">{describeKashrutShort(suggestion.kashrut, hechsherOptions)}</p>
               </li>
             );
           })}

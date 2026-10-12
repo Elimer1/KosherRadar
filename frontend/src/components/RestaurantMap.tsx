@@ -25,7 +25,7 @@ import { ISRAEL_MAP_BOUNDS, boundsCrossDateLine, zoomForRadius } from '../utils/
 import { buildTelUrl, buildWazeUrl, restaurantPageUrl } from '../utils/navigationLinks';
 import KashrutBadge from './KashrutBadge';
 import ShareButton from './ShareButton';
-import { primaryButtonCompactClassName, secondaryButtonClassName } from './formStyles';
+import { errorNoticeClassName, primaryButtonCompactClassName, secondaryButtonClassName, warningNoticeClassName } from './formStyles';
 
 interface RestaurantMapProps {
   filters: SearchFilters;
@@ -142,9 +142,20 @@ function MapPopup({
   };
 
   return (
-    <div className="min-w-52 space-y-2 text-sm text-gray-800">
-      <p className="text-base font-semibold text-gray-900">{names.primary}</p>
-      {names.secondary.length > 0 && <p className="text-gray-600">{names.secondary.join(' · ')}</p>}
+    <div className="w-64 max-w-full space-y-2 text-sm text-ink">
+      <p className="break-words text-base font-semibold text-ink" dir="auto">
+        {names.primary}
+      </p>
+      {names.secondary.length > 0 && (
+        <p className="break-words text-muted" dir="auto">
+          {names.secondary.join(' · ')}
+        </p>
+      )}
+      {restaurant.address && (
+        <p className="break-words text-muted" dir="auto">
+          {restaurant.address}
+        </p>
+      )}
       {restaurant.foodType && <p>{getFoodTypeLabel(restaurant.foodType)}</p>}
       <KashrutBadge kashrut={restaurant.kashrut} hechsherOptions={hechsherOptions} />
       <div className="flex flex-wrap gap-2 pt-1">
@@ -234,7 +245,7 @@ function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant
 
   return (
     <div>
-      <div className="relative h-[70vh] min-h-80 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:h-[72vh] md:h-[68vh] lg:h-[calc(100vh-14rem)]">
+      <div className="relative h-[70vh] min-h-80 overflow-hidden rounded-2xl border border-soft bg-mist shadow-[0_1px_2px_rgba(23,75,58,0.05)] sm:h-[72vh] md:h-[68vh] lg:h-[calc(100vh-14rem)]">
         <MapContainer
           {...(located
             ? { center: located.center, zoom: located.zoom }
@@ -257,7 +268,7 @@ function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant
             <Circle
               center={[filters.location.lat, filters.location.lng]}
               radius={filters.radiusKm * 1000}
-              pathOptions={{ color: '#15803d', weight: 1, fillColor: '#15803d', fillOpacity: 0.06 }}
+              pathOptions={{ color: '#174b3a', weight: 1, fillColor: '#174b3a', fillOpacity: 0.08 }}
             />
           )}
           <MarkerClusterGroup
@@ -287,34 +298,34 @@ function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant
         </MapContainer>
 
         {loading && (
-          <p role="status" className="pointer-events-none absolute start-3 top-3 z-[500] inline-flex items-center gap-2 rounded-lg bg-white/95 px-2.5 py-1.5 text-xs text-gray-700 shadow-sm">
+          <p role="status" className="pointer-events-none absolute start-3 top-3 z-[500] inline-flex min-h-11 items-center gap-2 rounded-full border border-soft bg-white/95 px-3 text-sm text-ink shadow-sm">
             <span className="kr-spinner" aria-hidden="true" />
             {t('map.loading')}
           </p>
         )}
       </div>
 
-      <div className="mt-2 space-y-2 text-sm text-gray-600">
+      <div className="mt-3 space-y-2 text-sm text-muted">
         {tooWide && (
-          <p role="status" className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-amber-950">
+          <p role="status" className={warningNoticeClassName}>
             {t('map.zoomIn')}
           </p>
         )}
         {error !== '' && (
-          <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-800">
+          <p role="alert" className={errorNoticeClassName}>
             {error}{' '}
-            <button type="button" onClick={() => setRetryCounter((current) => current + 1)} className="font-medium underline">
+            <button type="button" onClick={() => setRetryCounter((current) => current + 1)} className="inline-flex min-h-11 items-center font-medium underline">
               {t('common.tryAgain')}
             </button>
           </p>
         )}
         {capped && (
-          <p role="status" className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-amber-950">
+          <p role="status" className={warningNoticeClassName}>
             {t('map.capped')}
           </p>
         )}
         {!loading && !tooWide && error === '' && markers.length === 0 && (
-          <p>{t('map.empty')}</p>
+          <p className="rounded-2xl border border-dashed border-soft bg-white px-4 py-6 text-center text-ink">{t('map.empty')}</p>
         )}
         {filters.location && filters.radiusKm !== null && (
           <p>{t('map.radius')}</p>

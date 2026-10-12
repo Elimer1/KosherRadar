@@ -17,11 +17,12 @@ interface KashrutBadgeProps {
   hechsherOptions: HechsherOption[];
 }
 
+// Verified uses the forest surface. A claim stays on white with a dashed amber border so it cannot be read as approved.
 const STYLES: Record<KashrutStatus, { symbol: string; box: string }> = {
-  VERIFIED: { symbol: '✓', box: 'border-green-600 bg-green-50 text-green-900' },
-  UNVERIFIED: { symbol: '!', box: 'border-dashed border-amber-500 bg-amber-50 text-amber-900' },
-  EXPIRED: { symbol: '✕', box: 'border-red-500 bg-red-50 text-red-900' },
-  UNKNOWN: { symbol: '?', box: 'border-gray-300 bg-gray-50 text-gray-800' },
+  VERIFIED: { symbol: '✓', box: 'border-forest bg-mist text-forest-deep' },
+  UNVERIFIED: { symbol: '!', box: 'border-dashed border-amber-ink bg-white text-amber-ink' },
+  EXPIRED: { symbol: '✕', box: 'border-red-800 bg-red-50 text-red-900' },
+  UNKNOWN: { symbol: '?', box: 'border-soft bg-canvas text-muted' },
 };
 
 function KashrutBadge({ kashrut, hechsherOptions }: KashrutBadgeProps) {
@@ -32,21 +33,23 @@ function KashrutBadge({ kashrut, hechsherOptions }: KashrutBadgeProps) {
   const mentionsHiddenExpired = kashrut.hasRecentExpired && kashrut.status !== 'EXPIRED';
 
   return (
-    <div className={`rounded-lg border px-3 py-2.5 text-sm leading-snug ${style.box}`}>
+    <div className={`rounded-xl border px-3 py-2.5 text-sm leading-snug ${style.box}`}>
       <p className="font-semibold">
-        <span aria-hidden="true" className="me-1">{style.symbol}</span>
+        <span aria-hidden="true" className="me-1">
+          {style.symbol}
+        </span>
         {getStatusHeadline(kashrut.status)}
       </p>
 
       {kashrut.primary && (
-        <p className="mt-0.5">
+        <p className="mt-1" dir="auto">
           {describeEvidenceName(kashrut.primary, hechsherOptions)}
           {describeValidity(kashrut.primary) && <span> · {describeValidity(kashrut.primary)}</span>}
           {moreText && <span className="ms-2 font-medium">({moreText})</span>}
         </p>
       )}
 
-      {mentionsHiddenExpired && <p className="mt-0.5 font-medium">{t('kashrut.alsoExpired')}</p>}
+      {mentionsHiddenExpired && <p className="mt-1 font-medium">{t('kashrut.alsoExpired')}</p>}
     </div>
   );
 }

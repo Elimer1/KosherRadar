@@ -129,12 +129,12 @@ function AddressSearch({
             className={`${inputClassName} ${invalid ? 'border-red-500' : ''}`}
           />
           {suggestions.length > 0 && (
-            <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded border border-gray-200 bg-white shadow">
+            <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded border border-soft bg-white shadow">
               {suggestions.map((suggestion) => (
                 <li key={`${suggestion.placeId}-${suggestion.label}`}>
                   <button
                     type="button"
-                    className="w-full px-3 py-2 text-start text-sm text-gray-800 hover:bg-green-50"
+                    className="w-full px-3 py-2 text-start text-sm text-ink hover:bg-mist"
                     onClick={() => handlePick(suggestion)}
                   >
                     {suggestion.label}
@@ -165,7 +165,7 @@ function AddressSearch({
         </div>
       </div>
 
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-muted">
         {latitude ? t('forms.placed') : t('forms.manualHint')}
       </p>
       {lookupNote && <p className="text-sm text-amber-800">{lookupNote}</p>}
@@ -178,7 +178,7 @@ function AddressSearch({
             setSuggestions([]);
             setSearching(false);
           }}
-          className="text-sm font-medium text-green-700 underline"
+          className="text-sm font-medium text-grove underline"
         >
           {t('forms.typeIt')}
         </button>

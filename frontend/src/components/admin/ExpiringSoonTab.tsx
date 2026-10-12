@@ -34,24 +34,24 @@ function ExpiringSoonTab({ hechsherOptions }: ExpiringSoonTabProps) {
 
   return (
     <section className="space-y-4" aria-label={t('desk.expiringLabel')}>
-      <p className="text-sm text-gray-600">{t('desk.expiringBody')}</p>
+      <p className="text-sm text-muted">{t('desk.expiringBody')}</p>
       <FormAlert message={error} />
 
-      {!items && !error && <p className="text-gray-600">{t('common.loading')}</p>}
-      {items && items.length === 0 && <p className="text-gray-600">{t('desk.noneExpiring')}</p>}
+      {!items && !error && <p className="text-muted">{t('common.loading')}</p>}
+      {items && items.length === 0 && <p className="text-muted">{t('desk.noneExpiring')}</p>}
 
       <ul className="space-y-4">
         {items?.map((teuda) => (
-          <li key={teuda.id} className="space-y-2 rounded border border-green-100 p-4">
+          <li key={teuda.id} className="space-y-2 rounded border border-soft p-4">
             <div className="flex flex-wrap items-start justify-between gap-2">
-              <h3 className="text-lg font-semibold text-gray-900">{teuda.restaurant?.name || t('desk.unknownRestaurant')}</h3>
+              <h3 className="text-lg font-semibold tracking-tight text-ink">{teuda.restaurant?.name || t('desk.unknownRestaurant')}</h3>
               <span className="rounded bg-amber-50 px-2 py-0.5 text-sm font-medium text-amber-900">
                 {describeDaysLeft(teuda.daysLeft)}
               </span>
             </div>
             <TeudaFacts teuda={teuda} hechsherOptions={hechsherOptions} />
             {teuda.restaurant && (
-              <Link to={`/admin/restaurants/${teuda.restaurant.id}`} state={{ adminTab: 'expiring' }} className="text-sm font-medium text-green-700 underline">
+              <Link to={`/admin/restaurants/${teuda.restaurant.id}`} state={{ adminTab: 'expiring' }} className="text-sm font-medium text-grove underline">
                 {t('desk.openRestaurant')}
               </Link>
             )}

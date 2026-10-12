@@ -84,15 +84,15 @@ function SubmitTeudaPage() {
   }
 
   if (!context || !options) {
-    return <p className="text-gray-600">{t('common.loading')}</p>;
+    return <p className="text-muted">{t('common.loading')}</p>;
   }
 
   if (submitted) {
     return (
       <div className="mx-auto max-w-lg space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">{t('forms.certificateSent')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('forms.certificateSent')}</h1>
         <FormAlert kind="success" message={t('forms.thanksCertificate', { name: context.restaurant.name })} />
-        <Link to="/account" className="inline-block font-medium text-green-700 hover:underline">
+        <Link to="/account" className="inline-block font-medium text-grove hover:underline">
           {t('forms.seeSubmissions')}
         </Link>
       </div>
@@ -101,11 +101,11 @@ function SubmitTeudaPage() {
 
   return (
     <div className="mx-auto max-w-lg">
-      <h1 className="text-2xl font-bold text-gray-900">{t('forms.addCertificate')}</h1>
-      <p className="mt-1 text-gray-600">
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('forms.addCertificate')}</h1>
+      <p className="mt-1 text-muted">
         {context.restaurant.name} &middot; {context.restaurant.address}
       </p>
-      <p className="mt-3 text-sm text-gray-500">
+      <p className="mt-3 text-sm text-muted">
         {t('forms.certificateReview')}
       </p>
 
@@ -128,10 +128,10 @@ function SubmitTeudaPage() {
         />
 
         {loading && (
-          <div role="status" className="text-sm text-gray-600">
+          <div role="status" className="text-sm text-muted">
             {progress < 100 ? t('forms.uploadingPhoto', { progress }) : t('auth.saving')}
-            <div className="mt-1 h-2 rounded bg-green-100">
-              <div className="h-2 rounded bg-green-600" style={{ width: `${progress}%` }} />
+            <div className="mt-1 h-2 rounded bg-soft">
+              <div className="h-2 rounded bg-forest" style={{ width: `${progress}%` }} />
             </div>
           </div>
         )}

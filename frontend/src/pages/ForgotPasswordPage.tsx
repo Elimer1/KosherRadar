@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 import { requestPasswordReset } from '../api/authApi';
 import { getErrorMessage } from '../api/errors';
 import FormAlert from '../components/FormAlert';
-import { inputClassName, labelClassName, primaryButtonClassName } from '../components/formStyles';
+import { inputClassName, labelClassName, panelClassName, primaryButtonClassName } from '../components/formStyles';
 
 function ForgotPasswordPage() {
   const { t } = useTranslation();
@@ -33,11 +33,11 @@ function ForgotPasswordPage() {
 
   if (message) {
     return (
-      <div className="mx-auto max-w-md space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">{t('auth.checkEmail')}</h1>
+      <div className={`mx-auto max-w-md space-y-4 p-6 sm:p-8 ${panelClassName}`}>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('auth.checkEmail')}</h1>
         <FormAlert kind="success" message={message} />
-        <p className="text-sm text-gray-600">{t('auth.linkOnce')}</p>
-        <Link to="/login" className="inline-block font-medium text-green-700 hover:underline">
+        <p className="text-sm text-muted">{t('auth.linkOnce')}</p>
+        <Link to="/login" className="inline-block font-medium text-grove hover:underline">
           {t('auth.backToLogin')}
         </Link>
       </div>
@@ -45,9 +45,9 @@ function ForgotPasswordPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md">
-      <h1 className="text-2xl font-bold text-gray-900">{t('auth.forgotTitle')}</h1>
-      <p className="mt-2 text-sm text-gray-600">{t('auth.forgotBody')}</p>
+    <div className={`mx-auto max-w-md p-6 sm:p-8 ${panelClassName}`}>
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('auth.forgotTitle')}</h1>
+      <p className="mt-2 text-sm text-muted">{t('auth.forgotBody')}</p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <FormAlert message={error} />
@@ -72,8 +72,8 @@ function ForgotPasswordPage() {
         </button>
       </form>
 
-      <p className="mt-4 text-sm text-gray-600">
-        <Link to="/login" className="font-medium text-green-700 hover:underline">
+      <p className="mt-4 text-sm text-muted">
+        <Link to="/login" className="font-medium text-grove hover:underline">
           {t('auth.backToLogin')}
         </Link>
       </p>
