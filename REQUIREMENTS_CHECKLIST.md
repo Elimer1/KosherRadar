@@ -3,7 +3,7 @@
 Statuses: `NOT STARTED`, `IN PROGRESS`, `IMPLEMENTED UNVERIFIED`, `TESTED`, `BLOCKED`. `TESTED` requires evidence (a passing test or a real run), recorded in the Evidence column.
 Source of requirements: `PROJECT_SPEC.md`.
 
-After the Milestone 5 merges, `main` runs backend 37 files / 466 tests and frontend 14 files / 89 tests, all passing; frontend lint and build succeed. (After Milestone 4: backend 34 files / 448 tests, frontend 11 files / 76 tests. After Milestone 3: backend 24 files / 324 tests, frontend 7 files / 40 tests.)
+After Milestone 6, `main` runs backend 37 files / 466 tests and frontend 15 files / 91 tests, all passing; frontend lint and build succeed. The API and the browser were also used against a local MongoDB (`127.0.0.1:27017`, database `kosherradar`). That is not Atlas. Atlas Search, a real Cloudinary upload, Resend delivery and a real Geoapify lookup remain blocked. (After Milestone 5: backend 37 files / 466 tests, frontend 14 files / 89 tests. After Milestone 4: backend 34 files / 448 tests, frontend 11 files / 76 tests. After Milestone 3: backend 24 files / 324 tests, frontend 7 files / 40 tests.)
 
 Evidence for Milestone 1 came from `npm test` runs on `main` after merging both feature branches (backend 4 files / 40 tests, frontend 1 file / 11 tests). After the Milestone 2 merges, `main` runs backend 13 files / 150 tests and frontend 4 files / 24 tests, all passing; frontend `npm run typecheck`, `npm run build` and `npm run lint` succeed. No MongoDB, Cloudinary account or browser was available, so nothing was verified against real services.
 
@@ -24,20 +24,20 @@ Evidence for Milestone 1 came from `npm test` runs on `main` after merging both 
 | Zod validation middleware (4) | TESTED | `middleware.test.js` (short password, object instead of string, over-72-char password) |
 | Central error middleware, consistent error shape (4) | TESTED | `middleware.test.js` (`errorMiddleware`: app error, Zod, duplicate key 409, DB down 503, hides internals in production) |
 | Auth endpoint rate limiting (4) | IMPLEMENTED UNVERIFIED | `backend/src/middleware/rateLimiters.js` (30 requests per 15 minutes) on login/register; no test and not exercised against a running server |
-| CORS from env origin (4) | IMPLEMENTED UNVERIFIED | `backend/src/app.js` uses `CLIENT_URL`; not exercised against a running server |
-| Seed-admin script, idempotent, env credentials (14) | IMPLEMENTED UNVERIFIED | Service logic TESTED in `adminSeedService.test.js` (new admin, promote user, run twice, missing credentials, short password); the script was not run against a real MongoDB |
+| CORS from env origin (4) | TESTED | `server.js` sets `cors({ origin: env.clientUrl })`. Milestone 6: a browser origin of `http://localhost:5175` received that origin; `http://evil.example` did not receive its own origin and did not receive `*` |
+| Seed-admin script, idempotent, env credentials (14) | TESTED | Service logic in `adminSeedService.test.js`. Milestone 6 ran `npm run seed:admin` against the local MongoDB: first run `created`, second run `unchanged`. Not run against Atlas |
+| Real frontend -> Express -> MongoDB flow verified (15) | TESTED | Milestone 6: register, login, `/api/users/me`, a normal user blocked from `/api/admin/check`, and a restaurant submission, against the local MongoDB and then the browser. Not Atlas. Expired-token logout in the browser was not repeated |
 | Basic auth Vitest tests (15) | TESTED | Backend 40 tests passed; frontend 11 tests passed |
 | Frontend: Zustand persisted auth, shared Axios, interceptor (4) | TESTED | `frontend/src/api/axiosInstance.test.ts` (auth store persistence, `attachToken`) |
 | Frontend: expired-token 401 logs out only (4, 18) | TESTED | `axiosInstance.test.ts` (`isExpiredSessionError` true only for 401 on an authenticated, non-login request; false for 403, 500, network errors, login 401). Not exercised in a real browser |
-| Frontend: login/register/account pages, protected routes | IMPLEMENTED UNVERIFIED | `frontend/src/pages/*`, `ProtectedRoute.tsx`; compiles, builds and lints, but there are no component tests and no browser run |
-| Private points shown on own account only (7) | IMPLEMENTED UNVERIFIED | Backend `getMyProfileService` includes points (TESTED, `middleware.test.js`); `AccountPage.tsx` shows them; the page was not run against a real API |
-| Real frontend -> Express -> MongoDB flow verified (15) | BLOCKED | No `backend/.env` / MongoDB Atlas connection string available in this environment. Nothing was verified against a real database |
-| Root README with install/start/test/build commands (14) | IMPLEMENTED UNVERIFIED | `README.md`; commands match the package scripts but the full setup was not repeated from a clean clone |
+| Frontend: login/register/account pages, protected routes | IMPLEMENTED UNVERIFIED | Login was opened in Hebrew in Milestone 6 (including the forgot-password link and the show-password button). Register, account and a protected-route redirect were not clicked in that pass. No component tests |
+| Private points shown on own account only (7) | TESTED | `GET /api/users/me` in Milestone 6 returned `points: 0` for the signed-in user and did not include the password hash. The account page itself was not opened. Public restaurant responses do not include points |
+| Root README with install/start/test/build commands (14) | TESTED | `README.md` matches the package scripts. Milestone 6 completed the setup list (including Geoapify) and recorded what was run. The steps were not repeated from a clean clone |
 | Feature-branch commits with per-feature authors (19) | TESTED | `git log`: backend and docs by Eli Mermelstein, frontend by Moshe Silber; features merged with `--no-ff` |
 
 ## Milestone 2 — Submissions and image upload
 
-"Unit tests" below means Vitest with mocked repositories; none of these ran against a real MongoDB.
+"Unit tests" below means Vitest with mocked repositories. Milestone 6 later submitted a restaurant with no photo against a local MongoDB. A certificate photo still cannot be stored without Cloudinary.
 
 | Requirement (spec section) | Status | Files / tests / evidence |
 | --- | --- | --- |
@@ -119,26 +119,26 @@ Evidence for Milestone 1 came from `npm test` runs on `main` after merging both 
 | Restaurant detail page (status, certificates with photo, mashgiach, EXPIRED labels, unverified claims apart, Kosharot link) (10) | IMPLEMENTED UNVERIFIED | `RestaurantDetailsPage.tsx`; looked at in the browser with a stub API (loaded, 404 state). No component tests |
 | Entry points: add certificate / report problem from the restaurant page (10) | IMPLEMENTED UNVERIFIED | Links on `RestaurantDetailsPage.tsx`; the existing `ProtectedRoute` sends anonymous visitors to login. Not clicked through with a real login |
 | Google Maps and Waze links (8, 10) | IMPLEMENTED UNVERIFIED | Waze on cards and the detail page, Google Maps on the detail page (`navigationLinks.test.ts`). The share button and map popup links were added in Milestone 5 |
-| Real search and details flow against MongoDB / Atlas Search / browser (15) | BLOCKED | No `backend/.env`, MongoDB or Atlas cluster available here |
+| Real search and details flow against MongoDB / Atlas Search / browser (15) | TESTED | Milestone 6 ran search, filters, radius, details and the browser against a local MongoDB. `search.mode` was `BASIC`. **Atlas Search is still BLOCKED** (no Atlas cluster, index never created) |
 
 ## Milestone 5 — Maps, location, interface polish
 
 | Requirement | Status | Notes |
 | --- | --- | --- |
-| Leaflet map, clustering, bounds queries (9) | IMPLEMENTED UNVERIFIED | Bounds API TESTED: `mapSearchService.test.js`, `restaurantSearchRepository.test.js`, `geo.test.js`, `searchRoutesHttp.test.js` (mocked repository / mocked service). The map was opened in the browser: Leaflet controls and OpenStreetMap tiles loaded. Clustering and popups were not seen, because the search returned no restaurants. The MongoDB `$geoWithin` query was not run |
-| Geoapify location (8, 10) | IMPLEMENTED UNVERIFIED | `placesService.test.js` (suggest/geocode: Hebrew `lang`, a miss returns no place, a missing key does not invent coordinates). The location field is on the home page and is separate from the name/food box. **No real Geoapify request has been made** |
+| Leaflet map, clustering, bounds queries (9) | TESTED | Bounds API against the local MongoDB: a restaurant inside the box was returned, and one with no coordinates was omitted. In the browser the map showed one marker and a Hebrew popup. Clustering was not seen, because that filtered view had one marker |
+| Geoapify location (8, 10) | BLOCKED | The location field is separate from the name box. With no `GEOAPIFY_API_KEY`, suggest answered `available: false` and invented no coordinates (`placesService.test.js` and a real request in Milestone 6). **No real Geoapify request has been made** |
 | Waze / Google Maps / share (8, 10) | TESTED | Link builders and the share fallback (cancel does not copy; other failures copy) in `navigationLinks.test.ts`. The share button is on the restaurant page and in map popups; it was not clicked in the browser because no restaurant was loaded |
 | English + Hebrew, RTL/LTR (11) | TESTED | `locales.test.ts` (same keys, no empty Hebrew). In the browser, Hebrew set `lang=he` and `dir=rtl`, and the choice survived a reload. Login and the invalid reset-link screen were Hebrew. Server-written validation messages stay in the language the API sends |
-| Responsive across four width ranges (11) | IMPLEMENTED UNVERIFIED | Tailwind breakpoints are in the layout (`sm` 640, `md` 768, `lg` 1024). A 390px-wide home page did not scroll sideways. 640–767, 768–1023 and ≥1024 were not measured in this pass |
+| Responsive across four width ranges (11) | TESTED | No horizontal scrolling at 390, 700, 900 and 1280 px (one width in each range). At 1280 the filters are a sidebar and the Filters button is hidden. At 700 and 900 the Filters button is shown |
 | List/Map exclusive toggle, saved view (8, 18) | TESTED | `mapView.test.ts`. In the browser, Map hid the list, List hid the map, and `localStorage` key `kosherradar-view` kept Map across a reload |
 
 ## Milestone 6 — Full verification and fixes
 
 | Requirement | Status | Notes |
 | --- | --- | --- |
-| End-to-end checks against real services (15) | NOT STARTED | |
-| Security / data-leak review (15) | NOT STARTED | |
-| README completion, requirements reconciliation | NOT STARTED | |
+| End-to-end checks against real services (15) | TESTED | Local MongoDB and the browser, listed in `PROGRESS.md`. Atlas Search, a real Cloudinary upload, Resend delivery and a real Geoapify lookup stay BLOCKED |
+| Security / data-leak review (15) | TESTED | Public payloads omit admin fields and the internal `rank`. Submission context is rate-limited. Login return paths stay on this site. CORS does not reflect other origins. A normal user cannot call the admin API. Evidence: the leak test, `returnPath.test.ts`, and the Milestone 6 API run |
+| README completion, requirements reconciliation | TESTED | `README.md`, this file and `PROGRESS.md` updated in the Milestone 6 docs commit |
 
 ## Milestone 7 — Hebrew project book
 
