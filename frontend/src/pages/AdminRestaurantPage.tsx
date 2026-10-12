@@ -1,7 +1,7 @@
 // NEW (Milestone 3): the admin page of one restaurant: details and edit form, approve/reject, delete,
 // every certificate (including old expired ones), and a preview of what the public sees.
 // חדש (אבן דרך 3): דף המנהל של מסעדה אחת: פרטים ועריכה, אישור/דחייה, מחיקה, כל התעודות, ותצוגה של מה שהציבור רואה.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
@@ -36,8 +36,10 @@ function AdminRestaurantPage() {
   const [values, setValues] = useState<RestaurantFormValues | null>(null);
   const [extras, setExtras] = useState<RestaurantExtrasValues | null>(null);
   const [notices, setNotices] = useState<Notice[]>([]);
+  const [decisionNotices, setDecisionNotices] = useState<Notice[]>([]);
   const [busy, setBusy] = useState(false);
   const [rejecting, setRejecting] = useState(false);
+  const hasDetails = useRef(false);
 
   // Changing this number makes the effect below load the restaurant again (used after every change).
   const [reloadKey, setReloadKey] = useState(0);
@@ -49,11 +51,17 @@ function AdminRestaurantPage() {
       try {
         const loaded = await getRestaurantDetails(restaurantId);
         setDetails(loaded);
+        hasDetails.current = true;
         setValues(restaurantToFormValues(loaded.restaurant));
         setExtras(restaurantToExtrasValues(loaded.restaurant));
         setLoadError('');
       } catch (err) {
-        setLoadError(getErrorMessage(err, 'Could not load this restaurant.'));
+        const message = getErrorMessage(err, 'Could not load this restaurant.');
+        if (hasDetails.current) {
+          setDecisionNotices([{ kind: 'error', message }]);
+        } else {
+          setLoadError(message);
+        }
       }
     };
 
@@ -101,14 +109,18 @@ function AdminRestaurantPage() {
 
   const handleApprove = async () => {
     setBusy(true);
-    setNotices([]);
+    setDecisionNotices([]);
 
     try {
-      await approveRestaurant(restaurantId);
-      setNotices([{ kind: 'success', message: 'Restaurant approved. It is now public.' }]);
+      const result = await approveRestaurant(restaurantId);
+      setDetails((current) =>
+        current ? { ...current, restaurant: { ...current.restaurant, status: result.restaurant.status } } : current
+      );
+      setDecisionNotices([{ kind: 'success', message: 'Restaurant approved. It is now public and has left the pending list.' }]);
+      setRejecting(false);
       load();
     } catch (err) {
-      setNotices([{ kind: 'error', message: getErrorMessage(err, 'Could not approve the restaurant.') }]);
+      setDecisionNotices([{ kind: 'error', message: getErrorMessage(err, 'Could not approve the restaurant.') }]);
     } finally {
       setBusy(false);
     }
@@ -116,15 +128,30 @@ function AdminRestaurantPage() {
 
   const handleReject = async (reason: string) => {
     setBusy(true);
-    setNotices([]);
+    setDecisionNotices([]);
 
     try {
       const result = await rejectRestaurant(restaurantId, reason);
-      setNotices([{ kind: 'success', message: 'Restaurant rejected.' }, describeEmailStatus(result.emailStatus)]);
+      setDetails((current) =>
+        current
+          ? {
+              ...current,
+              restaurant: {
+                ...current.restaurant,
+                status: result.restaurant.status,
+                rejectionReason: result.restaurant.rejectionReason,
+              },
+            }
+          : current
+      );
+      setDecisionNotices([
+        { kind: 'success', message: 'Restaurant rejected. It has left the pending list.' },
+        describeEmailStatus(result.emailStatus),
+      ]);
       setRejecting(false);
       load();
     } catch (err) {
-      setNotices([{ kind: 'error', message: getErrorMessage(err, 'Could not reject the restaurant.') }]);
+      setDecisionNotices([{ kind: 'error', message: getErrorMessage(err, 'Could not reject the restaurant.') }]);
     } finally {
       setBusy(false);
     }
@@ -142,13 +169,13 @@ function AdminRestaurantPage() {
     }
 
     setBusy(true);
-    setNotices([]);
+    setDecisionNotices([]);
 
     try {
       await deleteRestaurant(restaurantId);
       navigate('/admin');
     } catch (err) {
-      setNotices([{ kind: 'error', message: getErrorMessage(err, 'Could not delete the restaurant.') }]);
+      setDecisionNotices([{ kind: 'error', message: getErrorMessage(err, 'Could not delete the restaurant.') }]);
       setBusy(false);
     }
   };
@@ -219,6 +246,7 @@ function AdminRestaurantPage() {
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-gray-900">Decision</h2>
+        <Notices notices={decisionNotices} onDismiss={() => setDecisionNotices([])} />
         {restaurant.status === 'PENDING' &&
           (rejecting ? (
             <RejectForm

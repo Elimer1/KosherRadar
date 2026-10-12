@@ -36,3 +36,8 @@ export const awardPointsOnceRepo = async (userId, key, points) => {
 export const setUserPasswordHashRepo = async (userId, passwordHash) => {
   return User.findByIdAndUpdate(userId, { passwordHash }, { new: true });
 };
+
+// Award keys are hidden on a normal user read. This loads only that list for the owner's submissions page.
+export const findUserAwardKeysRepo = async (userId) => {
+  return User.findById(userId).select('+awardedPointKeys');
+};

@@ -1,17 +1,28 @@
 import type { FormOptions, RestaurantFormValues } from '../types/submissions';
 import { getCategoryLabel, getFoodTypeLabel, getKashrutLevelLabel } from '../utils/labels';
+import AddressSearch from './AddressSearch';
 import { inputClassName, labelClassName } from './formStyles';
 
 interface RestaurantFieldsProps {
   values: RestaurantFormValues;
   options: FormOptions;
   disabled: boolean;
+  // The user form hides coordinates, food keywords and the kashrut claim. Admins still edit those.
+  variant?: 'user' | 'admin';
   onChange: (field: keyof RestaurantFormValues, value: string) => void;
   onToggleCategory: (category: string) => void;
 }
 
-function RestaurantFields({ values, options, disabled, onChange, onToggleCategory }: RestaurantFieldsProps) {
+function RestaurantFields({
+  values,
+  options,
+  disabled,
+  variant = 'admin',
+  onChange,
+  onToggleCategory,
+}: RestaurantFieldsProps) {
   const claimIsOther = values.claimedHechsher === options.hechsherOtherValue;
+  const forUser = variant === 'user';
 
   return (
     <div className="space-y-8">
@@ -34,37 +45,20 @@ function RestaurantFields({ values, options, disabled, onChange, onToggleCategor
           />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="restaurant-address" className={labelClassName}>
-              Street address
-            </label>
-            <input
-              id="restaurant-address"
-              type="text"
-              required
-              maxLength={250}
-              disabled={disabled}
-              value={values.address}
-              onChange={(event) => onChange('address', event.target.value)}
-              className={inputClassName}
-            />
-          </div>
-          <div>
-            <label htmlFor="restaurant-city" className={labelClassName}>
-              City (optional)
-            </label>
-            <input
-              id="restaurant-city"
-              type="text"
-              maxLength={100}
-              disabled={disabled}
-              value={values.city}
-              onChange={(event) => onChange('city', event.target.value)}
-              className={inputClassName}
-            />
-          </div>
-        </div>
+        <AddressSearch
+          address={values.address}
+          city={values.city}
+          latitude={values.latitude}
+          disabled={disabled}
+          cityRequired={forUser}
+          onAddressChange={(value) => onChange('address', value)}
+          onCityChange={(value) => onChange('city', value)}
+          onLocationChange={(location) => {
+            onChange('latitude', location.latitude);
+            onChange('longitude', location.longitude);
+            onChange('geoapifyPlaceId', location.placeId);
+          }}
+        />
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -93,52 +87,6 @@ function RestaurantFields({ values, options, disabled, onChange, onToggleCategor
               disabled={disabled}
               value={values.website}
               onChange={(event) => onChange('website', event.target.value)}
-              className={inputClassName}
-            />
-          </div>
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Map location (optional)</h2>
-        <p className="text-sm text-gray-600">
-          Address search is not available yet, so coordinates are never guessed. A restaurant without coordinates
-          cannot be shown on the map until they are added. You can copy them from Google Maps (right-click the
-          place and choose the numbers at the top).
-        </p>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="restaurant-latitude" className={labelClassName}>
-              Latitude
-            </label>
-            <input
-              id="restaurant-latitude"
-              type="number"
-              step="any"
-              min={29}
-              max={34}
-              placeholder="e.g. 31.7683"
-              disabled={disabled}
-              value={values.latitude}
-              onChange={(event) => onChange('latitude', event.target.value)}
-              className={inputClassName}
-            />
-          </div>
-          <div>
-            <label htmlFor="restaurant-longitude" className={labelClassName}>
-              Longitude
-            </label>
-            <input
-              id="restaurant-longitude"
-              type="number"
-              step="any"
-              min={34}
-              max={36.5}
-              placeholder="e.g. 35.2137"
-              disabled={disabled}
-              value={values.longitude}
-              onChange={(event) => onChange('longitude', event.target.value)}
               className={inputClassName}
             />
           </div>
@@ -187,22 +135,25 @@ function RestaurantFields({ values, options, disabled, onChange, onToggleCategor
           </div>
         </fieldset>
 
-        <div>
-          <label htmlFor="restaurant-keywords" className={labelClassName}>
-            What do they serve? (optional, separated by commas)
-          </label>
-          <input
-            id="restaurant-keywords"
-            type="text"
-            placeholder="pizza, pasta, salads"
-            disabled={disabled}
-            value={values.foodKeywords}
-            onChange={(event) => onChange('foodKeywords', event.target.value)}
-            className={inputClassName}
-          />
-        </div>
+        {!forUser && (
+          <div>
+            <label htmlFor="restaurant-keywords" className={labelClassName}>
+              What do they serve? (optional, separated by commas)
+            </label>
+            <input
+              id="restaurant-keywords"
+              type="text"
+              placeholder="pizza, pasta, salads"
+              disabled={disabled}
+              value={values.foodKeywords}
+              onChange={(event) => onChange('foodKeywords', event.target.value)}
+              className={inputClassName}
+            />
+          </div>
+        )}
       </section>
 
+      {!forUser && (
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-gray-900">Kashrut claim (optional)</h2>
         <p className="text-sm text-gray-600">
@@ -269,6 +220,7 @@ function RestaurantFields({ values, options, disabled, onChange, onToggleCategor
           </select>
         </div>
       </section>
+      )}
     </div>
   );
 }

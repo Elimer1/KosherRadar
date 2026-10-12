@@ -18,6 +18,7 @@ export const restaurantToFormValues = (restaurant: AdminRestaurant): RestaurantF
     claimedHechsher: restaurant.claimedHechsher || '',
     claimedHechsherOther: restaurant.claimedHechsherOther || '',
     claimedKashrutLevel: restaurant.claimedKashrutLevel || '',
+    geoapifyPlaceId: restaurant.geoapifyPlaceId || '',
   };
 };
 

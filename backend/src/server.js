@@ -9,6 +9,7 @@ import adminRoutes from './routes/adminRoutes.js';
 import optionsRoutes from './routes/optionsRoutes.js';
 import restaurantRoutes from './routes/restaurantRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
+import placesRoutes from './routes/placesRoutes.js';
 import { errorMiddleware, notFoundMiddleware } from './middleware/errorMiddleware.js';
 
 const startServer = async () => {
@@ -34,6 +35,7 @@ const startServer = async () => {
     app.use('/api/options', optionsRoutes);
     app.use('/api/restaurants', restaurantRoutes);
     app.use('/api/reports', reportRoutes);
+    app.use('/api/places', placesRoutes);
 
     app.use(notFoundMiddleware);
     app.use(errorMiddleware);

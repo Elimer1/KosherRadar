@@ -79,8 +79,8 @@ function SubmitTeudaPage() {
           kind="success"
           message={`Thank you. Your certificate for ${context.restaurant.name} is waiting for admin review. It will not appear on the site until it is approved.`}
         />
-        <Link to="/" className="inline-block font-medium text-green-700 hover:underline">
-          Back to home
+        <Link to="/account/submissions" className="inline-block font-medium text-green-700 hover:underline">
+          See your submissions
         </Link>
       </div>
     );

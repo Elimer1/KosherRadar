@@ -48,6 +48,7 @@ export interface RestaurantFormValues {
   claimedHechsher: string;
   claimedHechsherOther: string;
   claimedKashrutLevel: string;
+  geoapifyPlaceId: string;
 }
 
 export const emptyRestaurantForm: RestaurantFormValues = {
@@ -64,6 +65,7 @@ export const emptyRestaurantForm: RestaurantFormValues = {
   claimedHechsher: '',
   claimedHechsherOther: '',
   claimedKashrutLevel: '',
+  geoapifyPlaceId: '',
 };
 
 export interface RestaurantSubmitResult {

@@ -22,6 +22,8 @@ export const env = {
   // חדש (אבן דרך 4): Atlas Search כבוי עד שהאינדקס מ-ATLAS_SEARCH_SETUP.md קיים ונבדק.
   atlasSearchEnabled: process.env.ATLAS_SEARCH_ENABLED === 'true',
   atlasSearchIndex: process.env.ATLAS_SEARCH_INDEX || 'restaurant_search',
+  // Address search. The key stays on the server. Without it, people type the address by hand.
+  geoapifyApiKey: process.env.GEOAPIFY_API_KEY || '',
 };
 
 export const validateEnv = () => {

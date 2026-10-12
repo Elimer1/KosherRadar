@@ -7,7 +7,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { resetPassword } from '../api/authApi';
 import { getErrorMessage } from '../api/errors';
 import FormAlert from '../components/FormAlert';
-import { inputClassName, labelClassName, primaryButtonClassName } from '../components/formStyles';
+import PasswordField from '../components/PasswordField';
+import { primaryButtonClassName } from '../components/formStyles';
 import { readResetToken } from '../utils/resetToken';
 
 function ResetPasswordPage() {
@@ -72,38 +73,24 @@ function ResetPasswordPage() {
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <FormAlert message={error} />
 
-        <div>
-          <label htmlFor="reset-password" className={labelClassName}>
-            New password
-          </label>
-          <input
-            id="reset-password"
-            type="password"
-            required
-            minLength={8}
-            maxLength={72}
-            autoComplete="new-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className={inputClassName}
-          />
-          <p className="mt-1 text-xs text-gray-500">At least 8 characters.</p>
-        </div>
+        <PasswordField
+          id="reset-password"
+          label="New password"
+          autoComplete="new-password"
+          minLength={8}
+          maxLength={72}
+          hint="At least 8 characters."
+          value={password}
+          onChange={setPassword}
+        />
 
-        <div>
-          <label htmlFor="reset-confirm-password" className={labelClassName}>
-            Confirm new password
-          </label>
-          <input
-            id="reset-confirm-password"
-            type="password"
-            required
-            autoComplete="new-password"
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            className={inputClassName}
-          />
-        </div>
+        <PasswordField
+          id="reset-confirm-password"
+          label="Confirm new password"
+          autoComplete="new-password"
+          value={confirmPassword}
+          onChange={setConfirmPassword}
+        />
 
         <button type="submit" disabled={loading} className={primaryButtonClassName}>
           {loading ? 'Saving...' : 'Change password'}

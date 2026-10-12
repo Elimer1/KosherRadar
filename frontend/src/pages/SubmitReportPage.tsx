@@ -69,8 +69,8 @@ function SubmitReportPage() {
           kind="success"
           message="Thank you. An admin will review your report. Nothing on the restaurant page changes until an admin decides to apply a correction."
         />
-        <Link to="/" className="inline-block font-medium text-green-700 hover:underline">
-          Back to home
+        <Link to="/account/submissions" className="inline-block font-medium text-green-700 hover:underline">
+          See your submissions
         </Link>
       </div>
     );
