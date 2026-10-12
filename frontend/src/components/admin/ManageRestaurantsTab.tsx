@@ -92,7 +92,7 @@ function ManageRestaurantsTab() {
               <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
                 {getStatusLabel(restaurant.status)}
               </span>
-              <Link to={`/admin/restaurants/${restaurant.id}`} className="text-sm font-medium text-green-700 underline">
+              <Link to={`/admin/restaurants/${restaurant.id}`} state={{ adminTab: 'manage' }} className="text-sm font-medium text-green-700 underline">
                 {t('common.open')}
               </Link>
             </div>

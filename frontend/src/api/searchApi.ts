@@ -67,15 +67,19 @@ export const buildMapParams = (filters: SearchFilters, bounds: MapBounds) => {
   };
 };
 
-export const searchRestaurantsInBounds = async (filters: SearchFilters, bounds: MapBounds) => {
+export const searchRestaurantsInBounds = async (filters: SearchFilters, bounds: MapBounds, signal?: AbortSignal) => {
   const response = await api.get<MapSearchResult>('/restaurants/map', {
     params: buildMapParams(filters, bounds),
+    signal,
   });
   return response.data;
 };
 
-export const searchRestaurants = async (filters: SearchFilters, page: number) => {
-  const response = await api.get<SearchResult>('/restaurants', { params: buildSearchParams(filters, page) });
+export const searchRestaurants = async (filters: SearchFilters, page: number, signal?: AbortSignal) => {
+  const response = await api.get<SearchResult>('/restaurants', {
+    params: buildSearchParams(filters, page),
+    signal,
+  });
   return response.data;
 };
 

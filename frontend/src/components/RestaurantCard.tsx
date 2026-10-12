@@ -1,6 +1,7 @@
 // NEW (Milestone 4): one search result: name, place, food type, categories, kashrut status, distance, Call and Waze.
 // There are no ratings or reviews: KosherRadar is a factual directory.
 // חדש (אבן דרך 4): תוצאת חיפוש אחת: שם, מקום, סוג אוכל, קטגוריות, כשרות, מרחק, התקשר ו-Waze. אין דירוגים או ביקורות.
+import type { MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import type { RestaurantCardData } from '../types/search';
@@ -8,15 +9,19 @@ import type { HechsherOption } from '../types/submissions';
 import { getCategoryLabel, getFoodTypeLabel } from '../utils/labels';
 import { formatDistance } from '../utils/kashrutText';
 import { buildTelUrl, buildWazeUrl } from '../utils/navigationLinks';
+import { restaurantDisplayNames } from '../utils/restaurantName';
+import type { SearchReturnState } from '../search/searchReturn';
 import KashrutBadge from './KashrutBadge';
 import { primaryButtonCompactClassName, secondaryButtonClassName } from './formStyles';
 
 interface RestaurantCardProps {
   restaurant: RestaurantCardData;
   hechsherOptions: HechsherOption[];
+  returnState?: SearchReturnState;
+  onOpenRestaurant?: (restaurantId: string, background: boolean) => void;
 }
 
-function RestaurantCard({ restaurant, hechsherOptions }: RestaurantCardProps) {
+function RestaurantCard({ restaurant, hechsherOptions, returnState, onOpenRestaurant }: RestaurantCardProps) {
   const { t } = useTranslation();
   const telUrl = buildTelUrl(restaurant.phone);
   const wazeUrl = buildWazeUrl(restaurant.latitude, restaurant.longitude);
@@ -24,16 +29,31 @@ function RestaurantCard({ restaurant, hechsherOptions }: RestaurantCardProps) {
   const showCity = restaurant.city && !restaurant.address.includes(restaurant.city);
   const place = showCity ? `${restaurant.address}, ${restaurant.city}` : restaurant.address;
   const distanceText = formatDistance(restaurant.distanceKm);
+  const names = restaurantDisplayNames(restaurant);
+  const handleOpen = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (!onOpenRestaurant) {
+      return;
+    }
+
+    const background = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0;
+
+    if (!background) {
+      event.preventDefault();
+    }
+
+    onOpenRestaurant(restaurant.id, background);
+  };
 
   return (
     <li className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold text-gray-900">
-            <Link to={`/restaurants/${restaurant.id}`} className="rounded-sm hover:text-green-800 hover:underline">
-              {restaurant.name}
+            <Link to={`/restaurants/${restaurant.id}`} state={returnState} onClick={handleOpen} className="rounded-sm hover:text-green-800 hover:underline">
+              {names.primary}
             </Link>
           </h2>
+          {names.secondary.length > 0 && <p className="text-sm text-gray-600">{names.secondary.join(' · ')}</p>}
           <p className="mt-0.5 text-sm text-gray-600">{place}</p>
         </div>
         {distanceText && (
@@ -63,11 +83,11 @@ function RestaurantCard({ restaurant, hechsherOptions }: RestaurantCardProps) {
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <Link to={`/restaurants/${restaurant.id}`} className={primaryButtonCompactClassName}>
+        <Link to={`/restaurants/${restaurant.id}`} state={returnState} onClick={handleOpen} className={primaryButtonCompactClassName}>
           {t('card.viewDetails')}
         </Link>
         {telUrl && (
-          <a href={telUrl} className={secondaryButtonClassName} aria-label={t('card.callName', { name: restaurant.name })}>
+          <a href={telUrl} className={secondaryButtonClassName} aria-label={t('card.callName', { name: names.primary })}>
             {t('card.call')}
           </a>
         )}
@@ -77,7 +97,7 @@ function RestaurantCard({ restaurant, hechsherOptions }: RestaurantCardProps) {
             target="_blank"
             rel="noopener noreferrer"
             className={secondaryButtonClassName}
-            aria-label={t('card.wazeName', { name: restaurant.name })}
+            aria-label={t('card.wazeName', { name: names.primary })}
           >
             {t('card.waze')}
           </a>

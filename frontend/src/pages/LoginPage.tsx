@@ -7,6 +7,7 @@ import { getErrorMessage } from '../api/errors';
 import PasswordField from '../components/PasswordField';
 import { inputClassName, labelClassName, primaryButtonClassName } from '../components/formStyles';
 import { useAuthStore } from '../stores/authStore';
+import { loginReasonKey } from '../utils/loginReason';
 import { safeReturnPath } from '../utils/returnPath';
 
 function LoginPage() {
@@ -22,7 +23,9 @@ function LoginPage() {
 
   // ProtectedRoute remembers the page the visitor wanted. Only a path inside this site is followed.
   // ProtectedRoute זוכר את הדף שהמבקר רצה. עוקבים רק אחרי נתיב בתוך האתר.
-  const redirectTo = safeReturnPath((location.state as { from?: string } | null)?.from);
+  const requestedFrom = (location.state as { from?: unknown } | null)?.from;
+  const redirectTo = safeReturnPath(requestedFrom);
+  const reasonKey = typeof requestedFrom === 'string' ? loginReasonKey(redirectTo) : null;
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -43,6 +46,7 @@ function LoginPage() {
   return (
     <div className="mx-auto max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
       <h1 className="text-2xl font-bold text-gray-900">{t('auth.loginTitle')}</h1>
+      {reasonKey && <p className="mt-2 text-sm text-gray-700">{t(reasonKey)}</p>}
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         {error && (
@@ -92,7 +96,11 @@ function LoginPage() {
 
       <p className="mt-2 text-sm text-gray-600">
         {t('auth.noAccount')}{' '}
-        <Link to="/register" className="font-medium text-green-800 hover:underline">
+        <Link
+          to="/register"
+          state={reasonKey ? { from: redirectTo } : undefined}
+          className="font-medium text-green-800 hover:underline"
+        >
           {t('nav.signup')}
         </Link>
       </p>

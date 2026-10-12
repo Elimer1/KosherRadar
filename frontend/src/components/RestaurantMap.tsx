@@ -2,9 +2,11 @@
 // same filters as the list. Moving the map does not change the chosen search location.
 // חדש (אבן דרך 5): תצוגת המפה. טוענת מסעדות מאושרות בתוך המלבן הנראה, עם אותם מסננים כמו הרשימה.
 // הזזת המפה לא משנה את מיקום החיפוש שנבחר.
+import type { MouseEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 import L from 'leaflet';
 import { Circle, MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
@@ -12,11 +14,13 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster';
 import 'react-leaflet-cluster/dist/assets/MarkerCluster.css';
 import 'react-leaflet-cluster/dist/assets/MarkerCluster.Default.css';
-import { getErrorMessage } from '../api/errors';
+import { getSearchErrorMessage } from '../api/errors';
 import { searchRestaurantsInBounds } from '../api/searchApi';
+import type { SearchReturnState } from '../search/searchReturn';
 import type { HechsherOption } from '../types/submissions';
 import type { MapBounds, RestaurantCardData, SearchFilters } from '../types/search';
 import { getFoodTypeLabel } from '../utils/labels';
+import { restaurantDisplayNames } from '../utils/restaurantName';
 import { ISRAEL_MAP_BOUNDS, boundsCrossDateLine, zoomForRadius } from '../utils/mapView';
 import { buildTelUrl, buildWazeUrl, restaurantPageUrl } from '../utils/navigationLinks';
 import KashrutBadge from './KashrutBadge';
@@ -26,6 +30,8 @@ import { primaryButtonCompactClassName, secondaryButtonClassName } from './formS
 interface RestaurantMapProps {
   filters: SearchFilters;
   hechsherOptions: HechsherOption[];
+  returnState?: SearchReturnState;
+  onOpenRestaurant?: (restaurantId: string, background: boolean) => void;
 }
 
 const actionClassName = secondaryButtonClassName;
@@ -105,19 +111,44 @@ function FollowSearchLocation({ location, radiusKm }: { location: SearchFilters[
   return null;
 }
 
-function MapPopup({ restaurant, hechsherOptions }: { restaurant: RestaurantCardData; hechsherOptions: HechsherOption[] }) {
+function MapPopup({
+  restaurant,
+  hechsherOptions,
+  returnState,
+  onOpenRestaurant,
+}: {
+  restaurant: RestaurantCardData;
+  hechsherOptions: HechsherOption[];
+  returnState?: SearchReturnState;
+  onOpenRestaurant?: (restaurantId: string, background: boolean) => void;
+}) {
   const { t } = useTranslation();
   const telUrl = buildTelUrl(restaurant.phone);
   const wazeUrl = buildWazeUrl(restaurant.latitude, restaurant.longitude);
   const pageUrl = restaurantPageUrl(restaurant.id, window.location.origin);
+  const names = restaurantDisplayNames(restaurant);
+  const handleOpen = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (!onOpenRestaurant) {
+      return;
+    }
+
+    const background = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0;
+
+    if (!background) {
+      event.preventDefault();
+    }
+
+    onOpenRestaurant(restaurant.id, background);
+  };
 
   return (
     <div className="min-w-52 space-y-2 text-sm text-gray-800">
-      <p className="text-base font-semibold text-gray-900">{restaurant.name}</p>
+      <p className="text-base font-semibold text-gray-900">{names.primary}</p>
+      {names.secondary.length > 0 && <p className="text-gray-600">{names.secondary.join(' · ')}</p>}
       {restaurant.foodType && <p>{getFoodTypeLabel(restaurant.foodType)}</p>}
       <KashrutBadge kashrut={restaurant.kashrut} hechsherOptions={hechsherOptions} />
       <div className="flex flex-wrap gap-2 pt-1">
-        <Link to={`/restaurants/${restaurant.id}`} className={primaryButtonCompactClassName}>
+        <Link to={`/restaurants/${restaurant.id}`} state={returnState} onClick={handleOpen} className={primaryButtonCompactClassName}>
           {t('card.viewDetails')}
         </Link>
         {telUrl && (
@@ -130,13 +161,13 @@ function MapPopup({ restaurant, hechsherOptions }: { restaurant: RestaurantCardD
             {t('card.waze')}
           </a>
         )}
-        <ShareButton title={restaurant.name} url={pageUrl} className={actionClassName} />
+        <ShareButton title={names.primary} url={pageUrl} className={actionClassName} />
       </div>
     </div>
   );
 }
 
-function RestaurantMap({ filters, hechsherOptions }: RestaurantMapProps) {
+function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant }: RestaurantMapProps) {
   const { t } = useTranslation();
   const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [items, setItems] = useState<RestaurantCardData[]>([]);
@@ -157,23 +188,26 @@ function RestaurantMap({ filters, hechsherOptions }: RestaurantMapProps) {
     }
 
     let ignore = false;
+    const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setLoading(true);
       setError('');
 
       try {
-        const result = await searchRestaurantsInBounds(filters, bounds);
+        const result = await searchRestaurantsInBounds(filters, bounds, controller.signal);
 
         if (!ignore) {
           setItems(result.items);
           setCapped(result.capped);
         }
       } catch (err) {
-        if (!ignore) {
-          setItems([]);
-          setCapped(false);
-          setError(getErrorMessage(err, t('map.loadError')));
+        if (ignore || axios.isCancel(err)) {
+          return;
         }
+
+        setItems([]);
+        setCapped(false);
+        setError(getSearchErrorMessage(err, t('map.loadError')));
       } finally {
         if (!ignore) {
           setLoading(false);
@@ -184,6 +218,7 @@ function RestaurantMap({ filters, hechsherOptions }: RestaurantMapProps) {
     return () => {
       ignore = true;
       window.clearTimeout(timer);
+      controller.abort();
     };
     // `bounds` and `filters` match the keys above; the keys are what should retrigger the load.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -239,7 +274,12 @@ function RestaurantMap({ filters, hechsherOptions }: RestaurantMapProps) {
             {markers.map((restaurant) => (
               <Marker key={restaurant.id} position={[restaurant.latitude as number, restaurant.longitude as number]} icon={markerIcon}>
                 <Popup>
-                  <MapPopup restaurant={restaurant} hechsherOptions={hechsherOptions} />
+                  <MapPopup
+                    restaurant={restaurant}
+                    hechsherOptions={hechsherOptions}
+                    returnState={returnState}
+                    onOpenRestaurant={onOpenRestaurant}
+                  />
                 </Popup>
               </Marker>
             ))}
@@ -247,7 +287,7 @@ function RestaurantMap({ filters, hechsherOptions }: RestaurantMapProps) {
         </MapContainer>
 
         {loading && (
-          <p className="pointer-events-none absolute start-3 top-3 z-[500] inline-flex items-center gap-2 rounded-lg bg-white/95 px-2.5 py-1.5 text-xs text-gray-700 shadow-sm">
+          <p role="status" className="pointer-events-none absolute start-3 top-3 z-[500] inline-flex items-center gap-2 rounded-lg bg-white/95 px-2.5 py-1.5 text-xs text-gray-700 shadow-sm">
             <span className="kr-spinner" aria-hidden="true" />
             {t('map.loading')}
           </p>

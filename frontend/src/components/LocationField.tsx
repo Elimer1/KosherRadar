@@ -6,20 +6,24 @@ import { useTranslation } from 'react-i18next';
 import { geocodePlace, suggestPlaces } from '../api/placesApi';
 import { activeLanguage } from '../i18n';
 import type { AddressSuggestion, PlaceLanguage } from '../api/placesApi';
+import type { SearchLocationPick } from '../hooks/useSearchCriteria';
 import type { SearchFilters } from '../types/search';
 import { inputClassName, labelClassName } from './formStyles';
 
 interface LocationFieldProps {
   filters: SearchFilters;
-  onChange: (next: SearchFilters) => void;
+  appliedLabel?: string;
+  locationSource?: 'named' | 'device' | null;
+  onPickLocation: (pick: SearchLocationPick) => void;
+  onClearLocation: () => void;
   lang?: PlaceLanguage;
 }
 
-function LocationField({ filters, onChange, lang }: LocationFieldProps) {
+function LocationField({ filters, appliedLabel = '', locationSource = null, onPickLocation, onClearLocation, lang }: LocationFieldProps) {
   const { t } = useTranslation();
   const placeLanguage = lang ?? activeLanguage();
-  const [text, setText] = useState('');
-  const [selectedLabel, setSelectedLabel] = useState('');
+  const [text, setText] = useState(locationSource === 'device' ? '' : appliedLabel);
+  const [selectedLabel, setSelectedLabel] = useState(locationSource === 'device' ? '' : appliedLabel);
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [note, setNote] = useState('');
   const [locating, setLocating] = useState(false);
@@ -64,7 +68,7 @@ function LocationField({ filters, onChange, lang }: LocationFieldProps) {
     setSelectedLabel(place.label);
     setSuggestions([]);
     setNote('');
-    onChange({ ...filters, location: { lat: place.latitude, lng: place.longitude } });
+    onPickLocation({ source: 'named', label: place.label, latitude: place.latitude, longitude: place.longitude });
   };
 
   const handleClear = () => {
@@ -72,7 +76,7 @@ function LocationField({ filters, onChange, lang }: LocationFieldProps) {
     setSelectedLabel('');
     setSuggestions([]);
     setNote('');
-    onChange({ ...filters, location: null, radiusKm: null });
+    onClearLocation();
   };
 
   const handleLookupTyped = async () => {
@@ -92,7 +96,7 @@ function LocationField({ filters, onChange, lang }: LocationFieldProps) {
 
     if (!result.place) {
       setNote(t(result.reason === 'ambiguous' ? 'location.ambiguous' : 'location.noMatch'));
-      onChange({ ...filters, location: null, radiusKm: null });
+      onClearLocation();
       setSelectedLabel('');
       return;
     }
@@ -113,11 +117,13 @@ function LocationField({ filters, onChange, lang }: LocationFieldProps) {
       (position) => {
         setLocating(false);
         setText('');
-        setSelectedLabel(t('location.current'));
+        setSelectedLabel('');
         setSuggestions([]);
-        onChange({
-          ...filters,
-          location: { lat: position.coords.latitude, lng: position.coords.longitude },
+        onPickLocation({
+          source: 'device',
+          label: '',
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
         });
       },
       (error) => {
@@ -180,9 +186,9 @@ function LocationField({ filters, onChange, lang }: LocationFieldProps) {
         </ul>
       )}
 
-      {selectedLabel !== '' && filters.location && (
+      {(locationSource === 'device' || selectedLabel !== '') && filters.location && (
         <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-700">
-          <span>{t('location.using', { place: selectedLabel })}</span>
+          <span>{t('location.using', { place: locationSource === 'device' ? t('location.current') : selectedLabel })}</span>
           <button type="button" onClick={handleClear} className="font-medium text-green-700 underline">
             {t('location.clear')}
           </button>

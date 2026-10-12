@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { getRestaurantDetails } from '../api/restaurantDetailsApi';
 import { getErrorMessage } from '../api/errors';
@@ -9,11 +9,14 @@ import KashrutBadge from '../components/KashrutBadge';
 import { useFormOptions } from '../hooks/useFormOptions';
 import type { PublicTeuda, RestaurantDetails } from '../types/restaurantDetails';
 import type { HechsherOption } from '../types/submissions';
-import { formatDateOnly } from '../utils/kashrutText';
+import { describeEvidenceName, formatDateOnly } from '../utils/kashrutText';
 import { getCategoryLabel, getFoodTypeLabel, getHechsherLabel, getKashrutLevelLabel } from '../utils/labels';
+import { restaurantDisplayNames } from '../utils/restaurantName';
 import { buildGoogleMapsUrl, buildTelUrl, buildWazeUrl, restaurantPageUrl } from '../utils/navigationLinks';
 import ShareButton from '../components/ShareButton';
 import { primaryButtonCompactClassName, secondaryButtonClassName } from '../components/formStyles';
+import { readRememberedLocation } from '../hooks/useSearchCriteria';
+import { resolveSearchReturnPath } from '../search/searchReturn';
 import { isSafeHttpUrl } from '../utils/safeUrl';
 import { usePageMeta } from '../hooks/usePageMeta';
 
@@ -82,9 +85,16 @@ function TeudaCard({ teuda, hechsherOptions }: { teuda: PublicTeuda; hechsherOpt
 function RestaurantDetailsPage() {
   const { t } = useTranslation();
   const { restaurantId = '' } = useParams();
+  const location = useLocation();
+  // NEW (UX WP1A): Back to search uses the originating search, then the same-tab search, then home.
+  // חדש (חבילת UX 1A): חזרה לחיפוש משתמשת בחיפוש המקורי, אחר כך בחיפוש בלשונית, ולבסוף בדף הבית.
+  const backTo = resolveSearchReturnPath(location.state);
+  const rememberedLocation = readRememberedLocation(location.state);
+  const backState = rememberedLocation ? { searchLocation: rememberedLocation } : undefined;
   const { options } = useFormOptions();
   const [result, setResult] = useState<LoadResult | null>(null);
-  const loadedName = result && result.restaurantId === restaurantId ? result.details?.name : '';
+  const loadedRestaurant = result && result.restaurantId === restaurantId ? result.details : null;
+  const loadedName = loadedRestaurant ? restaurantDisplayNames(loadedRestaurant).primary : '';
 
   usePageMeta(
     loadedName ? t('meta.restaurantTitle', { name: loadedName }) : t('meta.title'),
@@ -136,7 +146,7 @@ function RestaurantDetailsPage() {
       <div className="mx-auto max-w-lg space-y-4 rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900">{t('details.notFoundTitle')}</h1>
         <p className="text-gray-600">{t('details.notFoundBody')}</p>
-        <Link to="/" className={`${primaryButtonCompactClassName} mx-auto`}>
+        <Link to={backTo} state={backState} className={`${primaryButtonCompactClassName} mx-auto`}>
           {t('details.back')}
         </Link>
       </div>
@@ -147,7 +157,7 @@ function RestaurantDetailsPage() {
     return (
       <div className="mx-auto max-w-lg space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <FormAlert message={result.error} />
-        <Link to="/" className="inline-flex min-h-11 items-center font-medium text-green-800 hover:underline">
+        <Link to={backTo} state={backState} className="inline-flex min-h-11 items-center font-medium text-green-800 hover:underline">
           {t('details.back')}
         </Link>
       </div>
@@ -159,22 +169,21 @@ function RestaurantDetailsPage() {
   const wazeUrl = buildWazeUrl(restaurant.latitude, restaurant.longitude);
   const showCity = restaurant.city && !restaurant.address.includes(restaurant.city);
   const place = showCity ? `${restaurant.address}, ${restaurant.city}` : restaurant.address;
-  const mapsUrl = buildGoogleMapsUrl(restaurant.name, place);
-  const otherNames = [restaurant.nameHe, restaurant.nameEn].filter(
-    (name): name is string => Boolean(name) && name !== restaurant.name
-  );
+  const names = restaurantDisplayNames(restaurant);
+  const mapsUrl = buildGoogleMapsUrl(names.primary, place);
+  const claims = restaurant.kashrut.items.filter((item) => item.kind === 'UNVERIFIED');
 
   return (
     <article className="mx-auto max-w-3xl space-y-6">
-        <Link to="/" className="inline-flex min-h-11 items-center text-sm font-medium text-green-800 hover:underline">
+        <Link to={backTo} state={backState} className="inline-flex min-h-11 items-center text-sm font-medium text-green-800 hover:underline">
           {/* NEW (Milestone 6): this link was English only. The missing-restaurant state already uses the translation. */}
           {/* חדש (אבן דרך 6): הקישור הזה היה באנגלית בלבד. מצב "מסעדה לא נמצאה" כבר משתמש בתרגום. */}
           {t('details.back')}
         </Link>
 
       <header className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-        <h1 className="text-3xl font-bold text-gray-900">{restaurant.name}</h1>
-        {otherNames.length > 0 && <p className="text-gray-600">{otherNames.join(' · ')}</p>}
+        <h1 className="text-3xl font-bold text-gray-900">{names.primary}</h1>
+        {names.secondary.length > 0 && <p className="text-gray-600">{names.secondary.join(' · ')}</p>}
         <p className="mt-1 text-gray-700">{place}</p>
         {(restaurant.foodType || restaurant.categories.length > 0) && (
           <p className="mt-2 text-sm text-gray-700">
@@ -197,6 +206,17 @@ function RestaurantDetailsPage() {
           {t('details.kashrut')}
         </h2>
         <KashrutBadge kashrut={restaurant.kashrut} hechsherOptions={hechsherOptions} />
+
+        {claims.length > 0 && (
+          <ul className="space-y-2 text-sm text-gray-800">
+            {claims.map((claim, index) => (
+              <li key={`${claim.hechsher ?? 'claim'}-${claim.kashrutLevel ?? 'level'}-${index}`}>
+                <p>{t('details.claimSays', { name: describeEvidenceName(claim, hechsherOptions) })}</p>
+                <p className="text-gray-600">{t('details.claimNote')}</p>
+              </li>
+            ))}
+          </ul>
+        )}
 
         {restaurant.teudot.length > 0 && (
           <div>
@@ -279,7 +299,7 @@ function RestaurantDetailsPage() {
             </a>
           )}
           <ShareButton
-            title={restaurant.name}
+            title={names.primary}
             url={restaurantPageUrl(restaurant.id, window.location.origin)}
             className={actionClassName}
           />

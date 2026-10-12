@@ -92,7 +92,7 @@ function PendingTeudotTab({ hechsherOptions }: PendingTeudotTabProps) {
                 )}
               </h3>
               {teuda.restaurant && (
-                <Link to={`/admin/restaurants/${teuda.restaurant.id}`} className="text-sm font-medium text-green-700 underline">
+                <Link to={`/admin/restaurants/${teuda.restaurant.id}`} state={{ adminTab: 'teudot' }} className="text-sm font-medium text-green-700 underline">
                   {t('desk.viewRestaurant')}
                 </Link>
               )}

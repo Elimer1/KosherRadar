@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Outlet } from 'react-router-dom';
-import { usePageMeta } from '../hooks/usePageMeta';
+import { PageMetaProvider } from './PageMetaProvider';
 import Navbar from './Navbar';
 import { useAuthStore } from '../stores/authStore';
 
@@ -9,31 +9,31 @@ function Layout() {
   const sessionExpired = useAuthStore((state) => state.sessionExpired);
   const dismissSessionExpired = useAuthStore((state) => state.dismissSessionExpired);
 
-  usePageMeta(t('meta.title'), t('meta.description'));
-
   return (
-    <div className="flex min-h-screen flex-col">
-      <Navbar />
+    <PageMetaProvider title={t('meta.title')} description={t('meta.description')}>
+      <div className="flex min-h-screen flex-col">
+        <Navbar />
 
-      {sessionExpired && (
-        <div role="alert" className="border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-950">
-          <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
-            <span>{t('layout.sessionExpired')}</span>
-            <button type="button" onClick={dismissSessionExpired} className="rounded-md px-2 py-1 font-medium underline">
-              {t('layout.dismiss')}
-            </button>
+        {sessionExpired && (
+          <div role="alert" className="border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-950">
+            <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+              <span>{t('layout.sessionExpired')}</span>
+              <button type="button" onClick={dismissSessionExpired} className="rounded-md px-2 py-1 font-medium underline">
+                {t('layout.dismiss')}
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 sm:py-8 md:px-8 lg:py-10">
-        <Outlet />
-      </main>
+        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 sm:py-8 md:px-8 lg:py-10">
+          <Outlet />
+        </main>
 
-      <footer className="border-t border-green-100 bg-white px-4 py-5 text-center text-sm text-gray-600">
-        {t('layout.footer')}
-      </footer>
-    </div>
+        <footer className="border-t border-green-100 bg-white px-4 py-5 text-center text-sm text-gray-600">
+          {t('layout.footer')}
+        </footer>
+      </div>
+    </PageMetaProvider>
   );
 }
 
