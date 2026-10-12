@@ -2,6 +2,7 @@
 // same filters as the list. Moving the map does not change the chosen search location.
 // חדש (אבן דרך 5): תצוגת המפה. טוענת מסעדות מאושרות בתוך המלבן הנראה, עם אותם מסננים כמו הרשימה.
 // הזזת המפה לא משנה את מיקום החיפוש שנבחר.
+import type { MouseEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -14,6 +15,7 @@ import 'react-leaflet-cluster/dist/assets/MarkerCluster.css';
 import 'react-leaflet-cluster/dist/assets/MarkerCluster.Default.css';
 import { getErrorMessage } from '../api/errors';
 import { searchRestaurantsInBounds } from '../api/searchApi';
+import type { SearchReturnState } from '../search/searchReturn';
 import type { HechsherOption } from '../types/submissions';
 import type { MapBounds, RestaurantCardData, SearchFilters } from '../types/search';
 import { getFoodTypeLabel } from '../utils/labels';
@@ -26,6 +28,8 @@ import { primaryButtonCompactClassName, secondaryButtonClassName } from './formS
 interface RestaurantMapProps {
   filters: SearchFilters;
   hechsherOptions: HechsherOption[];
+  returnState?: SearchReturnState;
+  onOpenRestaurant?: (restaurantId: string, background: boolean) => void;
 }
 
 const actionClassName = secondaryButtonClassName;
@@ -105,11 +109,34 @@ function FollowSearchLocation({ location, radiusKm }: { location: SearchFilters[
   return null;
 }
 
-function MapPopup({ restaurant, hechsherOptions }: { restaurant: RestaurantCardData; hechsherOptions: HechsherOption[] }) {
+function MapPopup({
+  restaurant,
+  hechsherOptions,
+  returnState,
+  onOpenRestaurant,
+}: {
+  restaurant: RestaurantCardData;
+  hechsherOptions: HechsherOption[];
+  returnState?: SearchReturnState;
+  onOpenRestaurant?: (restaurantId: string, background: boolean) => void;
+}) {
   const { t } = useTranslation();
   const telUrl = buildTelUrl(restaurant.phone);
   const wazeUrl = buildWazeUrl(restaurant.latitude, restaurant.longitude);
   const pageUrl = restaurantPageUrl(restaurant.id, window.location.origin);
+  const handleOpen = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (!onOpenRestaurant) {
+      return;
+    }
+
+    const background = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0;
+
+    if (!background) {
+      event.preventDefault();
+    }
+
+    onOpenRestaurant(restaurant.id, background);
+  };
 
   return (
     <div className="min-w-52 space-y-2 text-sm text-gray-800">
@@ -117,7 +144,7 @@ function MapPopup({ restaurant, hechsherOptions }: { restaurant: RestaurantCardD
       {restaurant.foodType && <p>{getFoodTypeLabel(restaurant.foodType)}</p>}
       <KashrutBadge kashrut={restaurant.kashrut} hechsherOptions={hechsherOptions} />
       <div className="flex flex-wrap gap-2 pt-1">
-        <Link to={`/restaurants/${restaurant.id}`} className={primaryButtonCompactClassName}>
+        <Link to={`/restaurants/${restaurant.id}`} state={returnState} onClick={handleOpen} className={primaryButtonCompactClassName}>
           {t('card.viewDetails')}
         </Link>
         {telUrl && (
@@ -136,7 +163,7 @@ function MapPopup({ restaurant, hechsherOptions }: { restaurant: RestaurantCardD
   );
 }
 
-function RestaurantMap({ filters, hechsherOptions }: RestaurantMapProps) {
+function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant }: RestaurantMapProps) {
   const { t } = useTranslation();
   const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [items, setItems] = useState<RestaurantCardData[]>([]);
@@ -239,7 +266,12 @@ function RestaurantMap({ filters, hechsherOptions }: RestaurantMapProps) {
             {markers.map((restaurant) => (
               <Marker key={restaurant.id} position={[restaurant.latitude as number, restaurant.longitude as number]} icon={markerIcon}>
                 <Popup>
-                  <MapPopup restaurant={restaurant} hechsherOptions={hechsherOptions} />
+                  <MapPopup
+                    restaurant={restaurant}
+                    hechsherOptions={hechsherOptions}
+                    returnState={returnState}
+                    onOpenRestaurant={onOpenRestaurant}
+                  />
                 </Popup>
               </Marker>
             ))}

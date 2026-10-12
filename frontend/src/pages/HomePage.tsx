@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import LocationField from '../components/LocationField';
 import RestaurantCard from '../components/RestaurantCard';
 import RestaurantMap from '../components/RestaurantMap';
@@ -8,7 +8,7 @@ import SearchBar from '../components/SearchBar';
 import SearchFiltersPanel from '../components/SearchFiltersPanel';
 import { useFormOptions } from '../hooks/useFormOptions';
 import { useRestaurantSearch } from '../hooks/useRestaurantSearch';
-import { emptySearchFilters } from '../types/search';
+import { useSearchCriteria } from '../hooks/useSearchCriteria';
 import type { SearchFilters } from '../types/search';
 import { readSavedView, saveView } from '../utils/mapView';
 import type { DiscoveryView } from '../utils/mapView';
@@ -33,31 +33,32 @@ const countActiveFilters = (filters: SearchFilters) => {
 
 function HomePage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { options } = useFormOptions();
 
-  // `text` is what is typed in the box; `filters.q` is the text of the last search that was run.
-  const [text, setText] = useState('');
-  const [filters, setFilters] = useState<SearchFilters>(emptySearchFilters);
+  // NEW (UX WP1A): the address holds the applied search. The box keeps its own draft until Enter, Search, or a filter.
+  // חדש (חבילת UX 1A): הכתובת מחזיקה את החיפוש שהוחל. התיבה שומרת טיוטה עד Enter, חיפוש, או מסנן.
+  const criteria = useSearchCriteria();
+  const filters = criteria.filters;
   const [showFilters, setShowFilters] = useState(false);
   // NEW (Milestone 5): list and map are never shown together. The choice is remembered on this browser.
   // חדש (אבן דרך 5): רשימה ומפה לא מוצגות יחד. הבחירה נשמרת בדפדפן הזה.
   const [view, setView] = useState<DiscoveryView>(() => readSavedView());
-  const [locationReset, setLocationReset] = useState(0);
 
-  const search = useRestaurantSearch(filters, view === 'list');
+  const search = useRestaurantSearch(filters, view === 'list' && !criteria.locationPending);
   const activeFilterCount = countActiveFilters(filters);
   const hechsherOptions = options?.hechsherOptions || [];
   const hasAnySearchChoice = filters.q.trim() !== '' || activeFilterCount > 0;
 
-  const handleSearch = (searchText: string) => {
-    setFilters((current) => ({ ...current, q: searchText.trim() }));
-  };
-
-  const handleClearAll = () => {
-    setText('');
-    setFilters(emptySearchFilters);
-    setLocationReset((current) => current + 1);
+  const handleFiltersChange = (next: SearchFilters) => {
+    criteria.updateFilters({
+      level: next.level,
+      hechsher: next.hechsher,
+      foodType: next.foodType,
+      category: next.category,
+      hideExpired: next.hideExpired,
+      includeUnknown: next.includeUnknown,
+      radiusKm: next.radiusKm,
+    });
   };
 
   const handleViewChange = (next: DiscoveryView) => {
@@ -81,14 +82,21 @@ function HomePage() {
 
       <div className="mx-auto max-w-3xl">
         <SearchBar
-          text={text}
-          onTextChange={setText}
-          onSearch={handleSearch}
-          onPickSuggestion={(restaurantId) => navigate(`/restaurants/${restaurantId}`)}
+          text={criteria.draftQuery}
+          onTextChange={criteria.setDraftQuery}
+          onSearch={criteria.commitDraftQuery}
+          onPickSuggestion={(restaurantId) => criteria.openRestaurant(restaurantId, false)}
           filters={filters}
           hechsherOptions={hechsherOptions}
         />
-        <LocationField key={locationReset} filters={filters} onChange={setFilters} />
+        <LocationField
+          key={`${criteria.locationSource ?? 'none'}:${criteria.applied.near}`}
+          filters={filters}
+          appliedLabel={criteria.applied.near}
+          locationSource={criteria.locationSource}
+          onPickLocation={criteria.pickLocation}
+          onClearLocation={criteria.clearLocation}
+        />
       </div>
 
       <div className="mt-6 lg:grid lg:grid-cols-[18rem_1fr] lg:gap-6">
@@ -105,7 +113,7 @@ function HomePage() {
           </button>
 
           <div id="search-filters" className={`mt-3 lg:mt-0 lg:block ${showFilters ? 'block' : 'hidden'}`}>
-            <SearchFiltersPanel filters={filters} options={options} onChange={setFilters} />
+            <SearchFiltersPanel filters={filters} options={options} onChange={handleFiltersChange} />
           </div>
         </aside>
 
@@ -133,7 +141,14 @@ function HomePage() {
             </button>
           </div>
 
-          {view === 'map' && <RestaurantMap filters={filters} hechsherOptions={hechsherOptions} />}
+          {view === 'map' && !criteria.locationPending && (
+            <RestaurantMap
+              filters={filters}
+              hechsherOptions={hechsherOptions}
+              returnState={criteria.restaurantState}
+              onOpenRestaurant={criteria.openRestaurant}
+            />
+          )}
 
           {view === 'list' && search.atlasUnavailable && (
             <p role="status" className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950">
@@ -141,7 +156,7 @@ function HomePage() {
             </p>
           )}
 
-          {view === 'list' && search.loading && (
+          {(criteria.locationPending || (view === 'list' && search.loading)) && (
             <p className="flex items-center justify-center gap-2 py-10 text-gray-600">
               <span className="kr-spinner" aria-hidden="true" />
               {t('home.searching')}
@@ -169,7 +184,7 @@ function HomePage() {
                   <p className="mt-1 text-sm">{t('home.noMatchBody')}</p>
                   <button
                     type="button"
-                    onClick={handleClearAll}
+                    onClick={criteria.clearAll}
                     className={`${secondaryButtonClassName} mt-4`}
                   >
                     {t('home.clear')}
@@ -203,7 +218,13 @@ function HomePage() {
 
               <ul className="space-y-4">
                 {search.items.map((restaurant) => (
-                  <RestaurantCard key={restaurant.id} restaurant={restaurant} hechsherOptions={hechsherOptions} />
+                  <RestaurantCard
+                    key={restaurant.id}
+                    restaurant={restaurant}
+                    hechsherOptions={hechsherOptions}
+                    returnState={criteria.restaurantState}
+                    onOpenRestaurant={criteria.openRestaurant}
+                  />
                 ))}
               </ul>
 

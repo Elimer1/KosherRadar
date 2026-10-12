@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { getRestaurantDetails } from '../api/restaurantDetailsApi';
 import { getErrorMessage } from '../api/errors';
@@ -14,6 +14,8 @@ import { getCategoryLabel, getFoodTypeLabel, getHechsherLabel, getKashrutLevelLa
 import { buildGoogleMapsUrl, buildTelUrl, buildWazeUrl, restaurantPageUrl } from '../utils/navigationLinks';
 import ShareButton from '../components/ShareButton';
 import { primaryButtonCompactClassName, secondaryButtonClassName } from '../components/formStyles';
+import { readRememberedLocation } from '../hooks/useSearchCriteria';
+import { resolveSearchReturnPath } from '../search/searchReturn';
 import { isSafeHttpUrl } from '../utils/safeUrl';
 import { usePageMeta } from '../hooks/usePageMeta';
 
@@ -82,6 +84,12 @@ function TeudaCard({ teuda, hechsherOptions }: { teuda: PublicTeuda; hechsherOpt
 function RestaurantDetailsPage() {
   const { t } = useTranslation();
   const { restaurantId = '' } = useParams();
+  const location = useLocation();
+  // NEW (UX WP1A): Back to search uses the originating search, then the same-tab search, then home.
+  // חדש (חבילת UX 1A): חזרה לחיפוש משתמשת בחיפוש המקורי, אחר כך בחיפוש בלשונית, ולבסוף בדף הבית.
+  const backTo = resolveSearchReturnPath(location.state);
+  const rememberedLocation = readRememberedLocation(location.state);
+  const backState = rememberedLocation ? { searchLocation: rememberedLocation } : undefined;
   const { options } = useFormOptions();
   const [result, setResult] = useState<LoadResult | null>(null);
   const loadedName = result && result.restaurantId === restaurantId ? result.details?.name : '';
@@ -136,7 +144,7 @@ function RestaurantDetailsPage() {
       <div className="mx-auto max-w-lg space-y-4 rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900">{t('details.notFoundTitle')}</h1>
         <p className="text-gray-600">{t('details.notFoundBody')}</p>
-        <Link to="/" className={`${primaryButtonCompactClassName} mx-auto`}>
+        <Link to={backTo} state={backState} className={`${primaryButtonCompactClassName} mx-auto`}>
           {t('details.back')}
         </Link>
       </div>
@@ -147,7 +155,7 @@ function RestaurantDetailsPage() {
     return (
       <div className="mx-auto max-w-lg space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <FormAlert message={result.error} />
-        <Link to="/" className="inline-flex min-h-11 items-center font-medium text-green-800 hover:underline">
+        <Link to={backTo} state={backState} className="inline-flex min-h-11 items-center font-medium text-green-800 hover:underline">
           {t('details.back')}
         </Link>
       </div>
@@ -166,7 +174,7 @@ function RestaurantDetailsPage() {
 
   return (
     <article className="mx-auto max-w-3xl space-y-6">
-        <Link to="/" className="inline-flex min-h-11 items-center text-sm font-medium text-green-800 hover:underline">
+        <Link to={backTo} state={backState} className="inline-flex min-h-11 items-center text-sm font-medium text-green-800 hover:underline">
           {/* NEW (Milestone 6): this link was English only. The missing-restaurant state already uses the translation. */}
           {/* חדש (אבן דרך 6): הקישור הזה היה באנגלית בלבד. מצב "מסעדה לא נמצאה" כבר משתמש בתרגום. */}
           {t('details.back')}
