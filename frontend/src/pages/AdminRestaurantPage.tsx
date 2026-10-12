@@ -90,11 +90,6 @@ function AdminRestaurantPage() {
       return;
     }
 
-    if (values.categories.length === 0) {
-      setNotices([{ kind: 'error', message: t('forms.chooseCategory') }]);
-      return;
-    }
-
     setBusy(true);
     setNotices([]);
 
@@ -346,6 +341,7 @@ function AdminRestaurantPage() {
           values={values}
           options={options}
           disabled={busy}
+          requireFoodBasics={false}
           onChange={(field, value) => setValues((current) => (current ? { ...current, [field]: value } : current))}
           onToggleCategory={handleToggleCategory}
         />

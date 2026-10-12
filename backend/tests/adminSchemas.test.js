@@ -88,6 +88,22 @@ describe('admin restaurant schemas', () => {
     expect(result.extras.kosharotUrl).toBeUndefined();
   });
 
+  it('lets an admin save a restaurant that has no food type or categories', () => {
+    const result = adminEditRestaurantSchema.parse({
+      restaurant: restaurant({ foodType: '', categories: [] }),
+      extras: {},
+    });
+
+    expect(result.restaurant.foodType).toBeUndefined();
+    expect(result.restaurant.categories).toEqual([]);
+  });
+
+  it('still requires food type and a category when an admin creates a restaurant', () => {
+    expect(() =>
+      adminCreateRestaurantSchema.parse({ restaurant: restaurant({ foodType: '', categories: [] }) })
+    ).toThrow(/Choose meat, dairy or pareve|Choose at least one category/);
+  });
+
   it('works without extras and with an optional certificate on creation', () => {
     const result = adminCreateRestaurantSchema.parse({ restaurant: restaurant(), teuda: teuda() });
 

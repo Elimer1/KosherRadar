@@ -6,11 +6,11 @@ Counts below are derived from the issue statuses in this file.
 
 | Status | Count |
 | --- | ---: |
-| NOT STARTED | 16 |
+| NOT STARTED | 15 |
 | ALREADY WORKING | 8 |
 | BLOCKED | 5 |
 | DEFERRED | 1 |
-| VERIFIED | 6 |
+| VERIFIED | 7 |
 | Other | 0 |
 | **Total** | **36** |
 
@@ -26,7 +26,7 @@ The user asked to finish important fixes and to defer low-impact, cosmetic, end-
 | M1-002 | The user form has to match what is stored | VERIFIED |
 | M1-003 | A typed address must not take the first geocode hit | VERIFIED |
 | M2-002 | Confirmed bug: report correction can stick when the report does not | VERIFIED |
-| M2-003 | Admin cannot save a user restaurant that omitted food type or categories | NOT STARTED |
+| M2-003 | Admin cannot save a user restaurant that omitted food type or categories | VERIFIED |
 | M4-001 | Confirmed bug: password reset leaves existing JWTs valid | NOT STARTED |
 | M5-002 | Confirmed bug: a failed password write burns the reset link | NOT STARTED |
 
@@ -51,7 +51,7 @@ No application code was changed in the audit. No issue is `VERIFIED`. Blocked an
 | M1-003 | 1 Restaurant and certificate submission | Critical | VERIFIED | Reliability risk |
 | M2-001 | 2 Admin moderation | Critical | ALREADY WORKING | Already implemented |
 | M2-002 | 2 Admin moderation | Critical | VERIFIED | Confirmed bug |
-| M2-003 | 2 Admin moderation | Critical | NOT STARTED | UX improvement |
+| M2-003 | 2 Admin moderation | Critical | VERIFIED | UX improvement |
 | M2-004 | 2 Admin moderation | Critical | NOT STARTED | Architectural improvement |
 | M3-001 | 3 Kashrut status | Critical | ALREADY WORKING | Already implemented |
 | M3-002 | 3 Kashrut status | Critical | ALREADY WORKING | Product decision |
@@ -174,16 +174,16 @@ Priority: Critical
 
 - **Milestone:** 2
 - **Priority:** Critical
-- **Status:** NOT STARTED
+- **Status:** VERIFIED
 - **Description:** The dashboard can list, approve, reject, edit, and delete, but review of user submissions is incomplete. Saving an edit of a user restaurant that omitted food type or categories is blocked by the admin form. Report photos are a link, not a preview. There is no before/after view (see M2-004).
 - **Evidence:** `AdminRestaurantPage.handleSave` returns early when `categories.length === 0`. `RestaurantFields` sets `required` on food type unless `variant="user"`. User submit allows empty food type and categories (`restaurantFieldsSchema`). Approve is separate and still works. `PendingReportsTab` renders `photoUrl` as "open full" when the URL is http/https. Pending restaurant cards show the claim and duplicate warnings, not a certificate, which matches M1-001 because no certificate was stored.
 - **Root cause:** Admin edit reused required fields from the admin-create rules after user submit made those fields optional. Report review was built for structured proposals; the later form is a note plus a photo.
 - **Relevant files/functions:** `frontend/src/pages/AdminRestaurantPage.tsx`; `frontend/src/components/RestaurantFields.tsx`; `frontend/src/components/admin/PendingReportsTab.tsx`; `frontend/src/components/admin/PendingRestaurantsTab.tsx`; `frontend/src/components/admin/AdminTeudaCard.tsx`.
 - **Planned solution:** Let an admin save an edit of a restaurant that has no food type or category, without forcing those fields, while admin-created restaurants can keep their own required rules. Show the report photo on the pending report card. Keep private notes off the public page.
-- **Files changed:** none
-- **Tests added or modified:** none
-- **Verification:** Static inspection only. Admin screens were not opened in this audit.
-- **Blockers:** none for the form fix. Browser check belongs in the implementation session.
+- **Files changed:** `frontend/src/pages/AdminRestaurantPage.tsx`, `frontend/src/components/RestaurantFields.tsx`, `backend/src/schemas/adminSchemas.js`.
+- **Tests added or modified:** `backend/tests/adminSchemas.test.js`. Edit accepts a blank food type and empty categories. Create still rejects that.
+- **Verification:** `cd backend; npm test -- tests/adminSchemas.test.js` exit 0, 18 tests passed. `cd frontend; npm run typecheck` exit 0. The admin screen was not opened in a browser.
+- **Blockers:** Report photos stay a link rather than an inline preview. That is cosmetic and was left for later. Before/after history stays M2-004.
 
 ### M2-004 — Audit history
 

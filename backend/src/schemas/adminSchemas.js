@@ -96,13 +96,13 @@ export const adminCreateRestaurantSchema = z
   })
   .superRefine(requireAdminRestaurantBasics);
 
-// Editing replaces the whole set of admin-editable fields, so the form sends every field.
-export const adminEditRestaurantSchema = z
-  .object({
-    restaurant: restaurantFieldsSchema,
-    extras: restaurantExtrasSchema,
-  })
-  .superRefine(requireAdminRestaurantBasics);
+// NEW (Audit M2): an admin must be able to save a user restaurant that left food type and categories blank.
+// Admin create still requires both. Editing replaces the whole set of admin-editable fields.
+// חדש (ביקורת M2): מנהל חייב להיות יכול לשמור מסעדה שהמשתמש השאיר בה סוג אוכל וקטגוריות ריקים. יצירה על ידי מנהל עדיין דורשת את שניהם.
+export const adminEditRestaurantSchema = z.object({
+  restaurant: restaurantFieldsSchema,
+  extras: restaurantExtrasSchema,
+});
 
 export const adminCreateTeudaSchema = z.object({
   teuda: adminTeudaFieldsSchema,

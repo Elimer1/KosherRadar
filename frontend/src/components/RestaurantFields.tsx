@@ -10,6 +10,8 @@ interface RestaurantFieldsProps {
   disabled: boolean;
   // The user form hides coordinates, food keywords and the kashrut claim. Admins still edit those.
   variant?: 'user' | 'admin';
+  // Admin create still requires food type. Editing a user submission must allow both to stay empty.
+  requireFoodBasics?: boolean;
   invalidName?: boolean;
   invalidAddress?: boolean;
   invalidCity?: boolean;
@@ -22,6 +24,7 @@ function RestaurantFields({
   options,
   disabled,
   variant = 'admin',
+  requireFoodBasics = true,
   invalidName = false,
   invalidAddress = false,
   invalidCity = false,
@@ -113,7 +116,7 @@ function RestaurantFields({
           </label>
           <select
             id="restaurant-food-type"
-            required={!forUser}
+            required={!forUser && requireFoodBasics}
             disabled={disabled}
             value={values.foodType}
             onChange={(event) => onChange('foodType', event.target.value)}
