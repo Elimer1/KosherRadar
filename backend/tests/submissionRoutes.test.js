@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import restaurantRoutes from '../src/routes/restaurantRoutes.js';
 import reportRoutes from '../src/routes/reportRoutes.js';
 import { authMiddleware } from '../src/middleware/authMiddleware.js';
+import { searchRateLimiter } from '../src/middleware/rateLimiters.js';
 
 const listRoutes = (router) => {
   return router.stack
@@ -45,5 +46,8 @@ describe('submission routes', () => {
     const context = allRoutes.find((route) => route.path === '/:restaurantId/submission-context');
 
     expect(context.handlers).not.toContain(authMiddleware);
+    // NEW (Milestone 6): the context is public, and it is rate-limited like the other public reads.
+    // חדש (אבן דרך 6): ההקשר ציבורי, והוא מוגבל כמו שאר הקריאות הציבוריות.
+    expect(context.handlers).toContain(searchRateLimiter);
   });
 });

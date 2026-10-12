@@ -167,9 +167,11 @@ function RestaurantDetailsPage() {
 
   return (
     <article className="mx-auto max-w-3xl space-y-6">
-      <Link to="/" className="text-sm font-medium text-green-700 hover:underline">
-        &larr; Back to search
-      </Link>
+        <Link to="/" className="text-sm font-medium text-green-700 hover:underline">
+          {/* NEW (Milestone 6): this link was English only. The missing-restaurant state already uses the translation. */}
+          {/* חדש (אבן דרך 6): הקישור הזה היה באנגלית בלבד. מצב "מסעדה לא נמצאה" כבר משתמש בתרגום. */}
+          {t('details.back')}
+        </Link>
 
       <header>
         <h1 className="text-3xl font-bold text-gray-900">{restaurant.name}</h1>

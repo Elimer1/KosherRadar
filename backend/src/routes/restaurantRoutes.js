@@ -59,8 +59,11 @@ router.post(
   submitRestaurantController
 );
 
+// NEW (Milestone 6): this public read hits the database, so it uses the same limit as search and details.
+// חדש (אבן דרך 6): קריאה ציבורית שפונה למסד, ולכן אותה מגבלה כמו לחיפוש ולדף המסעדה.
 router.get(
   '/:restaurantId/submission-context',
+  searchRateLimiter,
   validateObjectIdParam('restaurantId'),
   getSubmissionContextController
 );

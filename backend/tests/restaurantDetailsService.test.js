@@ -135,6 +135,7 @@ describe('getPublicRestaurantDetailsService: public data only', () => {
       'cloudinaryPublicId',
       'secret-public-id',
       '"APPROVED"',
+      '"rank"',
     ]) {
       expect(text, secret).not.toContain(secret);
     }
