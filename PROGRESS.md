@@ -592,14 +592,40 @@ Immediate before/after status of the other worktrees matched: backend-qa `bca1b3
 
 `git merge-base --is-ancestor` exits 1 for `feature/design-overhaul` (`34950bd`) and `feature/workflow-verification` (`7811ca2`). Both still have commits that are not in `main`. `feature/ux-review` (`7d2a1a6`) was already an ancestor of pre-merge `main`; this merge did not add its commits. The design branch remains independent.
 
+## Visual Design Integration — 12 October 2026
+
+`feature/design-overhaul` was merged on staging and promoted to `main` by fast-forward only. No push.
+
+| Item | Hash |
+|---|---|
+| Pre-integration `main` (`MAIN_BEFORE`) | `36cf869fd132e6acbe800c9d1d78bcadb1e25035` |
+| Design tip | `34950bd0c1284acb7f3f61897830e28e98daff93` |
+| Backup | `backup/main-pre-design-merge` → `36cf869fd132e6acbe800c9d1d78bcadb1e25035` |
+| Design merge | `f3d3db0f470c189934301341eeb046c4451b87ce` (parents: preflight `bf47636`, design tip `34950bd`) |
+| Promoted `main` | The fast-forward target is the staging tip that contains this section. The agent report records that hash after promotion. |
+
+19 textual conflicts. 20 overlapping files reviewed, including `AdminDashboardPage.tsx`, which merged without a conflict marker. Resolution kept `main` search, admin-tab, login-return, and bilingual-name behavior, and applied the design classes. No second search store. `git diff 36cf869 HEAD -- backend` is empty. Backend concurrency commit `07c6a3f` remains an ancestor.
+
+No new dependencies, lockfile changes, icon libraries, or external font URLs. The font stack is the system stack, including Segoe UI, Noto Sans Hebrew, and Arial Hebrew.
+
+Frontend bundle after integration: JS `index-BNhbbtpQ.js` 749.63 kB (gzip 219.16 kB), CSS `index-CLDEltFl.css` 47.29 kB (gzip 13.13 kB). Against pre-integration main (JS 742.89 kB, CSS 46.62 kB) that is about +6.74 kB of JavaScript and +0.67 kB of CSS. The existing chunk-size warning remains. No new dependency explains it.
+
+One design CSS order bug was corrected on staging: the reduced-motion block in `frontend/src/index.css` now follows `.kr-spinner`, so `animation: none` wins. Before that, the later spinner rule kept the spin under `prefers-reduced-motion: reduce`.
+
+Full overlap table, commands, and the browser matrix are in `DESIGN_INTEGRATION_HANDOFF.md`.
+
+Screenshot notes (not committed): `C:\Users\elime\AppData\Local\Temp\cursor\screenshots\` and `C:\Users\elime\AppData\Local\Temp\kr-design-integration-shots\`. The embedded browser pane is about 183px wide, so full-frame captures of an emulated 1280px layout tiled. Layout was measured with emulated viewports.
+
+Deferred: native-speaker review of Hebrew copy, including design strings and the added `home.unknownExcluded` / `home.appliedFilters` keys. Geocoding was not exercised; the mock reports place search unavailable. Map tiles loaded from OpenStreetMap. A map popup was not opened because the visible map bounds did not contain the fixture markers in this session. Live Atlas, Cloudinary, Geoapify, and database-gated concurrency tests were not run.
+
 ## NEXT AGENT ONBOARDING
 
 **Current position**
 
 - Branch: `main` (not pushed). It is ahead of `origin/main`.
 - Current batch: MUST FIX NOW, QA-001, QA-002, `feature/ui-polish`, `feature/qa-testing`, `feature/ux-functionality`, and `feature/backend-qa-fixes` are on `main`. This was not a walk through all 11 milestones.
-- Last verified fixes: the backend concurrency merge `07c6a3f`, after the UX merge `cfdf7fc`. The three live `node:test` races were not run. See "Backend Concurrency Integration — 12 October 2026".
-- Next issue: none until the user asks. Do not start a LATER issue. Do not merge the design or workflow branches unless the user asks.
+- Last verified fixes: the design integration merge `f3d3db0`, after the backend concurrency merge `07c6a3f` and the UX merge `cfdf7fc`. See "Visual Design Integration — 12 October 2026".
+- Next issue: none until the user asks. Do not start a LATER issue. Do not merge `feature/workflow-verification` unless the user asks.
 - Tracker counts: 11 VERIFIED, 8 ALREADY WORKING, 13 NOT STARTED, 5 BLOCKED, 1 DEFERRED. Total 38.
 
 **Integration check**
@@ -698,4 +724,4 @@ The QA-001 case on `main` is already a normal `it`. The QA worktree still has `i
 
 **Exact next task**
 
-Stop. `feature/backend-qa-fixes` is on `main` at merge `07c6a3f` (backup `backup/main-pre-backend-merge`). The Vitest suites passed. The live concurrency files were not run because they can only write `kosherradar_agent2_test`. Do not push unless the user asks. Do not start a LATER issue. Do not merge `feature/design-overhaul` or `feature/workflow-verification` unless the user asks.
+Stop. The design branch is integrated. Do not push unless the user asks. Do not start a LATER issue. Do not merge `feature/workflow-verification` (`7811ca2`) unless the user asks. Hebrew copy still needs native-speaker review. Live concurrency tests still must not be pointed at `kosherradar_agent2_test`.

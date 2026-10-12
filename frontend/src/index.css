@@ -43,17 +43,6 @@ input[type='checkbox'] {
   accent-color: #174b3a;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .kr-spinner {
-    animation: none;
-  }
-
-  .kr-card,
-  .kr-view-toggle button {
-    transition: none;
-  }
-}
-
 .kr-spinner {
   display: inline-block;
   width: 1rem;
@@ -68,6 +57,18 @@ input[type='checkbox'] {
 @keyframes kr-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* The reduced-motion rule has to follow the spinner rule. Same specificity, so an earlier block loses. */
+@media (prefers-reduced-motion: reduce) {
+  .kr-spinner {
+    animation: none;
+  }
+
+  .kr-card,
+  .kr-view-toggle button {
+    transition: none;
   }
 }
 
