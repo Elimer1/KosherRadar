@@ -512,14 +512,94 @@ Worktrees. At the start of this session the design worktree was `d3d69fd` with u
 
 Follow-up, not changed here: Hebrew strings added in Work Packages 1B, 1C, and 2 still need native-speaker review. The design branch is still separate and should import `useSearchCriteria` rather than a second search store. The map popup, device geolocation, and a live geocoder were not used in this check. The mock API was local only.
 
+## Backend Concurrency Integration — 12 October 2026
+
+`feature/backend-qa-fixes` was merged into local `main`. Nothing was pushed. `feature/design-overhaul`, `feature/workflow-verification`, and `feature/ux-review` were not merged.
+
+The reported hashes matched the repository: pre-merge `main` `bbe81cf42804f7aa512784a366e501940d315484`, backend tip `bca1b3a1597d2905ae604fe3c26c34bb5137541e`, merge base `3bbb1e2da84215e62c82010de755be2b574aa6bf`. The six commits unique to the backend branch are the restaurant, certificate, and report race tests and their fixes. No other product area was changed on that branch. `git merge-tree --write-tree` reported no conflicts. The real merge also had none.
+
+- Backup ref: `backup/main-pre-backend-merge` at `bbe81cf42804f7aa512784a366e501940d315484`
+- Merge commit: `07c6a3f0e8f1fb4d0f4436e0c6acb6ea3dc137d2`
+- Parents: `bbe81cf42804f7aa512784a366e501940d315484` (`main`) and `bca1b3a1597d2905ae604fe3c26c34bb5137541e` (`feature/backend-qa-fixes`)
+- `git diff --stat bbe81cf..07c6a3f -- frontend` is empty. UX files were not changed.
+- Readiness procedure: `docs/BACKEND_INDEX_READINESS.md`
+
+### Tests
+
+Backend has no lint script. Vitest reported no skipped tests. The concurrency files use `node:test` and are not part of `npm test`.
+
+| Command | `main` before | Backend tip `bca1b3a` | `main` after |
+| --- | --- | --- | --- |
+| `cd backend; npm test` | exit 0, 40 files, 497 passed, 0 failed, 0 skipped | exit 0, 40 files, 505 passed, 0 failed, 0 skipped | exit 0, 40 files, 505 passed, 0 failed, 0 skipped |
+| `cd frontend; npm test` | exit 0, 22 files, 127 passed, 0 failed, 0 skipped | not run (backend-only tip) | exit 0, 22 files, 127 passed, 0 failed, 0 skipped |
+| `cd frontend; npm run lint` | exit 0 | not run | exit 0 |
+| `cd frontend; npm run typecheck` | exit 0 | not run | exit 0 |
+| `cd frontend; npm run build` | exit 0, JS about 742.89 kB | not run | exit 0, JS about 742.89 kB |
+
+The backend tip was tested from a temporary detached worktree, then removed. Agent 2's worktree was not used for tests. `node --test integration/assertSafeAgent2Database.check.mjs` on the merged tree: exit 0, 3 passed, 0 failed, 0 skipped. It does not open a database.
+
+### Live concurrency tests
+
+Not executed. The harness in `backend/integration/assertSafeAgent2Database.mjs` accepts only `mongodb://127.0.0.1:27017/kosherradar_agent2_test` and rejects every other database name, including `kosherradar_backend_integration_test`. There is no URI override. Running the three files would write Agent 2's existing database. Tracked source was not edited to retarget them.
+
+The unrun cases are the `node:test` names in:
+
+- `backend/integration/concurrentRestaurantSubmission.integration.mjs` (10 tests, including "two concurrent identical submissions leave one pending restaurant")
+- `backend/integration/concurrentCertificateSubmission.integration.mjs` (12 tests, including "two concurrent dated certificates for the same restaurant collapse to one" and "two concurrent identical undated certificates collapse to one")
+- `backend/integration/concurrentReportSubmission.integration.mjs` (9 tests, including "two concurrent identical reports leave one pending report and award no points")
+
+Unit coverage that did run: `models.test.js` ("keeps one pending submission per user, normalized name, and address", "keeps one pending dated certificate per user, restaurant, hechsher, and date", "stores a short pending identity and does not index the description"); `restaurantSubmissionService.test.js` ("answers 409 when a concurrent insert loses the pending identity index", "does not treat a different duplicate key as a pending restaurant conflict"); `teudaSubmissionService.test.js` ("answers 409 when a concurrent insert loses a pending certificate index"); `reportSubmissionService.test.js` ("answers 409 when a concurrent insert loses the pending report index", "does not treat a different duplicate key as a pending report conflict"). Those tests mock the database.
+
+Duplicate-key mapping uses `keyPattern`, not the index name. A non-matching code 11000 is rethrown. `errorMiddleware` still turns every uncaught 11000 into 409 "This value is already in use". That generic path was already documented for an admin save that collides with the restaurant index. It was not changed.
+
+### Indexes and startup
+
+On empty local database `kosherradar_backend_integration_test` at `127.0.0.1:27017`, additive `createIndexes()` succeeded. MongoDB server version was 7.0.22. Atlas was not contacted. No documented minimum server version was found in the README. Atlas compatibility is unverified.
+
+Observed unique indexes:
+
+| Name | Keys | Partial filter |
+| --- | --- | --- |
+| `pending_submitter_name_address` | `submittedBy`, `nameNormalized`, `addressNormalized` | `{ status: "PENDING" }` |
+| `pending_dated_certificate_identity` | `restaurant`, `submittedBy`, `hechsher`, `hechsherOther`, `kashrutLevel`, `expirationDate` | `{ status: "PENDING", expirationDate: { $type: "date" } }` |
+| `pending_undated_certificate_identity` | `restaurant`, `submittedBy`, `hechsher`, `hechsherOther`, `kashrutLevel`, `mashgiachName`, `mashgiachPhone`, `photoFingerprint` | `{ status: "PENDING", expirationDate: null }` |
+| `pending_report_identity` | `submittedBy`, `restaurant`, `pendingReportFingerprint` | `{ status: "PENDING", pendingReportFingerprint: { $type: "string" } }` |
+
+A separate empty local database, `kosherradar_backend_legacy_scratch`, received synthetic pending documents and no personal data. Two pending reports with no fingerprint: `createIndexes()` succeeded, and `pending_report_identity` was present. Two pending restaurants for the same submitter with no normalized fields: `createIndexes()` failed with code 11000. Two undated pending certificates with no photo fingerprint: `createIndexes()` failed with code 11000. Those databases were left in place. They were not dropped.
+
+Mongoose's default `autoIndex` is true (`mongoose/lib/mongoose.js`). `connectDb` awaits `mongoose.connect` and does not await `Model.init()`. `server.js` then calls `listen`. Index creation is therefore not finished before the process accepts submissions. A failed automatic build emits `error` on the model. `server.js` does not handle that event and does not exit because an index is missing.
+
+Importing the models loaded `backend/.env` through `dotenv` (`injected env (1)`). The external-service flags read after that load were all unset. The script connected with an explicit loopback URI and checked the database name before writing. The `.env` file was not read or printed.
+
+### Still not resolved
+
+Carried forward from `BACKEND_QA_FIX_PROGRESS.md`. This merge does not close them.
+
+- NEEDS PRODUCT DECISION: a legacy undated certificate with no photo fingerprint still matches a later no-photo submission.
+- NEEDS PRODUCT DECISION: `CORRECTION_ALREADY_MADE` still awards +1 without a field diff.
+- DEFERRED: an uncaught register email 11000 uses the generic middleware sentence.
+- DEFERRED: search candidate cap (M6-001).
+- BLOCKED: restaurant deletion is not one transaction (standalone MongoDB, no new dependency).
+- BLOCKED: Cloudinary delete failures (M5-004), no credentials.
+- BLOCKED / DEFERRED: security headers (M4-003) and cookie auth (M4-004).
+- Reopening a resolved report can fail the new index if an identical pending report already exists.
+- Old reports without `pendingReportFingerprint` are not backfilled.
+- Production and Atlas were not scanned.
+
+### Worktrees and excluded branches
+
+Immediate before/after status of the other worktrees matched: backend-qa `bca1b3a` clean, design `34950bd` clean, QA `54d9605` clean, UI `e479f31` clean, UX review `7d2a1a6` with untracked `UX_REVIEW.md`, UX functionality `c897ed6` clean, workflow `7811ca2` clean.
+
+`git merge-base --is-ancestor` exits 1 for `feature/design-overhaul` (`34950bd`) and `feature/workflow-verification` (`7811ca2`). Both still have commits that are not in `main`. `feature/ux-review` (`7d2a1a6`) was already an ancestor of pre-merge `main`; this merge did not add its commits. The design branch remains independent.
+
 ## NEXT AGENT ONBOARDING
 
 **Current position**
 
 - Branch: `main` (not pushed). It is ahead of `origin/main`.
-- Current batch: MUST FIX NOW, QA-001, QA-002, `feature/ui-polish`, `feature/qa-testing`, and `feature/ux-functionality` are on `main`. This was not a walk through all 11 milestones.
-- Last verified fixes: QA-001 and QA-002, then the integration merges `226e0bc`, `dbf5672`, and `cfdf7fc` (`feature/ux-functionality`).
-- Next issue: none until the user asks. Do not start a LATER issue. Do not merge the design, backend-qa, or workflow branches unless the user asks.
+- Current batch: MUST FIX NOW, QA-001, QA-002, `feature/ui-polish`, `feature/qa-testing`, `feature/ux-functionality`, and `feature/backend-qa-fixes` are on `main`. This was not a walk through all 11 milestones.
+- Last verified fixes: the backend concurrency merge `07c6a3f`, after the UX merge `cfdf7fc`. The three live `node:test` races were not run. See "Backend Concurrency Integration — 12 October 2026".
+- Next issue: none until the user asks. Do not start a LATER issue. Do not merge the design or workflow branches unless the user asks.
 - Tracker counts: 11 VERIFIED, 8 ALREADY WORKING, 13 NOT STARTED, 5 BLOCKED, 1 DEFERRED. Total 38.
 
 **Integration check**
@@ -618,4 +698,4 @@ The QA-001 case on `main` is already a normal `it`. The QA worktree still has `i
 
 **Exact next task**
 
-Stop. `feature/ux-functionality` is on `main` at merge `cfdf7fc` (backup `backup/main-pre-ux-merge`). The checks in "Integration: feature/ux-functionality" passed. Do not push unless the user asks. Do not start a LATER issue. Do not merge `feature/design-overhaul`, `feature/backend-qa-fixes`, or `feature/workflow-verification` unless the user asks.
+Stop. `feature/backend-qa-fixes` is on `main` at merge `07c6a3f` (backup `backup/main-pre-backend-merge`). The Vitest suites passed. The live concurrency files were not run because they can only write `kosherradar_agent2_test`. Do not push unless the user asks. Do not start a LATER issue. Do not merge `feature/design-overhaul` or `feature/workflow-verification` unless the user asks.
