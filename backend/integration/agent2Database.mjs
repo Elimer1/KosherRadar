@@ -40,14 +40,17 @@ async function loadApp() {
     applyAgent2ProcessEnv();
     const mongoose = (await import(pathToFileURL(require.resolve('mongoose')).href)).default;
     const bcrypt = (await import(pathToFileURL(require.resolve('bcrypt')).href)).default;
-    const [restaurant, teuda, report, user, submission, teudaSubmission] = await Promise.all([
-      import('../src/models/Restaurant.js'),
-      import('../src/models/Teuda.js'),
-      import('../src/models/Report.js'),
-      import('../src/models/User.js'),
-      import('../src/services/restaurantSubmissionService.js'),
-      import('../src/services/teudaSubmissionService.js'),
-    ]);
+    const [restaurant, teuda, report, user, submission, teudaSubmission, reportSubmission, adminReport] =
+      await Promise.all([
+        import('../src/models/Restaurant.js'),
+        import('../src/models/Teuda.js'),
+        import('../src/models/Report.js'),
+        import('../src/models/User.js'),
+        import('../src/services/restaurantSubmissionService.js'),
+        import('../src/services/teudaSubmissionService.js'),
+        import('../src/services/reportSubmissionService.js'),
+        import('../src/services/adminReportService.js'),
+      ]);
 
     loaded = {
       mongoose,
@@ -58,6 +61,8 @@ async function loadApp() {
       User: user.User,
       submitRestaurantService: submission.submitRestaurantService,
       submitTeudaService: teudaSubmission.submitTeudaService,
+      submitReportService: reportSubmission.submitReportService,
+      resolveReportService: adminReport.resolveReportService,
     };
   }
 
@@ -152,6 +157,11 @@ export async function ensureRestaurantIndexes() {
 export async function ensureTeudaIndexes() {
   const { Teuda } = await loadApp();
   await Teuda.createIndexes();
+}
+
+export async function ensureReportIndexes() {
+  const { Report } = await loadApp();
+  await Report.createIndexes();
 }
 
 export async function agent2Models() {
