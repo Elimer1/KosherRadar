@@ -3,7 +3,7 @@
 import { ATLAS_SEARCH_HIT_LIMIT } from '../config/constants.js';
 import { Restaurant } from '../models/Restaurant.js';
 import { Teuda } from '../models/Teuda.js';
-import { kmToRadians } from '../utils/geo.js';
+import { boundsToGeoBox, kmToRadians } from '../utils/geo.js';
 
 // Only what the result cards and the ranking need. Admin-only fields are never selected.
 // רק מה שכרטיסי התוצאות והדירוג צריכים. שדות של מנהלים לעולם לא נבחרים.
@@ -45,6 +45,7 @@ export const findSearchCandidatesRepo = async ({
   categories,
   center,
   radiusKm,
+  bounds,
   limit,
 }) => {
   const filter = { status: 'APPROVED' };
@@ -57,9 +58,26 @@ export const findSearchCandidatesRepo = async ({
     filter.categories = { $in: categories };
   }
 
-  // Restaurants without coordinates have no `location`, so a radius naturally leaves them out.
+  // NEW (Milestone 5): the map asks for the visible rectangle. A chosen radius is applied as well,
+  // so markers stay inside both the screen and the radius. Restaurants with no coordinates have no
+  // `location`, so both queries leave them out.
+  // חדש (אבן דרך 5): המפה מבקשת את המלבן הנראה. רדיוס שנבחר חל גם הוא. למסעדה בלי קואורדינטות אין location.
+  const area = [];
+
+  if (bounds) {
+    area.push({ location: { $geoWithin: { $box: boundsToGeoBox(bounds) } } });
+  }
+
   if (center && radiusKm) {
-    filter.location = { $geoWithin: { $centerSphere: [[center.lng, center.lat], kmToRadians(radiusKm)] } };
+    area.push({
+      location: { $geoWithin: { $centerSphere: [[center.lng, center.lat], kmToRadians(radiusKm)] } },
+    });
+  }
+
+  if (area.length === 1) {
+    Object.assign(filter, area[0]);
+  } else if (area.length > 1) {
+    filter.$and = area;
   }
 
   if (words.length > 0) {

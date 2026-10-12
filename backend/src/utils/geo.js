@@ -19,3 +19,10 @@ export const distanceInKm = (fromLat, fromLng, toLat, toLng) => {
 
 // `$centerSphere` wants the radius in radians of the Earth, not in kilometers.
 export const kmToRadians = (km) => km / EARTH_RADIUS_KM;
+
+// NEW (Milestone 5): visible map rectangle as a GeoJSON box. Order is [longitude, latitude].
+// חדש (אבן דרך 5): מלבן המפה הנראה כתיבת GeoJSON. הסדר הוא [קו אורך, קו רוחב].
+export const boundsToGeoBox = (bounds) => [
+  [bounds.west, bounds.south],
+  [bounds.east, bounds.north],
+];

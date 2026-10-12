@@ -11,6 +11,7 @@ vi.mock('../src/config/env.js', () => ({
 vi.mock('../src/services/restaurantSearchService.js', () => ({
   searchRestaurantsService: vi.fn(),
   getRestaurantSuggestionsService: vi.fn(),
+  findMapRestaurantsService: vi.fn(),
 }));
 
 vi.mock('../src/services/restaurantSubmissionService.js', () => ({ submitRestaurantService: vi.fn() }));
@@ -20,6 +21,7 @@ vi.mock('../src/services/teudaSubmissionService.js', () => ({
 }));
 
 import {
+  findMapRestaurantsService,
   getRestaurantSuggestionsService,
   searchRestaurantsService,
 } from '../src/services/restaurantSearchService.js';
@@ -50,6 +52,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   searchRestaurantsService.mockResolvedValue(emptyResult);
   getRestaurantSuggestionsService.mockResolvedValue({ suggestions: [] });
+  findMapRestaurantsService.mockResolvedValue({ items: [], total: 0, capped: false, search: { mode: 'BASIC', atlasUnavailable: false } });
 });
 
 describe('GET /api/restaurants (search)', () => {
@@ -132,5 +135,48 @@ describe('GET /api/restaurants/suggestions', () => {
     }
 
     expect(getRestaurantSuggestionsService).not.toHaveBeenCalled();
+  });
+});
+
+// NEW (Milestone 5): the map route is public and does not accept a box that is upside down.
+// חדש (אבן דרך 5): נתיב המפה ציבורי, ולא מקבל תיבה הפוכה.
+describe('GET /api/restaurants/map', () => {
+  const box = 'north=32.2&south=31.6&east=35.4&west=34.6';
+
+  it('works without logging in and passes the box plus the filters', async () => {
+    const response = await fetch(`${baseUrl}/map?${box}&q=pizza&radiusKm=5&lat=31.7&lng=35.2&hideExpired=true`);
+
+    expect(response.status).toBe(200);
+    expect(findMapRestaurantsService).toHaveBeenCalledWith({
+      q: 'pizza',
+      level: undefined,
+      hechsher: [],
+      foodType: [],
+      category: [],
+      hideExpired: true,
+      includeUnknown: false,
+      lat: 31.7,
+      lng: 35.2,
+      radiusKm: 5,
+      north: 32.2,
+      south: 31.6,
+      east: 35.4,
+      west: 34.6,
+    });
+    expect(searchRestaurantsService).not.toHaveBeenCalled();
+  });
+
+  it('answers 400 when the box is invalid or a key is repeated', async () => {
+    for (const badQuery of [
+      'north=31&south=32&east=35&west=34',
+      'north=32&south=31&east=34&west=35',
+      `${box}&north=33`,
+      'north=32&south=31&east=35',
+    ]) {
+      const response = await fetch(`${baseUrl}/map?${badQuery}`);
+      expect(response.status, badQuery).toBe(400);
+    }
+
+    expect(findMapRestaurantsService).not.toHaveBeenCalled();
   });
 });

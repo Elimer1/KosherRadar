@@ -129,6 +129,34 @@ describe('findSearchCandidatesRepo', () => {
 
     expect(filterSentToDatabase().location).toBeUndefined();
   });
+
+  // NEW (Milestone 5): the map rectangle, and the rectangle together with a radius.
+  // חדש (אבן דרך 5): מלבן המפה, והמלבן יחד עם רדיוס.
+  it('limits the map to the visible box, with longitude first', async () => {
+    await findSearchCandidatesRepo({
+      ...NO_FILTERS,
+      bounds: { west: 34.7, south: 31.7, east: 35.3, north: 32.1 },
+    });
+
+    expect(filterSentToDatabase().location).toEqual({
+      $geoWithin: { $box: [[34.7, 31.7], [35.3, 32.1]] },
+    });
+  });
+
+  it('keeps both the visible box and the radius when a radius is set', async () => {
+    await findSearchCandidatesRepo({
+      ...NO_FILTERS,
+      bounds: { west: 34.7, south: 31.7, east: 35.3, north: 32.1 },
+      center: { lat: 31.78, lng: 35.21 },
+      radiusKm: 5,
+    });
+
+    const clauses = filterSentToDatabase().$and;
+
+    expect(clauses[0]).toEqual({ location: { $geoWithin: { $box: [[34.7, 31.7], [35.3, 32.1]] } } });
+    expect(clauses[1].location.$geoWithin.$centerSphere[0]).toEqual([35.21, 31.78]);
+    expect(filterSentToDatabase().location).toBeUndefined();
+  });
 });
 
 describe('findAtlasNameHitsRepo', () => {

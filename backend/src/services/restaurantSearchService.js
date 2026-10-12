@@ -12,6 +12,7 @@
 // מסעדות; התשובה מציינת capped: true כשהגענו למגבלה.
 import { env } from '../config/env.js';
 import {
+  MAP_MARKER_LIMIT,
   MAX_SEARCH_CANDIDATES,
   PUBLIC_EXPIRED_MONTHS,
   SEARCH_PAGE_SIZE,
@@ -147,7 +148,9 @@ const compareResults = (hasCenter, hasText) => (a, b) => {
   return String(a.restaurant._id).localeCompare(String(b.restaurant._id));
 };
 
-export const searchRestaurantsService = async (query, pageSize = SEARCH_PAGE_SIZE) => {
+// Shared by the list and the map. `bounds` is only set for the map. The kashrut rules stay in this one place.
+// משותף לרשימה ולמפה. bounds נשלח רק עבור המפה. חוקי הכשרות נשארים במקום אחד.
+const loadMatches = async ({ query, candidateLimit, bounds }) => {
   const today = todayInIsrael();
   const parsed = parseSearchText(query.q || '');
   const center = query.lat !== undefined && query.lng !== undefined ? { lat: query.lat, lng: query.lng } : null;
@@ -163,11 +166,12 @@ export const searchRestaurantsService = async (query, pageSize = SEARCH_PAGE_SIZ
     categories: query.category,
     center,
     radiusKm: query.radiusKm,
-    limit: MAX_SEARCH_CANDIDATES + 1,
+    bounds,
+    limit: candidateLimit + 1,
   });
 
-  const capped = candidates.length > MAX_SEARCH_CANDIDATES;
-  const examined = capped ? candidates.slice(0, MAX_SEARCH_CANDIDATES) : candidates;
+  const capped = candidates.length > candidateLimit;
+  const examined = capped ? candidates.slice(0, candidateLimit) : candidates;
 
   const oldestPublicExpiration = dateOnlyToDate(addMonthsToDateOnly(today, -PUBLIC_EXPIRED_MONTHS));
   const teudot = await findPublicTeudotForRestaurantsRepo(
@@ -208,6 +212,20 @@ export const searchRestaurantsService = async (query, pageSize = SEARCH_PAGE_SIZ
 
   matches.sort(compareResults(Boolean(center), parsed.words.length > 0));
 
+  return { matches, capped, atlasUnavailable };
+};
+
+const searchMode = (atlasUnavailable) => ({
+  mode: env.atlasSearchEnabled && !atlasUnavailable ? 'ATLAS' : 'BASIC',
+  atlasUnavailable,
+});
+
+export const searchRestaurantsService = async (query, pageSize = SEARCH_PAGE_SIZE) => {
+  const { matches, capped, atlasUnavailable } = await loadMatches({
+    query,
+    candidateLimit: MAX_SEARCH_CANDIDATES,
+  });
+
   const start = (query.page - 1) * pageSize;
   const items = matches
     .slice(start, start + pageSize)
@@ -220,10 +238,25 @@ export const searchRestaurantsService = async (query, pageSize = SEARCH_PAGE_SIZ
     total: matches.length,
     hasMore: start + pageSize < matches.length,
     capped,
-    search: {
-      mode: env.atlasSearchEnabled && !atlasUnavailable ? 'ATLAS' : 'BASIC',
-      atlasUnavailable,
-    },
+    search: searchMode(atlasUnavailable),
+  };
+};
+
+// NEW (Milestone 5): restaurants inside the visible map, with the same filters as the list.
+// Not paged by 20: the map needs every match in view, up to MAP_MARKER_LIMIT.
+// חדש (אבן דרך 5): מסעדות בתוך המפה הנראית, עם אותם מסננים כמו הרשימה. לא עמודים של 20.
+export const findMapRestaurantsService = async (query) => {
+  const { matches, capped, atlasUnavailable } = await loadMatches({
+    query,
+    candidateLimit: MAP_MARKER_LIMIT,
+    bounds: { north: query.north, south: query.south, east: query.east, west: query.west },
+  });
+
+  return {
+    items: matches.map((match) => toPublicRestaurantCard(match.restaurant, match.summary, match.distanceKm)),
+    total: matches.length,
+    capped,
+    search: searchMode(atlasUnavailable),
   };
 };
 
