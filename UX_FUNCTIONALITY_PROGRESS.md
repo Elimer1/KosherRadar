@@ -358,4 +358,4 @@ The map popup was not opened. With `/?q=piz` the map reported no saved-location 
 - `fcfd59d` — `feat(ux-1b): search as the visitor types and cancel stale requests`
 - `7945748` — `feat(ux-1c): clear one filter at a time and restore search focus`
 - `435f692` — `feat(ux-2): keep the page that asked for an account, and the admin tab`
-- Work Package 3 is the commit that adds this section.
+- `2a8a9f5` — `feat(ux-3): show stored names, claim sentences, and restore the tab title`
