@@ -2,238 +2,262 @@
 
 Branch: `feature/design-overhaul`  
 Worktree: `C:\FS\projects\KosherRadar-design`  
-Base: `main` at `3bbb1e2` (`test(qa-001): keep the undated certificate regression as a normal test`)
+Base: `main` at `3bbb1e2`  
+HEAD: `c09bae2` (`style(discovery): refine search, filters, and map`) until the docs commit that follows this file.
 
 This file is the only progress log for the design overhaul. Do not edit `PROGRESS.md`, `FIX_TRACKER.md`, `AUDIT_FINDINGS.md`, `QA_PROGRESS.md`, `UI_PROGRESS.md`, or `UX_FUNCTIONALITY_PROGRESS.md`.
 
 ## Coordination
 
-Agent 2 owns `feature/ux-functionality` in `C:\FS\projects\KosherRadar-ux-functionality`.
+Agent 1 owns `feature/ux-functionality` in `C:\FS\projects\KosherRadar-ux-functionality`.
 
-Checked again on 12 October 2026, after the independent-page pass: `git worktree list` still shows `C:\FS\projects\KosherRadar-ux-functionality` at `3bbb1e2` on `feature/ux-functionality`. `UX_FUNCTIONALITY_PROGRESS.md` is not in that worktree. Work Package 1A is not committed. Do not merge, rebase, or cherry-pick that branch.
+Inspected on 12 October 2026 with read-only Git:
 
-Until Agent 2 commits the search-state hook and action interface, do not substantially edit:
+- Committed HEAD was `7945748` (`feat(ux-1c): clear one filter at a time and restore search focus`).
+- `UX_FUNCTIONALITY_PROGRESS.md` says Work Packages 1A, 1B, and 1C are complete. The search contract is `useSearchCriteria` (`SearchCriteriaApi`).
+- That worktree also had uncommitted Work Package 2 edits in auth, admin tabs, and `locales/en.ts` / `locales/he.ts`. Those files were not edited in this discovery pass.
+- `git diff main...feature/ux-functionality --stat` touches the discovery files listed under Agent 1 integration below.
 
-- `frontend/src/pages/HomePage.tsx`
-- `frontend/src/components/SearchBar.tsx`
-- `frontend/src/components/SearchFiltersPanel.tsx`
-- `frontend/src/components/RestaurantCard.tsx`
-- `frontend/src/pages/RestaurantDetailsPage.tsx`
-- `frontend/src/components/RestaurantMap.tsx`
-- `frontend/src/components/LocationField.tsx`
-- `frontend/src/components/KashrutBadge.tsx`
-- `frontend/src/hooks/useRestaurantSearch.ts`
+This branch was not reset. It was not merged, rebased, cherry-picked, or pushed. Agent 1's worktree was not checked out or edited.
 
-Those files are unchanged on this branch. The homepage still renders and still runs the existing search. Global shell changes (canvas, header, footer) are visible there.
+The discovery screens on this branch still call the pre-1A search props (`text`, `onSearch`, `onChange`, `navigate`). Visual classes were applied around that existing behavior. Integration must re-apply those classes onto Agent 1's components. Do not copy Agent 1's hook into this branch.
 
-Integration order: UX functionality first, design overhaul second. When discovery work starts, consume Agent 2's hook. Do not add a second search-state store, URL sync, debounce, or filter-removal implementation.
+## Design system
 
-## Current stage
-
-Stage 1 foundation is in place. Independent pages (authentication, forms, account, admin) have the new visual system. Discovery redesign has not started.
-
-## Design direction
-
-Modern, restrained restaurant discovery. Deep green carries actions. Amber is only a warning accent. The page canvas is warm off-white so white cards read as surfaces.
+Unchanged palette and type. No new font, icon library, or dependency.
 
 | Token | Value | Use |
 | --- | --- | --- |
-| `forest` | `#174B3A` | Primary buttons, header mark, footer |
-| `forest-deep` | `#103528` | Primary hover |
+| `forest` | `#174B3A` | Primary buttons, verified border, map pin, selected view |
+| `forest-deep` | `#103528` | Primary hover, verified text |
 | `grove` | `#2C6B56` | Secondary text links |
-| `canvas` | `#F7F8F4` | Page background |
-| `soft` | `#DCEAE4` | Borders, quiet fills |
-| `mist` | `#EEF4F1` | Soft highlights |
+| `canvas` | `#F7F8F4` | Page background, unknown status fill |
+| `soft` | `#DCEAE4` | Borders |
+| `mist` | `#EEF4F1` | Selected filter row, verified fill, food chip |
 | `ink` | `#24342F` | Body text |
 | `muted` | `#4E5E58` | Supporting text |
-| `amber-ink` | `#6B4A1F` | Warning text |
+| `amber-ink` | `#6B4A1F` | Unverified claim text and dashed border only |
 
-White on `#174B3A` is the primary button pair. `#2C6B56` is slightly darker than the suggested `#347B66` so small link text stays nearer AA. Amber `#C48B47` is used in the mark only, not for small text.
+Verified evidence uses forest on mist, with the words "Verified certificate". An unverified claim stays on white with a dashed amber border and the words "Unverified claim (no certificate)". Expired uses the existing red text and an ✕. Unknown uses muted text and a "?". Status is never color alone.
 
-Typography stays on the system stack already in the app (`Segoe UI`, `Noto Sans Hebrew`, Arial). No new font package.
+Shared classes in `frontend/src/components/formStyles.ts`: inputs, buttons, panels, `filterChipClassName`, plus `metaChipClassName`, `quietChipClassName`, `choiceClassName`, `warningNoticeClassName`, and `errorNoticeClassName`.
 
-Shared classes live in `frontend/src/components/formStyles.ts`: inputs, labels, primary and secondary buttons, quiet actions, text links, panels, section cards, danger buttons, and `filterChipClassName`.
+`filterChipClassName` is still unused. Agent 1's 1C did not add a chip row. It added per-group Clear buttons and a result-line clear. Those buttons are not on this branch. Do not invent a second removal path.
 
-`filterChipClassName` is presentation only. Nothing renders a chip yet. Agent 2 owns when a chip is created or removed.
+No new translation keys. The homepage title now uses the existing `home.heading` (English and Hebrew were already present). New Hebrew from the earlier independent-page pass still needs native-speaker review; this pass did not add Hebrew.
 
-## Completed work
+## Earlier stage (already committed before this session)
 
-- Design tokens and focus, selection, map pin, and cluster colors in `frontend/src/index.css`. Leaflet stays left-to-right.
-- Header: one language control on the logo row, with a visible `EN` / `עב` label for the language it switches to. The accessible name is still `nav.switchLanguage`. Page width stays `max-w-5xl` so the untouched homepage grid does not reflow.
-- Footer uses the forest bar and the existing disclaimer.
-- Login, register, forgot-password, reset-password, and the missing page use the same card, title, and link treatment. Forgot-password and reset-password were given that card in a follow-up after the first visual pass.
-- Account shows the existing points sentences (`account.pointsHint`, `points3`, `points2`, `points1`, `pointsPrivate`).
-- Submission rows use the same card surface. A resolved report shows `forms.correctionApplied` when points were awarded and `forms.closedWithoutChange` otherwise. That reads the existing `points` field. It does not add a restaurant link.
-- Restaurant submission explains that food type is added during review (`forms.foodReviewed`). Fields, payloads, and the rule that users do not choose a kashrut level are unchanged.
-- Report form shows two examples under the note (`forms.reportExamples`). It does not add a certificate picker or a proposed hechsher.
-- Certificate photo inputs use a dashed upload area. Upload behavior is unchanged.
-- Admin tabs are a text tab bar with a forest underline. Approve and reject controls meet a taller touch height. Pending restaurants show a warning when food type or coordinates are missing. Approval is not blocked.
-- `localizedRestaurantName` / `localizedAddress` in `frontend/src/utils/displayName.ts` choose a stored name or address for the active language and do not translate. They are not wired into cards, suggestions, or the details page yet.
+`c32efd7` and `61a05a1`, recorded in the previous handoff: tokens, header, footer, login, registration, password reset, submission forms, account, and admin. `displayName.ts` chooses a stored name or address and does not translate. It is still not wired. Agent 1's package 3 owns restaurant-name selection.
 
-## Files modified
+## Discovery stage
 
-- `frontend/src/index.css`
+### Restaurant cards — `08127e7`
+
+`RestaurantCard` and `KashrutBadge`. Name and address use `dir="auto"` and wrap. A missing address no longer leaves a leading comma. Food is a mist chip. Categories are quiet outlined chips, not the verified green. Distance is a mist chip. Call and Waze stay on the existing link builders. No photo placeholder.
+
+### Restaurant details — `ac1181b`
+
+Identity, kashrut, contact, and help are section cards. The back control uses `details.back` and a chevron that mirrors in RTL (`scaleX(-1)` measured on the Hebrew page). Phone numbers and websites are in `bdi dir="ltr"`.
+
+Unverified items already on `kashrut.items` are listed with the existing `details.claim`, `details.claimSays`, and `details.claimNote`. They use the dashed amber treatment, separate from certificates. This does not change status rules. Live Pizza Place had one unverified claim and no certificate, and that section rendered.
+
+### Homepage, filters, and map — `c09bae2`
+
+Search field, suggestion list, location field, filter panel, list/map toggle, empty and no-match states, and map frame use the same surfaces. Selected filter rows use `.kr-choice:has(input:checked)` (mist fill, weight 600, 44px row). The list/map selected button is forest with white text and `aria-pressed`. The map container stays `direction: ltr`. Popup text follows the page. The radius circle uses `#174B3A`. Leaflet's popup close control is enlarged toward a 44px target.
+
+Search state, debounce, URL params, and map requests were not changed.
+
+## Files modified in this session
+
+- `frontend/src/components/RestaurantCard.tsx`
+- `frontend/src/components/KashrutBadge.tsx`
 - `frontend/src/components/formStyles.ts`
-- `frontend/src/components/Navbar.tsx`
-- `frontend/src/components/Layout.tsx`
-- `frontend/src/components/FormAlert.tsx`
-- `frontend/src/components/PasswordField.tsx`
-- `frontend/src/components/RestaurantFields.tsx`
-- `frontend/src/components/TeudaFields.tsx`
-- `frontend/src/components/AddressSearch.tsx`
-- `frontend/src/components/ShareButton.tsx`
-- `frontend/src/components/admin/*` presentation classes
-- `frontend/src/pages/LoginPage.tsx`
-- `frontend/src/pages/RegisterPage.tsx`
-- `frontend/src/pages/ForgotPasswordPage.tsx`
-- `frontend/src/pages/ResetPasswordPage.tsx`
-- `frontend/src/pages/NotFoundPage.tsx`
-- `frontend/src/pages/AccountPage.tsx`
-- `frontend/src/pages/MySubmissionsPage.tsx`
-- `frontend/src/pages/SubmitRestaurantPage.tsx`
-- `frontend/src/pages/SubmitTeudaPage.tsx`
-- `frontend/src/pages/SubmitReportPage.tsx`
-- `frontend/src/pages/AdminDashboardPage.tsx`
-- `frontend/src/pages/AdminRestaurantPage.tsx`
-- `frontend/src/pages/AdminCreateRestaurantPage.tsx`
-- `frontend/src/pages/AdminAddTeudaPage.tsx`
-- `frontend/src/locales/en.ts`
-- `frontend/src/locales/he.ts`
-- `frontend/src/utils/displayName.ts`
-- `frontend/src/utils/displayName.test.ts`
+- `frontend/src/pages/RestaurantDetailsPage.tsx`
+- `frontend/src/pages/HomePage.tsx`
+- `frontend/src/components/SearchBar.tsx`
+- `frontend/src/components/SearchFiltersPanel.tsx`
+- `frontend/src/components/LocationField.tsx`
+- `frontend/src/components/RestaurantMap.tsx`
+- `frontend/src/index.css`
+- `.gitignore` (`design-screenshots/` ignored)
 - `DESIGN_PROGRESS.md`
 
-Not modified: backend, API clients, hooks, stores, search pages, restaurant cards, restaurant details, the map, and `LocationField.tsx`.
+Not modified: backend, hooks, API clients, locales, `SearchBar` behavior, `displayName.ts`, and Agent 1's branch.
 
 ## Tests and results
 
-Run from `C:\FS\projects\KosherRadar-design\frontend`. Dependencies are a junction to the main checkout's `frontend/node_modules`. No package was installed.
+Run from `C:\FS\projects\KosherRadar-design\frontend`. `node_modules` was already present. No package was installed.
 
-| Command | Exit code | Result |
+Baseline on `d3d69fd` before edits:
+
+| Command | Exit | Result |
 | --- | --- | --- |
 | `npm test` | 0 | 15 files, 94 tests passed |
-| `npm run lint` | 0 | No findings |
-| `npm run typecheck` | 0 | Passed |
-| `npm run build` | 0 | JS `728.37 kB` (gzip `213.19 kB`), CSS `48.86 kB` (gzip `13.41 kB`). Vite still warns above 500 kB. |
+| `npm run lint` | 0 | oxlint, no findings |
+| `npm run typecheck` | 0 | `tsc -b` |
 
-Earlier notes recorded about `718 kB` after UI polish and about `722 kB` after the audit fixes. This build was not compared with a fresh baseline build of `3bbb1e2` in the same session. The increase is small and there is no new dependency. These tests do not assert CSS class names.
+After the discovery edits, including the popup close-control CSS:
 
-## Screens inspected
+| Command | Exit | Result |
+| --- | --- | --- |
+| `npm test` | 0 | 15 files, 94 tests passed |
+| `npm run lint` | 0 | oxlint, no findings |
+| `npm run build` | 0 | `tsc -b` then Vite. JS `730.52 kB` (gzip `213.70 kB`), CSS `46.54 kB` (gzip `13.00 kB`). The existing chunk warning above 500 kB remains. |
 
-Dev server: `http://127.0.0.1:5176/` from this worktree. The API was not reachable, so the homepage showed the existing server-error alert. No restaurant records were loaded.
+The previous design build on this branch was JS `728.37 kB` (gzip `213.19 kB`) and CSS `48.86 kB` (gzip `13.41 kB`). No dependency was added. Tests do not assert CSS class names.
 
-Inspected:
+## Browser verification
 
-- English login and forgot-password at a desktop width: mark, visible `עב` language control, card, forest primary button, footer contrast. Login also shows the password reveal.
-- Hebrew login at about 390px: `dir=rtl`, logo on the right, `EN` on the logo row, two header rows, form and footer.
-- Hebrew register: heading, password hint, confirm field.
-- English homepage after switching language back: existing search, filters, list/map controls still present. The error sentence stayed in Hebrew until a new request because that string was already stored. That behavior was not changed.
+Dev server: `http://localhost:5179/` from this worktree, with an uncommitted `frontend/vite.design.config.ts` that proxied `/api` to the already-running local API on port 5000. `VITE_API_URL` was `http://localhost:5179/api` for that process only. The proxy file was deleted and was not committed. Reads only. `kosherradar_qa` and `kosherradar_agent2_test` were not used. Geoapify was not called (the location field was not submitted). OpenStreetMap tiles are the existing Leaflet layer: 12 tiles loaded and the map container stayed `direction: ltr`.
 
-Not inspected with a signed-in session or real records:
+The Cursor browser pane was about 220px wide, so pixel screenshots are that narrow slice. Layout at 375, 768, and 1280 was measured with the layout viewport (`scrollWidth` versus `clientWidth`, card width, control height). At 220px the language control overflowed by about 6px. At 375, 768, and 1280, overflow was 0 in both languages.
 
-- Account points block and submission history.
-- Restaurant, certificate, and report forms after login.
-- Admin dashboard and the missing-food / missing-pin warning.
-- A populated restaurant card or details page (intentionally not restyled yet).
+Live local records used: Claimed Grill (unverified, phone, coordinates), Pizza Place (Hebrew stored name, unverified claim, no certificate), and the unknown kitchens when Include unknown was not required for the default list. The default list showed the two unverified restaurants.
 
-## Hebrew strings for native-speaker review
+A temporary `/design-states` route rendered the real card, badge, and certificate components with long English and Hebrew names, a verified badge that also mentions an expired certificate, an expired badge, an unknown card with no phone and no coordinates, and valid versus expired certificate rows. That route and `vite.design.config.ts` were removed before the commits.
 
-Rendered in this pass:
+## Coverage matrix
 
-- `forms.foodReviewed`: `סוג האוכל נוסף במהלך הבדיקה, לפני שאפשר למצוא את המקום בחיפוש לפי אוכל.`
-- `forms.reportExamples`: `לדוגמה: טלפון או שעות שגויים, או שהתעודה מציגה הכשר שונה ממה שמופיע בדף.`
-- `forms.correctionApplied`: `התיקון הוחל`
-- `forms.closedWithoutChange`: `נסגר בלי שינוי בדף`
-- `desk.missingFood`: `אין עדיין סוג אוכל. חיפוש לפי אוכל לא ימצא את המקום עד שיוסף.`
-- `desk.missingPin`: `אין עדיין מיקום על המפה. המקום לא יופיע במפה עד שיתווספו קואורדינטות.`
+Widths: 375, 768, and 1280 were measured for overflow and structure in English and Hebrew. Screenshots are the ~220px pane. Equivalent layouts are grouped.
 
-Prepared for the discovery pass and not rendered yet:
+| Screen | State | English | Hebrew | Notes |
+| --- | --- | --- | --- | --- |
+| Cards | Default | VERIFIED | VERIFIED | Live Claimed Grill and Pizza Place. 375 card width 343px. 1280 card width 648px. |
+| Cards | Hover/focus | VERIFIED | VERIFIED | Focus outline is the global forest ring. A details link took focus. Hover is CSS only. |
+| Cards | Selected | NOT APPLICABLE | NOT APPLICABLE | No selected-card state exists. |
+| Cards | Loading | VERIFIED | VERIFIED | "Searching..." / "מחפש..." with the spinner. |
+| Cards | Empty | VERIFIED | NOT TESTED | English no-match for `zzzz-no-match`, including Clear search and filters. Hebrew empty copy was not opened. |
+| Cards | Error | NOT TESTED | NOT TESTED | The alert markup exists. The API did not fail. |
+| Cards | Edge | VERIFIED | VERIFIED | Fixture route: long names wrap (English heading 124px tall at 375, no overflow). Unknown card has no Call or Waze. Verified badge includes "+2 more" and the expired sentence. Expired badge uses the expired words. |
+| Details | Default | VERIFIED | VERIFIED | Pizza Place. Hebrew `dir=rtl`. Back chevron sits at the inline start and is mirrored. |
+| Details | Hover/focus | VERIFIED | NOT TESTED | English back and actions use the shared focus ring. |
+| Details | Selected | NOT APPLICABLE | NOT APPLICABLE | The page is one restaurant. |
+| Details | Loading | NOT TESTED | NOT TESTED | Spinner markup exists. Navigation was too fast to record it. |
+| Details | Empty | VERIFIED | VERIFIED | No certificate on Pizza Place. The unverified claim block and the unknown sentence path are separate. Unknown Kitchen was not opened. |
+| Details | Error / not found | NOT TESTED | NOT TESTED | Not-found and error cards are styled. A bad id was not opened. |
+| Details | Edge | VERIFIED | VERIFIED | Fixture certificate rows: valid with photo and mashgiach phone, expired without photo. Live claim uses dashed amber, not forest. |
+| Homepage/search | Default | VERIFIED | VERIFIED | `home.heading` in both languages. Search control 52px, button 44px at 375. |
+| Homepage/search | Hover/focus | VERIFIED | NOT TESTED | Search field uses the forest focus ring. |
+| Homepage/search | Selected | NOT APPLICABLE | NOT APPLICABLE | The query is text, not a selected token. |
+| Homepage/search | Loading | VERIFIED | VERIFIED | Seen while results were requested. |
+| Homepage/search | Empty | VERIFIED | NOT TESTED | English no-match. |
+| Homepage/search | Error | NOT TESTED | NOT TESTED | Rate-limit and server-error copy were not triggered. |
+| Homepage/search | Suggestions | NOT TESTED | NOT TESTED | The dropdown is styled. A suggestion list was not opened. |
+| Filters | Default | VERIFIED | VERIFIED | Hidden behind the Filters button below 1024px. Visible at 1280 (aside 288px). |
+| Filters | Hover/focus | VERIFIED | VERIFIED | Checked row was focused. |
+| Filters | Selected | VERIFIED | VERIFIED | Meat / בשרי: background `rgb(238, 244, 241)`, weight 600, row 44px. |
+| Filters | Loading | NOT APPLICABLE | NOT APPLICABLE | Options arrived with the page. There is no separate filter loader. |
+| Filters | Empty | NOT APPLICABLE | NOT APPLICABLE | The distance note shows when no location is chosen. That note was visible. |
+| Filters | Error | NOT APPLICABLE | NOT APPLICABLE | Filter choices are local. |
+| Filters | Chips | NOT APPLICABLE | NOT APPLICABLE | This branch has no chip row. Agent 1's group Clear buttons are the removal UI. See integration. |
+| Map/list | Default | VERIFIED | VERIFIED | List pressed by default. Map pressed switches the view and keeps the URL behavior of this branch. |
+| Map/list | Selected | VERIFIED | VERIFIED | `aria-pressed` on List and Map. |
+| Map/list | Loading | NOT TESTED | NOT TESTED | The map badge exists. The snapshot moved on before it could be read. |
+| Map/list | Empty | VERIFIED | VERIFIED | Hebrew empty-area sentence appeared before the marker arrived. English empty-area sentence appeared on return to the map. |
+| Map/list | Error | NOT TESTED | NOT TESTED | Zoom-in and load-error notices are styled. They were not triggered. |
+| Map/list | Popup | VERIFIED | VERIFIED | Hebrew popup: Claimed Grill, address, meat, unverified words, details, call, Waze, share. Action height 44px. Map container `direction: ltr`. 12 OSM tiles loaded. Marker clustering and bounds were not changed and were not retested as behavior. |
 
-- `home.heading`: `מצאו מסעדות ואת הראיות לכשרות שלהן`
-- `home.unknownExcluded`: `מקומות שכשרותם אינה ידועה נשארים מוסתרים, אלא אם תבחרו לכלול אותם.`
-- `home.appliedFilters`: `מסננים פעילים`
-- `map.scoped`: `המפה מציגה התאמות באזור שעל המסך. חיפוש לפי שם אינו מזיז את המפה.`
-- `common.removeFilter`: `הסרת {{name}}`
+## Screenshot paths
 
-English admin tab `admin.tabTeudot` is now `Pending certificates`. The Hebrew label was already `תעודות ממתינות` and was left as it is.
+Ignored by Git (`design-screenshots/`):
 
-## Requests for the functionality agent
+- `C:\FS\projects\KosherRadar-design\design-screenshots\home-en-narrow.png`
+- `C:\FS\projects\KosherRadar-design\design-screenshots\card-en-narrow.png`
+- `C:\FS\projects\KosherRadar-design\design-screenshots\details-en-narrow.png`
+- `C:\FS\projects\KosherRadar-design\design-screenshots\details-kashrut-en.png`
+- `C:\FS\projects\KosherRadar-design\design-screenshots\details-he-narrow.png`
 
-Do not implement these here:
+These are the ~220px pane, not 375/1280 pixel captures. Wider layouts were measured, not screenshotted, because device-metric screenshots in this browser tiled the same pane.
 
-- Remember search text and filters in the address, and restore them on Back to search (UX-001).
-- Include the current search-box text when a filter changes (UX-002).
-- Pass the login return path through registration (UX-006).
-- Restore the document title when leaving a restaurant page (UX-010).
-- Report certificate picker or proposed hechsher (UX-005 beyond the hint already shown).
-- Links from certificate and report history rows. Those payloads have no restaurant id.
-- Fitting the map to text-search results, and hiding the empty-map line while the first bounds request is pending (UX-012).
+## Accessibility and RTL
 
-`displayName.ts` is ready for Hebrew and English stored names. Wire it only when the discovery files are safe to edit, using Agent 2's components if those components own the name rendering.
+- Focus ring remains the global 2px forest outline.
+- Unverified, expired, verified, and unknown each have words and a symbol.
+- Filter rows and the main actions measured 44px at 375.
+- `dir="auto"` on names, addresses, and hechsher lines. Phones use `bdi dir="ltr"`.
+- Hebrew back chevron: inline start, `transform: matrix(-1, 0, 0, 1, 0, 0)`.
+- Map tiles and pins are not mirrored. Popup text was `direction: rtl` on the Hebrew page.
+- At about 220px the header language control overflowed by 6px. That is below the 375 target, where overflow was 0. The header was not restyled in this pass.
 
-## Visual QA of the independent pages
+## AGENT 1 INTEGRATION DEPENDENCIES
 
-Dev server for this worktree: `http://127.0.0.1:5177/` (port 5176 was already taken). The API was not required for these screens. Account and admin were not opened because that needs a signed-in session, and a new account was not created against the local database.
+Do not reimplement these. After `feature/ux-functionality` is integrated, put this branch's classes back onto Agent 1's elements.
 
-Checked in the browser:
+| File | Agent 1 contract to keep | Design classes to re-apply |
+| --- | --- | --- |
+| `frontend/src/hooks/useSearchCriteria.ts` | `applied`, `draftQuery`, `setDraftQuery`, `commitDraftQuery`, `updateFilters`, `setLevel`, `toggleHechsher`, `toggleFoodType`, `toggleCategory`, `setHideExpired`, `setIncludeUnknown`, `setRadiusKm`, `pickLocation`, `clearLocation`, `clearQuery`, `clearFilters`, `clearAll`, `filters`, `locationPending`, `locationSource`, `returnPath`, `restaurantState`, `openRestaurant(id, background?)` | None. Do not add a second store. |
+| `frontend/src/pages/HomePage.tsx` | Search box uses `draftQuery` / `setDraftQuery` / `commitDraftQuery`. Filters go through `updateFilters` (ignore `next.q`). Location uses `pickLocation` / `clearLocation` and `key={`${locationSource ?? 'none'}:${applied.near}`}`. Cards and the map receive `returnState` and `onOpenRestaurant`. Clear-all calls `clearAll`. | `pageTitleClassName` on the `home.heading` title. View toggle `kr-view-toggle` with selected `bg-forest text-white` and unselected `text-ink hover:bg-mist`. Result count `text-muted`. Empty panel `rounded-2xl border-dashed border-soft`. Notices `warningNoticeClassName` and `errorNoticeClassName`. |
+| `frontend/src/components/RestaurantCard.tsx` | Optional `returnState` and `onOpenRestaurant(id, background)`. Both links keep `state` and `onClick`. | Card surface `kr-card rounded-2xl border-soft`. Name link `text-ink` with `dir="auto"`. Address `dir="auto"`. `metaChipClassName` / `quietChipClassName`. |
+| `frontend/src/components/RestaurantMap.tsx` | Same `returnState` and `onOpenRestaurant`. Abort and `getSearchErrorMessage` stay. | Popup `w-64`, name and address `dir="auto"`. Frame `rounded-2xl border-soft bg-mist`. Circle `#174b3a`. Status notices as on the list. |
+| `frontend/src/pages/RestaurantDetailsPage.tsx` | Back links use `to={backTo}` and `state={backState}` from `resolveSearchReturnPath` / `readRememberedLocation`. | `kr-back` and `kr-back-mark` on those same links. Section cards. Claim list from `kashrut.items` where `kind === 'UNVERIFIED'`. |
+| `frontend/src/components/LocationField.tsx` | Props `appliedLabel`, `locationSource`, `onPickLocation`, `onClearLocation`. Do not restore `onChange`. | `secondaryButtonClassName` on the current-location button. Suggestion rows `min-h-11` and `hover:bg-mist`. Clear uses `quietActionClassName`. |
+| `frontend/src/components/SearchFiltersPanel.tsx` | Group Clear buttons call `onChange` with that group emptied (`level: ''`, `hechsher: []`, and the same for food, category, and radius). Checkbox handlers stay. | Panel `panelClassName`. Labels `choiceClassName`. Checkbox `size-5`. Replace the group Clear class `text-sm font-medium text-green-800 underline` with `quietActionClassName`. |
+| `frontend/src/components/SearchBar.tsx` | Agent 1 had not changed this file in the committed diff. Keep `text`, `onTextChange`, `onSearch`, `onPickSuggestion`. Home passes the hook methods above. | Forest search shell and mist suggestion rows already on this branch. |
+| Locales | Agent 1 added `home.rateLimited`, `home.unknownHidden`, `filters.clearGroup`, and a longer `filters.hideExpired`. Uncommitted WP2 also edits both locale files. | Do not duplicate those keys. `home.heading` is already in both files and is what the title uses. |
+| `frontend/src/utils/displayName.ts` | Package 3 owns which stored name is chosen. | When a name is chosen, render it with `dir="auto"`. Do not translate it. |
 
-- English login at 390px: no horizontal overflow. Language control sits on the logo row and shows `עב`. The log-in button label is centered. Email and password fields are labeled.
-- Hebrew login at 390px and 375px: `dir="rtl"`. Logo is on the right, `EN` is on the left. No horizontal overflow. The show-password control stays at the inline end of the field.
-- Hebrew register at 1280px: heading `יצירת חשבון`, no horizontal overflow.
-- Hebrew forgot-password at 390px: heading and reset action are present, no horizontal overflow.
-- Hebrew missing page at 768px: heading `הדף לא נמצא`, no horizontal overflow.
-- Hebrew home at 390px and 1440px: the shell does not overflow. The search controls are still the previous interface. They were not restyled.
+Pending behavior this branch did not build:
 
-Not checked: a signed-in account page, the admin dashboard, certificate upload with a real file, and a populated restaurant card.
-
-## How discovery should use Agent 2's interface
-
-Do not invent a parallel store while the interface is missing. When `UX_FUNCTIONALITY_PROGRESS.md` names the hook and its actions:
-
-- Read search text, filters, and the list/map choice from that hook. Do not add another `useState` for them.
-- Render applied filters with `filterChipClassName`. Removal calls the documented clear action for that filter, not a local copy of the filter object.
-- Pass the stored restaurant through `localizedRestaurantName` and `localizedAddress` in the card, suggestion, and details title. Do not translate names that were not stored.
-- Keep Leaflet `direction: ltr`. Popup text can follow the page.
-- Leave list/map side-by-side and a mobile filter drawer undocumented as implementations until the actions exist and a side-by-side layout is approved.
-
-## Deferred until Work Package 1A is committed
-
-- Homepage composition, search field, filters, applied-filter chips, result cards, details page, and map/list layout.
-- Side-by-side list and map. Not approved. It would change Leaflet bounds, clustering, and selection. Do not build it without approval.
-- A mobile filter drawer. Opening it must not reset filters. Do not build it until Agent 2's filter actions exist.
-- Using `home.heading` and the unused discovery strings above.
+- URL search params, draft debounce, and request cancellation.
+- Per-group Clear and the result-line clear. The empty-state button already calls the local `handleClearAll` and is styled.
+- Removable chips. If a later change adds them, use `filterChipClassName` and Agent 1's clear action for that one filter.
+- `localizedRestaurantName` / `localizedAddress`. Cards still show `restaurant.name` and the stored address fields.
 
 ## Potential merge conflicts
 
-Likely if Agent 2 also edits presentation in the same files:
+High, because both branches edit the same JSX:
 
-- Medium: `Navbar.tsx`, `Layout.tsx` if navigation markup moves.
-- Medium: `locales/en.ts` and `locales/he.ts` (new keys were added in parallel places).
-- Low: `formStyles.ts`, `index.css` if Agent 2 does not import them.
-- Admin and form pages were restyled in place. Conflicts should keep Agent 2's handlers and this branch's classes.
+- `frontend/src/pages/HomePage.tsx`
+- `frontend/src/components/RestaurantCard.tsx`
+- `frontend/src/components/RestaurantMap.tsx`
+- `frontend/src/pages/RestaurantDetailsPage.tsx`
+- `frontend/src/components/SearchFiltersPanel.tsx`
+- `frontend/src/components/LocationField.tsx`
 
-`frontend/node_modules` is a directory junction and must not be committed. `frontend/dist` is generated. `frontend/scripts/apply-independent-design.mjs` is a one-off coder script and must not be committed.
+Low:
+
+- `frontend/src/components/SearchBar.tsx`, `KashrutBadge.tsx`, `formStyles.ts`, `index.css` (not in Agent 1's committed diff).
+- Locales were not edited here. Agent 1's committed and uncommitted locale edits should be kept.
+
+On conflict, keep Agent 1's handlers, props, and hook calls, and keep this branch's class names.
 
 ## NEXT DESIGN AGENT ONBOARDING
 
 **Current position**
 
 - Branch `feature/design-overhaul`, worktree `C:\FS\projects\KosherRadar-design`.
-- Stage 1 and the independent pages are committed (`c32efd7`, `61a05a1`) and checked with tests, lint, typecheck, build, and the browser notes above.
-- Discovery screens are the next stage. They stay blocked while `feature/ux-functionality` has no committed interface.
+- Discovery presentation is committed: `08127e7` cards, `ac1181b` details, `c09bae2` search, filters, and map.
+- Do not start another design branch. Do not merge or push.
+
+**Completed screens**
+
+Restaurant cards, restaurant details, homepage and search presentation, filter appearance, and map/list controls. The independent pages from `c32efd7` / `61a05a1` remain.
+
+**Remaining**
+
+- Re-apply classes after Agent 1 lands. The table above is the checklist.
+- Browser cases marked NOT TESTED: suggestion dropdown, details loading, not-found, search error, map load error, Hebrew no-match.
+- Location autocomplete was not opened, so Geoapify was not called.
+- `displayName.ts` stays unwired until Agent 1's package 3 chooses the name.
+- Header overflow at about 220px only. No change at 375.
+
+**Design system**
+
+`frontend/src/index.css` tokens and `frontend/src/components/formStyles.ts`.
+
+**Tests last run**
+
+`npm test`, `npm run lint`, and `npm run build` in `frontend`, all exit 0. 94 tests. JS `730.52 kB`.
+
+**Browser**
+
+`http://localhost:5179/` during this session. The proxy config was deleted. Screenshots are listed above and are gitignored.
 
 **Exact next step**
 
-1. Read this file. Reconcile it with `git status` and `git log` on this worktree only.
-2. Read `C:\FS\projects\KosherRadar-ux-functionality\UX_FUNCTIONALITY_PROGRESS.md` if it exists. Do not edit it.
-3. If Work Package 1A is not committed, do not start homepage, filters, cards, details, or the map. Continue only with leftover visual polish on auth, forms, account, and admin.
-4. If Work Package 1A is committed, read the hook and action names, then restyle discovery by calling that interface. Use `filterChipClassName` and `displayName.ts`. Do not copy search state into this branch.
-5. Re-run `npm test`, `npm run lint`, `npm run typecheck`, and `npm run build` in `frontend`.
-6. Look at login, register, account (if a session exists), and admin in English and Hebrew around 390px and 1280px.
-
-**Do not repeat**
-
-- Do not add URL search params, debounce, or a second filter store.
-- Do not change who is included by the unknown-kashrut default.
-- Do not rename public kashrut statuses.
-- Do not merge, rebase, or push.
+1. Read this file and `git status` on this worktree only.
+2. Read `C:\FS\projects\KosherRadar-ux-functionality\UX_FUNCTIONALITY_PROGRESS.md` without editing it.
+3. If integrating, keep Agent 1's `useSearchCriteria` and re-apply the classes in the table. Do not add a second search store.
+4. Do not edit Agent 1's uncommitted auth, admin, or locale files from this worktree.
+5. Do not merge, rebase, or push.

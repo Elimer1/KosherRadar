@@ -17,6 +17,9 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
+# Local design evidence. Paths are listed in DESIGN_PROGRESS.md.
+design-screenshots/
+
 # Editor folders
 .vscode/
 .idea/
