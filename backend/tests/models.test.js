@@ -4,6 +4,8 @@ import mongoose from 'mongoose';
 import { User } from '../src/models/User.js';
 import { Restaurant } from '../src/models/Restaurant.js';
 import { Teuda } from '../src/models/Teuda.js';
+import { Report } from '../src/models/Report.js';
+import { pendingReportFingerprint } from '../src/utils/reportIdentity.js';
 
 const someId = () => new mongoose.Types.ObjectId();
 
@@ -163,5 +165,46 @@ describe('Teuda model', () => {
     });
 
     await expect(teuda.validate()).rejects.toThrow(/rejectionReason/);
+  });
+});
+
+describe('Report model', () => {
+  it('stores a short pending identity and does not index the description', async () => {
+    const pendingIdentity = Report.schema.indexes().find(([, options]) => options.name === 'pending_report_identity');
+
+    expect(pendingIdentity[0]).toEqual({
+      submittedBy: 1,
+      restaurant: 1,
+      pendingReportFingerprint: 1,
+    });
+    expect(pendingIdentity[1]).toMatchObject({
+      unique: true,
+      partialFilterExpression: { status: 'PENDING', pendingReportFingerprint: { $type: 'string' } },
+    });
+    expect(Report.schema.path('pendingReportFingerprint').options.select).toBe(false);
+
+    const teudaId = someId();
+    const report = new Report({
+      restaurant: someId(),
+      submittedBy: someId(),
+      teuda: teudaId,
+      description: '  The hours are wrong  ',
+      type: 'KASHRUT_UPDATE',
+      proposedKashrutLevel: 'MEHADRIN',
+    });
+
+    await report.validate();
+
+    expect(report.description).toBe('The hours are wrong');
+    expect(report.pendingReportFingerprint).toBe(
+      pendingReportFingerprint({ description: 'The hours are wrong', teuda: teudaId })
+    );
+    expect(report.pendingReportFingerprint).toHaveLength(64);
+    expect(pendingReportFingerprint({ description: 'The hours are wrong', teuda: teudaId })).not.toBe(
+      pendingReportFingerprint({ description: 'the hours are wrong', teuda: teudaId })
+    );
+    expect(pendingReportFingerprint({ description: 'The hours are wrong', teuda: teudaId })).not.toBe(
+      pendingReportFingerprint({ description: 'The hours are wrong' })
+    );
   });
 });

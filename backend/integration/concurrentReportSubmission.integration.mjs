@@ -92,6 +92,24 @@ async function pointsOf(userId) {
   return { points: user.points, awardedPointKeys: user.awardedPointKeys };
 }
 
+test('the pending report index exists before concurrent submissions run', async () => {
+  const indexes = await models.Report.collection.indexes();
+  const pendingIndex = indexes.find((index) => index.name === 'pending_report_identity');
+
+  assert.ok(pendingIndex, 'pending_report_identity was not built');
+  assert.equal(pendingIndex.unique, true);
+  assert.equal(pendingIndex.key.description, undefined);
+  assert.deepEqual(pendingIndex.key, {
+    submittedBy: 1,
+    restaurant: 1,
+    pendingReportFingerprint: 1,
+  });
+  assert.deepEqual(pendingIndex.partialFilterExpression, {
+    status: 'PENDING',
+    pendingReportFingerprint: { $type: 'string' },
+  });
+});
+
 test('two concurrent identical reports leave one pending report and award no points', async () => {
   const user = await makeUser();
   const restaurant = await makeApprovedRestaurant(user);

@@ -83,6 +83,30 @@ Restaurant command re-run in the same session: exit 0, 10 passed.
 
 `npm test`: exit 0, 40 files, 502 passed.
 
+## Concurrent duplicate reports
+
+**Status:** VERIFIED
+
+**Reported behavior:** A user must not have two identical pending reports for the same restaurant. Concurrent identical submissions were both stored.
+
+**Identity, taken from the existing lookup:** same submitter, same restaurant, same certificate (or both with no certificate), and the same description, while `status` is `PENDING`. The description match follows the schema trim: surrounding spaces are the same text, and letter case is not. Report type, photo, and proposed hechsher or level are not part of the identity. Different users, different wording, and different certificates stay separate. After the first report is resolved or rejected, the same text can be sent again.
+
+**Root cause:** `findSimilarPendingReportRepo` then `createReportRepo`. A unique index on `description` was not used because a 2000-character value can exceed MongoDB's index key limit.
+
+**Solution:** `pendingReportFingerprint` is the SHA-256 of the trimmed description and the certificate id, stored on the report and omitted from default queries. Partial unique index `pending_report_identity` covers `submittedBy`, `restaurant`, and that fingerprint only when `status` is `PENDING` and the fingerprint is a string. The losing insert is mapped to the existing 409, `You already sent this report and it is waiting for review`. An uploaded photo is still deleted. Points are still awarded only when an admin resolves one report with a correction, once, under the existing +1 rule.
+
+**Migration:** No backfill. Reports saved before this field are outside the partial index, so the build does not require them to be unique and does not rewrite them. A later identical submission still hits the existing lookup. Production was not scanned. `syncIndexes` was not run.
+
+**Reopen note:** If a resolved report is put back to pending after the user has already sent the same text again, the index can reject that reopen. The existing correction path logs a failed reopen and still reports the original write error. That window was not given a new points rule.
+
+### Evidence
+
+Before, `node --test integration/concurrentReportSubmission.integration.mjs` with `AGENT2_DB_TEST=1`: exit 1. 8 tests, 6 passed, 2 failed. Identical concurrent reports and a 1500-character concurrent description each stored two rows (`created, created`). Commit `70e06858e3cb48d46442689e864e2922c747cedb`.
+
+After: same command, exit 0, 9 passed. The surviving report, resolved with `CORRECTION_ALREADY_MADE`, awarded +1 once (`REPORT:<id>`). Points were 0 before that resolution. A long description still collapsed to one row. Spacing, type, proposed level, another certificate, another user, different case, and resubmit after resolve or reject behaved as the existing rule requires.
+
+`npm test`: exit 0, 40 files, 505 passed. Resolving the live report printed the existing Mongoose warning that `new` on `findOneAndUpdate` is deprecated. That call was already in the admin repository. It was not changed.
+
 ## Triage
 
 | Issue | Evidence | Current status | Impact | Action |
@@ -90,7 +114,7 @@ Restaurant command re-run in the same session: exit 0, 10 passed.
 | QA-003 / M5-003 restaurant race | Live race stored 2 rows, then 1 row and 409 | VERIFIED | Duplicate pending restaurants | Fixed |
 | Dated and undated certificate race | Live race stored 2 certificates, then 1 and 409 | VERIFIED | Duplicate pending certificates; two later approvals could award +2 twice | Fixed |
 | Legacy undated photo with no fingerprint | Integration test still returns 409 for a later no-photo submission. QA reported the same limitation | NEEDS PRODUCT DECISION | A no-photo retry matches an old row that has no fingerprint | No backfill |
-| Report submission race | Opt-in run stored 2 identical pending reports (`created`, `created`) | CONFIRMED | Duplicate reports. Points only if an admin resolves both | Deferred. A unique index on `description` can exceed MongoDB's 1024-byte key limit |
+| Report submission race | Live race stored 2 rows, then 1 row and 409. +1 awarded once | VERIFIED | Duplicate pending reports and a second +1 | Fixed with a SHA-256 fingerprint, not an index on the description |
 | Password reset token, expiry, reuse, `tokenVersion` | QA live pass. Code consumes the token, releases it when the password is not saved, and bumps `tokenVersion` in the password update | ALREADY WORKING | Session invalidation and single use | No code change |
 | Concurrent certificate approval and +3 / +2 | QA live pass. Award key is per certificate id | ALREADY WORKING | Double points on one certificate | No code change |
 | `CORRECTION_ALREADY_MADE` awards +1 without a field diff | Documented points rule. QA did not treat it as a defect | NEEDS PRODUCT DECISION | Points policy | Not changed |
@@ -102,35 +126,36 @@ Restaurant command re-run in the same session: exit 0, 10 passed.
 | Search candidate cap (M6-001) | Code cap. Not reproduced with a large set | DEFERRED | Late alphabetical matches can be omitted | Not changed |
 | Public restaurant payload privacy | QA live pass on details and cards | ALREADY WORKING | Private field exposure | No code change |
 
-No further code changes were made after the certificate fix. The five-fix allowance was not used as a target.
+The report race above is the additional confirmed fix requested after the certificate work.
 
 ## NEXT AGENT ONBOARDING
 
-**Current task:** None. QA-003 and the certificate submission race are verified and committed. Do not start another fix unless a new confirmed defect appears. Do not merge or push.
+**Current task:** None. The report duplicate race is verified. Do not merge or push.
 
-**Last completed issue:** Concurrent dated and undated certificate submissions.
+**Last completed issue:** Concurrent identical pending reports.
 
-**Git branch:** `feature/backend-qa-fixes` in `C:\FS\projects\KosherRadar-backend-qa`. This progress file is part of the certificate fix commit. Earlier commits: `06d4bed` restaurant regression, `b86f46d` restaurant fix, `209cd75` dated-certificate regression.
+**Git branch:** `feature/backend-qa-fixes` in `C:\FS\projects\KosherRadar-backend-qa`. This progress file is part of the report fix commit. Regression commit `70e0685`. Earlier: `06d4bed` and `b86f46d` restaurants, `209cd75` and `fd84030` certificates.
 
 **Tests last run:**
 
-- Certificate integration: exit 0, 12 passed.
-- Restaurant integration, earlier in the same session after the restaurant fix and again with the certificate indexes: exit 0, 10 passed.
-- `npm test`: exit 0, 40 files, 502 passed.
-- Guard checks: exit 0, 3 passed.
+- Report integration: exit 0, 9 passed.
+- `npm test`: exit 0, 40 files, 505 passed.
+- Certificate integration from the previous fix: exit 0, 12 passed. Restaurant integration: exit 0, 10 passed.
 
 **Database safety:** `AGENT2_DB_TEST=1` and `kosherradar_agent2_test` on `127.0.0.1:27017` only. Do not use `kosherradar_qa`. Do not read `.env`.
 
 **Known limitations:**
 
 - Undated legacy rows with no photo fingerprint still match a later no-photo submission. That is intentional.
-- Identical concurrent reports can still both be stored. Do not unique-index the raw description.
+- Old reports without `pendingReportFingerprint` are not backfilled. The lookup still blocks a sequential duplicate.
+- Reopening a resolved report can fail if an identical pending report already exists.
 - Standalone MongoDB cannot run a multi-document transaction.
-- Production data was not scanned. Index builds fail if matching pending duplicates already exist.
+- Production data was not scanned. Do not `syncIndexes` a shared database.
 - Admin collision on the restaurant index uses the generic duplicate-key 409 text.
+- `CORRECTION_ALREADY_MADE` still awards +1 without a field diff.
 
-**Uncommitted changes:** none after the certificate fix commit.
+**Uncommitted changes:** none after the report fix commit.
 
-**Exact next step:** Stop. Do not merge or push. Do not start another backend fix unless a newly confirmed defect appears.
+**Exact next step:** Stop. Do not merge or push.
 
-**Do not repeat:** Do not reset `main`. Do not edit other worktrees. Do not unique-index restaurant name alone. Do not `syncIndexes` a shared database. Do not backfill certificate fingerprints. Do not change the +1 / +2 / +3 rules.
+**Do not repeat:** Do not reset `main`. Do not edit other worktrees. Do not unique-index a report description or a restaurant name. Do not backfill certificate fingerprints or report fingerprints. Do not change the +1 / +2 / +3 rules.

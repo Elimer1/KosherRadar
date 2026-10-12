@@ -115,6 +115,30 @@ describe('submitReportService', () => {
     ).rejects.toMatchObject({ statusCode: 404 });
   });
 
+  it('answers 409 when a concurrent insert loses the pending report index', async () => {
+    createReportRepo.mockRejectedValue(
+      Object.assign(new Error('E11000 duplicate key'), {
+        code: 11000,
+        keyPattern: { submittedBy: 1, restaurant: 1, pendingReportFingerprint: 1 },
+      })
+    );
+
+    await expect(submitReportService({ reportData: reportData(), user })).rejects.toMatchObject({
+      statusCode: 409,
+      message: 'You already sent this report and it is waiting for review',
+    });
+  });
+
+  it('does not treat a different duplicate key as a pending report conflict', async () => {
+    const duplicate = Object.assign(new Error('E11000 other'), {
+      code: 11000,
+      keyPattern: { email: 1 },
+    });
+    createReportRepo.mockRejectedValue(duplicate);
+
+    await expect(submitReportService({ reportData: reportData(), user })).rejects.toBe(duplicate);
+  });
+
   it('answers 409 for the same report sent twice', async () => {
     findSimilarPendingReportRepo.mockResolvedValue({ _id: 'earlier' });
 
