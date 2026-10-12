@@ -116,6 +116,20 @@ restaurantSchema.index({ geoapifyPlaceId: 1 }, { sparse: true });
 restaurantSchema.index({ phoneNormalized: 1 }, { sparse: true });
 restaurantSchema.index({ addressNormalized: 1 });
 restaurantSchema.index({ submittedBy: 1 });
+// NEW (Backend QA): one pending submission per user, normalized name, and normalized address.
+// The service lookup is not atomic. This index rejects the losing concurrent insert.
+// Approved and rejected rows stay out of the index, so the same user can submit again after a decision.
+// חדש (בדיקת שרת): הגשה ממתינה אחת לכל משתמש, שם מנורמל וכתובת מנורמלת.
+// החיפוש בשירות אינו אטומי. האינדקס דוחה את ההכנסה המקבילה שמפסידה.
+// שורות מאושרות ונדחות נשארות מחוץ לאינדקס, כדי שאפשר לשלוח שוב אחרי החלטה.
+restaurantSchema.index(
+  { submittedBy: 1, nameNormalized: 1, addressNormalized: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: 'PENDING' },
+    name: 'pending_submitter_name_address',
+  }
+);
 // NEW (Milestone 4): multikey indexes behind the public search (anchored prefix matches use them).
 // חדש (אבן דרך 4): אינדקסים לחיפוש הציבורי (התאמות תחילת מילה משתמשות בהם).
 restaurantSchema.index({ status: 1, nameTokens: 1 });

@@ -5,6 +5,23 @@ import { findTeudaByIdRepo } from '../repositories/teudaRepository.js';
 import { isTeudaPublic } from './teudaRulesService.js';
 import { deleteImageService, uploadReportImageService } from './imageUploadService.js';
 
+// NEW (Backend QA): the pending-report fingerprint index reports a lost race as a duplicate key.
+// חדש (בדיקת שרת): אינדקס טביעת הדיווח הממתין מדווח על מרוץ שהפסיד כמפתח כפול.
+const isPendingReportDuplicate = (error) => {
+  const duplicate = error?.code === 11000 ? error : error?.cause;
+  const pattern = duplicate?.keyPattern;
+
+  return (
+    duplicate?.code === 11000 &&
+    pattern?.submittedBy != null &&
+    pattern?.restaurant != null &&
+    pattern?.pendingReportFingerprint != null
+  );
+};
+
+const pendingReportConflict = () =>
+  appError('You already sent this report and it is waiting for review', 409);
+
 // A signed-in user reports a problem or proposes a correction. The report is PENDING: nothing about
 // the restaurant or certificate changes until an admin reviews it and applies a correction.
 export const submitReportService = async ({ reportData, file, user }) => {
@@ -33,7 +50,7 @@ export const submitReportService = async ({ reportData, file, user }) => {
   });
 
   if (alreadySent) {
-    throw appError('You already sent this report and it is waiting for review', 409);
+    throw pendingReportConflict();
   }
 
   // NEW (update): the photo is optional. A failed save removes the upload so it is not left behind.
@@ -60,6 +77,10 @@ export const submitReportService = async ({ reportData, file, user }) => {
   } catch (error) {
     if (image) {
       await deleteImageService(image.cloudinaryPublicId);
+    }
+
+    if (isPendingReportDuplicate(error)) {
+      throw pendingReportConflict();
     }
 
     throw error;

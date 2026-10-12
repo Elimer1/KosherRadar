@@ -242,6 +242,44 @@ describe('submitTeudaService', () => {
     expect(second).toEqual(first);
   });
 
+  it('answers 409 when a concurrent insert loses a pending certificate index', async () => {
+    const patterns = [
+      {
+        restaurant: 1,
+        submittedBy: 1,
+        hechsher: 1,
+        hechsherOther: 1,
+        kashrutLevel: 1,
+        expirationDate: 1,
+      },
+      {
+        restaurant: 1,
+        submittedBy: 1,
+        hechsher: 1,
+        hechsherOther: 1,
+        kashrutLevel: 1,
+        mashgiachName: 1,
+        mashgiachPhone: 1,
+        photoFingerprint: 1,
+      },
+    ];
+
+    for (const keyPattern of patterns) {
+      createTeudaRepo.mockRejectedValueOnce(
+        Object.assign(new Error('E11000 duplicate key'), { code: 11000, keyPattern })
+      );
+
+      await expect(
+        submitTeudaService({ restaurantId: 'rest-1', teudaData: teudaData(), file, user })
+      ).rejects.toMatchObject({
+        statusCode: 409,
+        message: 'You already submitted this certificate and it is waiting for review',
+      });
+    }
+
+    expect(deleteImageService).toHaveBeenCalledWith('kosherradar/teudot/photo');
+  });
+
   it('answers 409 and does not upload when the same certificate is already waiting for review', async () => {
     findSimilarPendingTeudaRepo.mockResolvedValue({ _id: 'earlier' });
 

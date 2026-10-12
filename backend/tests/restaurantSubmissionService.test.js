@@ -177,6 +177,35 @@ describe('submitRestaurantService', () => {
     ]);
   });
 
+  it('answers 409 when a concurrent insert loses the pending identity index', async () => {
+    createRestaurantRepo.mockRejectedValue(
+      Object.assign(new Error('E11000 duplicate key'), {
+        code: 11000,
+        keyPattern: { submittedBy: 1, nameNormalized: 1, addressNormalized: 1 },
+      })
+    );
+
+    await expect(
+      submitRestaurantService({ restaurantData: restaurantData(), teudaData: teudaData(), file, user })
+    ).rejects.toMatchObject({
+      statusCode: 409,
+      message: 'You already submitted this restaurant and it is waiting for review',
+    });
+    expect(deleteImageService).toHaveBeenCalledWith('kosherradar/teudot/photo');
+    expect(createTeudaRepo).not.toHaveBeenCalled();
+  });
+
+  it('does not treat a different duplicate key as a pending restaurant conflict', async () => {
+    const duplicate = Object.assign(new Error('E11000 other'), {
+      code: 11000,
+      keyPattern: { geoapifyPlaceId: 1 },
+    });
+    createRestaurantRepo.mockRejectedValue(duplicate);
+
+    await expect(submitRestaurantService({ restaurantData: restaurantData(), user })).rejects.toBe(duplicate);
+    expect(createTeudaRepo).not.toHaveBeenCalled();
+  });
+
   it('answers 409 when the same user already has this restaurant waiting for review', async () => {
     findPendingRestaurantBySubmitterRepo.mockResolvedValue({ _id: 'earlier' });
 

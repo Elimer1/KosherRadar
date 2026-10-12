@@ -14,6 +14,22 @@ import {
   isTeudaPublic,
 } from './teudaRulesService.js';
 
+// NEW (Backend QA): either pending-certificate index reports a lost race as a duplicate key.
+// חדש (בדיקת שרת): כל אחד מאינדקסי התעודה הממתינה מדווח על מרוץ שהפסיד כמפתח כפול.
+const isPendingCertificateDuplicate = (error) => {
+  const duplicate = error?.code === 11000 ? error : error?.cause;
+  const pattern = duplicate?.keyPattern;
+  const pendingIdentity =
+    pattern?.restaurant != null && pattern?.submittedBy != null && pattern?.hechsher != null;
+  const datedOrUndated =
+    pattern?.expirationDate != null || pattern?.mashgiachName != null || pattern?.photoFingerprint != null;
+
+  return duplicate?.code === 11000 && pendingIdentity && datedOrUndated;
+};
+
+const pendingCertificateConflict = () =>
+  appError('You already submitted this certificate and it is waiting for review', 409);
+
 // A photo, an expiration date, or a mashgiach is certificate evidence. The hechsher alone is the restaurant claim.
 export const hasCertificateEvidence = (teudaData, file) =>
   Boolean(file || teudaData?.expirationDate || teudaData?.mashgiachName || teudaData?.mashgiachPhone);
@@ -155,7 +171,7 @@ export const submitTeudaService = async ({ restaurantId, teudaData, file, user }
   );
 
   if (alreadySent) {
-    throw appError('You already submitted this certificate and it is waiting for review', 409);
+    throw pendingCertificateConflict();
   }
 
   const image = file ? await uploadTeudaImageService(file) : null;
@@ -177,6 +193,11 @@ export const submitTeudaService = async ({ restaurantId, teudaData, file, user }
     if (image) {
       await deleteImageService(image.cloudinaryPublicId);
     }
+
+    if (isPendingCertificateDuplicate(error)) {
+      throw pendingCertificateConflict();
+    }
+
     throw error;
   }
 };

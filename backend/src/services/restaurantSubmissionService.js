@@ -49,6 +49,23 @@ const withGeocodedLocation = async (restaurantData, lang) => {
   };
 };
 
+// NEW (Backend QA): the pending-identity unique index reports a lost race as a duplicate key.
+// חדש (בדיקת שרת): אינדקס הזהות של הגשה ממתינה מדווח על מרוץ שהפסיד כמפתח כפול.
+const isPendingRestaurantDuplicate = (error) => {
+  const duplicate = error?.code === 11000 ? error : error?.cause;
+  const pattern = duplicate?.keyPattern;
+
+  return (
+    duplicate?.code === 11000 &&
+    pattern?.submittedBy != null &&
+    pattern?.nameNormalized != null &&
+    pattern?.addressNormalized != null
+  );
+};
+
+const pendingRestaurantConflict = () =>
+  appError('You already submitted this restaurant and it is waiting for review', 409);
+
 // A signed-in user proposes a new restaurant, optionally with its first certificate.
 // Everything starts as PENDING: only an admin can approve, and the user never chooses status or points.
 export const submitRestaurantService = async ({ restaurantData, teudaData, file, user, lang }) => {
@@ -71,7 +88,7 @@ export const submitRestaurantService = async ({ restaurantData, teudaData, file,
   });
 
   if (alreadySent) {
-    throw appError('You already submitted this restaurant and it is waiting for review', 409);
+    throw pendingRestaurantConflict();
   }
 
   // Duplicates are only recorded for the admin. They never stop the submission.
@@ -92,6 +109,11 @@ export const submitRestaurantService = async ({ restaurantData, teudaData, file,
     if (image) {
       await deleteImageService(image.cloudinaryPublicId);
     }
+
+    if (isPendingRestaurantDuplicate(error)) {
+      throw pendingRestaurantConflict();
+    }
+
     throw error;
   }
 
