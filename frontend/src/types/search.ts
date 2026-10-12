@@ -69,6 +69,22 @@ export interface SearchLocation {
   lng: number;
 }
 
+// NEW (Milestone 5): the rectangle currently visible on the map. North must be greater than south.
+// חדש (אבן דרך 5): המלבן שנראה כרגע על המפה. צפון גדול מדרום.
+export interface MapBounds {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+}
+
+export interface MapSearchResult {
+  items: RestaurantCardData[];
+  total: number;
+  capped: boolean;
+  search: SearchResult['search'];
+}
+
 // Everything the visitor can choose. Text and filters are sent to the server, which filters and sorts.
 export interface SearchFilters {
   q: string;

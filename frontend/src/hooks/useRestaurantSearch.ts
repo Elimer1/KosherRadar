@@ -34,7 +34,9 @@ const toState = (result: SearchResult, items: RestaurantCardData[]): SearchState
   atlasUnavailable: result.search.atlasUnavailable,
 });
 
-export const useRestaurantSearch = (filters: SearchFilters) => {
+// `enabled` is false while the map is showing, so the list does not keep loading pages in the background.
+// enabled הוא false בזמן שהמפה מוצגת, כדי שהרשימה לא תמשיך לטעון עמודים ברקע.
+export const useRestaurantSearch = (filters: SearchFilters, enabled = true) => {
   const [state, setState] = useState<SearchState>(emptyState);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -47,6 +49,13 @@ export const useRestaurantSearch = (filters: SearchFilters) => {
 
   useEffect(() => {
     latestFiltersKey.current = filtersKey;
+
+    if (!enabled) {
+      setLoading(false);
+      setLoadingMore(false);
+      return;
+    }
+
     // `ignore` stops a slow answer for OLD filters from replacing the answer for the current ones.
     let ignore = false;
 
@@ -80,7 +89,7 @@ export const useRestaurantSearch = (filters: SearchFilters) => {
     };
     // `filters` is rebuilt on every render; `filtersKey` is its content, which is the real trigger.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtersKey, retryCounter]);
+  }, [filtersKey, retryCounter, enabled]);
 
   const loadMore = async () => {
     if (loading || loadingMore || !state.hasMore) {

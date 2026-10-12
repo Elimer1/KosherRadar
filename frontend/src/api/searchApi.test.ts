@@ -1,7 +1,7 @@
 // NEW (Milestone 4): tests for the search query string builder.
 // חדש (אבן דרך 4): בדיקות לבונה מחרוזת השאילתה של החיפוש.
 import { describe, expect, it } from 'vitest';
-import { buildSearchParams } from './searchApi';
+import { buildMapParams, buildSearchParams } from './searchApi';
 import { emptySearchFilters } from '../types/search';
 
 describe('buildSearchParams', () => {
@@ -52,5 +52,26 @@ describe('buildSearchParams', () => {
 
   it('never sends the page size: the server always uses 20', () => {
     expect(Object.keys(buildSearchParams(emptySearchFilters, 2))).not.toContain('limit');
+  });
+});
+
+describe('buildMapParams', () => {
+  it('adds the visible box and does not send a page', () => {
+    const params = buildMapParams(
+      { ...emptySearchFilters, q: 'pizza', location: { lat: 31.7, lng: 35.2 }, radiusKm: 5 },
+      { north: 32.2, south: 31.5, east: 35.5, west: 34.7 }
+    );
+
+    expect(params).toEqual({
+      q: 'pizza',
+      lat: '31.7',
+      lng: '35.2',
+      radiusKm: '5',
+      north: '32.2',
+      south: '31.5',
+      east: '35.5',
+      west: '34.7',
+    });
+    expect(params).not.toHaveProperty('page');
   });
 });

@@ -5,6 +5,7 @@ import {
   submitTeudaController,
 } from '../controllers/restaurantController.js';
 import {
+  getMapRestaurantsController,
   getRestaurantDetailsController,
   getSuggestionsController,
   searchRestaurantsController,
@@ -22,7 +23,7 @@ import { validateBody } from '../middleware/validate.js';
 import { validateObjectIdParam } from '../middleware/validateObjectId.js';
 import { validateQuery } from '../middleware/validateQuery.js';
 import { submitRestaurantSchema } from '../schemas/restaurantSchemas.js';
-import { searchQuerySchema, suggestionsQuerySchema } from '../schemas/searchSchemas.js';
+import { mapQuerySchema, searchQuerySchema, suggestionsQuerySchema } from '../schemas/searchSchemas.js';
 import { submitTeudaSchema } from '../schemas/teudaSchemas.js';
 
 const router = Router();
@@ -32,6 +33,10 @@ const router = Router();
 // חדש (אבן דרך 4): חיפוש והשלמה אוטומטית ציבוריים. בלי התחברות. חייבים להישאר מעל נתיבי `/:restaurantId`.
 router.get('/', searchRateLimiter, validateQuery(searchQuerySchema), searchRestaurantsController);
 router.get('/suggestions', searchRateLimiter, validateQuery(suggestionsQuerySchema), getSuggestionsController);
+
+// NEW (Milestone 5): restaurants inside the visible map. Must stay above `/:restaurantId`.
+// חדש (אבן דרך 5): מסעדות בתוך המפה הנראית. חייב להישאר מעל `/:restaurantId`.
+router.get('/map', searchRateLimiter, validateQuery(mapQuerySchema), getMapRestaurantsController);
 
 // NEW (Milestone 4): the public page of one APPROVED restaurant. Any other status answers 404.
 // חדש (אבן דרך 4): הדף הציבורי של מסעדה מאושרת אחת. כל סטטוס אחר עונה 404.

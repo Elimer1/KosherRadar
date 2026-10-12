@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import RestaurantCard from '../components/RestaurantCard';
+import RestaurantMap from '../components/RestaurantMap';
 import SearchBar from '../components/SearchBar';
 import SearchFiltersPanel from '../components/SearchFiltersPanel';
 import { useFormOptions } from '../hooks/useFormOptions';
 import { useRestaurantSearch } from '../hooks/useRestaurantSearch';
 import { emptySearchFilters } from '../types/search';
 import type { SearchFilters } from '../types/search';
+import { readSavedView, saveView } from '../utils/mapView';
+import type { DiscoveryView } from '../utils/mapView';
 
 // NEW (Milestone 4): the home page is the public search: one search box (restaurant name or food), filters,
 // and the list of results, 20 at a time. Anyone can use it without an account.
@@ -33,8 +36,11 @@ function HomePage() {
   const [text, setText] = useState('');
   const [filters, setFilters] = useState<SearchFilters>(emptySearchFilters);
   const [showFilters, setShowFilters] = useState(false);
+  // NEW (Milestone 5): list and map are never shown together. The choice is remembered on this browser.
+  // חדש (אבן דרך 5): רשימה ומפה לא מוצגות יחד. הבחירה נשמרת בדפדפן הזה.
+  const [view, setView] = useState<DiscoveryView>(() => readSavedView());
 
-  const search = useRestaurantSearch(filters);
+  const search = useRestaurantSearch(filters, view === 'list');
   const activeFilterCount = countActiveFilters(filters);
   const hechsherOptions = options?.hechsherOptions || [];
   const hasAnySearchChoice = filters.q.trim() !== '' || activeFilterCount > 0;
@@ -47,6 +53,16 @@ function HomePage() {
     setText('');
     setFilters(emptySearchFilters);
   };
+
+  const handleViewChange = (next: DiscoveryView) => {
+    setView(next);
+    saveView(next);
+  };
+
+  const viewButtonClass = (selected: boolean) =>
+    `min-h-11 flex-1 rounded px-3 py-2 text-sm font-medium sm:flex-none ${
+      selected ? 'bg-green-600 text-white' : 'border border-green-600 text-green-700 hover:bg-green-50'
+    }`;
 
   return (
     <div>
@@ -91,16 +107,37 @@ function HomePage() {
         </aside>
 
         <section aria-live="polite" aria-label="Search results">
-          {search.atlasUnavailable && (
+          <div role="group" aria-label="Results view" className="mb-3 flex gap-2">
+            <button
+              type="button"
+              aria-pressed={view === 'list'}
+              onClick={() => handleViewChange('list')}
+              className={viewButtonClass(view === 'list')}
+            >
+              List
+            </button>
+            <button
+              type="button"
+              aria-pressed={view === 'map'}
+              onClick={() => handleViewChange('map')}
+              className={viewButtonClass(view === 'map')}
+            >
+              Map
+            </button>
+          </div>
+
+          {view === 'map' && <RestaurantMap filters={filters} hechsherOptions={hechsherOptions} />}
+
+          {view === 'list' && search.atlasUnavailable && (
             <p role="status" className="mb-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
               Typo-tolerant search is temporarily unavailable. Results show restaurants whose name or food starts
               with what you typed.
             </p>
           )}
 
-          {search.loading && <p className="py-8 text-center text-gray-600">Searching...</p>}
+          {view === 'list' && search.loading && <p className="py-8 text-center text-gray-600">Searching...</p>}
 
-          {!search.loading && search.error && search.items.length === 0 && (
+          {view === 'list' && !search.loading && search.error && search.items.length === 0 && (
             <div role="alert" className="rounded border border-red-200 bg-red-50 p-4 text-red-800">
               <p>{search.error}</p>
               <button
@@ -113,7 +150,7 @@ function HomePage() {
             </div>
           )}
 
-          {!search.loading && !search.error && search.items.length === 0 && (
+          {view === 'list' && !search.loading && !search.error && search.items.length === 0 && (
             <div className="rounded-lg border border-dashed border-gray-300 p-8 text-center text-gray-700">
               {hasAnySearchChoice ? (
                 <>
@@ -144,7 +181,7 @@ function HomePage() {
             </div>
           )}
 
-          {search.items.length > 0 && (
+          {view === 'list' && search.items.length > 0 && (
             <>
               <p className="mb-3 text-sm text-gray-600">
                 {search.total} {search.total === 1 ? 'restaurant' : 'restaurants'} found
