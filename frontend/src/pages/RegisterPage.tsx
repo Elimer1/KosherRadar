@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { registerUser } from '../api/authApi';
 import { getErrorMessage } from '../api/errors';
 import PasswordField from '../components/PasswordField';
+import { inputClassName, labelClassName, primaryButtonClassName } from '../components/formStyles';
 import { useAuthStore } from '../stores/authStore';
 
 function RegisterPage() {
@@ -42,18 +43,18 @@ function RegisterPage() {
   };
 
   return (
-    <div className="mx-auto max-w-md">
+    <div className="mx-auto max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
       <h1 className="text-2xl font-bold text-gray-900">{t('auth.registerTitle')}</h1>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         {error && (
-          <p role="alert" className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
             {error}
           </p>
         )}
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="email" className={labelClassName}>
             {t('common.email')}
           </label>
           <input
@@ -63,7 +64,7 @@ function RegisterPage() {
             autoComplete="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
+            className={inputClassName}
           />
         </div>
 
@@ -89,7 +90,7 @@ function RegisterPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded bg-green-600 px-4 py-2.5 font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className={primaryButtonClassName}
         >
           {loading ? t('auth.creating') : t('nav.signup')}
         </button>
@@ -97,7 +98,7 @@ function RegisterPage() {
 
       <p className="mt-4 text-sm text-gray-600">
         {t('auth.haveAccount')}{' '}
-        <Link to="/login" className="font-medium text-green-700 hover:underline">
+        <Link to="/login" className="font-medium text-green-800 hover:underline">
           {t('nav.login')}
         </Link>
       </p>

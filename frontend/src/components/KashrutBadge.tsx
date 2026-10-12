@@ -21,7 +21,7 @@ const STYLES: Record<KashrutStatus, { symbol: string; box: string }> = {
   VERIFIED: { symbol: '✓', box: 'border-green-600 bg-green-50 text-green-900' },
   UNVERIFIED: { symbol: '!', box: 'border-dashed border-amber-500 bg-amber-50 text-amber-900' },
   EXPIRED: { symbol: '✕', box: 'border-red-500 bg-red-50 text-red-900' },
-  UNKNOWN: { symbol: '?', box: 'border-gray-300 bg-gray-50 text-gray-700' },
+  UNKNOWN: { symbol: '?', box: 'border-gray-300 bg-gray-50 text-gray-800' },
 };
 
 function KashrutBadge({ kashrut, hechsherOptions }: KashrutBadgeProps) {
@@ -32,9 +32,9 @@ function KashrutBadge({ kashrut, hechsherOptions }: KashrutBadgeProps) {
   const mentionsHiddenExpired = kashrut.hasRecentExpired && kashrut.status !== 'EXPIRED';
 
   return (
-    <div className={`rounded border px-3 py-2 text-sm ${style.box}`}>
+    <div className={`rounded-lg border px-3 py-2.5 text-sm leading-snug ${style.box}`}>
       <p className="font-semibold">
-        <span aria-hidden="true">{style.symbol} </span>
+        <span aria-hidden="true" className="me-1">{style.symbol}</span>
         {getStatusHeadline(kashrut.status)}
       </p>
 

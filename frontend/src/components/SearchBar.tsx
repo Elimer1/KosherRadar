@@ -12,7 +12,6 @@ import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import type { RestaurantSuggestion, SearchFilters } from '../types/search';
 import type { HechsherOption } from '../types/submissions';
 import { describeKashrutShort } from '../utils/kashrutText';
-import { inputClassName } from './formStyles';
 
 const MIN_CHARACTERS = 2;
 const DEBOUNCE_MS = 300;
@@ -113,7 +112,7 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
       <label htmlFor="restaurant-search" className="sr-only">
         {t('search.label')}
       </label>
-      <div className="flex gap-2">
+      <div className="flex items-stretch overflow-hidden rounded-xl border border-gray-300 bg-white shadow-sm focus-within:border-green-700 focus-within:ring-2 focus-within:ring-green-700/30">
         <input
           id="restaurant-search"
           type="search"
@@ -121,7 +120,7 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
           maxLength={100}
           autoComplete="off"
           placeholder={t('search.placeholder')}
-          className={`${inputClassName} mt-0`}
+          className="min-h-12 min-w-0 flex-1 bg-transparent px-4 text-gray-900 outline-none placeholder:text-gray-500"
           role="combobox"
           aria-expanded={showList}
           aria-controls={LIST_ID}
@@ -137,7 +136,7 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
         />
         <button
           type="submit"
-          className="rounded bg-green-600 px-5 py-2 font-medium text-white hover:bg-green-700"
+          className="m-1 inline-flex min-h-10 shrink-0 items-center rounded-lg bg-green-700 px-4 text-sm font-medium text-white hover:bg-green-800 focus-visible:outline-none"
         >
           {t('search.button')}
         </button>
@@ -147,7 +146,7 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
         <ul
           id={LIST_ID}
           role="listbox"
-          className="absolute left-0 right-0 z-10 mt-1 max-h-96 overflow-y-auto rounded border border-gray-200 bg-white shadow-lg"
+          className="absolute inset-x-0 z-20 mt-2 max-h-96 overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg"
         >
           {suggestions.map((suggestion, index) => (
             <li
@@ -160,7 +159,7 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
                 event.preventDefault();
                 onPickSuggestion(suggestion.id);
               }}
-              className={`cursor-pointer border-b border-gray-100 px-3 py-2 last:border-b-0 ${
+              className={`cursor-pointer px-4 py-2.5 ${
                 index === activeIndex ? 'bg-green-50' : 'hover:bg-gray-50'
               }`}
             >
