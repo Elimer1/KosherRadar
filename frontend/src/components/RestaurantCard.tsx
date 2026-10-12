@@ -41,12 +41,17 @@ function RestaurantCard({ restaurant, hechsherOptions }: RestaurantCardProps) {
         {distanceText && <p className="text-sm font-medium text-gray-700">{distanceText}</p>}
       </div>
 
-      <p className="mt-2 text-sm text-gray-700">
-        <span className="font-medium">{getFoodTypeLabel(restaurant.foodType)}</span>
-        {restaurant.categories.length > 0 && (
-          <span> · {restaurant.categories.map((category) => getCategoryLabel(category)).join(', ')}</span>
-        )}
-      </p>
+      {(restaurant.foodType || restaurant.categories.length > 0) && (
+        <p className="mt-2 text-sm text-gray-700">
+          {restaurant.foodType && <span className="font-medium">{getFoodTypeLabel(restaurant.foodType)}</span>}
+          {restaurant.categories.length > 0 && (
+            <span>
+              {restaurant.foodType ? ' · ' : ''}
+              {restaurant.categories.map((category) => getCategoryLabel(category)).join(', ')}
+            </span>
+          )}
+        </p>
+      )}
 
       <div className="mt-3">
         <KashrutBadge kashrut={restaurant.kashrut} hechsherOptions={hechsherOptions} />

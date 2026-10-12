@@ -40,7 +40,9 @@ const restaurantSchema = new mongoose.Schema(
     phone: { type: String, trim: true, maxlength: 30 },
     website: { type: String, trim: true, maxlength: 300 },
 
-    foodType: { type: String, enum: FOOD_TYPES, required: true },
+    // NEW (update): a user may submit a restaurant without choosing meat, dairy or pareve.
+    // חדש (עדכון): משתמש יכול לשלוח מסעדה בלי לבחור בשרי, חלבי או פרווה.
+    foodType: { type: String, enum: FOOD_TYPES },
     categories: { type: [{ type: String, enum: CATEGORIES }], default: [] },
     foodKeywords: { type: [String], default: [] },
 

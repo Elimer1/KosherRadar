@@ -10,6 +10,8 @@ interface RestaurantFieldsProps {
   disabled: boolean;
   // The user form hides coordinates, food keywords and the kashrut claim. Admins still edit those.
   variant?: 'user' | 'admin';
+  invalidName?: boolean;
+  invalidAddress?: boolean;
   onChange: (field: keyof RestaurantFormValues, value: string) => void;
   onToggleCategory: (category: string) => void;
 }
@@ -19,6 +21,8 @@ function RestaurantFields({
   options,
   disabled,
   variant = 'admin',
+  invalidName = false,
+  invalidAddress = false,
   onChange,
   onToggleCategory,
 }: RestaurantFieldsProps) {
@@ -43,7 +47,8 @@ function RestaurantFields({
             disabled={disabled}
             value={values.name}
             onChange={(event) => onChange('name', event.target.value)}
-            className={inputClassName}
+            aria-invalid={invalidName}
+            className={`${inputClassName} ${invalidName ? 'border-red-500' : ''}`}
           />
         </div>
 
@@ -52,7 +57,8 @@ function RestaurantFields({
           city={values.city}
           latitude={values.latitude}
           disabled={disabled}
-          cityRequired={forUser}
+          cityRequired={false}
+          invalid={invalidAddress}
           onAddressChange={(value) => onChange('address', value)}
           onCityChange={(value) => onChange('city', value)}
           onLocationChange={(location) => {
@@ -104,7 +110,7 @@ function RestaurantFields({
           </label>
           <select
             id="restaurant-food-type"
-            required
+            required={!forUser}
             disabled={disabled}
             value={values.foodType}
             onChange={(event) => onChange('foodType', event.target.value)}

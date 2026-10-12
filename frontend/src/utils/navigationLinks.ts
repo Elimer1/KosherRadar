@@ -12,12 +12,11 @@ export const buildTelUrl = (phone: string | null) => {
   return cleaned === '' ? null : `tel:${cleaned}`;
 };
 
-// NEW (Milestone 4): Google Maps link for the detail page. Exact coordinates are preferred; without them the
-// address text is searched. The text is encoded, so it cannot add parameters to the link.
-// חדש (אבן דרך 4): קישור Google Maps. עדיפות לקואורדינטות מדויקות; בלי אותן מחפשים לפי הכתובת (מקודדת).
-export const buildGoogleMapsUrl = (latitude: number | null, longitude: number | null, address: string) => {
-  const query =
-    typeof latitude === 'number' && typeof longitude === 'number' ? `${latitude},${longitude}` : address.trim();
+// NEW (update): search the restaurant name together with the address, so Google can open the business
+// rather than a pin on the street. The text is encoded, so it cannot add parameters to the link.
+// חדש (עדכון): חיפוש שם המסעדה יחד עם הכתובת, כדי ש-Google יוכל לפתוח את העסק ולא רק נעץ ברחוב.
+export const buildGoogleMapsUrl = (name: string, address: string) => {
+  const query = [name.trim(), address.trim()].filter((part) => part !== '').join(' ');
 
   return query === '' ? null : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 };

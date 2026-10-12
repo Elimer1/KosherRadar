@@ -2,6 +2,7 @@
 // and certificates that are hidden from the public). Public endpoints must use kashrutStatusService instead.
 // חדש (אבן דרך 3): הצורות שנשלחות רק לממשקי מנהל (כוללות הערות פרטיות, מיילים ותעודות ישנות). ממשק ציבורי לא משתמש בהן.
 import { dateToDateOnly, todayInIsrael } from '../utils/israelDate.js';
+import { toSafeHttpUrl } from '../utils/safeUrl.js';
 import { getTeudaVisibility } from './teudaRulesService.js';
 
 const idOf = (value) => (value && value._id ? String(value._id) : value ? String(value) : null);
@@ -49,7 +50,7 @@ export const toAdminRestaurant = (restaurant) => {
     geoapifyPlaceId: restaurant.geoapifyPlaceId || null,
     phone: restaurant.phone || null,
     website: restaurant.website || null,
-    foodType: restaurant.foodType,
+    foodType: restaurant.foodType || null,
     categories: restaurant.categories || [],
     foodKeywords: restaurant.foodKeywords || [],
     claimedHechsher: restaurant.claimedHechsher || null,
@@ -110,6 +111,7 @@ export const toAdminReport = (report) => {
     submittedBy: toUserBrief(report.submittedBy),
     type: report.type,
     description: report.description,
+    photoUrl: toSafeHttpUrl(report.photoUrl),
     proposedHechsher: report.proposedHechsher || null,
     proposedHechsherOther: report.proposedHechsherOther || null,
     proposedKashrutLevel: report.proposedKashrutLevel || null,

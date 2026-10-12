@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
 import { getMySubmissions } from '../api/submissionsApi';
 import { getErrorMessage } from '../api/errors';
 import FormAlert from '../components/FormAlert';
@@ -40,7 +39,9 @@ function StatusList({
   );
 }
 
-function MySubmissionsPage() {
+// NEW (update): the list lives on the account page. The old address still opens that page.
+// חדש (עדכון): הרשימה יושבת בדף החשבון. הכתובת הישנה עדיין פותחת את הדף הזה.
+export function SubmissionsPanel() {
   const { t } = useTranslation();
   const [submissions, setSubmissions] = useState<MySubmissions | null>(null);
   const [error, setError] = useState('');
@@ -66,12 +67,9 @@ function MySubmissionsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
+    <div className="mt-8 space-y-8">
       <div>
-        <Link to="/account" className="text-sm font-medium text-green-700 underline">
-          {t('forms.backAccount')}
-        </Link>
-        <h1 className="mt-2 text-2xl font-bold text-gray-900">{t('forms.mySubmissions')}</h1>
+        <h2 className="text-xl font-bold text-gray-900">{t('forms.mySubmissions')}</h2>
         <p className="mt-2 text-sm text-gray-600">{t('forms.submissionsBody')}</p>
       </div>
 
@@ -148,4 +146,4 @@ function MySubmissionsPage() {
   );
 }
 
-export default MySubmissionsPage;
+export default SubmissionsPanel;

@@ -33,24 +33,6 @@ function Navbar() {
         </Link>
 
         <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 text-sm sm:w-auto sm:justify-end">
-          <div role="group" aria-label={t('nav.language')} className="flex overflow-hidden rounded border border-green-600">
-            <button
-              type="button"
-              aria-pressed={language === 'en'}
-              onClick={() => handleLanguage('en')}
-              className={`min-h-11 px-2 py-1 ${language === 'en' ? 'bg-green-600 text-white' : 'text-green-700'}`}
-            >
-              {t('nav.english')}
-            </button>
-            <button
-              type="button"
-              aria-pressed={language === 'he'}
-              onClick={() => handleLanguage('he')}
-              className={`min-h-11 px-2 py-1 ${language === 'he' ? 'bg-green-600 text-white' : 'text-green-700'}`}
-            >
-              {t('nav.hebrew')}
-            </button>
-          </div>
           <Link to="/submit-restaurant" className="inline-flex min-h-11 items-center text-gray-700 hover:text-green-700">
             {t('nav.addRestaurant')}
           </Link>
@@ -62,9 +44,6 @@ function Navbar() {
                   {t('nav.admin')}
                 </Link>
               )}
-              <Link to="/account/submissions" className="inline-flex min-h-11 items-center text-gray-700 hover:text-green-700">
-                {t('nav.mySubmissions')}
-              </Link>
               <Link to="/account" className="inline-flex min-h-11 items-center text-gray-700 hover:text-green-700">
                 {user.email}
               </Link>
@@ -90,6 +69,20 @@ function Navbar() {
             </>
           )}
         </div>
+        {/* NEW (update): one globe in the corner switches the language. The labeled pair was too prominent. */}
+        {/* חדש (עדכון): גלובוס אחד בפינה מחליף את השפה. זוג הכפתורים עם השמות היה בולט מדי. */}
+        <button
+          type="button"
+          onClick={() => handleLanguage(language === 'he' ? 'en' : 'he')}
+          aria-label={t('nav.switchLanguage')}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full text-green-700 hover:bg-green-50"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M3 12h18" />
+            <path d="M12 3c2.5 2.6 3.8 5.7 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3z" />
+          </svg>
+        </button>
       </nav>
     </header>
   );

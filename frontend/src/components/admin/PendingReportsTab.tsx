@@ -9,6 +9,7 @@ import { getErrorMessage } from '../../api/errors';
 import { usePagedList } from '../../hooks/usePagedList';
 import { describeEmailStatus, describePoints } from '../../utils/adminLabels';
 import { getHechsherLabel, getKashrutLevelLabel } from '../../utils/labels';
+import { isSafeHttpUrl } from '../../utils/safeUrl';
 import type { AdminReport, ReportResolution } from '../../types/admin';
 import type { HechsherOption } from '../../types/submissions';
 import FormAlert from '../FormAlert';
@@ -98,6 +99,13 @@ function PendingReportsTab({ hechsherOptions }: PendingReportsTabProps) {
             </div>
 
             <p className="whitespace-pre-wrap text-sm text-gray-800">{report.description}</p>
+            {isSafeHttpUrl(report.photoUrl) && (
+              <p>
+                <a href={report.photoUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-green-700 underline">
+                  {t('desk.openFull')}
+                </a>
+              </p>
+            )}
             <p className="text-sm text-gray-500">
               {t('desk.sentBy', { email: report.submittedBy?.email || t('desk.unknownUser') })}
             </p>

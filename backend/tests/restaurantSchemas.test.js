@@ -7,6 +7,7 @@ const validRestaurant = () => ({
   city: 'Jerusalem',
   foodType: 'DAIRY',
   categories: ['RESTAURANT'],
+  claimedHechsher: 'LOCAL_RABBANUT',
 });
 
 const parse = (restaurant, teuda) => submitRestaurantSchema.parse({ restaurant, teuda });
@@ -19,31 +20,33 @@ describe('submitRestaurantSchema', () => {
     expect(result.teuda).toBeUndefined();
   });
 
-  it('requires a city and treats other empty optional inputs as missing', () => {
-    expect(() => parse({ ...validRestaurant(), city: '' })).toThrow(/City is required/);
-
+  it('allows a blank city, food type and categories, and still requires a hechsher', () => {
     const result = parse({
       ...validRestaurant(),
+      city: '',
+      foodType: '',
+      categories: [],
       latitude: '',
       longitude: '',
       phone: '',
       website: '',
-      claimedHechsher: '',
       claimedKashrutLevel: '',
     });
 
-    expect(result.restaurant.city).toBe('Jerusalem');
+    expect(result.restaurant.city).toBeUndefined();
+    expect(result.restaurant.foodType).toBeUndefined();
+    expect(result.restaurant.categories).toEqual([]);
+    expect(result.restaurant.claimedHechsher).toBe('LOCAL_RABBANUT');
     expect(result.restaurant.latitude).toBeUndefined();
     expect(result.restaurant.phone).toBeUndefined();
     expect(result.restaurant.website).toBeUndefined();
-    expect(result.restaurant.claimedHechsher).toBeUndefined();
+    expect(() => parse({ ...validRestaurant(), claimedHechsher: '' })).toThrow(/Choose a hechsher/);
   });
 
-  it('requires name, address, food type and at least one category', () => {
+  it('requires a name and an address, and rejects an unknown food type or category', () => {
     expect(() => parse({ ...validRestaurant(), name: '  ' })).toThrow();
     expect(() => parse({ ...validRestaurant(), address: '' })).toThrow();
     expect(() => parse({ ...validRestaurant(), foodType: 'FISH' })).toThrow();
-    expect(() => parse({ ...validRestaurant(), categories: [] })).toThrow();
     expect(() => parse({ ...validRestaurant(), categories: ['SPACESHIP'] })).toThrow();
   });
 

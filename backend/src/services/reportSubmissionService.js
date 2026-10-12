@@ -3,10 +3,11 @@ import { findRestaurantByIdRepo } from '../repositories/restaurantRepository.js'
 import { createReportRepo, findSimilarPendingReportRepo } from '../repositories/reportRepository.js';
 import { findTeudaByIdRepo } from '../repositories/teudaRepository.js';
 import { isTeudaPublic } from './teudaRulesService.js';
+import { deleteImageService, uploadReportImageService } from './imageUploadService.js';
 
 // A signed-in user reports a problem or proposes a correction. The report is PENDING: nothing about
 // the restaurant or certificate changes until an admin reviews it and applies a correction.
-export const submitReportService = async ({ reportData, user }) => {
+export const submitReportService = async ({ reportData, file, user }) => {
   const restaurant = await findRestaurantByIdRepo(reportData.restaurantId);
 
   if (!restaurant || restaurant.status !== 'APPROVED') {
@@ -35,18 +36,32 @@ export const submitReportService = async ({ reportData, user }) => {
     throw appError('You already sent this report and it is waiting for review', 409);
   }
 
-  const report = await createReportRepo({
-    restaurant: restaurant._id,
-    teuda: reportData.teudaId,
-    submittedBy: user._id,
-    type: reportData.type,
-    description: reportData.description,
-    proposedHechsher: reportData.proposedHechsher,
-    proposedHechsherOther: reportData.proposedHechsherOther,
-    proposedKashrutLevel: reportData.proposedKashrutLevel,
-    status: 'PENDING',
-    correctionApplied: false,
-  });
+  // NEW (update): the photo is optional. A failed save removes the upload so it is not left behind.
+  // חדש (עדכון): התמונה אינה חובה. שמירה שנכשלת מוחקת את ההעלאה כדי שלא תישאר.
+  const image = file ? await uploadReportImageService(file) : null;
 
-  return { id: String(report._id), status: report.status };
+  try {
+    const report = await createReportRepo({
+      restaurant: restaurant._id,
+      teuda: reportData.teudaId,
+      submittedBy: user._id,
+      type: reportData.type || 'GENERAL',
+      description: reportData.description,
+      proposedHechsher: reportData.proposedHechsher,
+      proposedHechsherOther: reportData.proposedHechsherOther,
+      proposedKashrutLevel: reportData.proposedKashrutLevel,
+      photoUrl: image?.photoUrl,
+      cloudinaryPublicId: image?.cloudinaryPublicId,
+      status: 'PENDING',
+      correctionApplied: false,
+    });
+
+    return { id: String(report._id), status: report.status };
+  } catch (error) {
+    if (image) {
+      await deleteImageService(image.cloudinaryPublicId);
+    }
+
+    throw error;
+  }
 };

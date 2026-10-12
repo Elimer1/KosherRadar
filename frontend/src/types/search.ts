@@ -33,7 +33,7 @@ export interface RestaurantCardData {
   latitude: number | null;
   longitude: number | null;
   phone: string | null;
-  foodType: string;
+  foodType: string | null;
   categories: string[];
   kashrut: KashrutPreview;
   distanceKm: number | null;

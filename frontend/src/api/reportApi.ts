@@ -1,25 +1,16 @@
 import { api } from './axiosInstance';
-import type { ReportFormValues } from '../types/submissions';
 
-// Empty inputs are left out so the server treats them as "not provided".
-export const buildReportPayload = (restaurantId: string, values: ReportFormValues) => {
-  const isKashrutUpdate = values.type === 'KASHRUT_UPDATE';
+// NEW (update): the report is a note plus an optional certificate photo.
+// חדש (עדכון): הדיווח הוא הערה ותמונת תעודה אופציונלית.
+export const submitReport = async (restaurantId: string, description: string, photo: File | null) => {
+  const formData = new FormData();
+  formData.append('restaurantId', restaurantId);
+  formData.append('description', description);
 
-  return {
-    restaurantId,
-    teudaId: values.teudaId || undefined,
-    type: values.type,
-    description: values.description,
-    proposedHechsher: isKashrutUpdate ? values.proposedHechsher || undefined : undefined,
-    proposedHechsherOther: isKashrutUpdate ? values.proposedHechsherOther || undefined : undefined,
-    proposedKashrutLevel: isKashrutUpdate ? values.proposedKashrutLevel || undefined : undefined,
-  };
-};
+  if (photo) {
+    formData.append('photo', photo);
+  }
 
-export const submitReport = async (restaurantId: string, values: ReportFormValues) => {
-  const response = await api.post<{ report: { id: string; status: string } }>(
-    '/reports',
-    buildReportPayload(restaurantId, values)
-  );
+  const response = await api.post<{ report: { id: string; status: string } }>('/reports', formData);
   return response.data;
 };

@@ -22,7 +22,11 @@ export const checkImageFile = (file) => {
   }
 };
 
-export const uploadTeudaImageService = async (file) => {
+// NEW (update): report photos use their own folder. Certificate photos stay in the teuda folder.
+// חדש (עדכון): תמונות דיווח נשמרות בתיקייה נפרדת. תמונות תעודה נשארות בתיקיית התעודות.
+const REPORT_FOLDER = 'kosherradar/reports';
+
+const uploadImageService = async (file, folder) => {
   checkImageFile(file);
 
   if (!isCloudinaryConfigured()) {
@@ -34,7 +38,7 @@ export const uploadTeudaImageService = async (file) => {
   try {
     const result = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
-        { folder: TEUDA_FOLDER, resource_type: 'image', allowed_formats: ['jpg', 'png', 'webp'] },
+        { folder, resource_type: 'image', allowed_formats: ['jpg', 'png', 'webp'] },
         (error, uploadResult) => (error ? reject(error) : resolve(uploadResult))
       );
       stream.end(file.buffer);
@@ -46,6 +50,10 @@ export const uploadTeudaImageService = async (file) => {
     throw appError('Could not upload the photo. Please try again later.', 502);
   }
 };
+
+export const uploadTeudaImageService = (file) => uploadImageService(file, TEUDA_FOLDER);
+
+export const uploadReportImageService = (file) => uploadImageService(file, REPORT_FOLDER);
 
 // Used to clean up an uploaded photo when saving to the database fails afterwards.
 // A failure here is only logged: the original error is the one the user needs to see.

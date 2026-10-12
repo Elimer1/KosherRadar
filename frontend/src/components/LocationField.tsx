@@ -163,9 +163,6 @@ function LocationField({ filters, onChange, lang }: LocationFieldProps) {
           {locating ? t('location.finding') : t('location.useMine')}
         </button>
       </div>
-      <p className="mt-1 text-xs text-gray-500">
-        {t('location.hint')}
-      </p>
 
       {suggestions.length > 0 && (
         <ul className="mt-1 overflow-hidden rounded border border-gray-200 bg-white" role="listbox">

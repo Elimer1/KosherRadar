@@ -12,7 +12,7 @@ export const restaurantToFormValues = (restaurant: AdminRestaurant): RestaurantF
     longitude: restaurant.longitude === null ? '' : String(restaurant.longitude),
     phone: restaurant.phone || '',
     website: restaurant.website || '',
-    foodType: restaurant.foodType,
+    foodType: restaurant.foodType || '',
     categories: restaurant.categories,
     foodKeywords: restaurant.foodKeywords.join(', '),
     claimedHechsher: restaurant.claimedHechsher || '',

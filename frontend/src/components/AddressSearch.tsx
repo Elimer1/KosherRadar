@@ -16,6 +16,7 @@ interface AddressSearchProps {
   latitude: string;
   disabled: boolean;
   cityRequired: boolean;
+  invalid?: boolean;
   onAddressChange: (value: string) => void;
   onCityChange: (value: string) => void;
   onLocationChange: (location: AddressLocation) => void;
@@ -29,6 +30,7 @@ function AddressSearch({
   latitude,
   disabled,
   cityRequired,
+  invalid = false,
   onAddressChange,
   onCityChange,
   onLocationChange,
@@ -119,9 +121,10 @@ function AddressSearch({
             maxLength={250}
             autoComplete="off"
             disabled={disabled}
+            aria-invalid={invalid}
             value={address}
             onChange={(event) => handleAddressType(event.target.value)}
-            className={inputClassName}
+            className={`${inputClassName} ${invalid ? 'border-red-500' : ''}`}
           />
           {suggestions.length > 0 && (
             <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded border border-gray-200 bg-white shadow">

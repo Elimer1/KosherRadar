@@ -11,7 +11,12 @@ export const submitReportSchema = z
   .object({
     restaurantId: objectIdField,
     teudaId: z.preprocess(emptyToUndefined, objectIdField.optional()),
-    type: z.enum(REPORT_TYPES, 'Choose the type of report'),
+    // NEW (update): the report form no longer asks for a type. A missing type is a general note.
+    // חדש (עדכון): טופס הדיווח כבר לא שואל סוג. בלי סוג זו הערה כללית.
+    type: z.preprocess(
+      (value) => (value === '' || value === undefined || value === null ? 'GENERAL' : value),
+      z.enum(REPORT_TYPES, 'Choose the type of report')
+    ),
     description: z.string().trim().min(1, 'Please describe the problem').max(2000),
     proposedHechsher: z.preprocess(emptyToUndefined, z.enum(HECHSHER_VALUES).optional()),
     proposedHechsherOther: z.preprocess(emptyToUndefined, z.string().trim().min(1).max(100).optional()),

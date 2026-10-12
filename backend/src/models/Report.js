@@ -14,6 +14,10 @@ const reportSchema = new mongoose.Schema(
 
     type: { type: String, enum: REPORT_TYPES, default: 'GENERAL' },
     description: { type: String, required: true, trim: true, maxlength: 2000 },
+    // NEW (update): an optional certificate photo sent with the report. The note can stand alone.
+    // חדש (עדכון): תמונת תעודה אופציונלית שנשלחת עם הדיווח. ההערה יכולה לעמוד לבדה.
+    photoUrl: { type: String, trim: true },
+    cloudinaryPublicId: { type: String, trim: true },
     proposedHechsher: { type: String, enum: HECHSHER_VALUES },
     proposedHechsherOther: { type: String, trim: true, maxlength: 100 },
     proposedKashrutLevel: { type: String, enum: KASHRUT_LEVELS },

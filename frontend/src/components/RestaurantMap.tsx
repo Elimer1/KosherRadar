@@ -114,7 +114,7 @@ function MapPopup({ restaurant, hechsherOptions }: { restaurant: RestaurantCardD
   return (
     <div className="min-w-52 space-y-2 text-sm text-gray-800">
       <p className="text-base font-semibold text-gray-900">{restaurant.name}</p>
-      <p>{getFoodTypeLabel(restaurant.foodType)}</p>
+      {restaurant.foodType && <p>{getFoodTypeLabel(restaurant.foodType)}</p>}
       <KashrutBadge kashrut={restaurant.kashrut} hechsherOptions={hechsherOptions} />
       <div className="flex flex-wrap gap-2 pt-1">
         <Link to={`/restaurants/${restaurant.id}`} className="inline-flex min-h-11 items-center rounded bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700">

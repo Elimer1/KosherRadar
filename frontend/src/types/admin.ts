@@ -41,7 +41,7 @@ export interface AdminRestaurant {
   geoapifyPlaceId: string | null;
   phone: string | null;
   website: string | null;
-  foodType: string;
+  foodType: string | null;
   categories: string[];
   foodKeywords: string[];
   claimedHechsher: string | null;
@@ -108,6 +108,7 @@ export interface AdminReport {
   submittedBy: UserBrief | null;
   type: 'GENERAL' | 'KASHRUT_UPDATE';
   description: string;
+  photoUrl: string | null;
   proposedHechsher: string | null;
   proposedHechsherOther: string | null;
   proposedKashrutLevel: string | null;

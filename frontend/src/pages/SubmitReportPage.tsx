@@ -9,10 +9,11 @@ import FormAlert from '../components/FormAlert';
 import { inputClassName, labelClassName, primaryButtonClassName } from '../components/formStyles';
 import { useFormOptions } from '../hooks/useFormOptions';
 import { usePageMeta } from '../hooks/usePageMeta';
-import { emptyReportForm } from '../types/submissions';
-import type { ReportFormValues, SubmissionContext } from '../types/submissions';
-import { getHechsherLabel, getHechsherOptionLabel, getKashrutLevelLabel } from '../utils/labels';
+import { usePhotoField } from '../hooks/usePhotoField';
+import type { SubmissionContext } from '../types/submissions';
 
+// NEW (update): a report is a note and an optional certificate photo.
+// חדש (עדכון): דיווח הוא הערה ותמונת תעודה אופציונלית.
 function SubmitReportPage() {
   const { t } = useTranslation();
   const { restaurantId = '' } = useParams();
@@ -21,10 +22,12 @@ function SubmitReportPage() {
 
   const [context, setContext] = useState<SubmissionContext | null>(null);
   const [loadError, setLoadError] = useState('');
-  const [values, setValues] = useState<ReportFormValues>(emptyReportForm);
+  const [description, setDescription] = useState('');
   const [error, setError] = useState('');
+  const [invalidNote, setInvalidNote] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const { photo, photoError, handlePhotoChange } = usePhotoField(options?.maxImageBytes || 5 * 1024 * 1024);
 
   useEffect(() => {
     const loadContext = async () => {
@@ -38,17 +41,26 @@ function SubmitReportPage() {
     loadContext();
   }, [restaurantId, t]);
 
-  const handleFieldChange = (field: keyof ReportFormValues, value: string) => {
-    setValues((current) => ({ ...current, [field]: value }));
-  };
-
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError('');
+
+    if (description.trim() === '') {
+      setInvalidNote(true);
+      setError(t('forms.missingReport'));
+      return;
+    }
+
+    if (photoError) {
+      setError(photoError);
+      return;
+    }
+
+    setInvalidNote(false);
     setLoading(true);
 
     try {
-      await submitReport(restaurantId, values);
+      await submitReport(restaurantId, description.trim(), photo);
       setSubmitted(true);
     } catch (err) {
       setError(getErrorMessage(err, t('forms.sendReportFailed')));
@@ -70,15 +82,14 @@ function SubmitReportPage() {
       <div className="mx-auto max-w-lg space-y-4">
         <h1 className="text-2xl font-bold text-gray-900">{t('forms.reportSent')}</h1>
         <FormAlert kind="success" message={t('forms.thanksReport')} />
-        <Link to="/account/submissions" className="inline-block font-medium text-green-700 hover:underline">
+        <Link to="/account" className="inline-block font-medium text-green-700 hover:underline">
           {t('forms.seeSubmissions')}
         </Link>
       </div>
     );
   }
 
-  const isKashrutUpdate = values.type === 'KASHRUT_UPDATE';
-  const proposesOther = values.proposedHechsher === options.hechsherOtherValue;
+  const maxMegabytes = Math.round(options.maxImageBytes / (1024 * 1024));
 
   return (
     <div className="mx-auto max-w-lg">
@@ -87,111 +98,8 @@ function SubmitReportPage() {
         {context.restaurant.name} &middot; {context.restaurant.address}
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+      <form noValidate onSubmit={handleSubmit} className="mt-6 space-y-4">
         <FormAlert message={error} />
-
-        <div>
-          <label htmlFor="report-type" className={labelClassName}>
-            {t('forms.about')}
-          </label>
-          <select
-            id="report-type"
-            disabled={loading}
-            value={values.type}
-            onChange={(event) => handleFieldChange('type', event.target.value)}
-            className={inputClassName}
-          >
-            <option value="GENERAL">{t('forms.generalProblem')}</option>
-            <option value="KASHRUT_UPDATE">{t('forms.kashrutWrong')}</option>
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor="report-teuda" className={labelClassName}>
-            {t('forms.whichCertificate')}
-          </label>
-          <select
-            id="report-teuda"
-            disabled={loading}
-            value={values.teudaId}
-            onChange={(event) => handleFieldChange('teudaId', event.target.value)}
-            className={inputClassName}
-          >
-            <option value="">{t('forms.notSpecific')}</option>
-            {context.teudot.map((teuda) => (
-              <option key={teuda.id} value={teuda.id}>
-                {getHechsherLabel(teuda.hechsher, teuda.hechsherOther, options.hechsherOptions)} -{' '}
-                {getKashrutLevelLabel(teuda.kashrutLevel)} -{' '}
-                {teuda.visibility === 'VALID' ? t('forms.validUntil') : t('forms.expiredOn')} {teuda.expirationDate}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {isKashrutUpdate && (
-          <div className="space-y-4 rounded border border-green-100 p-4">
-            <p className="text-sm text-gray-600">{t('forms.thinkCorrect')}</p>
-
-            <div>
-              <label htmlFor="report-hechsher" className={labelClassName}>
-                {t('forms.hechsher')}
-              </label>
-              <select
-                id="report-hechsher"
-                disabled={loading}
-                value={values.proposedHechsher}
-                onChange={(event) => handleFieldChange('proposedHechsher', event.target.value)}
-                className={inputClassName}
-              >
-                <option value="">{t('common.noChange')}</option>
-                {options.hechsherOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {getHechsherOptionLabel(option)}
-                  </option>
-                ))}
-                <option value={options.hechsherOtherValue}>{t('common.otherType')}</option>
-              </select>
-            </div>
-
-            {proposesOther && (
-              <div>
-                <label htmlFor="report-hechsher-other" className={labelClassName}>
-                  {t('forms.hechsherName')}
-                </label>
-                <input
-                  id="report-hechsher-other"
-                  type="text"
-                  required
-                  maxLength={100}
-                  disabled={loading}
-                  value={values.proposedHechsherOther}
-                  onChange={(event) => handleFieldChange('proposedHechsherOther', event.target.value)}
-                  className={inputClassName}
-                />
-              </div>
-            )}
-
-            <div>
-              <label htmlFor="report-level" className={labelClassName}>
-                {t('forms.level')}
-              </label>
-              <select
-                id="report-level"
-                disabled={loading}
-                value={values.proposedKashrutLevel}
-                onChange={(event) => handleFieldChange('proposedKashrutLevel', event.target.value)}
-                className={inputClassName}
-              >
-                <option value="">{t('common.noChange')}</option>
-                {options.kashrutLevels.map((level) => (
-                  <option key={level} value={level}>
-                    {getKashrutLevelLabel(level)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
 
         <div>
           <label htmlFor="report-description" className={labelClassName}>
@@ -199,14 +107,31 @@ function SubmitReportPage() {
           </label>
           <textarea
             id="report-description"
-            required
             rows={5}
             maxLength={2000}
             disabled={loading}
-            value={values.description}
-            onChange={(event) => handleFieldChange('description', event.target.value)}
-            className={inputClassName}
+            aria-invalid={invalidNote}
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            className={`${inputClassName} ${invalidNote ? 'border-red-500' : ''}`}
           />
+        </div>
+
+        <div>
+          <label htmlFor="report-photo" className={labelClassName}>
+            {t('forms.photo')}
+          </label>
+          <input
+            id="report-photo"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            disabled={loading}
+            onChange={handlePhotoChange}
+            className="mt-1 block w-full text-sm text-gray-700"
+          />
+          <p className="mt-1 text-sm text-gray-500">{t('forms.photoHint', { max: maxMegabytes })}</p>
+          {photo && <p className="mt-1 text-sm text-gray-700">{t('forms.selected', { name: photo.name })}</p>}
+          {photoError && <p className="mt-1 text-sm text-red-700">{photoError}</p>}
         </div>
 
         <button type="submit" disabled={loading} className={primaryButtonClassName}>

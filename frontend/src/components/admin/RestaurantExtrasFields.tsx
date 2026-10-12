@@ -8,17 +8,20 @@ import { inputClassName, labelClassName } from '../formStyles';
 interface RestaurantExtrasFieldsProps {
   values: RestaurantExtrasValues;
   disabled: boolean;
+  // NEW (update): a new restaurant keeps the note and the Kosharot link. Editing still has the names.
+  // חדש (עדכון): מסעדה חדשה שומרת את ההערה וקישור כושרות. בעריכה נשארים גם השמות.
+  includeNames?: boolean;
   onChange: (field: keyof RestaurantExtrasValues, value: string) => void;
 }
 
-function RestaurantExtrasFields({ values, disabled, onChange }: RestaurantExtrasFieldsProps) {
+function RestaurantExtrasFields({ values, disabled, includeNames = true, onChange }: RestaurantExtrasFieldsProps) {
   const { t } = useTranslation();
 
   return (
     <section className="space-y-4">
       <h2 className="text-lg font-semibold text-gray-900">{t('desk.adminDetails')}</h2>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      {includeNames && <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="extras-name-he" className={labelClassName}>
             {t('desk.nameHe')}
@@ -77,7 +80,7 @@ function RestaurantExtrasFields({ values, disabled, onChange }: RestaurantExtras
             className={inputClassName}
           />
         </div>
-      </div>
+      </div>}
 
       <div>
         <label htmlFor="extras-kosharot-url" className={labelClassName}>

@@ -22,6 +22,7 @@ function SubmitRestaurantPage() {
   const [restaurant, setRestaurant] = useState<RestaurantFormValues>(emptyRestaurantForm);
   const [teuda, setTeuda] = useState<TeudaFormValues>(emptyTeudaForm);
   const [error, setError] = useState('');
+  const [invalid, setInvalid] = useState({ name: false, address: false, hechsher: false });
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<RestaurantSubmitResult | null>(null);
@@ -50,39 +51,33 @@ function SubmitRestaurantPage() {
     event.preventDefault();
     setError('');
 
-    if (restaurant.categories.length === 0) {
-      setError(t('forms.chooseCategory'));
+    const otherMissing = teuda.hechsher === options?.hechsherOtherValue && !teuda.hechsherOther.trim();
+    const missing = {
+      name: restaurant.name.trim() === '',
+      address: restaurant.address.trim() === '',
+      hechsher: !teuda.hechsher || otherMissing,
+    };
+    setInvalid(missing);
+
+    if (missing.name || missing.address || missing.hechsher) {
+      const messages = [
+        missing.name ? t('forms.missingName') : '',
+        missing.address ? t('forms.missingAddress') : '',
+        missing.hechsher ? (otherMissing ? t('forms.missingKashrutName') : t('forms.missingKashrut')) : '',
+      ].filter((message) => message !== '');
+      setError(messages.join(' '));
       return;
     }
 
-    const certificateStarted = Boolean(
-      photo ||
-        teuda.hechsher ||
-        teuda.hechsherOther.trim() ||
-        teuda.kashrutLevel ||
-        teuda.expirationDate ||
-        teuda.mashgiachName.trim() ||
-        teuda.mashgiachPhone.trim()
+    // A certificate is saved only when every certificate field is present. Anything less still sends the restaurant.
+    const certificateComplete = Boolean(
+      teuda.kashrutLevel &&
+        teuda.expirationDate &&
+        teuda.mashgiachName.trim() &&
+        teuda.mashgiachPhone.trim() &&
+        photo &&
+        !photoError
     );
-
-    if (certificateStarted) {
-      const otherMissing = teuda.hechsher === options?.hechsherOtherValue && !teuda.hechsherOther.trim();
-      const certificateComplete = Boolean(
-        teuda.hechsher &&
-          !otherMissing &&
-          teuda.kashrutLevel &&
-          teuda.expirationDate &&
-          teuda.mashgiachName.trim() &&
-          teuda.mashgiachPhone.trim() &&
-          photo &&
-          !photoError
-      );
-
-      if (!certificateComplete) {
-        setError(t('forms.certificateIncomplete'));
-        return;
-      }
-    }
 
     setLoading(true);
     setProgress(0);
@@ -92,12 +87,12 @@ function SubmitRestaurantPage() {
         {
           ...restaurant,
           foodKeywords: '',
-          claimedHechsher: '',
-          claimedHechsherOther: '',
+          claimedHechsher: teuda.hechsher,
+          claimedHechsherOther: teuda.hechsherOther,
           claimedKashrutLevel: '',
         },
-        certificateStarted ? teuda : null,
-        photo,
+        certificateComplete ? teuda : null,
+        certificateComplete ? photo : null,
         setProgress
       );
       setResult(submitted);
@@ -125,7 +120,7 @@ function SubmitRestaurantPage() {
           message={result.teuda ? t('forms.thanksWithCertificate') : t('forms.thanksRestaurant')}
         />
         {result.possibleDuplicateCount > 0 && <FormAlert kind="warning" message={t('forms.similarWarning')} />}
-        <Link to="/account/submissions" className="inline-block font-medium text-green-700 hover:underline">
+        <Link to="/account" className="inline-block font-medium text-green-700 hover:underline">
           {t('forms.seeSubmissions')}
         </Link>
       </div>
@@ -137,7 +132,7 @@ function SubmitRestaurantPage() {
       <h1 className="text-2xl font-bold text-gray-900">{t('forms.addRestaurant')}</h1>
       <p className="mt-2 text-sm text-gray-600">{t('forms.addRestaurantBody')}</p>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-8">
+      <form noValidate onSubmit={handleSubmit} className="mt-6 space-y-8">
         <FormAlert message={error} />
 
         <RestaurantFields
@@ -145,6 +140,8 @@ function SubmitRestaurantPage() {
           options={options}
           disabled={loading}
           variant="user"
+          invalidName={invalid.name}
+          invalidAddress={invalid.address}
           onChange={handleRestaurantChange}
           onToggleCategory={handleToggleCategory}
         />
@@ -160,6 +157,8 @@ function SubmitRestaurantPage() {
             photoError={photoError}
             disabled={loading}
             fieldsRequired={false}
+            showLevel={false}
+            invalidHechsher={invalid.hechsher}
             onChange={handleTeudaChange}
             onPhotoChange={handlePhotoChange}
           />

@@ -80,7 +80,7 @@ function SubmitTeudaPage() {
       <div className="mx-auto max-w-lg space-y-4">
         <h1 className="text-2xl font-bold text-gray-900">{t('forms.certificateSent')}</h1>
         <FormAlert kind="success" message={t('forms.thanksCertificate', { name: context.restaurant.name })} />
-        <Link to="/account/submissions" className="inline-block font-medium text-green-700 hover:underline">
+        <Link to="/account" className="inline-block font-medium text-green-700 hover:underline">
           {t('forms.seeSubmissions')}
         </Link>
       </div>

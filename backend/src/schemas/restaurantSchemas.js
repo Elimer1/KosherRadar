@@ -49,11 +49,13 @@ export const restaurantFieldsSchema = z
     phone: z.preprocess(emptyToUndefined, phoneField.optional()),
     website: z.preprocess(emptyToUndefined, httpUrlField.optional()),
 
-    foodType: z.enum(FOOD_TYPES, 'Choose meat, dairy or pareve'),
+    // NEW (update): a person adding a restaurant may leave food type and categories blank.
+    // חדש (עדכון): מי שמוסיף מסעדה יכול להשאיר סוג אוכל וקטגוריות ריקים.
+    foodType: z.preprocess(emptyToUndefined, z.enum(FOOD_TYPES, 'Choose meat, dairy or pareve').optional()),
     categories: z
       .array(z.enum(CATEGORIES))
-      .min(1, 'Choose at least one category')
       .max(5)
+      .default([])
       .transform((values) => [...new Set(values)]),
     foodKeywords: z
       .array(z.string().trim().min(1).max(30))
@@ -79,18 +81,19 @@ export const restaurantFieldsSchema = z
   .superRefine(requireOtherTextWhenOther('claimedHechsher', 'claimedHechsherOther'))
   .transform(dropOtherTextUnlessOther('claimedHechsher', 'claimedHechsherOther'));
 
-// City is required only when a user submits a restaurant. Admin edit still allows a blank city.
+// NEW (update): a user submission needs a name, an address and a hechsher. City is optional.
+// חדש (עדכון): הגשת משתמש דורשת שם, כתובת והכשר. עיר אינה חובה.
 export const submitRestaurantSchema = z
   .object({
     restaurant: restaurantFieldsSchema,
     teuda: teudaFieldsSchema.optional(),
   })
   .superRefine((data, context) => {
-    if (!data.restaurant.city) {
+    if (!data.restaurant.claimedHechsher) {
       context.addIssue({
         code: 'custom',
-        path: ['restaurant', 'city'],
-        message: 'City is required',
+        path: ['restaurant', 'claimedHechsher'],
+        message: 'Choose a hechsher',
       });
     }
   });

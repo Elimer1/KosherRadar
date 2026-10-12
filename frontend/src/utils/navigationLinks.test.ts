@@ -4,20 +4,23 @@ import { describe, expect, it, vi } from 'vitest';
 import { buildGoogleMapsUrl, buildTelUrl, buildWazeUrl, restaurantPageUrl, sharePage } from './navigationLinks';
 
 describe('buildGoogleMapsUrl', () => {
-  it('uses the coordinates when the restaurant has them', () => {
-    expect(buildGoogleMapsUrl(31.78, 35.21, '1 Main St')).toBe(
-      'https://www.google.com/maps/search/?api=1&query=31.78%2C35.21'
+  it('searches the restaurant name and the address, and encodes them', () => {
+    expect(buildGoogleMapsUrl('Pizza Hut', 'Jaffa 1 & more=1, Tel Aviv')).toBe(
+      'https://www.google.com/maps/search/?api=1&query=Pizza%20Hut%20Jaffa%201%20%26%20more%3D1%2C%20Tel%20Aviv'
     );
   });
 
-  it('searches the address when there are no coordinates, and encodes it', () => {
-    expect(buildGoogleMapsUrl(null, null, 'Jaffa 1 & more=1, Tel Aviv')).toBe(
-      'https://www.google.com/maps/search/?api=1&query=Jaffa%201%20%26%20more%3D1%2C%20Tel%20Aviv'
+  it('uses whichever of the name or the address is present', () => {
+    expect(buildGoogleMapsUrl('Pizza Hut', '   ')).toBe(
+      'https://www.google.com/maps/search/?api=1&query=Pizza%20Hut'
+    );
+    expect(buildGoogleMapsUrl('  ', '1 Main St')).toBe(
+      'https://www.google.com/maps/search/?api=1&query=1%20Main%20St'
     );
   });
 
   it('has no link when there is nothing to search for', () => {
-    expect(buildGoogleMapsUrl(null, null, '   ')).toBeNull();
+    expect(buildGoogleMapsUrl('  ', '   ')).toBeNull();
   });
 });
 

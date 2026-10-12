@@ -23,7 +23,7 @@ export const buildRestaurantPayload = (values: RestaurantFormValues) => {
     longitude: values.longitude.trim() === '' ? undefined : Number(values.longitude),
     phone: values.phone || undefined,
     website: values.website || undefined,
-    foodType: values.foodType,
+    foodType: values.foodType || undefined,
     categories: values.categories,
     foodKeywords: keywords,
     claimedHechsher: values.claimedHechsher || undefined,

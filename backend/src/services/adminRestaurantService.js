@@ -23,7 +23,10 @@ import {
   listAllTeudotOfRestaurantRepo,
   rejectPendingTeudotOfRestaurantRepo,
 } from '../repositories/adminTeudaRepository.js';
-import { deleteReportsOfRestaurantRepo } from '../repositories/adminReportRepository.js';
+import {
+  deleteReportsOfRestaurantRepo,
+  findReportsOfRestaurantRepo,
+} from '../repositories/adminReportRepository.js';
 import { toAdminRestaurant, toAdminTeuda } from './adminSerializerService.js';
 import { findPossibleDuplicatesService } from './duplicateService.js';
 import { checkImageFile, deleteImageService, uploadTeudaImageService } from './imageUploadService.js';
@@ -252,6 +255,7 @@ export const deleteRestaurantService = async ({ restaurantId }) => {
   const restaurant = await loadRestaurantOr404(restaurantId);
 
   const teudot = await findTeudotOfRestaurantForDeleteRepo(restaurant._id);
+  const reports = await findReportsOfRestaurantRepo(restaurant._id);
 
   await deleteTeudotOfRestaurantRepo(restaurant._id);
   await deleteReportsOfRestaurantRepo(restaurant._id);
@@ -259,6 +263,10 @@ export const deleteRestaurantService = async ({ restaurantId }) => {
 
   for (const teuda of teudot) {
     await deleteImageService(teuda.cloudinaryPublicId);
+  }
+
+  for (const report of reports) {
+    await deleteImageService(report.cloudinaryPublicId);
   }
 
   return { deleted: true, deletedCertificates: teudot.length };

@@ -46,6 +46,12 @@ export const rejectPendingReportRepo = async (reportId, reason) => {
 
 // A deleted restaurant takes its reports with it: they describe a record that no longer exists.
 // מסעדה שנמחקה לוקחת איתה את הדיווחים שלה: הם מתארים רשומה שכבר לא קיימת.
+// NEW (update): needed so a deleted restaurant can also drop the report photos from Cloudinary.
+// חדש (עדכון): נדרש כדי שמחיקת מסעדה תמחק גם את תמונות הדיווחים מ-Cloudinary.
+export const findReportsOfRestaurantRepo = async (restaurantId) => {
+  return Report.find({ restaurant: restaurantId }).select('cloudinaryPublicId');
+};
+
 export const deleteReportsOfRestaurantRepo = async (restaurantId) => {
   return Report.deleteMany({ restaurant: restaurantId });
 };

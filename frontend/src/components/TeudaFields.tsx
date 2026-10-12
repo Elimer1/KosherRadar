@@ -16,6 +16,10 @@ interface TeudaFieldsProps {
   // The new-restaurant form shows these fields all the time. They are required only when a certificate is included.
   fieldsRequired?: boolean;
   hidePhoto?: boolean;
+  // NEW (update): a new restaurant asks for the hechsher only. The level stays for a full certificate.
+  // חדש (עדכון): מסעדה חדשה מבקשת רק הכשר. הרמה נשארת כשמוסיפים תעודה מלאה.
+  showLevel?: boolean;
+  invalidHechsher?: boolean;
 }
 
 // The certificate fields are shared by "add a certificate" and "submit a new restaurant with a certificate".
@@ -30,6 +34,8 @@ function TeudaFields({
   onPhotoChange,
   fieldsRequired = true,
   hidePhoto = false,
+  showLevel = true,
+  invalidHechsher = false,
 }: TeudaFieldsProps) {
   const { t } = useTranslation();
   const isOther = values.hechsher === options.hechsherOtherValue;
@@ -45,9 +51,10 @@ function TeudaFields({
           id={`${idPrefix}-hechsher`}
           required={fieldsRequired}
           disabled={disabled}
+          aria-invalid={invalidHechsher}
           value={values.hechsher}
           onChange={(event) => onChange('hechsher', event.target.value)}
-          className={inputClassName}
+          className={`${inputClassName} ${invalidHechsher ? 'border-red-500' : ''}`}
         >
           <option value="">{t('common.choose')}</option>
           {options.hechsherOptions.map((option) => (
@@ -77,7 +84,7 @@ function TeudaFields({
         </div>
       )}
 
-      <div>
+      {showLevel && <div>
         <label htmlFor={`${idPrefix}-level`} className={labelClassName}>
           {t('forms.level')}
         </label>
@@ -96,7 +103,7 @@ function TeudaFields({
             </option>
           ))}
         </select>
-      </div>
+      </div>}
 
       <div>
         <label htmlFor={`${idPrefix}-expiration`} className={labelClassName}>

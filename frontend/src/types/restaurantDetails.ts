@@ -39,7 +39,7 @@ export interface RestaurantDetails {
   longitude: number | null;
   phone: string | null;
   website: string | null;
-  foodType: string;
+  foodType: string | null;
   categories: string[];
   foodKeywords: string[];
   // A link to the restaurant's page on the Kosharot website, only when an admin checked it.

@@ -30,6 +30,7 @@ vi.mock('../src/repositories/adminTeudaRepository.js', () => ({
 
 vi.mock('../src/repositories/adminReportRepository.js', () => ({
   deleteReportsOfRestaurantRepo: vi.fn(),
+  findReportsOfRestaurantRepo: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock('../src/repositories/userRepository.js', () => ({
@@ -72,7 +73,10 @@ import {
   listAllTeudotOfRestaurantRepo,
   rejectPendingTeudotOfRestaurantRepo,
 } from '../src/repositories/adminTeudaRepository.js';
-import { deleteReportsOfRestaurantRepo } from '../src/repositories/adminReportRepository.js';
+import {
+  deleteReportsOfRestaurantRepo,
+  findReportsOfRestaurantRepo,
+} from '../src/repositories/adminReportRepository.js';
 import { awardPointsOnceRepo, findUserByIdRepo } from '../src/repositories/userRepository.js';
 import { sendRejectionEmailService } from '../src/services/emailService.js';
 import { findPossibleDuplicatesService } from '../src/services/duplicateService.js';
@@ -119,6 +123,7 @@ beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {});
 
   findPossibleDuplicatesService.mockResolvedValue([]);
+  findReportsOfRestaurantRepo.mockResolvedValue([]);
   findUserByIdRepo.mockResolvedValue({ _id: 'user-1', role: 'USER', email: 'user@example.com' });
   sendRejectionEmailService.mockResolvedValue('SENT');
   createRestaurantRepo.mockImplementation(async (data) => ({ ...data, _id: 'rest-new' }));
@@ -339,6 +344,7 @@ describe('deleteRestaurantService', () => {
       { cloudinaryPublicId: 'photo-1' },
       { cloudinaryPublicId: 'photo-2' },
     ]);
+    findReportsOfRestaurantRepo.mockResolvedValue([{ cloudinaryPublicId: 'report-photo' }]);
 
     const result = await deleteRestaurantService({ restaurantId: 'rest-1' });
 
@@ -346,8 +352,9 @@ describe('deleteRestaurantService', () => {
     expect(deleteTeudotOfRestaurantRepo).toHaveBeenCalledWith('rest-1');
     expect(deleteReportsOfRestaurantRepo).toHaveBeenCalledWith('rest-1');
     expect(deleteRestaurantByIdRepo).toHaveBeenCalledWith('rest-1');
-    expect(deleteImageService).toHaveBeenCalledTimes(2);
+    expect(deleteImageService).toHaveBeenCalledTimes(3);
     expect(deleteImageService).toHaveBeenCalledWith('photo-1');
+    expect(deleteImageService).toHaveBeenCalledWith('report-photo');
   });
 
   it('never touches points (given points stay with the users)', async () => {

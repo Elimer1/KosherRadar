@@ -85,7 +85,8 @@ function PendingRestaurantsTab({ hechsherOptions }: PendingRestaurantsTabProps) 
             </div>
 
             <p className="text-sm text-gray-700">
-              {getFoodTypeLabel(restaurant.foodType)} · {restaurant.categories.map(getCategoryLabel).join(', ')}
+              {restaurant.foodType ? `${getFoodTypeLabel(restaurant.foodType)} · ` : ''}
+              {restaurant.categories.map(getCategoryLabel).join(', ')}
               {restaurant.phone ? ` · ${restaurant.phone}` : ''}
             </p>
             <p className="text-sm text-gray-500">

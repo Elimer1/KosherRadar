@@ -138,6 +138,7 @@ function AdminCreateRestaurantPage() {
         <RestaurantExtrasFields
           values={extras}
           disabled={loading}
+          includeNames={false}
           onChange={(field, value) => setExtras((current) => ({ ...current, [field]: value }))}
         />
 

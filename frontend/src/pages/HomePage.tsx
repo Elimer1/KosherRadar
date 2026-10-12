@@ -86,7 +86,6 @@ function HomePage() {
           hechsherOptions={hechsherOptions}
         />
         <LocationField key={locationReset} filters={filters} onChange={setFilters} />
-        <p className="mt-2 text-xs text-gray-500">{t('home.hint')}</p>
       </div>
 
       <div className="mt-6 lg:grid lg:grid-cols-[18rem_1fr] lg:gap-6">

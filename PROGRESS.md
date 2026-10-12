@@ -296,6 +296,24 @@ Not run: either server against a real MongoDB, a real Cloudinary upload, and the
 
 To finish the remaining blocked items: put a real Atlas connection string in `backend/.env` (and allow this computer's IP), run `cd backend; npm run seed:admin` and `npm run search:rebuild`, create the Atlas Search index from `ATLAS_SEARCH_SETUP.md`, set `ATLAS_SEARCH_ENABLED=true`, and search a mistyped name. Add Cloudinary keys and upload a certificate photo, then approve it and check `users.points`. Add Resend keys and use `/forgot-password` with your own address. Add a Geoapify key and choose a place in the location field.
 
+## Product update (after Milestone 6)
+
+Requested in one session and applied on the working tree. This is not a new milestone. The hechsher-to-level map is still waiting for the team, so it was not guessed.
+
+- **Login length.** A session that is still open after about 15 hours matches the rule: tokens last 24 hours (`JWT_EXPIRES_IN`, default `24h`). Nothing was changed. A password reset still does not end sessions that are already open.
+- **Search captions.** The gray "Optional…" line under the location box and the gray line under "Using: …" are gone. The location box, current-location button, and Clear location stay.
+- **Admin create form.** Hebrew and English name and address are not on the create form. The private note and the Kosharot link stay. The edit form still has the four language fields.
+- **Who approved a restaurant.** The public list, map, and restaurant page still do not name the admin. There is no "approved by" field. The admin dashboard still shows "Sent by" to admins only.
+- **Account page.** The points total stays. The earning rules, the "only you can see this" line, the email row, and the role row are gone. Submissions are listed on this page. `/account/submissions` opens the account page. "My submissions" is gone from the navbar. The email in the navbar is still the link to the account.
+- **Language.** The English / Hebrew button pair is a globe in the corner of the bar. Clicking it still switches the language and saves the choice.
+- **Address completion.** Typing an address on the restaurant form and in the search location box already asks for suggestions. The lists stay empty until `GEOAPIFY_API_KEY` is set. A typed address that is not in the list can still be submitted.
+- **Restaurant submit.** The only required fields are name, address, and hechsher. City, food type, categories, phone, website, certificate photo, expiration, and mashgiach are optional. A missing required field is named, and that input is marked red. The hechsher is saved as an unverified claim. The level is not asked, because the map from hechsher to Rabbanut or Mehadrin is not set yet. An admin can set the level on the restaurant. A full certificate is stored only when the level, expiration, mashgiach, and photo are all present, so a photo on this form is not stored until that map exists. The add-certificate page still asks for a level. The admin create form still requires food type and a category.
+- **Report a problem.** The form is a required note and an optional certificate photo. The type menu, certificate picker, and proposed hechsher and level are gone. The photo is stored like other certificate photos when Cloudinary is configured. Without those keys the note can still be sent and a photo answers 503.
+- **Unverified claim.** The restaurant page says it once, in the kashrut status. The second dashed box is gone.
+- **Google Maps.** The button searches the restaurant name and address, so Google can open the business. Waze still routes to the coordinates.
+
+Checks after this update: `cd backend; npm test` (37 files, 466 tests passed), `cd frontend; npm test` (14 files, 89 tests passed; the two report-payload tests were removed with that payload), `cd frontend; npm run typecheck` passed, `cd frontend; npm run lint` passed.
+
 ## Next milestone
 
 Milestone 7 — Hebrew academic project book (needs your explicit approval, in a fresh conversation). Spec section 16: write `PROJECT_BOOK.md` in Hebrew from the actual implementation. Do not claim Atlas Search, Cloudinary, Resend or Geoapify were verified. The local MongoDB checks in Milestone 6 are not Atlas.

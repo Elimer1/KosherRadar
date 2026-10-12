@@ -9,7 +9,7 @@ import KashrutBadge from '../components/KashrutBadge';
 import { useFormOptions } from '../hooks/useFormOptions';
 import type { PublicTeuda, RestaurantDetails } from '../types/restaurantDetails';
 import type { HechsherOption } from '../types/submissions';
-import { describeEvidenceName, formatDateOnly } from '../utils/kashrutText';
+import { formatDateOnly } from '../utils/kashrutText';
 import { getCategoryLabel, getFoodTypeLabel, getHechsherLabel, getKashrutLevelLabel } from '../utils/labels';
 import { buildGoogleMapsUrl, buildTelUrl, buildWazeUrl, restaurantPageUrl } from '../utils/navigationLinks';
 import ShareButton from '../components/ShareButton';
@@ -155,12 +155,11 @@ function RestaurantDetailsPage() {
   }
 
   const restaurant = result.details;
-  const claims = restaurant.kashrut.items.filter((item) => item.kind === 'UNVERIFIED');
   const telUrl = buildTelUrl(restaurant.phone);
   const wazeUrl = buildWazeUrl(restaurant.latitude, restaurant.longitude);
-  const mapsUrl = buildGoogleMapsUrl(restaurant.latitude, restaurant.longitude, restaurant.address);
   const showCity = restaurant.city && !restaurant.address.includes(restaurant.city);
   const place = showCity ? `${restaurant.address}, ${restaurant.city}` : restaurant.address;
+  const mapsUrl = buildGoogleMapsUrl(restaurant.name, place);
   const otherNames = [restaurant.nameHe, restaurant.nameEn].filter(
     (name): name is string => Boolean(name) && name !== restaurant.name
   );
@@ -177,12 +176,17 @@ function RestaurantDetailsPage() {
         <h1 className="text-3xl font-bold text-gray-900">{restaurant.name}</h1>
         {otherNames.length > 0 && <p className="text-gray-600">{otherNames.join(' · ')}</p>}
         <p className="mt-1 text-gray-700">{place}</p>
-        <p className="mt-2 text-sm text-gray-700">
-          <span className="font-medium">{getFoodTypeLabel(restaurant.foodType)}</span>
-          {restaurant.categories.length > 0 && (
-            <span> · {restaurant.categories.map((category) => getCategoryLabel(category)).join(', ')}</span>
-          )}
-        </p>
+        {(restaurant.foodType || restaurant.categories.length > 0) && (
+          <p className="mt-2 text-sm text-gray-700">
+            {restaurant.foodType && <span className="font-medium">{getFoodTypeLabel(restaurant.foodType)}</span>}
+            {restaurant.categories.length > 0 && (
+              <span>
+                {restaurant.foodType ? ' · ' : ''}
+                {restaurant.categories.map((category) => getCategoryLabel(category)).join(', ')}
+              </span>
+            )}
+          </p>
+        )}
         {restaurant.foodKeywords.length > 0 && (
           <p className="mt-1 text-sm text-gray-600">{t('details.serves', { food: restaurant.foodKeywords.join(', ') })}</p>
         )}
@@ -200,27 +204,6 @@ function RestaurantDetailsPage() {
             <ul className="space-y-2">
               {restaurant.teudot.map((teuda) => (
                 <TeudaCard key={teuda.id} teuda={teuda} hechsherOptions={hechsherOptions} />
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {claims.length > 0 && (
-          <div>
-            <h3 className="mb-2 font-medium text-gray-900">{t('details.claim')}</h3>
-            <ul className="space-y-2">
-              {claims.map((claim, index) => (
-                <li
-                  key={index}
-                  className="rounded border border-dashed border-amber-500 bg-amber-50 p-3 text-sm text-amber-900"
-                >
-                  <p className="font-semibold">
-                    <span aria-hidden="true">! </span>
-                    {t('kashrut.UNVERIFIED')}
-                  </p>
-                  <p className="mt-0.5">{t('details.claimSays', { name: describeEvidenceName(claim, hechsherOptions) })}</p>
-                  <p className="mt-0.5">{t('details.claimNote')}</p>
-                </li>
               ))}
             </ul>
           </div>

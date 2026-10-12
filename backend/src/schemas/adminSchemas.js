@@ -57,18 +57,42 @@ export const adminTeudaFieldsSchema = z
   .superRefine(requireOtherTextWhenOther('hechsher', 'hechsherOther'))
   .transform(dropOtherTextUnlessOther('hechsher', 'hechsherOther'));
 
+// NEW (update): the admin form still requires food type and a category. The public submit form does not.
+// חדש (עדכון): טופס המנהל עדיין דורש סוג אוכל וקטגוריה. טופס ההגשה הציבורי לא.
+const requireAdminRestaurantBasics = (data, context) => {
+  if (!data.restaurant.foodType) {
+    context.addIssue({
+      code: 'custom',
+      path: ['restaurant', 'foodType'],
+      message: 'Choose meat, dairy or pareve',
+    });
+  }
+
+  if (!data.restaurant.categories || data.restaurant.categories.length === 0) {
+    context.addIssue({
+      code: 'custom',
+      path: ['restaurant', 'categories'],
+      message: 'Choose at least one category',
+    });
+  }
+};
+
 // Admin creates a restaurant (approved at once), optionally with an approved certificate and its photo.
-export const adminCreateRestaurantSchema = z.object({
-  restaurant: restaurantFieldsSchema,
-  extras: restaurantExtrasSchema,
-  teuda: adminTeudaFieldsSchema.optional(),
-});
+export const adminCreateRestaurantSchema = z
+  .object({
+    restaurant: restaurantFieldsSchema,
+    extras: restaurantExtrasSchema,
+    teuda: adminTeudaFieldsSchema.optional(),
+  })
+  .superRefine(requireAdminRestaurantBasics);
 
 // Editing replaces the whole set of admin-editable fields, so the form sends every field.
-export const adminEditRestaurantSchema = z.object({
-  restaurant: restaurantFieldsSchema,
-  extras: restaurantExtrasSchema,
-});
+export const adminEditRestaurantSchema = z
+  .object({
+    restaurant: restaurantFieldsSchema,
+    extras: restaurantExtrasSchema,
+  })
+  .superRefine(requireAdminRestaurantBasics);
 
 export const adminCreateTeudaSchema = z.object({
   teuda: adminTeudaFieldsSchema,
