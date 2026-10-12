@@ -17,13 +17,13 @@ interface SearchFiltersPanelProps {
   onChange: (next: SearchFilters) => void;
 }
 
-const checkboxLabelClassName = 'flex items-center gap-2 text-sm text-gray-800';
+const checkboxLabelClassName = 'flex items-center gap-2 py-0.5 text-sm text-gray-800';
 
 function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="space-y-5 rounded-lg border border-gray-200 bg-white p-4">
+    <div className="space-y-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
       <div>
         <label htmlFor="filter-level" className={labelClassName}>
           {t('filters.level')}
@@ -50,6 +50,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
             <label key={option.value} className={checkboxLabelClassName}>
               <input
                 type="checkbox"
+                className="size-4 shrink-0"
                 checked={filters.hechsher.includes(option.value)}
                 onChange={() => onChange({ ...filters, hechsher: toggleValue(filters.hechsher, option.value) })}
               />
@@ -60,6 +61,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
             <label className={checkboxLabelClassName}>
               <input
                 type="checkbox"
+                className="size-4 shrink-0"
                 checked={filters.hechsher.includes(options.hechsherOtherValue)}
                 onChange={() =>
                   onChange({ ...filters, hechsher: toggleValue(filters.hechsher, options.hechsherOtherValue) })
@@ -78,6 +80,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
             <label key={foodType} className={checkboxLabelClassName}>
               <input
                 type="checkbox"
+                className="size-4 shrink-0"
                 checked={filters.foodType.includes(foodType)}
                 onChange={() => onChange({ ...filters, foodType: toggleValue(filters.foodType, foodType) })}
               />
@@ -94,6 +97,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
             <label key={category} className={checkboxLabelClassName}>
               <input
                 type="checkbox"
+                className="size-4 shrink-0"
                 checked={filters.category.includes(category)}
                 onChange={() => onChange({ ...filters, category: toggleValue(filters.category, category) })}
               />
@@ -107,6 +111,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
         <label className={checkboxLabelClassName}>
           <input
             type="checkbox"
+            className="size-4 shrink-0"
             checked={filters.hideExpired}
             onChange={(event) => onChange({ ...filters, hideExpired: event.target.checked })}
           />
@@ -115,6 +120,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
         <label className={checkboxLabelClassName}>
           <input
             type="checkbox"
+            className="size-4 shrink-0"
             checked={filters.includeUnknown}
             onChange={(event) => onChange({ ...filters, includeUnknown: event.target.checked })}
           />

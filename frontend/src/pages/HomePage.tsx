@@ -12,6 +12,7 @@ import { emptySearchFilters } from '../types/search';
 import type { SearchFilters } from '../types/search';
 import { readSavedView, saveView } from '../utils/mapView';
 import type { DiscoveryView } from '../utils/mapView';
+import { primaryButtonCompactClassName, secondaryButtonClassName } from '../components/formStyles';
 
 // NEW (Milestone 4): the home page is the public search: one search box (restaurant name or food), filters,
 // and the list of results, 20 at a time. Anyone can use it without an account.
@@ -65,15 +66,17 @@ function HomePage() {
   };
 
   const viewButtonClass = (selected: boolean) =>
-    `min-h-11 flex-1 rounded px-3 py-2 text-sm font-medium sm:flex-none ${
-      selected ? 'bg-green-600 text-white' : 'border border-green-600 text-green-700 hover:bg-green-50'
+    `min-h-11 flex-1 rounded-lg px-4 py-2 text-sm font-medium sm:flex-none ${
+      selected ? 'bg-green-700 text-white shadow-sm' : 'text-gray-700 hover:bg-green-50 hover:text-green-800'
     }`;
 
   return (
     <div>
-      <section className="py-4 text-center sm:py-8">
-        <h1 className="text-3xl font-bold text-green-700 sm:text-4xl">{t('home.title')}</h1>
-        <p className="mx-auto mt-3 max-w-2xl text-gray-600">{t('home.intro')}</p>
+      <section className="pb-2 pt-2 text-center sm:pb-4 sm:pt-6">
+        <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+          <span className="text-green-800">{t('home.title')}</span>
+        </h1>
+        <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-gray-600">{t('home.intro')}</p>
       </section>
 
       <div className="mx-auto max-w-3xl">
@@ -95,7 +98,7 @@ function HomePage() {
             onClick={() => setShowFilters((current) => !current)}
             aria-expanded={showFilters}
             aria-controls="search-filters"
-            className="w-full rounded border border-green-600 px-3 py-2 font-medium text-green-700 hover:bg-green-50 lg:hidden"
+            className={`${secondaryButtonClassName} w-full lg:hidden`}
           >
             {showFilters ? t('home.hideFilters') : t('home.filters')}
             {activeFilterCount > 0 && ` (${activeFilterCount})`}
@@ -107,7 +110,11 @@ function HomePage() {
         </aside>
 
         <section aria-live="polite" aria-label={t('home.results')}>
-          <div role="group" aria-label={t('home.view')} className="mb-3 flex gap-2">
+          <div
+            role="group"
+            aria-label={t('home.view')}
+            className="mb-4 flex w-full gap-1 rounded-xl border border-gray-200 bg-white p-1 shadow-sm sm:inline-flex sm:w-auto"
+          >
             <button
               type="button"
               aria-pressed={view === 'list'}
@@ -129,15 +136,20 @@ function HomePage() {
           {view === 'map' && <RestaurantMap filters={filters} hechsherOptions={hechsherOptions} />}
 
           {view === 'list' && search.atlasUnavailable && (
-            <p role="status" className="mb-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            <p role="status" className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950">
               {t('home.atlasDown')}
             </p>
           )}
 
-          {view === 'list' && search.loading && <p className="py-8 text-center text-gray-600">{t('home.searching')}</p>}
+          {view === 'list' && search.loading && (
+            <p className="flex items-center justify-center gap-2 py-10 text-gray-600">
+              <span className="kr-spinner" aria-hidden="true" />
+              {t('home.searching')}
+            </p>
+          )}
 
           {view === 'list' && !search.loading && search.error && search.items.length === 0 && (
-            <div role="alert" className="rounded border border-red-200 bg-red-50 p-4 text-red-800">
+            <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
               <p>{search.error}</p>
               <button
                 type="button"
@@ -150,7 +162,7 @@ function HomePage() {
           )}
 
           {view === 'list' && !search.loading && !search.error && search.items.length === 0 && (
-            <div className="rounded-lg border border-dashed border-gray-300 p-8 text-center text-gray-700">
+            <div className="rounded-xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center text-gray-700 shadow-sm">
               {hasAnySearchChoice ? (
                 <>
                   <p className="font-medium">{t('home.noMatchTitle')}</p>
@@ -158,7 +170,7 @@ function HomePage() {
                   <button
                     type="button"
                     onClick={handleClearAll}
-                    className="mt-3 rounded border border-green-600 px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50"
+                    className={`${secondaryButtonClassName} mt-4`}
                   >
                     {t('home.clear')}
                   </button>
@@ -168,7 +180,7 @@ function HomePage() {
                   <p className="font-medium">{t('home.emptyTitle')}</p>
                   <p className="mt-1 text-sm">
                     {t('home.emptyBody')}{' '}
-                    <Link to="/submit-restaurant" className="font-medium text-green-700 underline">
+                    <Link to="/submit-restaurant" className="font-medium text-green-800 underline">
                       {t('home.addRestaurant')}
                     </Link>
                   </p>
@@ -179,17 +191,17 @@ function HomePage() {
 
           {view === 'list' && search.items.length > 0 && (
             <>
-              <p className="mb-3 text-sm text-gray-600">
+              <p className="mb-3 text-sm font-medium text-gray-700">
                 {search.total === 1 ? t('home.foundOne', { count: search.total }) : t('home.foundMany', { count: search.total })}
               </p>
 
               {search.capped && (
-                <p role="status" className="mb-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                <p role="status" className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950">
                   {t('home.capped')}
                 </p>
               )}
 
-              <ul className="space-y-3">
+              <ul className="space-y-4">
                 {search.items.map((restaurant) => (
                   <RestaurantCard key={restaurant.id} restaurant={restaurant} hechsherOptions={hechsherOptions} />
                 ))}
@@ -207,7 +219,7 @@ function HomePage() {
                     type="button"
                     onClick={search.loadMore}
                     disabled={search.loadingMore}
-                    className="rounded bg-green-600 px-6 py-2.5 font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    className={primaryButtonCompactClassName}
                   >
                     {search.loadingMore ? t('home.loadingMore') : t('home.loadMore')}
                   </button>

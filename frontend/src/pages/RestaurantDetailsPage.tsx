@@ -13,6 +13,7 @@ import { formatDateOnly } from '../utils/kashrutText';
 import { getCategoryLabel, getFoodTypeLabel, getHechsherLabel, getKashrutLevelLabel } from '../utils/labels';
 import { buildGoogleMapsUrl, buildTelUrl, buildWazeUrl, restaurantPageUrl } from '../utils/navigationLinks';
 import ShareButton from '../components/ShareButton';
+import { primaryButtonCompactClassName, secondaryButtonClassName } from '../components/formStyles';
 import { isSafeHttpUrl } from '../utils/safeUrl';
 import { usePageMeta } from '../hooks/usePageMeta';
 
@@ -29,8 +30,7 @@ interface LoadResult {
   error: string;
 }
 
-const actionClassName =
-  'rounded border border-green-600 px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50';
+const actionClassName = secondaryButtonClassName;
 
 function TeudaCard({ teuda, hechsherOptions }: { teuda: PublicTeuda; hechsherOptions: HechsherOption[] }) {
   const { t } = useTranslation();
@@ -40,8 +40,8 @@ function TeudaCard({ teuda, hechsherOptions }: { teuda: PublicTeuda; hechsherOpt
 
   return (
     <li
-      className={`rounded border p-3 text-sm ${
-        isExpired ? 'border-red-400 bg-red-50 text-red-900' : 'border-green-600 bg-green-50 text-green-900'
+      className={`rounded-xl border p-3 text-sm ${
+        isExpired ? 'border-red-400 bg-red-50 text-red-900' : 'border-green-700 bg-green-50 text-green-950'
       }`}
     >
       <p className="font-semibold">
@@ -128,15 +128,15 @@ function RestaurantDetailsPage() {
   const hechsherOptions = options?.hechsherOptions || [];
 
   if (!result || result.restaurantId !== restaurantId) {
-    return <p className="text-gray-600">{t('details.loading')}</p>;
+    return <p className="flex items-center justify-center gap-2 py-10 text-gray-600"><span className="kr-spinner" aria-hidden="true" />{t('details.loading')}</p>;
   }
 
   if (result.notFound) {
     return (
-      <div className="mx-auto max-w-lg space-y-4 text-center">
+      <div className="mx-auto max-w-lg space-y-4 rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900">{t('details.notFoundTitle')}</h1>
         <p className="text-gray-600">{t('details.notFoundBody')}</p>
-        <Link to="/" className="inline-block font-medium text-green-700 hover:underline">
+        <Link to="/" className={`${primaryButtonCompactClassName} mx-auto`}>
           {t('details.back')}
         </Link>
       </div>
@@ -145,9 +145,9 @@ function RestaurantDetailsPage() {
 
   if (!result.details) {
     return (
-      <div className="mx-auto max-w-lg space-y-4">
+      <div className="mx-auto max-w-lg space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <FormAlert message={result.error} />
-        <Link to="/" className="inline-block font-medium text-green-700 hover:underline">
+        <Link to="/" className="inline-flex min-h-11 items-center font-medium text-green-800 hover:underline">
           {t('details.back')}
         </Link>
       </div>
@@ -166,13 +166,13 @@ function RestaurantDetailsPage() {
 
   return (
     <article className="mx-auto max-w-3xl space-y-6">
-        <Link to="/" className="text-sm font-medium text-green-700 hover:underline">
+        <Link to="/" className="inline-flex min-h-11 items-center text-sm font-medium text-green-800 hover:underline">
           {/* NEW (Milestone 6): this link was English only. The missing-restaurant state already uses the translation. */}
           {/* חדש (אבן דרך 6): הקישור הזה היה באנגלית בלבד. מצב "מסעדה לא נמצאה" כבר משתמש בתרגום. */}
           {t('details.back')}
         </Link>
 
-      <header>
+      <header className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
         <h1 className="text-3xl font-bold text-gray-900">{restaurant.name}</h1>
         {otherNames.length > 0 && <p className="text-gray-600">{otherNames.join(' · ')}</p>}
         <p className="mt-1 text-gray-700">{place}</p>
@@ -192,7 +192,7 @@ function RestaurantDetailsPage() {
         )}
       </header>
 
-      <section aria-labelledby="kashrut-heading" className="space-y-3">
+      <section aria-labelledby="kashrut-heading" className="space-y-3 rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
         <h2 id="kashrut-heading" className="text-xl font-semibold text-gray-900">
           {t('details.kashrut')}
         </h2>
@@ -233,7 +233,7 @@ function RestaurantDetailsPage() {
         </p>
       </section>
 
-      <section aria-labelledby="contact-heading" className="space-y-2">
+      <section aria-labelledby="contact-heading" className="space-y-2 rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
         <h2 id="contact-heading" className="text-xl font-semibold text-gray-900">
           {t('details.contact')}
         </h2>
@@ -286,7 +286,7 @@ function RestaurantDetailsPage() {
         </div>
       </section>
 
-      <section aria-labelledby="help-heading" className="space-y-2 border-t border-gray-200 pt-4">
+      <section aria-labelledby="help-heading" className="space-y-2 rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
         <h2 id="help-heading" className="text-xl font-semibold text-gray-900">
           {t('details.help')}
         </h2>
@@ -294,7 +294,7 @@ function RestaurantDetailsPage() {
         <div className="flex flex-wrap gap-2">
           <Link
             to={`/restaurants/${restaurant.id}/add-teuda`}
-            className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700"
+            className={primaryButtonCompactClassName}
           >
             {t('details.addCertificate')}
           </Link>

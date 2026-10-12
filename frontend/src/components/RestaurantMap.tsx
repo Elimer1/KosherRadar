@@ -21,14 +21,14 @@ import { ISRAEL_MAP_BOUNDS, boundsCrossDateLine, zoomForRadius } from '../utils/
 import { buildTelUrl, buildWazeUrl, restaurantPageUrl } from '../utils/navigationLinks';
 import KashrutBadge from './KashrutBadge';
 import ShareButton from './ShareButton';
+import { primaryButtonCompactClassName, secondaryButtonClassName } from './formStyles';
 
 interface RestaurantMapProps {
   filters: SearchFilters;
   hechsherOptions: HechsherOption[];
 }
 
-const actionClassName =
-  'inline-flex min-h-11 items-center rounded border border-green-600 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-50';
+const actionClassName = secondaryButtonClassName;
 
 // A green pin drawn in the page, so the map does not depend on Leaflet's default image files.
 // סיכה ירוקה שמצוירת בדף, כדי שהמפה לא תלויה בקובצי התמונה של Leaflet.
@@ -117,7 +117,7 @@ function MapPopup({ restaurant, hechsherOptions }: { restaurant: RestaurantCardD
       {restaurant.foodType && <p>{getFoodTypeLabel(restaurant.foodType)}</p>}
       <KashrutBadge kashrut={restaurant.kashrut} hechsherOptions={hechsherOptions} />
       <div className="flex flex-wrap gap-2 pt-1">
-        <Link to={`/restaurants/${restaurant.id}`} className="inline-flex min-h-11 items-center rounded bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700">
+        <Link to={`/restaurants/${restaurant.id}`} className={primaryButtonCompactClassName}>
           {t('card.viewDetails')}
         </Link>
         {telUrl && (
@@ -199,7 +199,7 @@ function RestaurantMap({ filters, hechsherOptions }: RestaurantMapProps) {
 
   return (
     <div>
-      <div className="relative h-[70vh] min-h-80 overflow-hidden rounded-lg border border-gray-200 sm:h-[72vh] md:h-[68vh] lg:h-[calc(100vh-14rem)]">
+      <div className="relative h-[70vh] min-h-80 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:h-[72vh] md:h-[68vh] lg:h-[calc(100vh-14rem)]">
         <MapContainer
           {...(located
             ? { center: located.center, zoom: located.zoom }
@@ -247,7 +247,8 @@ function RestaurantMap({ filters, hechsherOptions }: RestaurantMapProps) {
         </MapContainer>
 
         {loading && (
-          <p className="pointer-events-none absolute top-2 left-2 z-[500] rounded bg-white/95 px-2 py-1 text-xs text-gray-700 shadow-sm">
+          <p className="pointer-events-none absolute start-3 top-3 z-[500] inline-flex items-center gap-2 rounded-lg bg-white/95 px-2.5 py-1.5 text-xs text-gray-700 shadow-sm">
+            <span className="kr-spinner" aria-hidden="true" />
             {t('map.loading')}
           </p>
         )}
@@ -255,12 +256,12 @@ function RestaurantMap({ filters, hechsherOptions }: RestaurantMapProps) {
 
       <div className="mt-2 space-y-2 text-sm text-gray-600">
         {tooWide && (
-          <p role="status" className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900">
+          <p role="status" className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-amber-950">
             {t('map.zoomIn')}
           </p>
         )}
         {error !== '' && (
-          <p role="alert" className="rounded border border-red-200 bg-red-50 px-3 py-2 text-red-800">
+          <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-800">
             {error}{' '}
             <button type="button" onClick={() => setRetryCounter((current) => current + 1)} className="font-medium underline">
               {t('common.tryAgain')}
@@ -268,7 +269,7 @@ function RestaurantMap({ filters, hechsherOptions }: RestaurantMapProps) {
           </p>
         )}
         {capped && (
-          <p role="status" className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900">
+          <p role="status" className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-amber-950">
             {t('map.capped')}
           </p>
         )}
