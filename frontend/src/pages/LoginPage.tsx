@@ -6,6 +6,7 @@ import { loginUser } from '../api/authApi';
 import { getErrorMessage } from '../api/errors';
 import PasswordField from '../components/PasswordField';
 import { useAuthStore } from '../stores/authStore';
+import { safeReturnPath } from '../utils/returnPath';
 
 function LoginPage() {
   const { t } = useTranslation();
@@ -18,8 +19,9 @@ function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ProtectedRoute remembers the page the visitor wanted.
-  const redirectTo = (location.state as { from?: string } | null)?.from || '/';
+  // ProtectedRoute remembers the page the visitor wanted. Only a path inside this site is followed.
+  // ProtectedRoute זוכר את הדף שהמבקר רצה. עוקבים רק אחרי נתיב בתוך האתר.
+  const redirectTo = safeReturnPath((location.state as { from?: string } | null)?.from);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
