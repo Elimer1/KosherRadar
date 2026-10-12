@@ -8,6 +8,19 @@ import { toSafeHttpUrl } from '../utils/safeUrl.js';
 
 const toNullable = (value) => value || null;
 
+// NEW (Milestone 6): the public page lists the evidence, not the internal sort number (`rank`).
+// חדש (אבן דרך 6): הדף הציבורי מציג את הראיות, לא את מספר המיון הפנימי (rank).
+const toPublicEvidence = (item) => {
+  return {
+    kind: item.kind,
+    teudaId: item.teudaId,
+    hechsher: item.hechsher,
+    hechsherOther: item.hechsherOther,
+    kashrutLevel: item.kashrutLevel,
+    expirationDate: item.expirationDate,
+  };
+};
+
 // The short form of the kashrut summary used on cards and in suggestions: only the primary item and "+N more".
 // הצורה הקצרה של סיכום הכשרות לכרטיסים והצעות: רק הפריט הראשי ו-"+N נוספים".
 const toKashrutPreview = (summary) => {
@@ -79,7 +92,9 @@ export const toPublicRestaurantDetails = (restaurant, summary, publicTeudot) => 
       moreCount: summary.moreCount,
       hasRecentExpired: summary.hasRecentExpired,
       // Every piece of evidence: verified and expired certificates, and unverified claims (teudaId is null).
-      items: summary.items,
+      // `rank` stays inside the kashrut service; it is not part of the public payload.
+      // rank נשאר בתוך שירות הכשרות; הוא לא חלק מהתשובה הציבורית.
+      items: summary.items.map(toPublicEvidence),
     },
     teudot: publicTeudot,
   };
