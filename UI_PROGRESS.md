@@ -102,3 +102,7 @@ This branch was cut from `main`, not from `feature/audit-must-fix`. The function
 4. Re-run `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build` in `frontend`.
 5. Look at home, a restaurant card, restaurant details, login, and a missing URL in English and Hebrew, at about 390px and at a width over 1024px.
 6. Do not merge until that review. This branch does not merge itself.
+
+## Integrated on main
+
+Merged into `main` as `226e0bc` after `feature/audit-must-fix` was fast-forwarded to `7c5fe29`. No class-name conflicts. Frontend lint, typecheck, tests, and build passed on the combined tree. The browser look in step 5 was not done in that session. This UI worktree was not edited.

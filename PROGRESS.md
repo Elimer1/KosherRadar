@@ -441,21 +441,42 @@ Integration check on 12 October 2026, before QA-001 and QA-002, on a clean `feat
 
 QA-001 and QA-002 were then fixed on this branch. See the onboarding section. Backend tests were run again: exit 0, 38 files, 489 tests passed. Frontend files were not changed by those two fixes, so the frontend results above still apply.
 
+## Integration (12 October 2026)
+
+The user approved integrating the completed functionality, UI, and QA work. Done on the primary worktree only. The UI, QA, and UX worktrees were not modified. Nothing was pushed.
+
+- `feature/audit-must-fix` fast-forwarded `main` from `430d4e2` to `7c5fe29`. No unrelated uncommitted files were present.
+- `feature/ui-polish` (`e479f31`) merged as `226e0bc`. No conflicts. Visual classes and the functionality fixes are both on `main`.
+- `feature/qa-testing` (`54d9605`) merged as `dbf5672`. No conflicts.
+- QA-001's regression in `backend/tests/qaPendingCertificateIdentity.test.js` is a normal `it`. The assertion is unchanged: the two undated lookups must not be equal.
+
+Checks on the combined tree:
+
+| Command | Result |
+| --- | --- |
+| `cd backend; npm test` | exit 0, 40 files, 497 tests passed |
+| `cd frontend; npm test` | exit 0, 14 files, 90 tests passed |
+| `cd frontend; npm run lint` | exit 0 |
+| `cd frontend; npm run typecheck` | exit 0 |
+| `cd frontend; npm run build` | exit 0 (JavaScript bundle about 724 kB; Vite warns above 500 kB) |
+
+The home page, restaurant page, login, and missing-page screens were not opened in a browser after the UI merge. `UI_PROGRESS.md` still asks for that look at about 390px and above 1024px, in English and Hebrew.
+
 ## NEXT AGENT ONBOARDING
 
 **Current position**
 
-- Branch: `feature/audit-must-fix` (not pushed). It starts from `main` at `430d4e2`.
-- Current batch: MUST FIX NOW, plus QA-001 and QA-002 found before integration. All of those are verified. This was not a walk through all 11 milestones.
-- Last verified fixes: QA-001 and QA-002, after M5-002, M4-001, M2-003, M2-002, and the certificate batch M1-001, M1-002, M1-003, M6-003, M8-002.
-- Next issue: none until the user asks. Do not start a LATER issue. Do not merge until the user approves.
+- Branch: `main` (not pushed). It is ahead of `origin/main`.
+- Current batch: MUST FIX NOW, QA-001, and QA-002 are on `main`, together with `feature/ui-polish` and `feature/qa-testing`. This was not a walk through all 11 milestones.
+- Last verified fixes: QA-001 and QA-002, then the integration merges `226e0bc` and `dbf5672`.
+- Next issue: none until the user asks. Do not start a LATER issue.
 - Tracker counts: 11 VERIFIED, 8 ALREADY WORKING, 13 NOT STARTED, 5 BLOCKED, 1 DEFERRED. Total 38.
 
 **Integration check**
 
-- `main` is `430d4e2`. This branch was 6 commits ahead and 0 behind before the QA fixes. `git merge-tree` into `main` was clean, so a fast-forward is possible. Not merged. Not pushed.
-- `feature/ui-polish` in `C:/FS/projects/KosherRadar-ui` is `e479f31` (`Polish public search, navigation, and shared controls.`), one commit ahead of `main`. It changes public layout and search screens plus `UI_PROGRESS.md`. It does not change the files in this fix branch. `git merge-tree` of that branch into this one was clean. Do not modify or merge it from here.
-- `feature/qa-testing` in `C:/FS/projects/KosherRadar-qa` is `54d9605`, one commit past `f87e665`. It adds `QA_PROGRESS.md` and two test files only. `git merge-tree` of that branch into this one was clean. Do not modify that worktree. After QA-001, its `it.fails` case starts passing, so Vitest will fail that file until `it.fails` is changed to `it` on the QA branch.
+- `main` contains `7c5fe29`, then merge `226e0bc` (`feature/ui-polish` at `e479f31`), then merge `dbf5672` (`feature/qa-testing` at `54d9605`). Not pushed.
+- The UI worktree `C:/FS/projects/KosherRadar-ui` is still checked out on `feature/ui-polish` at `e479f31`. The QA worktree `C:/FS/projects/KosherRadar-qa` is still on `feature/qa-testing` at `54d9605`, where the QA-001 case is still `it.fails`. Those worktrees were not edited. On `main` that case is a normal `it`.
+- `feature/ux-review` in `C:/FS/projects/KosherRadar-ux` is `7d2a1a6` and was not part of this integration. It was clean and was left alone.
 
 **Completed work**
 
@@ -514,7 +535,8 @@ Duplicate schema field (QA-002):
 **Tests executed**
 
 - Before QA-001 and QA-002: `cd backend; npm test` exit 0, 38 files, 485 tests passed. `cd frontend; npm test` exit 0, 14 files, 90 tests passed. `cd frontend; npm run lint` exit 0. `cd frontend; npm run build` exit 0, bundle about 722 kB.
-- After QA-001 and QA-002: `cd backend; npm test` exit 0, 38 files, 489 tests passed. Mocks only. Frontend was not changed by those fixes and was not re-run.
+- After QA-001 and QA-002: `cd backend; npm test` exit 0, 38 files, 489 tests passed. Mocks only.
+- After the three branches were on `main`: `cd backend; npm test` exit 0, 40 files, 497 tests passed. `cd frontend; npm test` exit 0, 14 files, 90 tests passed. `cd frontend; npm run lint` exit 0. `cd frontend; npm run typecheck` exit 0. `cd frontend; npm run build` exit 0, bundle about 724 kB.
 - Browser was not used. Live Geoapify, Cloudinary, Resend, and Atlas were not called.
 
 **Do not repeat**
@@ -542,15 +564,8 @@ LATER, do not start unless the user asks: M2-004, M3-003, M4-003, M4-004, M5-001
 
 If the user asks to continue, the next priority is M4-003 (security headers without a new package unless they approve `helmet`). After that, M5-001 (restaurant deletion writes) only if they want more data-integrity work. Do not add Playwright, `helmet`, or `mongodb-memory-server` without approval.
 
-On `feature/qa-testing`, change the QA-001 `it.fails` in `backend/tests/qaPendingCertificateIdentity.test.js` to a normal `it` after this fix is on the branch they merge. Do that on the QA branch, not here.
+The QA-001 case on `main` is already a normal `it`. The QA worktree still has `it.fails` at `54d9605` and was left that way on purpose.
 
 **Exact next task**
 
-Wait for approval to merge `feature/audit-must-fix` into `main`. Do not merge it in this session. Safe procedure, from a clean primary worktree, after `git fetch` and after confirming `main` is still `430d4e2`:
-
-1. Leave `C:/FS/projects/KosherRadar-ui` and `C:/FS/projects/KosherRadar-qa` untouched.
-2. `git checkout main`
-3. `git merge --ff-only feature/audit-must-fix`
-4. Do not push unless the user asks.
-
-`--ff-only` stops if `main` has moved. Do not use `--no-ff` unless the user wants a merge commit. Do not merge the UI or QA branches in that step.
+Stop. Integration is on `main` and the combined checks passed. Do not push unless the user asks. Do not start a LATER issue. The UI polish was not opened in a browser.

@@ -139,3 +139,7 @@ A temporary run of the QA-001 case as a normal `it` exited 1 with the assertion 
 - Skip password reset and `adminReportRepository` until those uncommitted edits land.
 - After QA-001 is fixed, `it.fails` will fail the suite because the assertion starts passing. Update that test in the same change.
 - Do not add Playwright or another database driver without approval.
+
+## Integrated on main
+
+`main` includes this branch via merge `dbf5672`. QA-001 and QA-002 were already fixed before that merge. On `main`, the QA-001 case in `qaPendingCertificateIdentity.test.js` is a normal `it` with the same assertion. The combined backend suite then passed 40 files and 497 tests. This QA worktree was not edited and still has `it.fails` at `54d9605`.

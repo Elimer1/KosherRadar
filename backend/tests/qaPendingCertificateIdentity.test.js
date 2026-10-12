@@ -68,9 +68,9 @@ describe('pending certificate duplicate lookup', () => {
   });
 
   // QA-001: two undated certificates of the same hechsher are not the same certificate when the
-  // mashgiach differs. The lookup currently ignores the mashgiach, so this expectation fails.
-  // QA-001: שתי תעודות בלי תאריך מאותה השגחה אינן אותה תעודה כשהמשגיח שונה. החיפוש מתעלם מהמשגיח.
-  it.fails('treats undated certificates with different mashgichim as different pending submissions', async () => {
+  // mashgiach differs. The lookup must differ, so the second submission is not rejected as a duplicate.
+  // QA-001: שתי תעודות בלי תאריך מאותה השגחה אינן אותה תעודה כשהמשגיח שונה. החיפוש חייב להיות שונה.
+  it('treats undated certificates with different mashgichim as different pending submissions', async () => {
     await submit({ hechsher: 'BADATZ_BEIT_YOSEF', mashgiachName: 'Avi Cohen' });
     await submit({ hechsher: 'BADATZ_BEIT_YOSEF', mashgiachName: 'Dana Levi' });
 
