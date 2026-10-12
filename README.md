@@ -2,7 +2,7 @@
 
 A crowdsourced, factual kashrut-information directory for restaurants in Israel. KosherRadar is not a rating app and does not certify anything itself. The authoritative requirements are in `PROJECT_SPEC.md`; current status is in `PROGRESS.md` and `REQUIREMENTS_CHECKLIST.md`.
 
-Current state: **Milestone 4 (search and restaurant pages)** on top of Milestones 1 to 3. Anyone can search approved restaurants on the home page (by name or food, in Hebrew or English, with filters, autocomplete and 20 results per page) and open a restaurant page that shows its kashrut evidence: certificates, EXPIRED certificates and unverified claims, kept apart. Logged-in users can submit restaurants (optionally with a certificate photo), add a certificate to an approved restaurant, and report a problem. Everything they send is saved as `PENDING`; admins review it in the admin dashboard (approve, reject with a reason, edit, delete, resolve reports), and users can reset a forgotten password by email. The map, location search, share button and the Hebrew interface are Milestone 5.
+Current state: **Milestone 5 (maps, location and interface polish)** on top of Milestones 1 to 4. Anyone can search approved restaurants on the home page (by name or food, in Hebrew or English, with filters, autocomplete and 20 results per page) or switch to a map of the same results. A separate location field looks up a place in Israel. The restaurant page shows kashrut evidence: certificates, EXPIRED certificates and unverified claims, kept apart, and can be shared. The interface is English or Hebrew, and Hebrew is right-to-left. Logged-in users can submit restaurants (optionally with a certificate photo), add a certificate to an approved restaurant, and report a problem. Everything they send is saved as `PENDING`; admins review it in the admin dashboard (approve, reject with a reason, edit, delete, resolve reports), and users can reset a forgotten password by email.
 
 Nothing in this project has been run against a real MongoDB, Cloudinary or Resend account yet. See `PROGRESS.md` for what is tested and what is not.
 
@@ -74,6 +74,8 @@ cp .env.example .env     # on Windows PowerShell: Copy-Item .env.example .env
 
 `VITE_API_URL` defaults to `http://localhost:5000/api`. Only put non-secret values in this file.
 
+The language (English or Hebrew) and the list/map choice are saved in this browser. Hebrew sets the page direction to right-to-left. The HTML file has a generic title and description; once JavaScript runs, the open page can set its own. A crawler that does not run JavaScript only sees the generic title.
+
 ### Frontend commands
 
 ```bash
@@ -102,9 +104,13 @@ npm run preview      # serve the production build locally
 | POST | `/api/auth/reset-password` | public, rate-limited; body `token` (64 hex characters) and `password`; token works once, 60 minutes |
 | GET | `/api/auth/me` | logged-in user |
 | GET | `/api/users/me` | logged-in user (includes private points) |
+| GET | `/api/users/me/submissions` | logged-in user; own restaurants, certificates and reports (no admin notes) |
+| GET | `/api/places/suggest?text&lang` and `/api/places/geocode?text&lang` | public, rate-limited; place lookup in Israel for the search location field. `lang` is `en` or `he`. Without `GEOAPIFY_API_KEY`, or if the lookup fails, the answer has `available: false` and no coordinates |
+| GET | `/api/places/autocomplete?text` | logged-in; the same lookup for the submission address field |
 | GET | `/api/admin/check` | ADMIN only |
 | GET | `/api/options` | public; hechsher list, food types, categories, levels |
 | GET | `/api/restaurants?q&level&hechsher&foodType&category&hideExpired&includeUnknown&lat&lng&radiusKm&page` | public, rate-limited; search APPROVED restaurants, 20 per page, response has `items`, `total`, `hasMore`, `capped` and `search.mode` (`ATLAS` or `BASIC`). A radius needs `lat` and `lng`. Without a location the order is relevance (with text) or A-Z; with one it is nearest first |
+| GET | `/api/restaurants/map?north&south&east&west&...` | public, rate-limited; the same filters as the list, limited to the visible box, at most 500 markers. A radius still applies when `lat` and `lng` are sent. Restaurants without coordinates are omitted. `capped: true` means the box had more matches than the cap |
 | GET | `/api/restaurants/suggestions?q&...` | public, rate-limited; autocomplete, at most 8 rows, `q` needs 2 characters |
 | GET | `/api/restaurants/:restaurantId` | public, rate-limited; one APPROVED restaurant with all public kashrut evidence and public certificates (404 for any other status, no admin data) |
 | GET | `/api/restaurants/:restaurantId/submission-context` | public; name/address and the public certificates of an APPROVED restaurant (404 for any other status) |
@@ -130,8 +136,8 @@ Admin endpoints (every one needs a valid login **and** the `ADMIN` role; the ser
 
 Public pages (no login needed), added in Milestone 4:
 
-- `/` - the search page: one search box (restaurant name or food), autocomplete, filters (kashrut level, hechsher, food type, category, hide expired, include unknown, "use my current location" with a radius) and a Load More button.
-- `/restaurants/:restaurantId` - the restaurant page: status in words, certificates with their photo, mashgiach details and EXPIRED labels, unverified claims shown separately, a Kosharot link when an admin added one, Call / Google Maps / Waze links, and links to add a certificate or report a problem.
+- `/` - the search page: one search box (restaurant name or food), a separate location box (a place in Israel, or the browser's current location), autocomplete, filters (kashrut level, hechsher, food type, category, hide expired, include unknown, and a radius once a location is chosen), a List / Map switch, and a Load More button on the list. The map shows the same approved matches inside the visible area.
+- `/restaurants/:restaurantId` - the restaurant page: status in words, certificates with their photo, mashgiach details and EXPIRED labels, unverified claims shown separately, a Kosharot link when an admin added one, Call / Google Maps / Waze links, a share button, and links to add a certificate or report a problem.
 
 Submission pages in the frontend (all need login):
 
@@ -160,6 +166,7 @@ To try the admin area: run `npm run seed:admin`, log in with that account, and o
 - The level and hechsher filters must match the **same** certificate (or claim); "hide expired" removes expired evidence; restaurants with unknown status only appear with "include unknown" and never match a kashrut filter.
 - Because status depends on dates, the database narrows the candidates first (at most 2000, sorted by name) and the server then applies the kashrut filters and the sort. If more than 2000 restaurants match, the response has `capped: true` and the page tells the visitor that the list may be incomplete.
 - Search works fully without Atlas Search. With `ATLAS_SEARCH_ENABLED=true` it also finds restaurants with a mistyped name; if Atlas fails, the plain search is used and the page says so.
+- The map uses the same filters. The visible box and a chosen radius both apply: panning the map does not change the place you searched. A name such as "pizza Jerusalem" is not treated as a place.
 
 ### Submission rules
 
@@ -173,4 +180,4 @@ To try the admin area: run `npm run seed:admin`, log in with that account, and o
 
 ## External services
 
-Cloudinary is used for certificate photos and Resend for emails (see setup above). Atlas Search is optional (see `ATLAS_SEARCH_SETUP.md`). Geoapify is not used yet; it belongs to Milestone 5.
+Cloudinary is used for certificate photos and Resend for emails (see setup above). Atlas Search is optional (see `ATLAS_SEARCH_SETUP.md`). Geoapify is used for address and place lookup when `GEOAPIFY_API_KEY` is set. The key stays on the server. Without it, a typed address can still be submitted, and the search location field explains that lookup is unavailable. No coordinates are invented. Geoapify itself has not been called from this project against a real key.

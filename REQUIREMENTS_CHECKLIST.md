@@ -3,7 +3,7 @@
 Statuses: `NOT STARTED`, `IN PROGRESS`, `IMPLEMENTED UNVERIFIED`, `TESTED`, `BLOCKED`. `TESTED` requires evidence (a passing test or a real run), recorded in the Evidence column.
 Source of requirements: `PROJECT_SPEC.md`.
 
-After the Milestone 4 merges, `main` runs backend 34 files / 448 tests and frontend 11 files / 76 tests, all passing; frontend typecheck, lint and build succeed. (After Milestone 3: backend 24 files / 324 tests, frontend 7 files / 40 tests.)
+After the Milestone 5 merges, `main` runs backend 37 files / 466 tests and frontend 14 files / 89 tests, all passing; frontend lint and build succeed. (After Milestone 4: backend 34 files / 448 tests, frontend 11 files / 76 tests. After Milestone 3: backend 24 files / 324 tests, frontend 7 files / 40 tests.)
 
 Evidence for Milestone 1 came from `npm test` runs on `main` after merging both feature branches (backend 4 files / 40 tests, frontend 1 file / 11 tests). After the Milestone 2 merges, `main` runs backend 13 files / 150 tests and frontend 4 files / 24 tests, all passing; frontend `npm run typecheck`, `npm run build` and `npm run lint` succeed. No MongoDB, Cloudinary account or browser was available, so nothing was verified against real services.
 
@@ -118,19 +118,19 @@ Evidence for Milestone 1 came from `npm test` runs on `main` after merging both 
 | Safe links: only http/https for website, Kosharot and photo links (4, 12) | TESTED | `safeUrl.test.js` (backend, re-checked on output), `safeUrl.test.ts` (frontend), `restaurantDetailsService.test.js` (a `javascript:` value written straight into the database is never sent) |
 | Restaurant detail page (status, certificates with photo, mashgiach, EXPIRED labels, unverified claims apart, Kosharot link) (10) | IMPLEMENTED UNVERIFIED | `RestaurantDetailsPage.tsx`; looked at in the browser with a stub API (loaded, 404 state). No component tests |
 | Entry points: add certificate / report problem from the restaurant page (10) | IMPLEMENTED UNVERIFIED | Links on `RestaurantDetailsPage.tsx`; the existing `ProtectedRoute` sends anonymous visitors to login. Not clicked through with a real login |
-| Google Maps and Waze links (8, 10) | IMPLEMENTED UNVERIFIED | Waze on cards and the detail page, Google Maps on the detail page (`navigationLinks.test.ts`). Share button and map popups are Milestone 5 |
+| Google Maps and Waze links (8, 10) | IMPLEMENTED UNVERIFIED | Waze on cards and the detail page, Google Maps on the detail page (`navigationLinks.test.ts`). The share button and map popup links were added in Milestone 5 |
 | Real search and details flow against MongoDB / Atlas Search / browser (15) | BLOCKED | No `backend/.env`, MongoDB or Atlas cluster available here |
 
 ## Milestone 5 — Maps, location, interface polish
 
 | Requirement | Status | Notes |
 | --- | --- | --- |
-| Leaflet map, clustering, bounds queries (9) | NOT STARTED | |
-| Geoapify location (8, 10) | NOT STARTED | |
-| Waze / Google Maps / share (8, 10) | IN PROGRESS | Waze and Call on result cards, Waze and Google Maps on the detail page were done in Milestone 4. Share button and map popup links are still to do |
-| English + Hebrew, RTL/LTR (11) | NOT STARTED | |
-| Responsive across four width ranges (11) | NOT STARTED | |
-| List/Map exclusive toggle, saved view (8, 18) | NOT STARTED | |
+| Leaflet map, clustering, bounds queries (9) | IMPLEMENTED UNVERIFIED | Bounds API TESTED: `mapSearchService.test.js`, `restaurantSearchRepository.test.js`, `geo.test.js`, `searchRoutesHttp.test.js` (mocked repository / mocked service). The map was opened in the browser: Leaflet controls and OpenStreetMap tiles loaded. Clustering and popups were not seen, because the search returned no restaurants. The MongoDB `$geoWithin` query was not run |
+| Geoapify location (8, 10) | IMPLEMENTED UNVERIFIED | `placesService.test.js` (suggest/geocode: Hebrew `lang`, a miss returns no place, a missing key does not invent coordinates). The location field is on the home page and is separate from the name/food box. **No real Geoapify request has been made** |
+| Waze / Google Maps / share (8, 10) | TESTED | Link builders and the share fallback (cancel does not copy; other failures copy) in `navigationLinks.test.ts`. The share button is on the restaurant page and in map popups; it was not clicked in the browser because no restaurant was loaded |
+| English + Hebrew, RTL/LTR (11) | TESTED | `locales.test.ts` (same keys, no empty Hebrew). In the browser, Hebrew set `lang=he` and `dir=rtl`, and the choice survived a reload. Login and the invalid reset-link screen were Hebrew. Server-written validation messages stay in the language the API sends |
+| Responsive across four width ranges (11) | IMPLEMENTED UNVERIFIED | Tailwind breakpoints are in the layout (`sm` 640, `md` 768, `lg` 1024). A 390px-wide home page did not scroll sideways. 640–767, 768–1023 and ≥1024 were not measured in this pass |
+| List/Map exclusive toggle, saved view (8, 18) | TESTED | `mapView.test.ts`. In the browser, Map hid the list, List hid the map, and `localStorage` key `kosherradar-view` kept Map across a reload |
 
 ## Milestone 6 — Full verification and fixes
 
