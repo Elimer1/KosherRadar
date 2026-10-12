@@ -28,3 +28,13 @@ export const getErrorMessage = (error: unknown, fallback?: string) => {
 
   return body?.message || generic;
 };
+
+// Search has its own limit. The server message is English, so the page uses the active language instead.
+// לחיפוש יש מגבלה משלו. הודעת השרת באנגלית, ולכן הדף משתמש בשפה הפעילה.
+export const getSearchErrorMessage = (error: unknown, fallback: string) => {
+  if (axios.isAxiosError<ApiErrorBody>(error) && error.response?.status === 429) {
+    return i18n.t('home.rateLimited');
+  }
+
+  return getErrorMessage(error, fallback);
+};

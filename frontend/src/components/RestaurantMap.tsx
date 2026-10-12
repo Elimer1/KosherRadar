@@ -6,6 +6,7 @@ import type { MouseEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 import L from 'leaflet';
 import { Circle, MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
@@ -13,7 +14,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster';
 import 'react-leaflet-cluster/dist/assets/MarkerCluster.css';
 import 'react-leaflet-cluster/dist/assets/MarkerCluster.Default.css';
-import { getErrorMessage } from '../api/errors';
+import { getSearchErrorMessage } from '../api/errors';
 import { searchRestaurantsInBounds } from '../api/searchApi';
 import type { SearchReturnState } from '../search/searchReturn';
 import type { HechsherOption } from '../types/submissions';
@@ -184,23 +185,26 @@ function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant
     }
 
     let ignore = false;
+    const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setLoading(true);
       setError('');
 
       try {
-        const result = await searchRestaurantsInBounds(filters, bounds);
+        const result = await searchRestaurantsInBounds(filters, bounds, controller.signal);
 
         if (!ignore) {
           setItems(result.items);
           setCapped(result.capped);
         }
       } catch (err) {
-        if (!ignore) {
-          setItems([]);
-          setCapped(false);
-          setError(getErrorMessage(err, t('map.loadError')));
+        if (ignore || axios.isCancel(err)) {
+          return;
         }
+
+        setItems([]);
+        setCapped(false);
+        setError(getSearchErrorMessage(err, t('map.loadError')));
       } finally {
         if (!ignore) {
           setLoading(false);
@@ -211,6 +215,7 @@ function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant
     return () => {
       ignore = true;
       window.clearTimeout(timer);
+      controller.abort();
     };
     // `bounds` and `filters` match the keys above; the keys are what should retrigger the load.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -279,7 +284,7 @@ function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant
         </MapContainer>
 
         {loading && (
-          <p className="pointer-events-none absolute start-3 top-3 z-[500] inline-flex items-center gap-2 rounded-lg bg-white/95 px-2.5 py-1.5 text-xs text-gray-700 shadow-sm">
+          <p role="status" className="pointer-events-none absolute start-3 top-3 z-[500] inline-flex items-center gap-2 rounded-lg bg-white/95 px-2.5 py-1.5 text-xs text-gray-700 shadow-sm">
             <span className="kr-spinner" aria-hidden="true" />
             {t('map.loading')}
           </p>

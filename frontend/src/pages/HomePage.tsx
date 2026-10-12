@@ -35,8 +35,8 @@ function HomePage() {
   const { t } = useTranslation();
   const { options } = useFormOptions();
 
-  // NEW (UX WP1A): the address holds the applied search. The box keeps its own draft until Enter, Search, or a filter.
-  // חדש (חבילת UX 1A): הכתובת מחזיקה את החיפוש שהוחל. התיבה שומרת טיוטה עד Enter, חיפוש, או מסנן.
+  // NEW (UX WP1A/1B): the address holds the applied search. Typed text is committed after a short pause, or immediately on Enter, Search, or a filter.
+  // חדש (חבילת UX 1A/1B): הכתובת מחזיקה את החיפוש שהוחל. טקסט מוקלד נשמר אחרי הפסקה קצרה, או מיד ב-Enter, בחיפוש, או במסנן.
   const criteria = useSearchCriteria();
   const filters = criteria.filters;
   const [showFilters, setShowFilters] = useState(false);
@@ -65,6 +65,29 @@ function HomePage() {
     setView(next);
     saveView(next);
   };
+
+  const listStatus = (() => {
+    if (view !== 'list') {
+      return '';
+    }
+
+    if (criteria.locationPending || search.loading) {
+      return t('home.searching');
+    }
+
+    if (search.error && search.items.length === 0) {
+      return search.error;
+    }
+
+    if (!search.error && search.items.length === 0) {
+      return hasAnySearchChoice ? t('home.noMatchTitle') : t('home.emptyTitle');
+    }
+
+    const countText =
+      search.total === 1 ? t('home.foundOne', { count: search.total }) : t('home.foundMany', { count: search.total });
+
+    return search.error ? `${countText}. ${search.error}` : countText;
+  })();
 
   const viewButtonClass = (selected: boolean) =>
     `min-h-11 flex-1 rounded-lg px-4 py-2 text-sm font-medium sm:flex-none ${
@@ -117,7 +140,13 @@ function HomePage() {
           </div>
         </aside>
 
-        <section aria-live="polite" aria-label={t('home.results')}>
+        <section
+          aria-label={t('home.results')}
+          aria-busy={view === 'list' && (criteria.locationPending || search.loading)}
+        >
+          <p className="sr-only" role="status" aria-live="polite">
+            {listStatus}
+          </p>
           <div
             role="group"
             aria-label={t('home.view')}

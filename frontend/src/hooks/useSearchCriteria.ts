@@ -72,6 +72,10 @@ export const readRememberedLocation = (state: unknown): RememberedSearchLocation
   };
 };
 
+// Live search waits for a short pause, then commits with replace. A filter flushes the draft sooner.
+// חיפוש חי מחכה להפסקה קצרה ואז שומר עם replace. מסנן שומר את הטיוטה מיד.
+export const DRAFT_COMMIT_DELAY_MS = 350;
+
 const locationsEqual = (left: RememberedSearchLocation | null, right: RememberedSearchLocation | null) => {
   if (left === right) {
     return true;
@@ -116,6 +120,17 @@ export const useSearchCriteria = () => {
   const appliedRef = useRef(applied);
   const locationRef = useRef(location);
   const navigateRef = useRef(navigate);
+  const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const commitDraftQueryRef = useRef<(text?: string) => void>(() => {});
+
+  const cancelDraftTimer = () => {
+    if (draftTimer.current !== null) {
+      clearTimeout(draftTimer.current);
+      draftTimer.current = null;
+    }
+  };
+
+  useEffect(() => cancelDraftTimer, []);
 
   useEffect(() => {
     draftRef.current = draftQuery;
@@ -134,6 +149,8 @@ export const useSearchCriteria = () => {
     seenAppliedQ.current = applied.q;
 
     if (nextDraft !== draftRef.current) {
+      cancelDraftTimer();
+      draftRef.current = nextDraft;
       setDraftQueryState(nextDraft);
     }
   }, [applied.q]);
@@ -239,10 +256,18 @@ export const useSearchCriteria = () => {
   };
 
   const setDraftQuery = (text: string) => {
-    setDraftQueryState(text.slice(0, 100));
+    const next = text.slice(0, 100);
+    draftRef.current = next;
+    setDraftQueryState(next);
+    cancelDraftTimer();
+    draftTimer.current = setTimeout(() => {
+      draftTimer.current = null;
+      commitDraftQueryRef.current();
+    }, DRAFT_COMMIT_DELAY_MS);
   };
 
   const commitDraftQuery = (text?: string) => {
+    cancelDraftTimer();
     const raw = text ?? draftRef.current;
     const next = commitDraftText(appliedRef.current, raw);
     // A blank commit clears the field. A non-empty commit may keep a trailing space so later
@@ -260,7 +285,14 @@ export const useSearchCriteria = () => {
     go(next.criteria, 'replace', keptLocation(next.criteria, undefined));
   };
 
+  useEffect(() => {
+    commitDraftQueryRef.current = commitDraftQuery;
+  });
+
   const updateFilters = (patch: SearchFilterPatch) => {
+    // A waiting keystroke is kept and committed with this filter. Cancelling the timer does not wipe the box.
+    // הקשה שממתינה נשמרת יחד עם המסנן. ביטול הטיימר לא מוחק את התיבה.
+    cancelDraftTimer();
     const current = appliedRef.current;
     const currentLocation = readRememberedLocation(locationRef.current.state);
     const deviceActive = current.near === '' && currentLocation?.source === 'device';
@@ -283,6 +315,8 @@ export const useSearchCriteria = () => {
   };
 
   const pickLocation = (pick: SearchLocationPick) => {
+    cancelDraftTimer();
+
     if (!isLatLng(pick.latitude, pick.longitude)) {
       return;
     }
@@ -323,24 +357,28 @@ export const useSearchCriteria = () => {
   };
 
   const clearLocation = () => {
+    cancelDraftTimer();
     const next = commitCriteriaPatch(appliedRef.current, draftRef.current, { near: '', radiusKm: null });
     setDraftQueryState(next.criteria.q);
     go(next.criteria, next.changed ? 'push' : 'replace', null);
   };
 
   const clearQuery = () => {
+    cancelDraftTimer();
     const next = clearAppliedQuery(appliedRef.current);
     setDraftQueryState('');
     go(next.criteria, next.changed ? 'push' : 'replace', keptLocation(next.criteria, undefined));
   };
 
   const clearFilters = () => {
+    cancelDraftTimer();
     const next = clearAppliedFilters(appliedRef.current, draftRef.current);
     setDraftQueryState(next.criteria.q);
     go(next.criteria, 'push', null);
   };
 
   const clearAll = () => {
+    cancelDraftTimer();
     const next = clearAppliedSearch(appliedRef.current);
     setDraftQueryState('');
     go(next.criteria, 'push', null);
@@ -354,6 +392,8 @@ export const useSearchCriteria = () => {
   const filters = toFilters(applied, activeLocation);
 
   const openRestaurant = (id: string, background = false) => {
+    cancelDraftTimer();
+
     if (!/^[a-fA-F0-9]{24}$/.test(id)) {
       return;
     }

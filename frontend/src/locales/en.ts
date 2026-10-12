@@ -65,6 +65,7 @@ export const en = {
     list: 'List',
     map: 'Map',
     searching: 'Searching...',
+    rateLimited: 'Too many searches. Please wait a moment and try again.',
     atlasDown:
       'Typo-tolerant search is temporarily unavailable. Results show restaurants whose name or food starts with what you typed.',
     loadError: 'Could not load restaurants.',

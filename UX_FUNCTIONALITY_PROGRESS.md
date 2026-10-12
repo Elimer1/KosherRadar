@@ -1,6 +1,6 @@
 # KosherRadar — UX functionality progress
 
-Work package 1A: search-state contract, URL persistence, and navigation.
+Work packages 1A and 1B: search-state contract, then live search.
 
 This file is the handoff for `feature/ux-functionality`. Shared `PROGRESS.md` and `FIX_TRACKER.md` were not modified. The design, QA, UI, and UX-review worktrees were not modified.
 
@@ -9,23 +9,23 @@ This file is the handoff for `feature/ux-functionality`. Shared `PROGRESS.md` an
 - Branch: `feature/ux-functionality`
 - Worktree: `C:\FS\projects\KosherRadar-ux-functionality`
 - Baseline: `main` at `3bbb1e2da84215e62c82010de755be2b574aa6bf` (`main` had not moved; it was 12 commits ahead of `origin/main`)
-- Package: **1A — Search-state contract, URL persistence, and navigation**
-- Checkpoint: **complete for 1A**, independently rechecked in the browser on 12 October 2026
-- Next package: **1B — Live search**
+- Package: **1B — Live search**
+- Checkpoint: **1A and 1B complete**
+- Next package: **1C — Filter actions and navigation polish**
 
 ## NEXT AGENT ONBOARDING
 
 Resume in `C:\FS\projects\KosherRadar-ux-functionality` on `feature/ux-functionality`. Read this file before changing code. Do not edit the design, QA, UI, or UX-review worktrees. Do not merge, rebase, or push.
 
-Work Package 1A is implemented and independently rechecked. Do not rewrite the search-state model. The next task is Work Package 1B.
+Work Packages 1A and 1B are implemented. Do not rewrite the search-state model. The next task is Work Package 1C.
 
-### Exact next task (Work Package 1B)
+### Exact next task (Work Package 1C)
 
-1. Debounce draft text by about 350 ms, then call `commitDraftQuery`. That already uses `replace`.
-2. If a filter changes while a debounce is pending, flush the latest draft through `updateFilters` (already commits the draft and the filter together). Do not clear `draftQuery` when cancelling the timer.
-3. Cancel obsolete HTTP requests with `AbortController`. Cancellation must not drop typed text.
-4. Handle errors and HTTP 429, loading, and aria-live announcements.
-5. Keep the URL contract in `frontend/src/search/searchCriteria.ts`.
+1. When search text or any filter is active, show a clear-all control next to the result count. Keep the empty-state control.
+2. Let the visitor clear one active choice without clearing the rest: query, level, each hechsher, food type, and category, plus the two checkboxes and the location. Do not add a second chip system for the design agent to restyle; put the clear actions on the existing panel and the result line.
+3. Best-effort scroll and focus restoration when returning from a restaurant to the same search path. Do not restore Load More pages. Do not store coordinates.
+4. On the result line, when unknown places are excluded, say so with the existing no-match sentence. Change the expired checkbox label to say it hides restaurants whose only public evidence is an expired certificate. Hebrew for that label needs native-speaker review. Do not change who is included by default.
+5. Browser-check the flows on this branch. The design worktree is separate and must not be edited.
 
 ### Do not repeat
 
@@ -114,7 +114,7 @@ Implemented and wired. Module: `frontend/src/hooks/useSearchCriteria.ts`. Type: 
 | Member | History | Behavior |
 | --- | --- | --- |
 | `applied` | — | Parsed from the URL |
-| `draftQuery` / `setDraftQuery(text)` | none | Local typing, capped at 100, not trimmed |
+| `draftQuery` / `setDraftQuery(text)` | replace after `DRAFT_COMMIT_DELAY_MS` (350) | Local typing, capped at 100, not trimmed. The pause calls `commitDraftQuery`. A newer keystroke cancels the previous pause and does not clear the box |
 | `commitDraftQuery(text?)` | replace, or none if unchanged | Trim into `q`. A blank result clears the field |
 | `updateFilters(patch)` | push when the URL changes | Commits the latest draft with the patch. Does not read a stale `q` from the filter panel |
 | `setLevel` / `toggleHechsher` / `toggleFoodType` / `toggleCategory` / `setHideExpired` / `setIncludeUnknown` / `setRadiusKm` | same as `updateFilters` | Thin wrappers |
@@ -129,7 +129,9 @@ Implemented and wired. Module: `frontend/src/hooks/useSearchCriteria.ts`. Type: 
 | `restaurantState` | — | `{ from, searchLocation? }` for links that need it |
 | `openRestaurant(id, background?)` | replace the search entry when needed, then push the restaurant unless `background` | 24-hex id only. Writes `kosherradar-search-return` |
 
-`SearchFiltersPanel` still emits a full filters object. `HomePage` passes that object to `updateFilters` and ignores `next.q`, because the hook flushes `draftQuery`.
+`SearchFiltersPanel` still emits a full filters object. `HomePage` passes that object to `updateFilters` and ignores `next.q`, because the hook flushes `draftQuery`. `updateFilters`, place changes, and clear actions cancel a pending pause first, then keep the latest draft.
+
+Live list and map requests take an `AbortSignal`. A cancelled response is ignored. It does not set an error and it does not change `draftQuery`. HTTP 429 uses `home.rateLimited` in the active language. The Hebrew string needs native-speaker review. The results region has one polite status line for searching, the count, the empty state, and errors. The visible "Searching..." line and `aria-busy` stay on the results section.
 
 ## Files
 
@@ -140,6 +142,11 @@ Implemented and wired. Module: `frontend/src/hooks/useSearchCriteria.ts`. Type: 
 - `frontend/src/hooks/useSearchCriteria.ts`
 - `frontend/src/hooks/useSearchCriteria.test.tsx`
 - `frontend/src/hooks/useRestaurantSearch.test.tsx`
+- `frontend/src/hooks/useRestaurantSearch.ts`
+- `frontend/src/api/errors.ts`
+- `frontend/src/api/searchApi.ts`
+- `frontend/src/locales/en.ts`
+- `frontend/src/locales/he.ts`
 - `frontend/src/utils/returnPath.ts`
 - `frontend/src/utils/returnPath.test.ts`
 - `frontend/src/pages/HomePage.tsx`
@@ -226,13 +233,40 @@ Baseline before this work was 14 files and 90 tests. New tests cover parsing and
 - The logo still links to `/`, which is the home page rather than Back to search.
 - No new clear-all control was added. The existing empty-state button calls `clearAll`.
 
-## Later packages (do not start in the 1A session)
+## Work Package 1B
 
-1. **1B — Live search.** Debounce about 350 ms via `commitDraftQuery` (`replace`). Flush draft on filter changes. Abort stale HTTP. Errors and 429. Loading. Aria-live.
-2. **1C — Filter actions and navigation polish.** Per-filter clear, clear-all control, best-effort scroll and focus restoration, browser verification with the design visuals.
-3. **2 — Authentication and admin navigation.** Reuse `readInternalPath`. Do not add a second validator.
-4. **3 — Localization and minor UX.** Restaurant display names, existing claim copy, document titles.
+`setDraftQuery` waits 350 ms, then `commitDraftQuery` (`replace`). A filter, place, or clear action cancels that wait and flushes the draft. Cancelling the wait does not empty the box.
+
+`searchRestaurants` and `searchRestaurantsInBounds` accept an `AbortSignal`. `useRestaurantSearch` and `RestaurantMap` abort the previous request. Cancellation is not shown as a failure. HTTP 429 uses `home.rateLimited` instead of the English server sentence. Loading still shows "Searching..." / the map loading line. A polite `role="status"` announces the list state.
+
+### Browser (12 October 2026, `http://localhost:5181`)
+
+| Action | Observed |
+| --- | --- |
+| Type `pizza` and wait | The URL stayed `/` in the snapshot taken as typing finished, then became `/?q=pizza`. The input stayed `pizza`. The status line said "1 restaurant found". Only Pizza Place remained. |
+| Replace that text with `zzzz`, then check Meat before the pause ended | The input stayed `zzzz`. The URL became `/?q=zzzz&foodType=MEAT` in one step. The status line said "No restaurants match your search." |
+
+Device geolocation and the live geocoder were not used. HTTP 429 was checked in the hook test with a mocked Axios 429, not by exhausting the real limiter.
+
+### Tests after 1B
+
+| Command | Exit | Result |
+| --- | --- | --- |
+| `npm test` | 0 | 18 files, 116 tests passed |
+| `npm run lint` | 0 | oxlint, no warnings |
+| `npm run typecheck` | 0 | `tsc -b` |
+| `npm run build` | 0 | Vite build. JS chunk about 735.23 kB. The existing chunk-size warning remains. |
+
+New tests: the 350 ms commit, a filter flushing a pending draft without clearing the box, a cancelled search leaving the newer result and an empty error, and the 429 message.
+
+## Later packages
+
+1. **1C — Filter actions and navigation polish.** Per-filter clear, clear-all control, best-effort scroll and focus restoration. Unknown-kashrut sentence on the result line. Expired-checkbox wording. Browser check on this branch.
+2. **2 — Authentication and admin navigation.** Reuse `readInternalPath`. Do not add a second validator. Login explains a return path, registration keeps that path, and the admin tab is in the address.
+3. **3 — Localization and minor UX.** Restaurant display names, existing claim copy, document titles.
 
 ## Commits
 
 - `03293d47e06ca1c8a4342dd74bae791d432690a8` — `feat(ux-1a): persist applied search in the URL`
+- `6382a0d` — `docs(ux-1a): record the search-state checkpoint hash`
+- `f182009` — `docs(ux-1a): record the independent search-state browser recheck`

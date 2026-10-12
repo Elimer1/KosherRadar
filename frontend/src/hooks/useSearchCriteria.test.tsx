@@ -2,7 +2,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { createMemoryRouter, RouterProvider, useLocation, useNavigate } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { useSearchCriteria } from './useSearchCriteria';
+import { DRAFT_COMMIT_DELAY_MS, useSearchCriteria } from './useSearchCriteria';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -141,6 +141,55 @@ describe('useSearchCriteria', () => {
     expect((container.querySelector('input') as HTMLInputElement).value).toBe('פיצה');
     expect(text(container, '[data-testid="food"]')).toBe('DAIRY');
     expect(text(container, '[data-testid="url"]')).toBe('/?q=%D7%A4%D7%99%D7%A6%D7%94&foodType=DAIRY');
+  });
+
+  it('commits typed text after a short pause', () => {
+    vi.useFakeTimers();
+
+    try {
+      const container = renderProbe();
+      click(container, 'type-pizza');
+
+      expect(text(container, '[data-testid="url"]')).toBe('/');
+      expect((container.querySelector('input') as HTMLInputElement).value).toBe('  pizza  ');
+
+      act(() => {
+        vi.advanceTimersByTime(DRAFT_COMMIT_DELAY_MS - 1);
+      });
+
+      expect(text(container, '[data-testid="url"]')).toBe('/');
+
+      act(() => {
+        vi.advanceTimersByTime(1);
+      });
+
+      expect(text(container, '[data-testid="url"]')).toBe('/?q=pizza');
+      expect((container.querySelector('input') as HTMLInputElement).value).toBe('  pizza  ');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('flushes a pending draft with a filter and does not clear the box when the timer is cancelled', () => {
+    vi.useFakeTimers();
+
+    try {
+      const container = renderProbe();
+      click(container, 'type-pizza');
+      click(container, 'meat');
+
+      expect(text(container, '[data-testid="url"]')).toBe('/?q=pizza&foodType=MEAT');
+      expect((container.querySelector('input') as HTMLInputElement).value).toBe('pizza');
+
+      act(() => {
+        vi.advanceTimersByTime(DRAFT_COMMIT_DELAY_MS);
+      });
+
+      expect(text(container, '[data-testid="url"]')).toBe('/?q=pizza&foodType=MEAT');
+      expect((container.querySelector('input') as HTMLInputElement).value).toBe('pizza');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('keeps device coordinates out of the URL', () => {
