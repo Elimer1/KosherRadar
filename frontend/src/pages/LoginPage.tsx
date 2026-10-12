@@ -41,8 +41,8 @@ function LoginPage() {
   };
 
   return (
-    <div className="mx-auto max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
-      <h1 className="text-2xl font-bold text-gray-900">{t('auth.loginTitle')}</h1>
+    <div className="mx-auto max-w-md rounded-2xl border border-soft bg-white p-6 shadow-[0_8px_24px_rgba(23,75,58,0.06)] sm:p-8">
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('auth.loginTitle')}</h1>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         {error && (
@@ -84,15 +84,15 @@ function LoginPage() {
       </form>
 
       {/* NEW (Milestone 3): link to the password reset / חדש (אבן דרך 3): קישור לאיפוס סיסמה */}
-      <p className="mt-4 text-sm text-gray-600">
-        <Link to="/forgot-password" className="font-medium text-green-800 hover:underline">
+      <p className="mt-4 text-sm text-muted">
+        <Link to="/forgot-password" className="font-medium text-forest hover:underline">
           {t('auth.forgot')}
         </Link>
       </p>
 
-      <p className="mt-2 text-sm text-gray-600">
+      <p className="mt-2 text-sm text-muted">
         {t('auth.noAccount')}{' '}
-        <Link to="/register" className="font-medium text-green-800 hover:underline">
+        <Link to="/register" className="font-medium text-forest hover:underline">
           {t('nav.signup')}
         </Link>
       </p>

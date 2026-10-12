@@ -76,23 +76,23 @@ function PendingTeudotTab({ hechsherOptions }: PendingTeudotTabProps) {
       <Notices notices={notices} onDismiss={() => setNotices([])} />
       <FormAlert message={error} />
 
-      {loading && !data && <p className="text-gray-600">{t('common.loading')}</p>}
-      {data && data.items.length === 0 && <p className="text-gray-600">{t('desk.noneCertificates')}</p>}
+      {loading && !data && <p className="text-muted">{t('common.loading')}</p>}
+      {data && data.items.length === 0 && <p className="text-muted">{t('desk.noneCertificates')}</p>}
 
       <ul className="space-y-4">
         {data?.items.map((teuda) => (
-          <li key={teuda.id} className="space-y-3 rounded border border-green-100 p-4">
+          <li key={teuda.id} className="space-y-3 rounded border border-soft p-4">
             <div className="flex flex-wrap items-start justify-between gap-2">
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold tracking-tight text-ink">
                 {teuda.restaurant?.name || t('desk.unknownRestaurant')}
                 {teuda.submittedWithNewRestaurant && (
-                  <span className="ms-2 rounded bg-green-50 px-2 py-0.5 text-xs font-medium text-green-800">
+                  <span className="ms-2 rounded bg-mist px-2 py-0.5 text-xs font-medium text-forest">
                     {t('desk.sentWithNew')}
                   </span>
                 )}
               </h3>
               {teuda.restaurant && (
-                <Link to={`/admin/restaurants/${teuda.restaurant.id}`} className="text-sm font-medium text-green-700 underline">
+                <Link to={`/admin/restaurants/${teuda.restaurant.id}`} className="text-sm font-medium text-grove underline">
                   {t('desk.viewRestaurant')}
                 </Link>
               )}
@@ -139,7 +139,7 @@ function PendingTeudotTab({ hechsherOptions }: PendingTeudotTabProps) {
                   type="button"
                   disabled={busyId === teuda.id || !teuda.restaurantApproved || !teuda.kashrutLevel || !teuda.expirationDate}
                   onClick={() => handleApprove(teuda.id)}
-                  className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex min-h-11 items-center rounded-lg bg-forest px-3.5 text-sm font-medium text-white hover:bg-forest-deep disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {busyId === teuda.id
                     ? t('common.working')
@@ -151,7 +151,7 @@ function PendingTeudotTab({ hechsherOptions }: PendingTeudotTabProps) {
                   type="button"
                   disabled={busyId === teuda.id}
                   onClick={() => setRejectingId(teuda.id)}
-                  className="rounded border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex min-h-11 items-center rounded-lg border border-red-800 bg-white px-3.5 text-sm font-medium text-red-800 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {t('common.reject')}
                 </button>

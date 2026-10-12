@@ -187,7 +187,7 @@ function AdminRestaurantPage() {
   }
 
   if (!details || !values || !extras || !options) {
-    return <p className="text-gray-600">{t('common.loading')}</p>;
+    return <p className="text-muted">{t('common.loading')}</p>;
   }
 
   const { restaurant, teudot, publicKashrutPreview } = details;
@@ -196,24 +196,24 @@ function AdminRestaurantPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <div>
-        <Link to="/admin" className="text-sm font-medium text-green-700 underline">
+        <Link to="/admin" className="text-sm font-medium text-grove underline">
           {t('desk.backDashboard')}
         </Link>
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-bold text-gray-900">{restaurant.name}</h1>
-          <span className="rounded bg-gray-100 px-2 py-0.5 text-sm font-medium text-gray-700">
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">{restaurant.name}</h1>
+          <span className="rounded bg-gray-100 px-2 py-0.5 text-sm font-medium text-ink">
             {getStatusLabel(restaurant.status)}
           </span>
         </div>
-        <p className="text-gray-600">
+        <p className="text-muted">
           {restaurant.address}
           {restaurant.city ? `, ${restaurant.city}` : ''}
         </p>
         {restaurant.submittedBy && (
-          <p className="text-sm text-gray-500">{t('desk.sentByColon', { email: restaurant.submittedBy.email })}</p>
+          <p className="text-sm text-muted">{t('desk.sentByColon', { email: restaurant.submittedBy.email })}</p>
         )}
         {restaurant.status === 'REJECTED' && restaurant.rejectionReason && (
-          <p className="mt-1 text-sm text-gray-700">{t('desk.rejectionReason', { reason: restaurant.rejectionReason })}</p>
+          <p className="mt-1 text-sm text-ink">{t('desk.rejectionReason', { reason: restaurant.rejectionReason })}</p>
         )}
       </div>
 
@@ -221,7 +221,7 @@ function AdminRestaurantPage() {
 
       {restaurant.possibleDuplicates.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-gray-900">{t('desk.possibleDuplicates')}</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-ink">{t('desk.possibleDuplicates')}</h2>
           <ul className="space-y-1 text-sm">
             {restaurant.possibleDuplicates.map((duplicate, index) => (
               <li key={index} className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
@@ -242,7 +242,7 @@ function AdminRestaurantPage() {
       )}
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-gray-900">{t('desk.decision')}</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-ink">{t('desk.decision')}</h2>
         <Notices notices={decisionNotices} onDismiss={() => setDecisionNotices([])} />
         {restaurant.status === 'PENDING' &&
           (rejecting ? (
@@ -258,7 +258,7 @@ function AdminRestaurantPage() {
                 type="button"
                 disabled={busy}
                 onClick={handleApprove}
-                className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-60"
+                className="inline-flex min-h-11 items-center rounded-lg bg-forest px-3.5 text-sm font-medium text-white hover:bg-forest-deep disabled:opacity-60"
               >
                 {t('desk.approveRestaurant')}
               </button>
@@ -273,7 +273,7 @@ function AdminRestaurantPage() {
             </div>
           ))}
         {restaurant.status !== 'PENDING' && (
-          <p className="text-sm text-gray-600">{t('desk.alreadyDecided', { status: getStatusLabel(restaurant.status) })}</p>
+          <p className="text-sm text-muted">{t('desk.alreadyDecided', { status: getStatusLabel(restaurant.status) })}</p>
         )}
         <button
           type="button"
@@ -286,11 +286,11 @@ function AdminRestaurantPage() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="text-lg font-semibold text-gray-900">{t('desk.publicSees')}</h2>
-        {!restaurantApproved && <p className="text-sm text-gray-600">{t('desk.hiddenUntilApproved')}</p>}
+        <h2 className="text-lg font-semibold tracking-tight text-ink">{t('desk.publicSees')}</h2>
+        {!restaurantApproved && <p className="text-sm text-muted">{t('desk.hiddenUntilApproved')}</p>}
         {restaurantApproved && publicKashrutPreview && (
           <>
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm font-medium text-ink">
               {t('desk.publicStatus', {
                 status:
                   publicKashrutPreview.status === 'UNKNOWN'
@@ -299,7 +299,7 @@ function AdminRestaurantPage() {
               })}
             </p>
             {publicKashrutPreview.items.length > 0 && (
-              <ul className="list-disc space-y-1 ps-5 text-sm text-gray-700">
+              <ul className="list-disc space-y-1 ps-5 text-sm text-ink">
                 {publicKashrutPreview.items.map((item, index) => (
                   <li key={index}>{describePreviewItem(item, options.hechsherOptions)}</li>
                 ))}
@@ -311,17 +311,17 @@ function AdminRestaurantPage() {
 
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold text-gray-900">{t('desk.certificateCount', { count: teudot.length })}</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-ink">{t('desk.certificateCount', { count: teudot.length })}</h2>
           {restaurantApproved && (
             <Link
               to={`/admin/restaurants/${restaurant.id}/add-teuda`}
-              className="text-sm font-medium text-green-700 underline"
+              className="text-sm font-medium text-grove underline"
             >
               {t('forms.addCertificate')}
             </Link>
           )}
         </div>
-        {teudot.length === 0 && <p className="text-sm text-gray-600">{t('desk.noCertificatesYet')}</p>}
+        {teudot.length === 0 && <p className="text-sm text-muted">{t('desk.noCertificatesYet')}</p>}
         <ul className="space-y-4">
           {teudot.map((teuda) => (
             <AdminTeudaCard
@@ -336,7 +336,7 @@ function AdminRestaurantPage() {
       </section>
 
       <form onSubmit={handleSave} className="space-y-8">
-        <h2 className="text-xl font-bold text-gray-900">{t('desk.editRestaurant')}</h2>
+        <h2 className="text-xl font-semibold tracking-tight text-ink">{t('desk.editRestaurant')}</h2>
         <RestaurantFields
           values={values}
           options={options}

@@ -62,37 +62,37 @@ function ManageRestaurantsTab() {
         </div>
         <button
           type="submit"
-          className="rounded bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700"
+          className="rounded bg-forest px-4 py-2 font-medium text-white hover:bg-forest-deep"
         >
           {t('common.search')}
         </button>
         <Link
           to="/admin/restaurants/new"
-          className="rounded border border-green-600 px-4 py-2 font-medium text-green-700 hover:bg-green-50"
+          className="rounded border border-forest px-4 py-2 font-medium text-grove hover:bg-mist"
         >
           {t('nav.addRestaurant')}
         </Link>
       </form>
 
       <FormAlert message={error} />
-      {loading && !data && <p className="text-gray-600">{t('common.loading')}</p>}
-      {data && data.items.length === 0 && <p className="text-gray-600">{t('desk.noMatch')}</p>}
+      {loading && !data && <p className="text-muted">{t('common.loading')}</p>}
+      {data && data.items.length === 0 && <p className="text-muted">{t('desk.noMatch')}</p>}
 
-      <ul className="divide-y divide-green-100 rounded border border-green-100">
+      <ul className="divide-y divide-soft overflow-hidden rounded-2xl border border-soft bg-white">
         {data?.items.map((restaurant) => (
           <li key={restaurant.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
             <div>
-              <p className="font-medium text-gray-900">{restaurant.name}</p>
-              <p className="text-sm text-gray-600">
+              <p className="font-medium text-ink">{restaurant.name}</p>
+              <p className="text-sm text-muted">
                 {restaurant.address}
                 {restaurant.city ? `, ${restaurant.city}` : ''}
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+              <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-ink">
                 {getStatusLabel(restaurant.status)}
               </span>
-              <Link to={`/admin/restaurants/${restaurant.id}`} className="text-sm font-medium text-green-700 underline">
+              <Link to={`/admin/restaurants/${restaurant.id}`} className="text-sm font-medium text-grove underline">
                 {t('common.open')}
               </Link>
             </div>

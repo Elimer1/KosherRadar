@@ -1,23 +1,35 @@
 @import "tailwindcss";
 
-/* Page canvas sits behind white cards and the header. Green-700 (#15803d) is the brand color:
-   white text on it clears WCAG AA, while green-600 does not. */
+/* Design tokens. Deep green carries actions; amber is only an accent. White text on forest
+   clears WCAG AA. System fonts already include Hebrew (Segoe UI / Noto Sans Hebrew). */
+@theme {
+  --color-ink: #24342f;
+  --color-muted: #4e5e58;
+  --color-canvas: #f7f8f4;
+  --color-soft: #dceae4;
+  --color-mist: #eef4f1;
+  --color-forest: #174b3a;
+  --color-forest-deep: #103528;
+  --color-grove: #2c6b56;
+  --color-amber-ink: #6b4a1f;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Hebrew", "Arial Hebrew", Arial, sans-serif;
+}
+
 body {
-  background-color: #f3f6f3;
-  color: #1f2937;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Hebrew', Arial, sans-serif;
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
-  background-color: #bbf7d0;
-  color: #14532d;
+  background-color: #dceae4;
+  color: #103528;
 }
 
-/* One visible keyboard focus style for links and buttons that do not draw their own ring. */
 a:focus-visible,
 button:focus-visible {
-  outline: 2px solid #15803d;
+  outline: 2px solid #174b3a;
   outline-offset: 2px;
 }
 
@@ -28,7 +40,7 @@ textarea:focus-visible {
 }
 
 input[type='checkbox'] {
-  accent-color: #15803d;
+  accent-color: #174b3a;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -42,8 +54,8 @@ input[type='checkbox'] {
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
-  border: 2px solid #d1d5db;
-  border-top-color: #15803d;
+  border: 2px solid #dceae4;
+  border-top-color: #174b3a;
   border-radius: 9999px;
   animation: kr-spin 0.7s linear infinite;
 }
@@ -69,9 +81,9 @@ input[type='checkbox'] {
   margin-left: 5px;
   margin-top: 6px;
   border-radius: 50% 50% 50% 0;
-  background: #15803d;
+  background: #174b3a;
   border: 2px solid #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 1px 3px rgba(23, 75, 58, 0.35);
   transform: rotate(-45deg);
 }
 
@@ -82,11 +94,11 @@ input[type='checkbox'] {
   width: 40px;
   height: 40px;
   border-radius: 9999px;
-  background: #15803d;
+  background: #174b3a;
   color: #ffffff;
   font-weight: 700;
   border: 2px solid #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 1px 3px rgba(23, 75, 58, 0.35);
 }
 
 /* NEW (Milestone 6): Leaflet places tiles in left-to-right space. A Hebrew page would otherwise shift the map.

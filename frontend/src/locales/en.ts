@@ -28,6 +28,7 @@ export const en = {
     edit: 'Edit',
     resolve: 'Resolve',
     dismiss: 'Dismiss messages',
+    removeFilter: 'Remove {{name}}',
   },
   nav: {
     main: 'Main navigation',
@@ -56,6 +57,7 @@ export const en = {
   },
   home: {
     title: 'KosherRadar',
+    heading: 'Find restaurants and the evidence behind their kashrut',
     intro:
       'Find restaurants in Israel and see the evidence behind their kashrut: verified certificates, unverified claims and expired certificates are always shown separately.',
     filters: 'Filters',
@@ -77,6 +79,8 @@ export const en = {
     addRestaurant: 'Add a restaurant',
     foundOne: '{{count}} restaurant found',
     foundMany: '{{count}} restaurants found',
+    unknownExcluded: 'Places with unknown kashrut stay hidden unless you include them.',
+    appliedFilters: 'Applied filters',
     capped: 'There are very many matches, so this list may be incomplete. Add words or filters to narrow it down.',
     loadMore: 'Load more',
     loadingMore: 'Loading...',
@@ -131,6 +135,7 @@ export const en = {
     empty: 'No restaurants with a saved location match in this area.',
     radius: 'The selected radius still applies. Restaurants outside it stay hidden even if that area is on screen.',
     note: 'Restaurants without a saved location are not on the map. Moving the map does not change your search location.',
+    scoped: 'The map shows matches in the current view. A name search does not move the map.',
   },
   share: {
     share: 'Share',
@@ -260,7 +265,7 @@ export const en = {
     title: 'Admin dashboard',
     sections: 'Admin sections',
     tabRestaurants: 'Pending Restaurants',
-    tabTeudot: 'Pending Teudot',
+    tabTeudot: 'Pending certificates',
     tabReports: 'Pending Reports',
     tabExpiring: 'Expiring Soon',
     tabManage: 'Manage Restaurants',
@@ -365,6 +370,10 @@ export const en = {
     addRestaurant: 'Add a restaurant',
     addRestaurantBody:
       'Share a restaurant or food business in Israel. An admin reviews every submission before it is shown. Only add facts you know; a certificate photo makes the listing verifiable.',
+    foodReviewed: 'Food type is added during review, before the place can be found by a food search.',
+    reportExamples: 'For example: the phone or hours are wrong, or the certificate shows a different hechsher than this page.',
+    correctionApplied: 'Correction applied',
+    closedWithoutChange: 'Closed without a change to the page',
     certificateOptional: 'Kashrut certificate (optional)',
     certificateOptionalBody:
       'A photo, an expiration date, or a mashgiach can be saved for review. You can leave these empty. Pending evidence is not shown as a verified certificate.',
@@ -439,6 +448,8 @@ export const en = {
     rejectFailed: 'Could not reject the restaurant.',
     nonePending: 'No restaurants are waiting for review.',
     viewEdit: 'View and edit',
+    missingFood: 'No food type yet. A food search will not find this place until one is added.',
+    missingPin: 'No map location yet. It will not appear on the map until coordinates are added.',
     sentBy: 'Sent by {{email}}',
     unknownUser: 'an unknown user',
     unverifiedClaim: 'Unverified claim: {{name}}',

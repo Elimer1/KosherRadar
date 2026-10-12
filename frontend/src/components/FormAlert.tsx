@@ -5,7 +5,7 @@ interface FormAlertProps {
 
 const styles = {
   error: 'border-red-200 bg-red-50 text-red-800',
-  success: 'border-green-200 bg-green-50 text-green-900',
+  success: 'border-forest bg-mist text-forest',
   warning: 'border-amber-200 bg-amber-50 text-amber-950',
 };
 
@@ -15,7 +15,7 @@ function FormAlert({ message, kind = 'error' }: FormAlertProps) {
   }
 
   return (
-    <p role={kind === 'error' ? 'alert' : 'status'} className={`rounded-lg border px-3 py-2 text-sm ${styles[kind]}`}>
+    <p role={kind === 'error' ? 'alert' : 'status'} className={`rounded-xl border px-3 py-2.5 text-sm leading-relaxed ${styles[kind]}`}>
       {message}
     </p>
   );

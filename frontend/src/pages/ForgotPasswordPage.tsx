@@ -34,10 +34,10 @@ function ForgotPasswordPage() {
   if (message) {
     return (
       <div className="mx-auto max-w-md space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">{t('auth.checkEmail')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('auth.checkEmail')}</h1>
         <FormAlert kind="success" message={message} />
-        <p className="text-sm text-gray-600">{t('auth.linkOnce')}</p>
-        <Link to="/login" className="inline-block font-medium text-green-700 hover:underline">
+        <p className="text-sm text-muted">{t('auth.linkOnce')}</p>
+        <Link to="/login" className="inline-block font-medium text-grove hover:underline">
           {t('auth.backToLogin')}
         </Link>
       </div>
@@ -46,8 +46,8 @@ function ForgotPasswordPage() {
 
   return (
     <div className="mx-auto max-w-md">
-      <h1 className="text-2xl font-bold text-gray-900">{t('auth.forgotTitle')}</h1>
-      <p className="mt-2 text-sm text-gray-600">{t('auth.forgotBody')}</p>
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('auth.forgotTitle')}</h1>
+      <p className="mt-2 text-sm text-muted">{t('auth.forgotBody')}</p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <FormAlert message={error} />
@@ -72,8 +72,8 @@ function ForgotPasswordPage() {
         </button>
       </form>
 
-      <p className="mt-4 text-sm text-gray-600">
-        <Link to="/login" className="font-medium text-green-700 hover:underline">
+      <p className="mt-4 text-sm text-muted">
+        <Link to="/login" className="font-medium text-grove hover:underline">
           {t('auth.backToLogin')}
         </Link>
       </p>

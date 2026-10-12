@@ -100,10 +100,10 @@ function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: Admin
   };
 
   return (
-    <li className="space-y-3 rounded border border-green-100 p-4">
+    <li className="space-y-3 rounded border border-soft p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-semibold text-gray-900">{title}</h3>
-        <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+        <h3 className="font-semibold text-ink">{title}</h3>
+        <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-ink">
           {getStatusLabel(teuda.status)}
         </span>
       </div>
@@ -142,7 +142,7 @@ function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: Admin
             <button
               type="submit"
               disabled={busy}
-              className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-60"
+              className="inline-flex min-h-11 items-center rounded-lg bg-forest px-3.5 text-sm font-medium text-white hover:bg-forest-deep disabled:opacity-60"
             >
               {busy ? t('auth.saving') : t('common.save')}
             </button>
@@ -150,7 +150,7 @@ function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: Admin
               type="button"
               disabled={busy}
               onClick={() => setMode('view')}
-              className="rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="rounded border border-soft px-3 py-1.5 text-sm font-medium text-ink hover:bg-gray-50"
             >
               {t('common.cancel')}
             </button>
@@ -161,7 +161,7 @@ function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: Admin
           <TeudaFacts teuda={teuda} hechsherOptions={options.hechsherOptions} />
 
           {teuda.status === 'REJECTED' && teuda.rejectionReason && (
-            <p className="text-sm text-gray-700">{t('desk.rejectionReason', { reason: teuda.rejectionReason })}</p>
+            <p className="text-sm text-ink">{t('desk.rejectionReason', { reason: teuda.rejectionReason })}</p>
           )}
 
           {needsClassification && (
@@ -198,7 +198,7 @@ function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: Admin
                     disabled={busy || !restaurantApproved || needsClassification}
                     onClick={handleApprove}
                     title={restaurantApproved ? undefined : t('desk.approveFirstTitle')}
-                    className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex min-h-11 items-center rounded-lg bg-forest px-3.5 text-sm font-medium text-white hover:bg-forest-deep disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {t('common.approve')}
                   </button>
@@ -216,7 +216,7 @@ function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: Admin
                 type="button"
                 disabled={busy}
                 onClick={() => setMode('edit')}
-                className="rounded border border-green-300 px-3 py-1.5 text-sm font-medium text-green-800 hover:bg-green-50"
+                className="inline-flex min-h-11 items-center rounded-lg border border-forest px-3.5 text-sm font-medium text-forest hover:bg-mist"
               >
                 {t('common.edit')}
               </button>

@@ -17,37 +17,37 @@ function TeudaFacts({ teuda, hechsherOptions }: TeudaFactsProps) {
   return (
     <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
       <div>
-        <dt className="inline text-gray-500">{t('desk.hechsher')} </dt>
-        <dd className="inline font-medium text-gray-900">
+        <dt className="inline text-muted">{t('desk.hechsher')} </dt>
+        <dd className="inline font-medium text-ink">
           {getHechsherLabel(teuda.hechsher, teuda.hechsherOther, hechsherOptions)}
         </dd>
       </div>
       <div>
-        <dt className="inline text-gray-500">{t('desk.level')} </dt>
-        <dd className="inline font-medium text-gray-900">
+        <dt className="inline text-muted">{t('desk.level')} </dt>
+        <dd className="inline font-medium text-ink">
           {teuda.kashrutLevel ? getKashrutLevelLabel(teuda.kashrutLevel) : t('desk.notSet')}
         </dd>
       </div>
       <div>
-        <dt className="inline text-gray-500">{t('desk.expires')} </dt>
-        <dd className="inline font-medium text-gray-900">{teuda.expirationDate || t('desk.notSet')}</dd>
+        <dt className="inline text-muted">{t('desk.expires')} </dt>
+        <dd className="inline font-medium text-ink">{teuda.expirationDate || t('desk.notSet')}</dd>
       </div>
       <div>
-        <dt className="inline text-gray-500">{t('desk.visibility')} </dt>
-        <dd className="inline font-medium text-gray-900">
+        <dt className="inline text-muted">{t('desk.visibility')} </dt>
+        <dd className="inline font-medium text-ink">
           {teuda.visibility ? getVisibilityLabel(teuda.visibility) : t('desk.notSet')}
         </dd>
       </div>
       <div>
-        <dt className="inline text-gray-500">{t('desk.mashgiach')} </dt>
-        <dd className="inline font-medium text-gray-900">
+        <dt className="inline text-muted">{t('desk.mashgiach')} </dt>
+        <dd className="inline font-medium text-ink">
           {teuda.mashgiachName || teuda.mashgiachPhone
             ? [teuda.mashgiachName, teuda.mashgiachPhone].filter(Boolean).join(', ')
             : t('desk.notSet')}
         </dd>
       </div>
       <div>
-        <dt className="inline text-gray-500">{t('desk.photo')} </dt>
+        <dt className="inline text-muted">{t('desk.photo')} </dt>
         <dd className="inline">
           {teuda.photoUrl ? (
             <span className="inline-flex flex-col gap-2">
@@ -55,27 +55,27 @@ function TeudaFacts({ teuda, hechsherOptions }: TeudaFactsProps) {
                 href={teuda.photoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium text-green-700 underline"
+                className="font-medium text-grove underline"
               >
                 {t('desk.openFull')}
               </a>
-              <img src={teuda.photoUrl} alt={t('forms.photo')} className="max-h-48 max-w-full rounded border border-gray-200" />
+              <img src={teuda.photoUrl} alt={t('forms.photo')} className="max-h-48 max-w-full rounded border border-soft" />
             </span>
           ) : (
-            <span className="font-medium text-gray-900">{t('desk.notSet')}</span>
+            <span className="font-medium text-ink">{t('desk.notSet')}</span>
           )}
         </dd>
       </div>
       {teuda.submittedBy && (
         <div>
-          <dt className="inline text-gray-500">{t('desk.sentByLabel')} </dt>
-          <dd className="inline text-gray-900">{teuda.submittedBy.email}</dd>
+          <dt className="inline text-muted">{t('desk.sentByLabel')} </dt>
+          <dd className="inline text-ink">{teuda.submittedBy.email}</dd>
         </div>
       )}
       {teuda.adminNote && (
         <div className="sm:col-span-2">
-          <dt className="inline text-gray-500">{t('desk.privateNoteLabel')} </dt>
-          <dd className="inline text-gray-900">{teuda.adminNote}</dd>
+          <dt className="inline text-muted">{t('desk.privateNoteLabel')} </dt>
+          <dd className="inline text-ink">{teuda.adminNote}</dd>
         </div>
       )}
     </dl>

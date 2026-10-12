@@ -33,8 +33,8 @@ function StatusList({
 }) {
   return (
     <section className="space-y-3">
-      <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-      {children || <p className="text-sm text-gray-600">{empty}</p>}
+      <h2 className="text-lg font-semibold tracking-tight text-ink">{title}</h2>
+      {children || <p className="text-sm text-muted">{empty}</p>}
     </section>
   );
 }
@@ -63,30 +63,30 @@ export function SubmissionsPanel() {
   }
 
   if (!submissions) {
-    return <p className="text-gray-600">{t('forms.loadingSubmissions')}</p>;
+    return <p className="text-muted">{t('forms.loadingSubmissions')}</p>;
   }
 
   return (
     <div className="mt-8 space-y-8">
       <div>
-        <h2 className="text-xl font-bold text-gray-900">{t('forms.mySubmissions')}</h2>
-        <p className="mt-2 text-sm text-gray-600">{t('forms.submissionsBody')}</p>
+        <h2 className="text-xl font-semibold tracking-tight text-ink">{t('forms.mySubmissions')}</h2>
+        <p className="mt-2 text-sm text-muted">{t('forms.submissionsBody')}</p>
       </div>
 
       <StatusList title={t('forms.restaurants')} empty={t('forms.noRestaurants')}>
         {submissions.restaurants.length > 0 && (
           <ul className="space-y-3">
             {submissions.restaurants.map((restaurant) => (
-              <li key={restaurant.id} className="rounded border border-green-100 p-4">
+              <li key={restaurant.id} className="rounded-2xl border border-soft bg-white p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-medium text-gray-900">{restaurant.name}</p>
-                  <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                  <p className="font-medium text-ink">{restaurant.name}</p>
+                  <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-ink">
                     {getStatusLabel(restaurant.status)}
                   </span>
                 </div>
-                <p className="mt-1 text-sm text-gray-500">{formatDate(restaurant.createdAt)}</p>
+                <p className="mt-1 text-sm text-muted">{formatDate(restaurant.createdAt)}</p>
                 {restaurant.rejectionReason && (
-                  <p className="mt-2 text-sm text-gray-700">{t('forms.reason', { reason: restaurant.rejectionReason })}</p>
+                  <p className="mt-2 text-sm text-ink">{t('forms.reason', { reason: restaurant.rejectionReason })}</p>
                 )}
               </li>
             ))}
@@ -98,19 +98,19 @@ export function SubmissionsPanel() {
         {submissions.teudot.length > 0 && (
           <ul className="space-y-3">
             {submissions.teudot.map((teuda) => (
-              <li key={teuda.id} className="rounded border border-green-100 p-4">
+              <li key={teuda.id} className="rounded-2xl border border-soft bg-white p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-medium text-gray-900">{teuda.restaurantName || t('forms.fallbackRestaurant')}</p>
-                  <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                  <p className="font-medium text-ink">{teuda.restaurantName || t('forms.fallbackRestaurant')}</p>
+                  <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-ink">
                     {getStatusLabel(teuda.status)}
                   </span>
                 </div>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-muted">
                   {formatDate(teuda.createdAt)}
                   {teuda.points > 0 ? ` · ${t('forms.pointsEarned', { count: teuda.points })}` : ''}
                 </p>
                 {teuda.rejectionReason && (
-                  <p className="mt-2 text-sm text-gray-700">{t('forms.reason', { reason: teuda.rejectionReason })}</p>
+                  <p className="mt-2 text-sm text-ink">{t('forms.reason', { reason: teuda.rejectionReason })}</p>
                 )}
               </li>
             ))}
@@ -122,20 +122,25 @@ export function SubmissionsPanel() {
         {submissions.reports.length > 0 && (
           <ul className="space-y-3">
             {submissions.reports.map((report) => (
-              <li key={report.id} className="rounded border border-green-100 p-4">
+              <li key={report.id} className="rounded-2xl border border-soft bg-white p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-medium text-gray-900">{report.restaurantName || t('forms.fallbackRestaurant')}</p>
-                  <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                  <p className="font-medium text-ink">{report.restaurantName || t('forms.fallbackRestaurant')}</p>
+                  <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-ink">
                     {getStatusLabel(report.status)}
                   </span>
                 </div>
-                <p className="mt-1 text-sm text-gray-700">{report.description}</p>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-ink">{report.description}</p>
+                <p className="mt-1 text-sm text-muted">
                   {formatDate(report.createdAt)}
                   {report.points > 0 ? ` · ${t('forms.pointsEarned', { count: report.points })}` : ''}
                 </p>
+                {report.status === 'RESOLVED' && (
+                  <p className="mt-2 text-sm text-ink">
+                    {report.points > 0 ? t('forms.correctionApplied') : t('forms.closedWithoutChange')}
+                  </p>
+                )}
                 {report.rejectionReason && (
-                  <p className="mt-2 text-sm text-gray-700">{t('forms.reason', { reason: report.rejectionReason })}</p>
+                  <p className="mt-2 text-sm text-ink">{t('forms.reason', { reason: report.rejectionReason })}</p>
                 )}
               </li>
             ))}

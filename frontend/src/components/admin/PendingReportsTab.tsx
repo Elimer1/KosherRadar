@@ -78,40 +78,40 @@ function PendingReportsTab({ hechsherOptions }: PendingReportsTabProps) {
       <Notices notices={notices} onDismiss={() => setNotices([])} />
       <FormAlert message={error} />
 
-      {loading && !data && <p className="text-gray-600">{t('common.loading')}</p>}
-      {data && data.items.length === 0 && <p className="text-gray-600">{t('desk.noneReports')}</p>}
+      {loading && !data && <p className="text-muted">{t('common.loading')}</p>}
+      {data && data.items.length === 0 && <p className="text-muted">{t('desk.noneReports')}</p>}
 
       <ul className="space-y-4">
         {data?.items.map((report) => (
-          <li key={report.id} className="space-y-3 rounded border border-green-100 p-4">
+          <li key={report.id} className="space-y-3 rounded border border-soft p-4">
             <div className="flex flex-wrap items-start justify-between gap-2">
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold tracking-tight text-ink">
                 {report.restaurant?.name || t('desk.unknownRestaurant')}
-                <span className="ms-2 rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                <span className="ms-2 rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-ink">
                   {report.type === 'KASHRUT_UPDATE' ? t('desk.kashrutUpdate') : t('desk.generalReport')}
                 </span>
               </h3>
               {report.restaurant && (
-                <Link to={`/admin/restaurants/${report.restaurant.id}`} className="text-sm font-medium text-green-700 underline">
+                <Link to={`/admin/restaurants/${report.restaurant.id}`} className="text-sm font-medium text-grove underline">
                   {t('desk.viewRestaurant')}
                 </Link>
               )}
             </div>
 
-            <p className="whitespace-pre-wrap text-sm text-gray-800">{report.description}</p>
+            <p className="whitespace-pre-wrap text-sm text-ink">{report.description}</p>
             {isSafeHttpUrl(report.photoUrl) && (
               <p>
-                <a href={report.photoUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-green-700 underline">
+                <a href={report.photoUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-grove underline">
                   {t('desk.openFull')}
                 </a>
               </p>
             )}
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted">
               {t('desk.sentBy', { email: report.submittedBy?.email || t('desk.unknownUser') })}
             </p>
 
             {report.teuda && (
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-ink">
                 {t('desk.aboutCertificate', {
                   name: getHechsherLabel(report.teuda.hechsher, report.teuda.hechsherOther, hechsherOptions),
                   level: report.teuda.kashrutLevel ? getKashrutLevelLabel(report.teuda.kashrutLevel) : t('desk.notSet'),
@@ -121,7 +121,7 @@ function PendingReportsTab({ hechsherOptions }: PendingReportsTabProps) {
             )}
 
             {canApplyProposal(report) && (
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-ink">
                 {t('desk.proposed', {
                   name: report.proposedHechsher
                     ? getHechsherLabel(report.proposedHechsher, report.proposedHechsherOther, hechsherOptions)
@@ -139,7 +139,7 @@ function PendingReportsTab({ hechsherOptions }: PendingReportsTabProps) {
                 onCancel={() => setRejectingId('')}
               />
             ) : (
-              <div className="space-y-3 rounded bg-green-50 p-3">
+              <div className="space-y-3 rounded bg-mist p-3">
                 <div>
                   <label htmlFor={`resolution-${report.id}`} className={labelClassName}>
                     {t('desk.howHandled')}
@@ -181,7 +181,7 @@ function PendingReportsTab({ hechsherOptions }: PendingReportsTabProps) {
                     type="button"
                     disabled={busyId === report.id}
                     onClick={() => handleResolve(report)}
-                    className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex min-h-11 items-center rounded-lg bg-forest px-3.5 text-sm font-medium text-white hover:bg-forest-deep disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {busyId === report.id ? t('common.working') : t('common.resolve')}
                   </button>
@@ -189,7 +189,7 @@ function PendingReportsTab({ hechsherOptions }: PendingReportsTabProps) {
                     type="button"
                     disabled={busyId === report.id}
                     onClick={() => setRejectingId(report.id)}
-                    className="rounded border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex min-h-11 items-center rounded-lg border border-red-800 bg-white px-3.5 text-sm font-medium text-red-800 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {t('common.reject')}
                   </button>

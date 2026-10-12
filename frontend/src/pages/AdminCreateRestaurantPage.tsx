@@ -89,13 +89,13 @@ function AdminCreateRestaurantPage() {
   }
 
   if (!options) {
-    return <p className="text-gray-600">{t('common.loading')}</p>;
+    return <p className="text-muted">{t('common.loading')}</p>;
   }
 
   if (created) {
     return (
       <div className="mx-auto max-w-lg space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">{t('desk.created')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('desk.created')}</h1>
         <FormAlert
           kind="success"
           message={t('desk.createdPublic', {
@@ -105,10 +105,10 @@ function AdminCreateRestaurantPage() {
         />
         {created.duplicates > 0 && <FormAlert kind="warning" message={t('desk.similarExists')} />}
         <div className="flex gap-4">
-          <Link to={`/admin/restaurants/${created.restaurant.id}`} className="font-medium text-green-700 underline">
+          <Link to={`/admin/restaurants/${created.restaurant.id}`} className="font-medium text-grove underline">
             {t('desk.openTheRestaurant')}
           </Link>
-          <Link to="/admin" className="font-medium text-green-700 underline">
+          <Link to="/admin" className="font-medium text-grove underline">
             {t('desk.backDash')}
           </Link>
         </div>
@@ -118,11 +118,11 @@ function AdminCreateRestaurantPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <Link to="/admin" className="text-sm font-medium text-green-700 underline">
+      <Link to="/admin" className="text-sm font-medium text-grove underline">
         {t('desk.backDashboard')}
       </Link>
-      <h1 className="mt-2 text-2xl font-bold text-gray-900">{t('desk.addAdmin')}</h1>
-      <p className="mt-2 text-sm text-gray-600">{t('desk.addAdminBody')}</p>
+      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">{t('desk.addAdmin')}</h1>
+      <p className="mt-2 text-sm text-muted">{t('desk.addAdminBody')}</p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-8">
         <FormAlert message={error} />
@@ -143,15 +143,15 @@ function AdminCreateRestaurantPage() {
         />
 
         <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">{t('forms.certificateOptional')}</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-ink">{t('forms.certificateOptional')}</h2>
 
-          <label className="flex items-center gap-2 text-sm text-gray-700">
+          <label className="flex items-center gap-2 text-sm text-ink">
             <input
               type="checkbox"
               disabled={loading}
               checked={withCertificate}
               onChange={(event) => setWithCertificate(event.target.checked)}
-              className="h-4 w-4 accent-green-600"
+              className="size-5 accent-forest"
             />
             {t('desk.addWithPhoto')}
           </label>
@@ -187,10 +187,10 @@ function AdminCreateRestaurantPage() {
         </section>
 
         {loading && withCertificate && (
-          <div role="status" className="text-sm text-gray-600">
+          <div role="status" className="text-sm text-muted">
             {progress < 100 ? t('forms.uploading', { progress }) : t('auth.saving')}
-            <div className="mt-1 h-2 rounded bg-green-100">
-              <div className="h-2 rounded bg-green-600" style={{ width: `${progress}%` }} />
+            <div className="mt-1 h-2 rounded bg-soft">
+              <div className="h-2 rounded bg-forest" style={{ width: `${progress}%` }} />
             </div>
           </div>
         )}

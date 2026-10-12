@@ -19,7 +19,7 @@ function RestaurantExtrasFields({ values, disabled, includeNames = true, onChang
 
   return (
     <section className="space-y-4">
-      <h2 className="text-lg font-semibold text-gray-900">{t('desk.adminDetails')}</h2>
+      <h2 className="text-lg font-semibold tracking-tight text-ink">{t('desk.adminDetails')}</h2>
 
       {includeNames && <div className="grid gap-4 sm:grid-cols-2">
         <div>

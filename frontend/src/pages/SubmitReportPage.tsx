@@ -74,15 +74,15 @@ function SubmitReportPage() {
   }
 
   if (!context || !options) {
-    return <p className="text-gray-600">{t('common.loading')}</p>;
+    return <p className="text-muted">{t('common.loading')}</p>;
   }
 
   if (submitted) {
     return (
       <div className="mx-auto max-w-lg space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">{t('forms.reportSent')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('forms.reportSent')}</h1>
         <FormAlert kind="success" message={t('forms.thanksReport')} />
-        <Link to="/account" className="inline-block font-medium text-green-700 hover:underline">
+        <Link to="/account" className="inline-block font-medium text-grove hover:underline">
           {t('forms.seeSubmissions')}
         </Link>
       </div>
@@ -93,8 +93,8 @@ function SubmitReportPage() {
 
   return (
     <div className="mx-auto max-w-lg">
-      <h1 className="text-2xl font-bold text-gray-900">{t('forms.reportTitle')}</h1>
-      <p className="mt-1 text-gray-600">
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('forms.reportTitle')}</h1>
+      <p className="mt-1 text-muted">
         {context.restaurant.name} &middot; {context.restaurant.address}
       </p>
 
@@ -115,6 +115,7 @@ function SubmitReportPage() {
             onChange={(event) => setDescription(event.target.value)}
             className={`${inputClassName} ${invalidNote ? 'border-red-500' : ''}`}
           />
+          <p className="mt-2 text-sm leading-relaxed text-muted">{t('forms.reportExamples')}</p>
         </div>
 
         <div>
@@ -127,10 +128,10 @@ function SubmitReportPage() {
             accept="image/jpeg,image/png,image/webp"
             disabled={loading}
             onChange={handlePhotoChange}
-            className="mt-1 block w-full text-sm text-gray-700"
+            className="mt-1 block w-full cursor-pointer rounded-xl border border-dashed border-grove bg-mist px-3 py-4 text-sm text-ink file:me-3 file:min-h-11 file:cursor-pointer file:rounded-lg file:border-0 file:bg-forest file:px-3 file:py-2 file:font-medium file:text-white hover:file:bg-forest-deep"
           />
-          <p className="mt-1 text-sm text-gray-500">{t('forms.photoHint', { max: maxMegabytes })}</p>
-          {photo && <p className="mt-1 text-sm text-gray-700">{t('forms.selected', { name: photo.name })}</p>}
+          <p className="mt-1 text-sm text-muted">{t('forms.photoHint', { max: maxMegabytes })}</p>
+          {photo && <p className="mt-1 text-sm text-ink">{t('forms.selected', { name: photo.name })}</p>}
           {photoError && <p className="mt-1 text-sm text-red-700">{photoError}</p>}
         </div>
 

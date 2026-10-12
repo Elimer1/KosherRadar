@@ -72,15 +72,15 @@ function AdminAddTeudaPage() {
   }
 
   if (!restaurant || !options) {
-    return <p className="text-gray-600">{t('common.loading')}</p>;
+    return <p className="text-muted">{t('common.loading')}</p>;
   }
 
   if (done) {
     return (
       <div className="mx-auto max-w-lg space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">{t('desk.certificateAdded')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('desk.certificateAdded')}</h1>
         <FormAlert kind="success" message={t('desk.certificateApprovedFor', { name: restaurant.name })} />
-        <Link to={`/admin/restaurants/${restaurant.id}`} className="font-medium text-green-700 underline">
+        <Link to={`/admin/restaurants/${restaurant.id}`} className="font-medium text-grove underline">
           {t('desk.backRestaurant')}
         </Link>
       </div>
@@ -89,11 +89,11 @@ function AdminAddTeudaPage() {
 
   return (
     <div className="mx-auto max-w-lg">
-      <Link to={`/admin/restaurants/${restaurant.id}`} className="text-sm font-medium text-green-700 underline">
+      <Link to={`/admin/restaurants/${restaurant.id}`} className="text-sm font-medium text-grove underline">
         {t('desk.backRestaurant')}
       </Link>
-      <h1 className="mt-2 text-2xl font-bold text-gray-900">{t('desk.addCertificateAdmin')}</h1>
-      <p className="mt-1 text-gray-600">
+      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">{t('desk.addCertificateAdmin')}</h1>
+      <p className="mt-1 text-muted">
         {restaurant.name} &middot; {restaurant.address}
       </p>
 
@@ -127,10 +127,10 @@ function AdminAddTeudaPage() {
         </div>
 
         {loading && (
-          <div role="status" className="text-sm text-gray-600">
+          <div role="status" className="text-sm text-muted">
             {progress < 100 ? t('forms.uploadingPhoto', { progress }) : t('auth.saving')}
-            <div className="mt-1 h-2 rounded bg-green-100">
-              <div className="h-2 rounded bg-green-600" style={{ width: `${progress}%` }} />
+            <div className="mt-1 h-2 rounded bg-soft">
+              <div className="h-2 rounded bg-forest" style={{ width: `${progress}%` }} />
             </div>
           </div>
         )}
