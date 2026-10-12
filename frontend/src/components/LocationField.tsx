@@ -7,7 +7,7 @@ import { geocodePlace, suggestPlaces } from '../api/placesApi';
 import { activeLanguage } from '../i18n';
 import type { AddressSuggestion, PlaceLanguage } from '../api/placesApi';
 import type { SearchFilters } from '../types/search';
-import { inputClassName, labelClassName } from './formStyles';
+import { inputClassName, labelClassName, quietActionClassName, secondaryButtonClassName } from './formStyles';
 
 interface LocationFieldProps {
   filters: SearchFilters;
@@ -158,20 +158,21 @@ function LocationField({ filters, onChange, lang }: LocationFieldProps) {
           type="button"
           onClick={handleUseMyLocation}
           disabled={locating}
-          className="min-h-11 rounded border border-green-600 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-60"
+          className={`${secondaryButtonClassName} w-full sm:w-auto`}
         >
           {locating ? t('location.finding') : t('location.useMine')}
         </button>
       </div>
 
       {suggestions.length > 0 && (
-        <ul className="mt-1 overflow-hidden rounded border border-gray-200 bg-white" role="listbox">
+        <ul className="mt-2 overflow-hidden rounded-2xl border border-soft bg-white shadow-[0_8px_24px_rgba(23,75,58,0.08)]" role="listbox">
           {suggestions.map((suggestion) => (
             <li key={suggestion.placeId || suggestion.label}>
               <button
                 type="button"
                 onClick={() => applyPlace(suggestion)}
-                className="w-full px-3 py-2 text-start text-sm hover:bg-green-50"
+                dir="auto"
+                className="min-h-11 w-full px-3 py-2 text-start text-sm text-ink hover:bg-mist"
               >
                 {suggestion.label}
               </button>
@@ -181,16 +182,16 @@ function LocationField({ filters, onChange, lang }: LocationFieldProps) {
       )}
 
       {selectedLabel !== '' && filters.location && (
-        <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-700">
-          <span>{t('location.using', { place: selectedLabel })}</span>
-          <button type="button" onClick={handleClear} className="font-medium text-green-700 underline">
+        <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-ink">
+          <span dir="auto">{t('location.using', { place: selectedLabel })}</span>
+          <button type="button" onClick={handleClear} className={quietActionClassName}>
             {t('location.clear')}
           </button>
         </p>
       )}
 
       {note !== '' && (
-        <p role="status" className="mt-2 text-sm text-amber-800">
+        <p role="status" className="mt-2 text-sm text-amber-ink">
           {note}
         </p>
       )}

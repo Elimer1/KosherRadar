@@ -9,7 +9,7 @@ import { RADIUS_OPTIONS_KM } from '../types/search';
 import type { SearchFilters } from '../types/search';
 import { getCategoryLabel, getFoodTypeLabel, getHechsherOptionLabel, getKashrutLevelLabel } from '../utils/labels';
 import { toggleValue } from '../utils/searchResults';
-import { inputClassName, labelClassName } from './formStyles';
+import { choiceClassName, inputClassName, labelClassName, panelClassName } from './formStyles';
 
 interface SearchFiltersPanelProps {
   filters: SearchFilters;
@@ -17,13 +17,14 @@ interface SearchFiltersPanelProps {
   onChange: (next: SearchFilters) => void;
 }
 
-const checkboxLabelClassName = 'flex items-center gap-2 py-0.5 text-sm text-gray-800';
+const checkboxLabelClassName = choiceClassName;
 
 function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="space-y-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+    <div className={`${panelClassName} space-y-5 p-4 sm:p-5`}>
+      <h2 className="text-base font-semibold text-ink">{t('home.filters')}</h2>
       <div>
         <label htmlFor="filter-level" className={labelClassName}>
           {t('filters.level')}
@@ -50,7 +51,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
             <label key={option.value} className={checkboxLabelClassName}>
               <input
                 type="checkbox"
-                className="size-4 shrink-0"
+                className="size-5 shrink-0"
                 checked={filters.hechsher.includes(option.value)}
                 onChange={() => onChange({ ...filters, hechsher: toggleValue(filters.hechsher, option.value) })}
               />
@@ -61,7 +62,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
             <label className={checkboxLabelClassName}>
               <input
                 type="checkbox"
-                className="size-4 shrink-0"
+                className="size-5 shrink-0"
                 checked={filters.hechsher.includes(options.hechsherOtherValue)}
                 onChange={() =>
                   onChange({ ...filters, hechsher: toggleValue(filters.hechsher, options.hechsherOtherValue) })
@@ -80,7 +81,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
             <label key={foodType} className={checkboxLabelClassName}>
               <input
                 type="checkbox"
-                className="size-4 shrink-0"
+                className="size-5 shrink-0"
                 checked={filters.foodType.includes(foodType)}
                 onChange={() => onChange({ ...filters, foodType: toggleValue(filters.foodType, foodType) })}
               />
@@ -92,12 +93,12 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
 
       <fieldset>
         <legend className={labelClassName}>{t('filters.category')}</legend>
-        <div className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1.5">
+        <div className="mt-1 grid grid-cols-1 gap-1 sm:grid-cols-2">
           {(options?.categories || []).map((category) => (
             <label key={category} className={checkboxLabelClassName}>
               <input
                 type="checkbox"
-                className="size-4 shrink-0"
+                className="size-5 shrink-0"
                 checked={filters.category.includes(category)}
                 onChange={() => onChange({ ...filters, category: toggleValue(filters.category, category) })}
               />
@@ -111,7 +112,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
         <label className={checkboxLabelClassName}>
           <input
             type="checkbox"
-            className="size-4 shrink-0"
+            className="size-5 shrink-0"
             checked={filters.hideExpired}
             onChange={(event) => onChange({ ...filters, hideExpired: event.target.checked })}
           />
@@ -120,7 +121,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
         <label className={checkboxLabelClassName}>
           <input
             type="checkbox"
-            className="size-4 shrink-0"
+            className="size-5 shrink-0"
             checked={filters.includeUnknown}
             onChange={(event) => onChange({ ...filters, includeUnknown: event.target.checked })}
           />
@@ -149,7 +150,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
             ))}
           </select>
         ) : (
-          <p id="filter-radius" className="mt-1 text-sm text-gray-600">
+          <p id="filter-radius" className="mt-1 text-sm text-muted">
             {t('filters.needLocation')}
           </p>
         )}

@@ -47,6 +47,11 @@ input[type='checkbox'] {
   .kr-spinner {
     animation: none;
   }
+
+  .kr-card,
+  .kr-view-toggle button {
+    transition: none;
+  }
 }
 
 .kr-spinner {
@@ -111,4 +116,55 @@ input[type='checkbox'] {
 html[dir='rtl'] .leaflet-popup-content {
   direction: rtl;
   text-align: right;
+}
+
+/* Popup chrome follows the page. Tiles and pins stay left-to-right above. */
+.leaflet-popup-content-wrapper {
+  border: 1px solid #dceae4;
+  border-radius: 1rem;
+  box-shadow: 0 8px 24px rgba(23, 75, 58, 0.12);
+  color: #24342f;
+}
+
+.leaflet-popup-content {
+  margin: 0.85rem 1rem;
+  line-height: 1.45;
+}
+
+.leaflet-popup-tip {
+  box-shadow: none;
+}
+
+.leaflet-popup-content a {
+  color: #174b3a;
+}
+
+.leaflet-popup-close-button {
+  width: 2.75rem !important;
+  height: 2.75rem !important;
+  font-size: 1.35rem !important;
+  line-height: 2.5rem !important;
+  color: #174b3a !important;
+}
+
+/* Selected filter rows. The words stay; the fill only marks the current choice. */
+.kr-choice:has(input:checked) {
+  background-color: #eef4f1;
+  font-weight: 600;
+}
+
+.kr-choice:has(input:focus-visible) {
+  outline: 2px solid #174b3a;
+  outline-offset: 2px;
+}
+
+/* Back affordance points toward the previous page. Hebrew mirrors it. */
+.kr-back-mark {
+  display: inline-block;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+html[dir='rtl'] .kr-back-mark {
+  transform: scaleX(-1);
 }

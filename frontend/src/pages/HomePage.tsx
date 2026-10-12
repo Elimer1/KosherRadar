@@ -12,7 +12,13 @@ import { emptySearchFilters } from '../types/search';
 import type { SearchFilters } from '../types/search';
 import { readSavedView, saveView } from '../utils/mapView';
 import type { DiscoveryView } from '../utils/mapView';
-import { primaryButtonCompactClassName, secondaryButtonClassName } from '../components/formStyles';
+import {
+  errorNoticeClassName,
+  pageTitleClassName,
+  primaryButtonCompactClassName,
+  secondaryButtonClassName,
+  warningNoticeClassName,
+} from '../components/formStyles';
 
 // NEW (Milestone 4): the home page is the public search: one search box (restaurant name or food), filters,
 // and the list of results, 20 at a time. Anyone can use it without an account.
@@ -67,16 +73,14 @@ function HomePage() {
 
   const viewButtonClass = (selected: boolean) =>
     `min-h-11 flex-1 rounded-lg px-4 py-2 text-sm font-medium sm:flex-none ${
-      selected ? 'bg-green-700 text-white shadow-sm' : 'text-gray-700 hover:bg-green-50 hover:text-green-800'
+      selected ? 'bg-forest text-white shadow-sm' : 'text-ink hover:bg-mist'
     }`;
 
   return (
     <div>
-      <section className="pb-2 pt-2 text-center sm:pb-4 sm:pt-6">
-        <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
-          <span className="text-green-800">{t('home.title')}</span>
-        </h1>
-        <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-gray-600">{t('home.intro')}</p>
+      <section className="pb-2 pt-1 text-center sm:pb-4 sm:pt-2">
+        <h1 className={pageTitleClassName}>{t('home.heading')}</h1>
+        <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-muted">{t('home.intro')}</p>
       </section>
 
       <div className="mx-auto max-w-3xl">
@@ -113,7 +117,7 @@ function HomePage() {
           <div
             role="group"
             aria-label={t('home.view')}
-            className="mb-4 flex w-full gap-1 rounded-xl border border-gray-200 bg-white p-1 shadow-sm sm:inline-flex sm:w-auto"
+            className="kr-view-toggle mb-4 flex w-full gap-1 rounded-xl border border-soft bg-white p-1 shadow-sm sm:inline-flex sm:w-auto"
           >
             <button
               type="button"
@@ -136,25 +140,25 @@ function HomePage() {
           {view === 'map' && <RestaurantMap filters={filters} hechsherOptions={hechsherOptions} />}
 
           {view === 'list' && search.atlasUnavailable && (
-            <p role="status" className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+            <p role="status" className={`mb-3 ${warningNoticeClassName}`}>
               {t('home.atlasDown')}
             </p>
           )}
 
           {view === 'list' && search.loading && (
-            <p className="flex items-center justify-center gap-2 py-10 text-gray-600">
+            <p className="flex items-center justify-center gap-2 py-12 text-muted">
               <span className="kr-spinner" aria-hidden="true" />
               {t('home.searching')}
             </p>
           )}
 
           {view === 'list' && !search.loading && search.error && search.items.length === 0 && (
-            <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
+            <div role="alert" className={errorNoticeClassName}>
               <p>{search.error}</p>
               <button
                 type="button"
                 onClick={search.retry}
-                className="mt-2 rounded border border-red-300 px-3 py-1.5 text-sm font-medium hover:bg-red-100"
+                className="mt-3 inline-flex min-h-11 items-center rounded-lg border border-red-800 bg-white px-3.5 text-sm font-medium text-red-900 hover:bg-red-50"
               >
                 {t('common.tryAgain')}
               </button>
@@ -162,11 +166,11 @@ function HomePage() {
           )}
 
           {view === 'list' && !search.loading && !search.error && search.items.length === 0 && (
-            <div className="rounded-xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center text-gray-700 shadow-sm">
+            <div className="rounded-2xl border border-dashed border-soft bg-white px-6 py-12 text-center text-ink shadow-sm">
               {hasAnySearchChoice ? (
                 <>
                   <p className="font-medium">{t('home.noMatchTitle')}</p>
-                  <p className="mt-1 text-sm">{t('home.noMatchBody')}</p>
+                  <p className="mt-1 text-sm text-muted">{t('home.noMatchBody')}</p>
                   <button
                     type="button"
                     onClick={handleClearAll}
@@ -178,9 +182,9 @@ function HomePage() {
               ) : (
                 <>
                   <p className="font-medium">{t('home.emptyTitle')}</p>
-                  <p className="mt-1 text-sm">
+                  <p className="mt-1 text-sm text-muted">
                     {t('home.emptyBody')}{' '}
-                    <Link to="/submit-restaurant" className="font-medium text-green-800 underline">
+                    <Link to="/submit-restaurant" className="font-medium text-forest underline-offset-2 hover:underline">
                       {t('home.addRestaurant')}
                     </Link>
                   </p>
@@ -191,24 +195,24 @@ function HomePage() {
 
           {view === 'list' && search.items.length > 0 && (
             <>
-              <p className="mb-3 text-sm font-medium text-gray-700">
+              <p className="mb-3 text-sm font-medium text-muted">
                 {search.total === 1 ? t('home.foundOne', { count: search.total }) : t('home.foundMany', { count: search.total })}
               </p>
 
               {search.capped && (
-                <p role="status" className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+                <p role="status" className={`mb-3 ${warningNoticeClassName}`}>
                   {t('home.capped')}
                 </p>
               )}
 
-              <ul className="space-y-4">
+              <ul className="space-y-3">
                 {search.items.map((restaurant) => (
                   <RestaurantCard key={restaurant.id} restaurant={restaurant} hechsherOptions={hechsherOptions} />
                 ))}
               </ul>
 
               {search.error && (
-                <p role="alert" className="mt-3 text-sm text-red-700">
+                <p role="alert" className="mt-3 text-sm text-red-900">
                   {search.error}
                 </p>
               )}
