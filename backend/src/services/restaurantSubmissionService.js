@@ -11,6 +11,7 @@ import { deleteImageService, uploadTeudaImageService } from './imageUploadServic
 import {
   buildTeudaRecord,
   hasCertificateEvidence,
+  photoFingerprint,
   validateTeudaSubmission,
   withoutUserKashrutLevel,
 } from './teudaSubmissionService.js';
@@ -108,6 +109,7 @@ export const submitRestaurantService = async ({ restaurantData, teudaData, file,
       buildTeudaRecord({
         teudaData: evidence,
         image,
+        photoFingerprint: photoFingerprint(file),
         restaurantId: restaurant._id,
         userId: user._id,
         withNewRestaurant: true,

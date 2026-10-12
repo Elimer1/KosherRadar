@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
 import mongoose from 'mongoose';
 import { User } from '../src/models/User.js';
 import { Restaurant } from '../src/models/Restaurant.js';
@@ -12,7 +13,10 @@ describe('User model', () => {
 
     expect(user.role).toBe('USER');
     expect(user.points).toBe(0);
+    expect(user.tokenVersion).toBe(0);
     expect(user.email).toBe('test@example.com');
+    const source = readFileSync(new URL('../src/models/User.js', import.meta.url), 'utf8');
+    expect(source.match(/tokenVersion:/g)).toHaveLength(1);
   });
 
   it('does not allow a made-up role', async () => {

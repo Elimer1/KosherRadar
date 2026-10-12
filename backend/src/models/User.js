@@ -45,13 +45,6 @@ const userSchema = new mongoose.Schema(
       default: [],
       select: false,
     },
-    // NEW (Audit M4): bumped when the password changes. Missing on an old account means 0.
-    // חדש (ביקורת M4): עולה כשהסיסמה משתנה. חשבון ישן בלי השדה נחשב 0.
-    tokenVersion: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
   },
   { timestamps: true }
 );

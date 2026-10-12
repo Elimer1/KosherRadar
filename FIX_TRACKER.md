@@ -10,9 +10,9 @@ Counts below are derived from the issue statuses in this file.
 | ALREADY WORKING | 8 |
 | BLOCKED | 5 |
 | DEFERRED | 1 |
-| VERIFIED | 9 |
+| VERIFIED | 11 |
 | Other | 0 |
-| **Total** | **36** |
+| **Total** | **38** |
 
 ## Priority bands (12 October 2026)
 
@@ -42,6 +42,8 @@ Classification of those 36 issues: **4 confirmed bugs**, **12 risks**, **12 impr
 
 Blocked and deferred issues are not counted as verified. The sentence above is the audit classification; current statuses are in the tables.
 
+QA-001 and QA-002 were found on 12 October 2026 while checking `feature/qa-testing` at `54d9605`. They are not part of the original 36. Both are verified. LATER issues were not started.
+
 ## Milestone index
 
 | ID | Milestone | Priority | Status | Class |
@@ -49,6 +51,7 @@ Blocked and deferred issues are not counted as verified. The sentence above is t
 | M1-001 | 1 Restaurant and certificate submission | Critical | VERIFIED | Confirmed bug |
 | M1-002 | 1 Restaurant and certificate submission | Critical | VERIFIED | UX improvement |
 | M1-003 | 1 Restaurant and certificate submission | Critical | VERIFIED | Reliability risk |
+| QA-001 | Integration QA | High | VERIFIED | Confirmed bug |
 | M2-001 | 2 Admin moderation | Critical | ALREADY WORKING | Already implemented |
 | M2-002 | 2 Admin moderation | Critical | VERIFIED | Confirmed bug |
 | M2-003 | 2 Admin moderation | Critical | VERIFIED | UX improvement |
@@ -57,6 +60,7 @@ Blocked and deferred issues are not counted as verified. The sentence above is t
 | M3-002 | 3 Kashrut status | Critical | ALREADY WORKING | Product decision |
 | M3-003 | 3 Kashrut status | Critical | NOT STARTED | UX improvement |
 | M4-001 | 4 Authentication and security | High | VERIFIED | Confirmed bug |
+| QA-002 | Integration QA | Low | VERIFIED | Cleanup |
 | M4-002 | 4 Authentication and security | High | ALREADY WORKING | Already implemented |
 | M4-003 | 4 Authentication and security | High | NOT STARTED | Security risk |
 | M4-004 | 4 Authentication and security | High | DEFERRED | Security risk |
@@ -133,6 +137,21 @@ Priority: Critical
 - **Tests added or modified:** `placesService.test.js`.
 - **Verification:** Same commands as M1-001. No live Geoapify call. Mocked tests do not prove real address quality (M9-002). Keyboard use of the suggestion list remains M8-003 and was left for later.
 - **Blockers:** Live Geoapify checks stay blocked (M9-002). City is required, as decided, and is filled from the selected address when that address includes a city.
+
+### QA-001 — Undated certificates of the same hechsher collapse into one pending duplicate
+
+- **Milestone:** Integration QA, found before merging `feature/audit-must-fix`
+- **Priority:** High
+- **Status:** VERIFIED
+- **Description:** On the add-certificate flow, two pending certificates with the same hechsher and no expiration date were treated as the same submission. A different mashgiach or a different photo was rejected with 409.
+- **Evidence:** `QA_PROGRESS.md` on `feature/qa-testing` at `54d9605`. `submitTeudaService` called `findSimilarPendingTeudaRepo` with `kashrutLevel: null` and `expirationDate: null`, and did not pass the mashgiach or the photo. The QA test `it.fails` showed the two lookup objects were equal.
+- **Root cause:** The duplicate key was built for a full certificate that always had a date. After partial evidence was allowed, a missing date made every undated certificate of that hechsher look the same.
+- **Relevant files/functions:** `backend/src/services/teudaSubmissionService.js` (`pendingCertificateLookup`, `submitTeudaService`); `backend/src/repositories/teudaRepository.js` (`findSimilarPendingTeudaRepo`); `backend/src/models/Teuda.js`.
+- **Planned solution:** Keep the dated key as hechsher plus expiration date, so a retry of the same dated certificate still returns 409. For an undated certificate, also compare mashgiach name, mashgiach phone, and a sha256 of the photo bytes. Store that fingerprint on the certificate. Do not backfill old photos.
+- **Files changed:** `teudaSubmissionService.js`, `teudaRepository.js`, `Teuda.js`, `restaurantSubmissionService.js` (stores the same fingerprint when a new restaurant is sent with a photo).
+- **Tests added or modified:** `backend/tests/teudaSubmissionService.test.js`, `backend/tests/restaurantSubmissionService.test.js`.
+- **Verification:** `cd backend; npm test` exit 0, 38 files, 489 tests passed. Mocks only. No live database and no Cloudinary call.
+- **Blockers:** A pending photo saved before this field exists has no fingerprint. A later undated submission with no photo still matches that older row when the hechsher and mashgiach match, because a missing fingerprint is stored the same way as no photo. New photos are distinct. The QA worktree still has `it.fails` for this case. That assertion now passes, so that file must be changed to a normal `it` on `feature/qa-testing`. This branch does not edit that worktree.
 
 ---
 
@@ -271,6 +290,21 @@ Priority: High
 - **Tests added or modified:** `backend/tests/authService.test.js`, `backend/tests/userRepository.test.js`. `passwordResetService.test.js` still passed.
 - **Verification:** `cd backend; npm test` exit 0, 38 files, 485 tests passed. Mocks only. No live database. Existing tokens with no `tv` stay valid while `tokenVersion` is missing or 0. Logout still only clears localStorage (M4-004).
 - **Blockers:** none. A missing `tokenVersion` on an old account is treated as 0, so this deploy does not log everyone out. No backfill.
+
+### QA-002 — Duplicate `tokenVersion` declaration
+
+- **Milestone:** Integration QA, found before merging `feature/audit-must-fix`
+- **Priority:** Low
+- **Status:** VERIFIED
+- **Description:** `User.js` declared `tokenVersion` twice in the same schema object. JavaScript kept the second definition. Both definitions were the same, so sessions were unaffected.
+- **Evidence:** `QA_PROGRESS.md` on `feature/qa-testing` at `54d9605`. The field appeared before `points` and again after `awardedPointKeys`.
+- **Root cause:** The field was added twice while writing M4-001.
+- **Relevant files/functions:** `backend/src/models/User.js`.
+- **Planned solution:** Keep the first declaration and its comment. Delete the second.
+- **Files changed:** `backend/src/models/User.js`.
+- **Tests added or modified:** `backend/tests/models.test.js` expects the default `0` and a single `tokenVersion:` in the model source.
+- **Verification:** `cd backend; npm test` exit 0, 38 files, 489 tests passed. No behavior change. No backfill.
+- **Blockers:** none
 
 ### M4-002 — Authentication and authorization audit
 

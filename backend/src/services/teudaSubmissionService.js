@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { appError } from '../utils/appError.js';
 import { dateOnlyToDate, dateToDateOnly } from '../utils/israelDate.js';
 import { findRestaurantByIdRepo } from '../repositories/restaurantRepository.js';
@@ -28,6 +29,47 @@ export const withoutUserKashrutLevel = (teudaData) => {
   return evidence;
 };
 
+const blankToNull = (value) => {
+  const text = typeof value === 'string' ? value.trim() : '';
+  return text || null;
+};
+
+// NEW (Audit QA-001): identity of the photo bytes, so two different undated photos are not one certificate.
+// חדש (ביקורת QA-001): זהות של תוכן התמונה, כדי ששתי תמונות בלי תאריך לא ייחשבו לאותה תעודה.
+export const photoFingerprint = (file) => {
+  if (!file?.buffer) {
+    return null;
+  }
+
+  return createHash('sha256').update(file.buffer).digest('hex');
+};
+
+// NEW (Audit QA-001): a dated certificate matches on hechsher and date. An undated one also matches
+// on mashgiach name, phone, and photo bytes, so those are not collapsed into one pending row.
+// חדש (ביקורת QA-001): תעודה עם תאריך מזוהה לפי השגחה ותאריך. תעודה בלי תאריך מזוהה גם לפי המשגיח והתמונה.
+export const pendingCertificateLookup = ({ restaurantId, userId, evidence, file }) => {
+  const expirationDate = evidence.expirationDate ? dateOnlyToDate(evidence.expirationDate) : null;
+  const lookup = {
+    restaurant: restaurantId,
+    submittedBy: userId,
+    hechsher: evidence.hechsher,
+    hechsherOther: evidence.hechsherOther,
+    kashrutLevel: null,
+    expirationDate,
+  };
+
+  if (expirationDate) {
+    return lookup;
+  }
+
+  return {
+    ...lookup,
+    mashgiachName: blankToNull(evidence.mashgiachName),
+    mashgiachPhone: blankToNull(evidence.mashgiachPhone),
+    photoFingerprint: photoFingerprint(file),
+  };
+};
+
 // Checks that do not touch the database or Cloudinary. Run before anything is uploaded or saved.
 // A missing date or a missing photo is allowed. A date that is present must still be valid.
 export const validateTeudaSubmission = (teudaData, file) => {
@@ -40,7 +82,14 @@ export const validateTeudaSubmission = (teudaData, file) => {
   }
 };
 
-export const buildTeudaRecord = ({ teudaData, image, restaurantId, userId, withNewRestaurant }) => {
+export const buildTeudaRecord = ({
+  teudaData,
+  image,
+  photoFingerprint: fingerprint,
+  restaurantId,
+  userId,
+  withNewRestaurant,
+}) => {
   const record = {
     restaurant: restaurantId,
     hechsher: teudaData.hechsher,
@@ -61,6 +110,10 @@ export const buildTeudaRecord = ({ teudaData, image, restaurantId, userId, withN
   if (image) {
     record.photoUrl = image.photoUrl;
     record.cloudinaryPublicId = image.cloudinaryPublicId;
+  }
+
+  if (fingerprint) {
+    record.photoFingerprint = fingerprint;
   }
 
   if (teudaData.mashgiachName) {
@@ -90,16 +143,16 @@ export const submitTeudaService = async ({ restaurantId, teudaData, file, user }
   validateTeudaSubmission(teudaData, file);
 
   const evidence = withoutUserKashrutLevel(teudaData);
-  const expirationDate = evidence.expirationDate ? dateOnlyToDate(evidence.expirationDate) : null;
+  const fingerprint = photoFingerprint(file);
 
-  const alreadySent = await findSimilarPendingTeudaRepo({
-    restaurant: restaurant._id,
-    submittedBy: user._id,
-    hechsher: evidence.hechsher,
-    hechsherOther: evidence.hechsherOther,
-    kashrutLevel: null,
-    expirationDate,
-  });
+  const alreadySent = await findSimilarPendingTeudaRepo(
+    pendingCertificateLookup({
+      restaurantId: restaurant._id,
+      userId: user._id,
+      evidence,
+      file,
+    })
+  );
 
   if (alreadySent) {
     throw appError('You already submitted this certificate and it is waiting for review', 409);
@@ -112,6 +165,7 @@ export const submitTeudaService = async ({ restaurantId, teudaData, file, user }
       buildTeudaRecord({
         teudaData: evidence,
         image,
+        photoFingerprint: fingerprint,
         restaurantId: restaurant._id,
         userId: user._id,
         withNewRestaurant: false,

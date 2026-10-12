@@ -120,6 +120,7 @@ describe('submitRestaurantService', () => {
       photoUrl: 'https://res.cloudinary.com/photo.jpg',
     });
     expect(createTeudaRepo.mock.calls[0][0].kashrutLevel).toBeUndefined();
+    expect(createTeudaRepo.mock.calls[0][0].photoFingerprint).toMatch(/^[a-f0-9]{64}$/);
   });
 
   it('stores a photo without a kashrut level as pending evidence', async () => {

@@ -16,6 +16,10 @@ const teudaSchema = new mongoose.Schema(
 
     photoUrl: { type: String, trim: true },
     cloudinaryPublicId: { type: String, trim: true },
+    // NEW (Audit QA-001): sha256 of the photo bytes. Only the undated duplicate check reads it.
+    // Old pending photos have no fingerprint. No backfill.
+    // חדש (ביקורת QA-001): טביעת sha256 של התמונה. רק בדיקת הכפילות של תעודה בלי תאריך קוראת אותה.
+    photoFingerprint: { type: String, trim: true, maxlength: 64 },
     mashgiachName: { type: String, trim: true, maxlength: 100 },
     mashgiachPhone: { type: String, trim: true, maxlength: 30 },
 

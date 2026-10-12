@@ -150,6 +150,98 @@ describe('submitTeudaService', () => {
     ).resolves.toMatchObject({ status: 'PENDING' });
   });
 
+  it('looks up a dated certificate by hechsher and date, not by mashgiach or photo', async () => {
+    await submitTeudaService({
+      restaurantId: 'rest-1',
+      teudaData: {
+        hechsher: 'BADATZ_BEIT_YOSEF',
+        kashrutLevel: 'MEHADRIN',
+        expirationDate: '2027-01-15',
+        mashgiachName: 'Avi Cohen',
+      },
+      file,
+      user,
+    });
+
+    expect(findSimilarPendingTeudaRepo).toHaveBeenCalledWith({
+      restaurant: 'rest-1',
+      submittedBy: 'user-1',
+      hechsher: 'BADATZ_BEIT_YOSEF',
+      hechsherOther: undefined,
+      kashrutLevel: null,
+      expirationDate: dateOnlyToDate('2027-01-15'),
+    });
+    expect(createTeudaRepo.mock.calls[0][0].kashrutLevel).toBeUndefined();
+    expect(createTeudaRepo.mock.calls[0][0].photoFingerprint).toHaveLength(64);
+  });
+
+  it('treats undated certificates with different mashgichim as different pending submissions', async () => {
+    await submitTeudaService({
+      restaurantId: 'rest-1',
+      teudaData: { hechsher: 'BADATZ_BEIT_YOSEF', mashgiachName: 'Avi Cohen' },
+      user,
+    });
+    await submitTeudaService({
+      restaurantId: 'rest-1',
+      teudaData: { hechsher: 'BADATZ_BEIT_YOSEF', mashgiachName: 'Dana Levi' },
+      user,
+    });
+
+    const [first] = findSimilarPendingTeudaRepo.mock.calls[0];
+    const [second] = findSimilarPendingTeudaRepo.mock.calls[1];
+
+    expect(first).not.toEqual(second);
+    expect(first.mashgiachName).toBe('Avi Cohen');
+    expect(second.mashgiachName).toBe('Dana Levi');
+    expect(first.photoFingerprint).toBeNull();
+    expect(createTeudaRepo).toHaveBeenCalledTimes(2);
+  });
+
+  it('treats undated certificates with different photos or phones as different pending submissions', async () => {
+    const shared = { hechsher: 'BADATZ_BEIT_YOSEF', mashgiachName: 'Avi Cohen' };
+
+    await submitTeudaService({
+      restaurantId: 'rest-1',
+      teudaData: shared,
+      file: { buffer: Buffer.from('photo-a'), size: 7 },
+      user,
+    });
+    await submitTeudaService({
+      restaurantId: 'rest-1',
+      teudaData: shared,
+      file: { buffer: Buffer.from('photo-b'), size: 7 },
+      user,
+    });
+    await submitTeudaService({
+      restaurantId: 'rest-1',
+      teudaData: { ...shared, mashgiachPhone: '050-1111111' },
+      user,
+    });
+
+    const [withPhotoA] = findSimilarPendingTeudaRepo.mock.calls[0];
+    const [withPhotoB] = findSimilarPendingTeudaRepo.mock.calls[1];
+    const [withPhone] = findSimilarPendingTeudaRepo.mock.calls[2];
+
+    expect(withPhotoA.photoFingerprint).not.toBe(withPhotoB.photoFingerprint);
+    expect(withPhotoA.mashgiachName).toBe(withPhotoB.mashgiachName);
+    expect(withPhone.mashgiachPhone).toBe('050-1111111');
+    expect(withPhone).not.toEqual(withPhotoA);
+    expect(createTeudaRepo.mock.calls[0][0].photoFingerprint).toBe(withPhotoA.photoFingerprint);
+  });
+
+  it('uses one lookup for a retry of the same undated mashgiach and photo', async () => {
+    const sameFile = { buffer: Buffer.from('same-photo'), size: 10 };
+    const data = { hechsher: 'BADATZ_BEIT_YOSEF', mashgiachName: 'Avi Cohen' };
+
+    await submitTeudaService({ restaurantId: 'rest-1', teudaData: data, file: sameFile, user });
+    await submitTeudaService({ restaurantId: 'rest-1', teudaData: data, file: sameFile, user });
+
+    const [first] = findSimilarPendingTeudaRepo.mock.calls[0];
+    const [second] = findSimilarPendingTeudaRepo.mock.calls[1];
+
+    expect(second).toEqual(first);
+  });
+
   it('answers 409 and does not upload when the same certificate is already waiting for review', async () => {
     findSimilarPendingTeudaRepo.mockResolvedValue({ _id: 'earlier' });
 
