@@ -462,14 +462,64 @@ Checks on the combined tree:
 
 The home page, restaurant page, login, and missing-page screens were not opened in a browser after the UI merge. `UI_PROGRESS.md` still asks for that look at about 390px and above 1024px, in English and Hebrew.
 
+## Integration: feature/ux-functionality (12 October 2026)
+
+Merged on the primary worktree only. Nothing was pushed. `feature/backend-qa-fixes`, `feature/design-overhaul`, and `feature/workflow-verification` were not merged, rebased, or edited.
+
+The request named tip hashes as the placeholders `<MAIN_HASH>` and `<UX_HASH>`. The real tips were `main` `3bbb1e2da84215e62c82010de755be2b574aa6bf` and `feature/ux-functionality` `c897ed6ccbe471d6877f9938379a36c2484e50e0`. `UX_FUNCTIONALITY_PROGRESS.md` already recorded that `main` hash as the branch baseline. `c897ed6` is one documentation commit on top of `2a8a9f5`: it only replaces the Work Package 3 line in `UX_FUNCTIONALITY_PROGRESS.md` with the feature commit hash. That commit is compatible, so the merge continued.
+
+- Backup ref: `backup/main-pre-ux-merge` at `3bbb1e2da84215e62c82010de755be2b574aa6bf`
+- Merge commit: `cfdf7fc1c2306cdeee38dfa8bd6ba8b0fb4ce2c9`
+- Parents: `3bbb1e2da84215e62c82010de755be2b574aa6bf` (`main`) and `c897ed6ccbe471d6877f9938379a36c2484e50e0` (`feature/ux-functionality`)
+- Conflicts: none. `git merge --no-ff` completed with the `ort` strategy.
+- Locale files: no conflict and no duplicate keys. The feature branch added the same new keys in English and Hebrew (`home.rateLimited`, `home.unknownHidden`, `filters.clearGroup`, and the `auth.need*` sentences). `filters.hideExpired` changed in both languages as part of that branch, not as a merge disagreement. `frontend/src/locales/locales.test.ts` passed after the merge.
+- `package-lock.json` was not changed. No install was run.
+- Backend tests were not run. `git diff --name-only 3bbb1e2..cfdf7fc -- backend` is empty.
+- `git diff --stat 3bbb1e2..cfdf7fc` is the 44 frontend and progress files from the UX branch. Nothing outside that scope changed.
+- `git merge-base --is-ancestor` exits 1 for `feature/backend-qa-fixes` (`bca1b3a`), `feature/design-overhaul` (`34950bd`), and `feature/workflow-verification` (`7811ca2`). Those tips are not ancestors of `main`.
+
+The UX tip was tested from a temporary detached checkout, not from `C:\FS\projects\KosherRadar-ux-functionality`. That worktree was not modified.
+
+| Command | `main` before merge | UX tip `c897ed6` | `main` after merge |
+| --- | --- | --- | --- |
+| `cd frontend; npm test` | exit 0, 14 files, 90 tests | exit 0, 22 files, 127 tests | exit 0, 22 files, 127 tests |
+| `cd frontend; npm run lint` | exit 0 | exit 0 | exit 0 |
+| `cd frontend; npm run typecheck` | exit 0 | exit 0 | exit 0 |
+| `cd frontend; npm run build` | exit 0, JS about 724.25 kB | exit 0, JS about 742.89 kB | exit 0, JS about 742.89 kB |
+
+The 14 test files on pre-merge `main` are still present. The post-merge list is the UX list: the original 14 plus `usePageMeta.test.tsx`, `useRestaurantSearch.test.tsx`, `useSearchCriteria.test.tsx`, `searchCriteria.test.ts`, `searchReturn.test.ts`, `adminTab.test.ts`, `loginReason.test.ts`, and `restaurantName.test.ts`. No test file or test count disappeared, and no new failure appeared.
+
+| Requirement | Evidence | Result |
+| --- | --- | --- |
+| `useSearchCriteria` and `SearchCriteriaApi` present | `frontend/src/hooks/useSearchCriteria.ts` exports both. `useSearchCriteria.test.tsx` passed. | Pass |
+| Search and filter persistence intact | `searchCriteria.test.ts` ("commits draft text with the filter in one transition") and `useSearchCriteria.test.tsx` ("applies the latest draft together with a filter and can navigate back"). Browser on `http://localhost:5191` with a local mock API on port 5192: typing `pizza` became `/?q=pizza`; checking Meat became `/?q=pizza&foodType=MEAT` with Meat checked; Back to search restored that URL, the text, and Filters (1). | Pass |
+| Authentication return destinations work | `loginReason.test.ts` ("names the contribution page that required an account") and `returnPath.test.ts`. Browser: opening `/restaurants/6acc84e0953576757dad2141/add-teuda` while logged out landed on `/login` and showed "An account is required to add a certificate." | Pass |
+| Localized restaurant names preserved | `restaurantName.test.ts` (submitted name, stored Hebrew heading, stored English heading). Browser: English heading `Pizza Place` with `מקום פיצה` under it; after the language switch the heading was `מקום פיצה`, the second line was `Pizza Place`, and the title was `מקום פיצה - KosherRadar`. | Pass |
+| Unverified-claim explanations still visible | No component test renders the sentences. The page uses `details.claimSays` and `details.claimNote` in `RestaurantDetailsPage.tsx`. Browser, mock restaurant with one `UNVERIFIED` item and no certificate list: English "The restaurant says: Badatz Machpud, Mehadrin." and "No certificate has been checked for this. Please ask the restaurant to show its certificate." Hebrew: "המסעדה אומרת: בד״ץ מחפוד, מהדרין." and "לא נבדקה תעודה עבור זה. בקשו מהמסעדה להציג את התעודה." | Pass |
+| Other worktrees untouched | Compared immediately before the merge and after it. See the worktree note below. | Pass |
+
+Worktrees. At the start of this session the design worktree was `d3d69fd` with uncommitted edits. Before the merge it was already `34950bd` and clean. This merge did not do that. The snapshot taken immediately before `git merge` matches the snapshot after it:
+
+| Worktree | HEAD before and after | Status before and after |
+| --- | --- | --- |
+| `KosherRadar-backend-qa` | `bca1b3a` | clean |
+| `KosherRadar-design` | `34950bd` | clean |
+| `KosherRadar-qa` | `54d9605` | clean |
+| `KosherRadar-ui` | `e479f31` | clean |
+| `KosherRadar-ux` | `7d2a1a6` | untracked `UX_REVIEW.md` |
+| `KosherRadar-ux-functionality` | `c897ed6` | clean |
+| `KosherRadar-workflow` | `7811ca2` | clean |
+
+Follow-up, not changed here: Hebrew strings added in Work Packages 1B, 1C, and 2 still need native-speaker review. The design branch is still separate and should import `useSearchCriteria` rather than a second search store. The map popup, device geolocation, and a live geocoder were not used in this check. The mock API was local only.
+
 ## NEXT AGENT ONBOARDING
 
 **Current position**
 
 - Branch: `main` (not pushed). It is ahead of `origin/main`.
-- Current batch: MUST FIX NOW, QA-001, and QA-002 are on `main`, together with `feature/ui-polish` and `feature/qa-testing`. This was not a walk through all 11 milestones.
-- Last verified fixes: QA-001 and QA-002, then the integration merges `226e0bc` and `dbf5672`.
-- Next issue: none until the user asks. Do not start a LATER issue.
+- Current batch: MUST FIX NOW, QA-001, QA-002, `feature/ui-polish`, `feature/qa-testing`, and `feature/ux-functionality` are on `main`. This was not a walk through all 11 milestones.
+- Last verified fixes: QA-001 and QA-002, then the integration merges `226e0bc`, `dbf5672`, and `cfdf7fc` (`feature/ux-functionality`).
+- Next issue: none until the user asks. Do not start a LATER issue. Do not merge the design, backend-qa, or workflow branches unless the user asks.
 - Tracker counts: 11 VERIFIED, 8 ALREADY WORKING, 13 NOT STARTED, 5 BLOCKED, 1 DEFERRED. Total 38.
 
 **Integration check**
@@ -568,4 +618,4 @@ The QA-001 case on `main` is already a normal `it`. The QA worktree still has `i
 
 **Exact next task**
 
-Stop. Integration is on `main` and the combined checks passed. Do not push unless the user asks. Do not start a LATER issue. The UI polish was not opened in a browser.
+Stop. `feature/ux-functionality` is on `main` at merge `cfdf7fc` (backup `backup/main-pre-ux-merge`). The checks in "Integration: feature/ux-functionality" passed. Do not push unless the user asks. Do not start a LATER issue. Do not merge `feature/design-overhaul`, `feature/backend-qa-fixes`, or `feature/workflow-verification` unless the user asks.
