@@ -4,11 +4,19 @@ Authoritative requirements: `PROJECT_SPEC.md` (do not edit without approval). Re
 
 ## Active milestone
 
-**Milestone 5 — Maps, location and interface polish** (DONE and merged to `main`; waiting for your approval before Milestone 6). Scope from `PROJECT_SPEC.md` section 16: Leaflet visible-bounds queries and clustering, Geoapify for the map and for search-by-address, Waze / Google Maps / share, English and Hebrew with RTL/LTR, responsive layout across four width ranges, list/map view preference, UI integration. Kashrut status and filters keep using `kashrutStatusService.js` and `restaurantSearchService.js`.
+**Milestone 6 — Full verification and fixes** (in progress). Scope from `PROJECT_SPEC.md` section 16: end-to-end checks against configured real services, Vitest coverage, build checks, a security and data-leak review, fixes for bugs that review finds, README completion, and a reconciliation of the requirements. Kashrut status and filters keep using `kashrutStatusService.js` and `restaurantSearchService.js`. Milestone 7 (the Hebrew project book) is out of scope.
 
-Milestones 1 to 5 are merged to `main`. Real-database, Atlas Search, Cloudinary, Resend and Geoapify checks are still BLOCKED (see "Blockers"). Local `main` is ahead of `origin/main`; it has not been pushed in this milestone.
+Milestones 1 to 5 are merged to `main`, and `main` matches `origin/main` at the start of this milestone (`5fda850`). Atlas Search, Cloudinary, Resend and Geoapify are still without credentials (see "Blockers"). A local MongoDB is used for the checks that do not need those accounts. Those checks are not a substitute for Atlas Search.
 
-Milestone 4 (`main` and its three feature branches) has been pushed to `origin`. Milestone 5 has not been pushed.
+## Feature ownership (Milestone 6)
+
+Recorded before implementation, per section 19. `--author` follows the responsible teammate. The code is AI-generated and must be reviewed by its owner. Merge order: `feature/public-response-review`, then `feature/interface-verification`, then the docs branch.
+
+| Feature branch | Responsible teammate | Scope |
+| --- | --- | --- |
+| `feature/public-response-review` | Eli Mermelstein | Security and data-leak review of public versus admin responses. Keep the internal kashrut sort key off the public restaurant page payload, rate-limit the public submission-context route the same way as the other public reads, and reject a login return path that is not a path inside this site. Tests for those checks |
+| `feature/interface-verification` | Moshe Silber | Fixes found while checking English, Hebrew, right-to-left layout and the four width ranges. The restaurant page's "back to search" link is translated. The map stays usable when the page is right-to-left |
+| `feature/milestone-6-docs` | Eli Mermelstein | Progress and checklist files, README completion, and an honest record of what was verified against a local database versus what is still blocked |
 
 Before this milestone started, the leftover working-tree change on `main` (deleted `project.zip`, a snapshot archive that had been committed by mistake) was committed, and `main` plus the Milestone 3 feature branches were pushed to `origin`. The six duplicate-detection files had already been committed in an earlier "share snapshot" commit, so they are no longer uncommitted.
 
