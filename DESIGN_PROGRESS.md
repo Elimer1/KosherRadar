@@ -3,7 +3,7 @@
 Branch: `feature/design-overhaul`  
 Worktree: `C:\FS\projects\KosherRadar-design`  
 Base: `main` at `3bbb1e2`  
-HEAD: `c09bae2` (`style(discovery): refine search, filters, and map`) until the docs commit that follows this file.
+Tip: the docs commit that contains this file, on top of `08127e7`, `ac1181b`, and `c09bae2`. Confirm with `git log -5` in this worktree.
 
 This file is the only progress log for the design overhaul. Do not edit `PROGRESS.md`, `FIX_TRACKER.md`, `AUDIT_FINDINGS.md`, `QA_PROGRESS.md`, `UI_PROGRESS.md`, or `UX_FUNCTIONALITY_PROGRESS.md`.
 
@@ -227,7 +227,7 @@ On conflict, keep Agent 1's handlers, props, and hook calls, and keep this branc
 **Current position**
 
 - Branch `feature/design-overhaul`, worktree `C:\FS\projects\KosherRadar-design`.
-- Discovery presentation is committed: `08127e7` cards, `ac1181b` details, `c09bae2` search, filters, and map.
+- Discovery presentation is committed: `08127e7` cards, `ac1181b` details, `c09bae2` search, filters, and map, then the docs commit that contains this file.
 - Do not start another design branch. Do not merge or push.
 
 **Completed screens**
