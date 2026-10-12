@@ -4,11 +4,11 @@ Authoritative requirements: `PROJECT_SPEC.md` (do not edit without approval). Re
 
 ## Active milestone
 
-**Milestone 5 — Maps, location and interface polish** (IN PROGRESS). Scope from `PROJECT_SPEC.md` section 16: Leaflet visible-bounds queries and clustering, Geoapify for the map and for search-by-address, Waze / Google Maps / share, English and Hebrew with RTL/LTR, responsive layout across four width ranges, list/map view preference, UI integration. Kashrut status and filters keep using `kashrutStatusService.js` and `restaurantSearchService.js`.
+**Milestone 5 — Maps, location and interface polish** (DONE and merged to `main`; waiting for your approval before Milestone 6). Scope from `PROJECT_SPEC.md` section 16: Leaflet visible-bounds queries and clustering, Geoapify for the map and for search-by-address, Waze / Google Maps / share, English and Hebrew with RTL/LTR, responsive layout across four width ranges, list/map view preference, UI integration. Kashrut status and filters keep using `kashrutStatusService.js` and `restaurantSearchService.js`.
 
-Milestone 4 is done and merged. The form/account polish that was sitting uncommitted after Milestone 4 is now on `main` (`feature/form-account-polish`). Real-database, Atlas Search, Cloudinary, Resend and Geoapify checks are still BLOCKED (see "Blockers").
+Milestones 1 to 5 are merged to `main`. Real-database, Atlas Search, Cloudinary, Resend and Geoapify checks are still BLOCKED (see "Blockers"). Local `main` is ahead of `origin/main`; it has not been pushed in this milestone.
 
-Milestones 1 to 4 are merged to `main`. Their real-database, Atlas Search, Cloudinary, Resend and real-backend browser checks are still BLOCKED (see "Blockers"). Milestone 4 (`main` and its three feature branches) has been pushed to `origin`.
+Milestone 4 (`main` and its three feature branches) has been pushed to `origin`. Milestone 5 has not been pushed.
 
 Before this milestone started, the leftover working-tree change on `main` (deleted `project.zip`, a snapshot archive that had been committed by mistake) was committed, and `main` plus the Milestone 3 feature branches were pushed to `origin`. The six duplicate-detection files had already been committed in an earlier "share snapshot" commit, so they are no longer uncommitted.
 
@@ -173,9 +173,27 @@ Committed on `feature/form-account-polish` and merged to `main` before Milestone
 - **The certificate is the only kashrut input on the user form.** Restaurant-level claimed hechsher and claimed level stay in the database and on the admin edit form, because existing unverified listings and `kashrutStatusService.js` still use them. A user cannot set them on a new submission.
 - **Food keywords stay on the admin form.** Search uses them when the food word is not in the restaurant name. Users no longer type them.
 - **A half-filled certificate is rejected in the browser** before it is sent. The server still accepts a restaurant with no certificate.
-- **Home-page location search is unchanged.** "Use my current location" is still the only location control on the search page. A typed address for search, and the map, remain Milestone 5.
+- **Home-page location search was unchanged at the time of this polish.** "Use my current location" was still the only location control on the search page. Milestone 5 later added the typed location field and the map (see the Milestone 5 work log).
 
-### Corrections to earlier statements
+#### Milestone 5
+
+- Ownership was recorded first (`feature/milestone-5-docs`, not merged until this docs update). Then three feature branches were built and merged into `main` with `--no-ff`, in this order: `feature/map-discovery` (Eli), `feature/location-search` (Moshe), `feature/bilingual-ui` (Moshe). `feature/bilingual-ui` was branched from `feature/location-search`, so it already contained the location commit; merging location first, then bilingual, kept the history. `feature/milestone-5-docs` is merged last. Branches were not deleted. All code is AI-generated and must be reviewed by its owner. Feature commits use `--author` for the responsible teammate. The merge commits carry the git-configured identity.
+- **Map API**: `GET /api/restaurants/map` (registered before `/:restaurantId`). Same filters as the list, plus `north`, `south`, `east`, `west`. `findMapRestaurantsService` reuses `loadMatches` in `restaurantSearchService.js`, so kashrut filters cannot diverge. The box is `$geoWithin` `$box` in `[lng, lat]`. A radius is still applied with `$and` when a search location is set. Restaurants without coordinates are omitted. The payload is capped at 500 markers (`capped: true` when the cap is hit). Boxes that cross the date line are rejected.
+- **Map UI**: `RestaurantMap.tsx` (Leaflet, OpenStreetMap tiles, branded div markers, clustering). List and map are mutually exclusive. The choice is saved in `localStorage` (`kosherradar-view`); anything other than `map` is the list. Moving the map does not change the search location. A radius is drawn and still filters the viewport. Bounds requests are debounced and stale answers are ignored.
+- **Location field**: a separate box from the name/food search. `GET /api/places/suggest` and `GET /api/places/geocode` are public and rate-limited; the form autocomplete stays login-only. The key stays on the server. A miss or a missing key returns no coordinates and the UI says nothing was guessed. Current location is optional.
+- **Share**: Web Share API, with clipboard fallback. Cancelling the share sheet does not copy. Waze stays on the list and the map popup; Google Maps stays on the restaurant page.
+- **Languages**: `frontend/src/locales/en.ts` and `he.ts`, `i18next`. The choice is saved (`kosherradar-language`). Default is the saved choice, otherwise Hebrew when the browser language starts with `he`, otherwise English. `lang` and `dir` are set before React loads and again when the language changes. Hechsher names use the existing `labelEn` / `labelHe`. Restaurant names and addresses are not translated. Messages that the server itself returns (validation text) stay in the language the API sent.
+- **Page title**: `usePageMeta` sets the document title and description. A crawler that does not run JavaScript only sees the generic title in `index.html`.
+
+### Design decisions made in Milestone 5 (please review)
+
+- **The map does not use the 20-row list.** It asks for every approved match in the visible box, up to 500. The list stays at 20 per page. While the map is showing, the list request is not sent.
+- **Radius and the visible box both apply.** Choosing "5 km around Jerusalem" and then panning to Tel Aviv shows only restaurants that are inside both. The map says that moving it does not change the search location.
+- **A location is never parsed out of the name box.** "pizza Jerusalem" is a food/name search, not a place.
+- **Public place search is separate from the login-only form autocomplete**, so browsing does not require an account, and the Geoapify key still never reaches the browser.
+- **English stays the fallback language** so the existing kashrut and admin label tests keep passing without setting a language first.
+
+## Corrections to earlier statements
 
 - Earlier in this milestone I said `PROGRESS.md` contained stray line-number markers. That was wrong: they were only an artifact of how the file was displayed to me; the file has none.
 - The six duplicate-detection files that earlier versions of this file listed as "uncommitted team changes" were already committed in a "share snapshot" commit, so nothing in the working tree is waiting for the team any more.
@@ -203,6 +221,19 @@ Run again after the MVP polish above (build was not re-run):
 
 The login and registration pages were opened in the browser: the eye button showed the typed password and switched to "Hide password". The API did not start in that session (MongoDB Atlas rejected this computer's IP), so the restaurant form, address search, approval buttons and My Submissions were not clicked against a live server. Geoapify itself was not called.
 
+Run on `main` after the Milestone 5 feature merges (this docs commit only changes tracking files and the README):
+
+| Command | Result |
+| --- | --- |
+| `cd backend; npm test` | 37 test files, 466 tests passed |
+| `cd frontend; npm test` | 14 test files, 89 tests passed |
+| `cd frontend; npm run build` | passed (the production JavaScript bundle is over 500 kB; Vite only warns) |
+| `cd frontend; npm run lint` | passed (no findings) |
+
+The home page was opened in the browser on the Vite dev server. Hebrew was selected, `dir` became `rtl`, and the choice survived a reload. The map view was selected, Leaflet and OpenStreetMap tiles loaded, the choice survived a reload, and switching back to the list hid the map. At a 390px-wide viewport the page did not scroll sideways. Login and the invalid reset-link screen were in Hebrew. The map request then failed with the Hebrew "cannot reach the server" message, and an earlier list response was an empty approved set; neither Geoapify nor a restaurant popup was exercised. Clustering, Call, Waze and Share inside a popup were not seen, because no markers were returned.
+
+New Milestone 5 backend tests: `mapSearchService`, bounds cases in `restaurantSearchRepository` and `geo`, map cases in `searchRoutesHttp`, public suggest/geocode cases in `placesService`. New frontend tests: `mapView`, `language`, `locales` (the two languages have the same keys and Hebrew strings are not empty), share cases in `navigationLinks`.
+
 New Milestone 4 backend tests: `searchFields`, `geo`, `searchSchemas`, `kashrutFilters`, `restaurantSearchService`, `restaurantSearchRepository` (the built query, repository mocked), `searchRoutesHttp` (real HTTP, service mocked), `restaurantDetailsService`, `restaurantDetailsRoutesHttp`, `safeUrl`. New frontend tests: `searchApi`, `kashrutText`, `navigationLinks`, `safeUrl`.
 
 Done once and not kept: the search page and the restaurant page (loaded, 404 state, filters, Load More, autocomplete) were opened in a browser against a throwaway stub API (`.scratch/`, git-ignored via `.git/info/exclude`). This proves the screens render and the requests are shaped as the stub expects; it does **not** prove anything about the real backend, MongoDB or Atlas Search. There are no frontend component tests.
@@ -227,7 +258,8 @@ Not run: either server against a real MongoDB, a real Cloudinary upload, and the
 - **UNVERIFIED (Milestone 3):** the whole admin flow against a real database and the admin and password reset pages in a browser. Sessions are not revoked by a password reset (see design decisions).
 - **BLOCKED (Milestone 4):** Atlas Search. Needs a real Atlas cluster, the index from `ATLAS_SEARCH_SETUP.md` and `ATLAS_SEARCH_ENABLED=true`. The `$search` pipeline and the index JSON were never run; only the fallback is tested.
 - **UNVERIFIED (Milestone 4):** every MongoDB query behind search and details (the candidate `$or` query, `$geoWithin $centerSphere`, the new indexes, the one-query certificate lookup, `npm run search:rebuild`) and the search and restaurant pages against the real backend. Performance with real data (2000-candidate cap) is unknown.
-- **UNVERIFIED:** Geoapify. The submission form now calls it through `GET /api/places/autocomplete` and, for a typed address with no coordinates, through geocoding in `submitRestaurantService`. Needs `GEOAPIFY_API_KEY` in `backend/.env`. Without a key the typed address still submits and no coordinates are saved. No real Geoapify request has been made. Map search by a typed address is still Milestone 5.
+- **UNVERIFIED:** Geoapify. The submission form calls it through `GET /api/places/autocomplete` (login required) and, for a typed address with no coordinates, through geocoding in `submitRestaurantService`. The home-page location field calls `GET /api/places/suggest` and `GET /api/places/geocode` (public). Needs `GEOAPIFY_API_KEY` in `backend/.env`. Without a key, or if Geoapify fails, no coordinates are invented. No real Geoapify request has been made.
+- **UNVERIFIED (Milestone 5):** the map bounds query against a real MongoDB (`$geoWithin` `$box`, combined with a radius, restaurants that have no coordinates). The Leaflet map was opened and tiles loaded; clustering and popups were not seen because the search returned no restaurants. Share was not clicked. Widths other than 390px were not measured.
 
 To finish the Milestone 4 blocked items: run `cd backend; npm run search:rebuild`, start both servers, search a restaurant by name, by an English and a Hebrew food word, and with each filter, open its page, then create the Atlas index, set `ATLAS_SEARCH_ENABLED=true`, restart, and search a mistyped name (steps in `ATLAS_SEARCH_SETUP.md`).
 
@@ -237,8 +269,8 @@ To finish the blocked items: copy `backend/.env.example` to `backend/.env`, fill
 
 ## Next milestone
 
-Milestone 5 — Maps, location and interface polish (needs your explicit approval, in a fresh conversation). Spec section 16: Leaflet visible-bounds queries and clustering, Geoapify for the map and for search-by-address (submission-form address search already exists; see "MVP polish"), Waze / Google Maps / share, English and Hebrew translations with RTL/LTR, responsive Tailwind design across four ranges, view preference, UI integration. Things it will build on: `GET /api/restaurants` already accepts `lat`, `lng` and `radiusKm` (a bounds query for the map is not written yet); `searchRestaurantsService` and `kashrutStatusService.js` (reuse them for the map, do not copy status logic); `publicRestaurantSerializer.js`; the card and detail pages that already have Call / Waze / Google Maps links; `buildSearchParams` and `useRestaurantSearch` on the frontend. Every UI string is still hard-coded English and must move to the translation files.
+Milestone 6 — Full verification and fixes (needs your explicit approval, in a fresh conversation). Spec section 16: end-to-end checks against real services, a security and data-leak review, README completion and a reconciliation of the requirements. It depends on a real MongoDB, and on Cloudinary, Resend, Atlas Search and Geoapify if those checks are in scope. Do not treat the Milestone 5 browser pass as proof that search, the map markers or Geoapify work.
 
 ## Continuation prompt (copy into a new Cursor Agent conversation)
 
-> Read the complete repository-root `PROJECT_SPEC.md` (authoritative master specification), `PROGRESS.md`, `REQUIREMENTS_CHECKLIST.md`, and the recent Git commits. Do not modify `PROJECT_SPEC.md` without my approval. Implement **only Milestone 5** from section 16, preserving all existing functionality. Work autonomously within that milestone; test, fix, update both tracking files, make real incremental, appropriately attributed feature-branch commits and merge verified work as specified in section 19, then STOP and ask for approval before the next milestone. Do not claim untested integrations work (MongoDB, Atlas Search, Cloudinary, Resend and Geoapify were never verified; see "Blockers"). Reuse `kashrutStatusService.js` and `restaurantSearchService.js` for every public status and filter. Follow the "Comment convention for new code" section in `PROGRESS.md`: mark every new file, function and block with an English `NEW (Milestone 5)` comment plus a Hebrew `חדש (אבן דרך 5)` comment.
+> Read the complete repository-root `PROJECT_SPEC.md` (authoritative master specification), `PROGRESS.md`, `REQUIREMENTS_CHECKLIST.md`, and the recent Git commits. Do not modify `PROJECT_SPEC.md` without my approval. Implement **only Milestone 6** from section 16, preserving all existing functionality. Work autonomously within that milestone; test, fix, update both tracking files, make real incremental, appropriately attributed feature-branch commits and merge verified work as specified in section 19, then STOP and ask for approval before the next milestone. Do not claim untested integrations work (MongoDB, Atlas Search, Cloudinary, Resend and Geoapify were never verified; see "Blockers"). Reuse `kashrutStatusService.js` and `restaurantSearchService.js` for every public status and filter. Follow the "Comment convention for new code" section in `PROGRESS.md`.
