@@ -2,6 +2,7 @@
 // and it never claims that an email was sent.
 // חדש (אבן דרך 3): דף "שכחתי סיסמה". מציג אותה הודעה בין אם יש חשבון ובין אם לא, ולא טוען שנשלח מייל.
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { requestPasswordReset } from '../api/authApi';
@@ -10,6 +11,7 @@ import FormAlert from '../components/FormAlert';
 import { inputClassName, labelClassName, primaryButtonClassName } from '../components/formStyles';
 
 function ForgotPasswordPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -23,7 +25,7 @@ function ForgotPasswordPage() {
     try {
       setMessage(await requestPasswordReset(email));
     } catch (err) {
-      setError(getErrorMessage(err, 'Could not send the request. Please try again.'));
+      setError(getErrorMessage(err, t('auth.forgotFailed')));
     } finally {
       setLoading(false);
     }
@@ -32,11 +34,11 @@ function ForgotPasswordPage() {
   if (message) {
     return (
       <div className="mx-auto max-w-md space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">Check your email</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('auth.checkEmail')}</h1>
         <FormAlert kind="success" message={message} />
-        <p className="text-sm text-gray-600">The link works once and expires after one hour.</p>
+        <p className="text-sm text-gray-600">{t('auth.linkOnce')}</p>
         <Link to="/login" className="inline-block font-medium text-green-700 hover:underline">
-          Back to log in
+          {t('auth.backToLogin')}
         </Link>
       </div>
     );
@@ -44,15 +46,15 @@ function ForgotPasswordPage() {
 
   return (
     <div className="mx-auto max-w-md">
-      <h1 className="text-2xl font-bold text-gray-900">Forgot your password?</h1>
-      <p className="mt-2 text-sm text-gray-600">Enter your email and we will send you a link to choose a new one.</p>
+      <h1 className="text-2xl font-bold text-gray-900">{t('auth.forgotTitle')}</h1>
+      <p className="mt-2 text-sm text-gray-600">{t('auth.forgotBody')}</p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <FormAlert message={error} />
 
         <div>
           <label htmlFor="forgot-email" className={labelClassName}>
-            Email
+            {t('common.email')}
           </label>
           <input
             id="forgot-email"
@@ -66,13 +68,13 @@ function ForgotPasswordPage() {
         </div>
 
         <button type="submit" disabled={loading} className={primaryButtonClassName}>
-          {loading ? 'Sending...' : 'Send reset link'}
+          {loading ? t('auth.sending') : t('auth.sendLink')}
         </button>
       </form>
 
       <p className="mt-4 text-sm text-gray-600">
         <Link to="/login" className="font-medium text-green-700 hover:underline">
-          Back to log in
+          {t('auth.backToLogin')}
         </Link>
       </p>
     </div>

@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { getMySubmissions } from '../api/submissionsApi';
 import { getErrorMessage } from '../api/errors';
 import FormAlert from '../components/FormAlert';
 import type { MySubmissions } from '../types/mySubmissions';
 import { getStatusLabel } from '../utils/adminLabels';
+import { activeLanguage } from '../i18n';
 
 const formatDate = (value: string) => {
   const date = new Date(value);
@@ -14,7 +16,11 @@ const formatDate = (value: string) => {
     return value;
   }
 
-  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  return date.toLocaleDateString(activeLanguage() === 'he' ? 'he-IL' : 'en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 };
 
 function StatusList({
@@ -35,6 +41,7 @@ function StatusList({
 }
 
 function MySubmissionsPage() {
+  const { t } = useTranslation();
   const [submissions, setSubmissions] = useState<MySubmissions | null>(null);
   const [error, setError] = useState('');
 
@@ -43,34 +50,32 @@ function MySubmissionsPage() {
       try {
         setSubmissions(await getMySubmissions());
       } catch (err) {
-        setError(getErrorMessage(err, 'Could not load your submissions.'));
+        setError(getErrorMessage(err, t('forms.loadSubmissions')));
       }
     };
 
     load();
-  }, []);
+  }, [t]);
 
   if (error) {
     return <FormAlert message={error} />;
   }
 
   if (!submissions) {
-    return <p className="text-gray-600">Loading your submissions...</p>;
+    return <p className="text-gray-600">{t('forms.loadingSubmissions')}</p>;
   }
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <div>
         <Link to="/account" className="text-sm font-medium text-green-700 underline">
-          Back to my account
+          {t('forms.backAccount')}
         </Link>
-        <h1 className="mt-2 text-2xl font-bold text-gray-900">My submissions</h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Restaurants, certificates and reports you sent, and what happened to each one.
-        </p>
+        <h1 className="mt-2 text-2xl font-bold text-gray-900">{t('forms.mySubmissions')}</h1>
+        <p className="mt-2 text-sm text-gray-600">{t('forms.submissionsBody')}</p>
       </div>
 
-      <StatusList title="Restaurants" empty="You have not sent a restaurant yet.">
+      <StatusList title={t('forms.restaurants')} empty={t('forms.noRestaurants')}>
         {submissions.restaurants.length > 0 && (
           <ul className="space-y-3">
             {submissions.restaurants.map((restaurant) => (
@@ -83,7 +88,7 @@ function MySubmissionsPage() {
                 </div>
                 <p className="mt-1 text-sm text-gray-500">{formatDate(restaurant.createdAt)}</p>
                 {restaurant.rejectionReason && (
-                  <p className="mt-2 text-sm text-gray-700">Reason: {restaurant.rejectionReason}</p>
+                  <p className="mt-2 text-sm text-gray-700">{t('forms.reason', { reason: restaurant.rejectionReason })}</p>
                 )}
               </li>
             ))}
@@ -91,35 +96,37 @@ function MySubmissionsPage() {
         )}
       </StatusList>
 
-      <StatusList title="Certificates" empty="You have not sent a certificate yet.">
+      <StatusList title={t('forms.certificates')} empty={t('forms.noCertificates')}>
         {submissions.teudot.length > 0 && (
           <ul className="space-y-3">
             {submissions.teudot.map((teuda) => (
               <li key={teuda.id} className="rounded border border-green-100 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-medium text-gray-900">{teuda.restaurantName || 'Restaurant'}</p>
+                  <p className="font-medium text-gray-900">{teuda.restaurantName || t('forms.fallbackRestaurant')}</p>
                   <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
                     {getStatusLabel(teuda.status)}
                   </span>
                 </div>
                 <p className="mt-1 text-sm text-gray-500">
                   {formatDate(teuda.createdAt)}
-                  {teuda.points > 0 ? ` · +${teuda.points} points` : ''}
+                  {teuda.points > 0 ? ` · ${t('forms.pointsEarned', { count: teuda.points })}` : ''}
                 </p>
-                {teuda.rejectionReason && <p className="mt-2 text-sm text-gray-700">Reason: {teuda.rejectionReason}</p>}
+                {teuda.rejectionReason && (
+                  <p className="mt-2 text-sm text-gray-700">{t('forms.reason', { reason: teuda.rejectionReason })}</p>
+                )}
               </li>
             ))}
           </ul>
         )}
       </StatusList>
 
-      <StatusList title="Reports" empty="You have not sent a report yet.">
+      <StatusList title={t('forms.reports')} empty={t('forms.noReports')}>
         {submissions.reports.length > 0 && (
           <ul className="space-y-3">
             {submissions.reports.map((report) => (
               <li key={report.id} className="rounded border border-green-100 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-medium text-gray-900">{report.restaurantName || 'Restaurant'}</p>
+                  <p className="font-medium text-gray-900">{report.restaurantName || t('forms.fallbackRestaurant')}</p>
                   <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
                     {getStatusLabel(report.status)}
                   </span>
@@ -127,10 +134,10 @@ function MySubmissionsPage() {
                 <p className="mt-1 text-sm text-gray-700">{report.description}</p>
                 <p className="mt-1 text-sm text-gray-500">
                   {formatDate(report.createdAt)}
-                  {report.points > 0 ? ` · +${report.points} points` : ''}
+                  {report.points > 0 ? ` · ${t('forms.pointsEarned', { count: report.points })}` : ''}
                 </p>
                 {report.rejectionReason && (
-                  <p className="mt-2 text-sm text-gray-700">Reason: {report.rejectionReason}</p>
+                  <p className="mt-2 text-sm text-gray-700">{t('forms.reason', { reason: report.rejectionReason })}</p>
                 )}
               </li>
             ))}

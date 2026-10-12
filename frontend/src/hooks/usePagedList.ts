@@ -4,6 +4,7 @@
 // חדש (אבן דרך 3): טוען עמוד אחד של רשימת ניהול ומאפשר מעבר בין עמודים ורענון. חמש לשוניות צריכות בדיוק את זה.
 import { useEffect, useState } from 'react';
 import { getErrorMessage } from '../api/errors';
+import i18n from '../i18n';
 import type { PageResult } from '../types/admin';
 
 export const usePagedList = <T>(load: (page: number) => Promise<PageResult<T>>, resetKey = '') => {
@@ -41,7 +42,7 @@ export const usePagedList = <T>(load: (page: number) => Promise<PageResult<T>>, 
         }
       } catch (err) {
         if (!ignore) {
-          setError(getErrorMessage(err, 'Could not load the list.'));
+          setError(getErrorMessage(err, i18n.t('desk.loadList')));
         }
       } finally {
         if (!ignore) {

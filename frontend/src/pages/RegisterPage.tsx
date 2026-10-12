@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { registerUser } from '../api/authApi';
@@ -7,6 +8,7 @@ import PasswordField from '../components/PasswordField';
 import { useAuthStore } from '../stores/authStore';
 
 function RegisterPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -21,7 +23,7 @@ function RegisterPage() {
     setError('');
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+      setError(t('auth.mismatch'));
       return;
     }
 
@@ -33,7 +35,7 @@ function RegisterPage() {
       setAuth(result.token, result.user);
       navigate('/account', { replace: true });
     } catch (err) {
-      setError(getErrorMessage(err, 'Could not create the account. Please try again.'));
+      setError(getErrorMessage(err, t('auth.registerFailed')));
     } finally {
       setLoading(false);
     }
@@ -41,7 +43,7 @@ function RegisterPage() {
 
   return (
     <div className="mx-auto max-w-md">
-      <h1 className="text-2xl font-bold text-gray-900">Create an account</h1>
+      <h1 className="text-2xl font-bold text-gray-900">{t('auth.registerTitle')}</h1>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         {error && (
@@ -52,7 +54,7 @@ function RegisterPage() {
 
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-            Email
+            {t('common.email')}
           </label>
           <input
             id="email"
@@ -67,18 +69,18 @@ function RegisterPage() {
 
         <PasswordField
           id="password"
-          label="Password"
+          label={t('common.password')}
           autoComplete="new-password"
           minLength={8}
           maxLength={72}
-          hint="At least 8 characters."
+          hint={t('auth.passwordHint')}
           value={password}
           onChange={setPassword}
         />
 
         <PasswordField
           id="confirmPassword"
-          label="Confirm password"
+          label={t('auth.confirm')}
           autoComplete="new-password"
           value={confirmPassword}
           onChange={setConfirmPassword}
@@ -89,14 +91,14 @@ function RegisterPage() {
           disabled={loading}
           className="w-full rounded bg-green-600 px-4 py-2.5 font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? 'Creating account...' : 'Sign up'}
+          {loading ? t('auth.creating') : t('nav.signup')}
         </button>
       </form>
 
       <p className="mt-4 text-sm text-gray-600">
-        Already have an account?{' '}
+        {t('auth.haveAccount')}{' '}
         <Link to="/login" className="font-medium text-green-700 hover:underline">
-          Log in
+          {t('nav.login')}
         </Link>
       </p>
     </div>

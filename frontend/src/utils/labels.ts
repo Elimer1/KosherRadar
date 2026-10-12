@@ -1,34 +1,21 @@
 import type { HechsherOption } from '../types/submissions';
+import i18n, { activeLanguage } from '../i18n';
 
-// Readable labels so raw values like "MEHADRIN" or "FAST_FOOD" never reach the screen.
-const KASHRUT_LEVEL_LABELS: Record<string, string> = {
-  RABBANUT: 'Rabbanut',
-  MEHADRIN: 'Mehadrin',
+// NEW (Milestone 5): labels follow the chosen language. A value with no translation stays as stored, never a raw guess.
+// חדש (אבן דרך 5): התוויות לפי השפה שנבחרה. ערך בלי תרגום נשאר כפי שנשמר.
+const translated = (key: string, fallback: string) => {
+  const text = i18n.t(key);
+  return text === key ? fallback : text;
 };
 
-const FOOD_TYPE_LABELS: Record<string, string> = {
-  MEAT: 'Meat',
-  DAIRY: 'Dairy',
-  PAREVE: 'Pareve',
-};
+export const getKashrutLevelLabel = (value: string) => translated(`level.${value}`, value);
 
-const CATEGORY_LABELS: Record<string, string> = {
-  RESTAURANT: 'Restaurant',
-  CAFE: 'Cafe',
-  BAKERY: 'Bakery',
-  HOTEL: 'Hotel',
-  CATERING: 'Catering',
-  FAST_FOOD: 'Fast food',
-  FOOD_TRUCK: 'Food truck',
-  ICE_CREAM: 'Ice cream',
-  GROCERY: 'Grocery',
-};
+export const getFoodTypeLabel = (value: string) => translated(`food.${value}`, value);
 
-export const getKashrutLevelLabel = (value: string) => KASHRUT_LEVEL_LABELS[value] || value;
+export const getCategoryLabel = (value: string) => translated(`category.${value}`, value);
 
-export const getFoodTypeLabel = (value: string) => FOOD_TYPE_LABELS[value] || value;
-
-export const getCategoryLabel = (value: string) => CATEGORY_LABELS[value] || value;
+export const getHechsherOptionLabel = (option: HechsherOption) =>
+  activeLanguage() === 'he' ? option.labelHe : option.labelEn;
 
 export const getHechsherLabel = (
   value: string,
@@ -40,5 +27,5 @@ export const getHechsherLabel = (
   }
 
   const match = options.find((option) => option.value === value);
-  return match ? match.labelEn : value;
+  return match ? getHechsherOptionLabel(match) : value;
 };

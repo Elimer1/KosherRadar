@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import { getSubmissionContext, submitTeuda } from '../api/restaurantApi';
 import { getErrorMessage } from '../api/errors';
@@ -7,12 +8,15 @@ import FormAlert from '../components/FormAlert';
 import TeudaFields from '../components/TeudaFields';
 import { primaryButtonClassName } from '../components/formStyles';
 import { useFormOptions } from '../hooks/useFormOptions';
+import { usePageMeta } from '../hooks/usePageMeta';
 import { usePhotoField } from '../hooks/usePhotoField';
 import { emptyTeudaForm } from '../types/submissions';
 import type { SubmissionContext, TeudaFormValues } from '../types/submissions';
 
 function SubmitTeudaPage() {
+  const { t } = useTranslation();
   const { restaurantId = '' } = useParams();
+  usePageMeta(t('forms.addCertificate'), t('forms.certificateReview'));
   const { options, error: optionsError } = useFormOptions();
 
   const [context, setContext] = useState<SubmissionContext | null>(null);
@@ -30,12 +34,12 @@ function SubmitTeudaPage() {
       try {
         setContext(await getSubmissionContext(restaurantId));
       } catch (err) {
-        setLoadError(getErrorMessage(err, 'Could not load this restaurant.'));
+        setLoadError(getErrorMessage(err, t('forms.loadRestaurant')));
       }
     };
 
     loadContext();
-  }, [restaurantId]);
+  }, [restaurantId, t]);
 
   const handleFieldChange = (field: keyof TeudaFormValues, value: string) => {
     setValues((current) => ({ ...current, [field]: value }));
@@ -46,7 +50,7 @@ function SubmitTeudaPage() {
     setError('');
 
     if (!photo) {
-      setError('Please choose a photo of the certificate.');
+      setError(t('forms.needPhoto'));
       return;
     }
 
@@ -57,7 +61,7 @@ function SubmitTeudaPage() {
       await submitTeuda(restaurantId, values, photo, setProgress);
       setSubmitted(true);
     } catch (err) {
-      setError(getErrorMessage(err, 'Could not send the certificate. Please try again.'));
+      setError(getErrorMessage(err, t('forms.sendCertificateFailed')));
     } finally {
       setLoading(false);
     }
@@ -68,19 +72,16 @@ function SubmitTeudaPage() {
   }
 
   if (!context || !options) {
-    return <p className="text-gray-600">Loading...</p>;
+    return <p className="text-gray-600">{t('common.loading')}</p>;
   }
 
   if (submitted) {
     return (
       <div className="mx-auto max-w-lg space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">Certificate sent</h1>
-        <FormAlert
-          kind="success"
-          message={`Thank you. Your certificate for ${context.restaurant.name} is waiting for admin review. It will not appear on the site until it is approved.`}
-        />
+        <h1 className="text-2xl font-bold text-gray-900">{t('forms.certificateSent')}</h1>
+        <FormAlert kind="success" message={t('forms.thanksCertificate', { name: context.restaurant.name })} />
         <Link to="/account/submissions" className="inline-block font-medium text-green-700 hover:underline">
-          See your submissions
+          {t('forms.seeSubmissions')}
         </Link>
       </div>
     );
@@ -88,12 +89,12 @@ function SubmitTeudaPage() {
 
   return (
     <div className="mx-auto max-w-lg">
-      <h1 className="text-2xl font-bold text-gray-900">Add a certificate</h1>
+      <h1 className="text-2xl font-bold text-gray-900">{t('forms.addCertificate')}</h1>
       <p className="mt-1 text-gray-600">
         {context.restaurant.name} &middot; {context.restaurant.address}
       </p>
       <p className="mt-3 text-sm text-gray-500">
-        An admin reviews every certificate before it is shown. Existing approved certificates stay unchanged until then.
+        {t('forms.certificateReview')}
       </p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -112,7 +113,7 @@ function SubmitTeudaPage() {
 
         {loading && (
           <div role="status" className="text-sm text-gray-600">
-            {progress < 100 ? `Uploading photo... ${progress}%` : 'Saving...'}
+            {progress < 100 ? t('forms.uploadingPhoto', { progress }) : t('auth.saving')}
             <div className="mt-1 h-2 rounded bg-green-100">
               <div className="h-2 rounded bg-green-600" style={{ width: `${progress}%` }} />
             </div>
@@ -120,7 +121,7 @@ function SubmitTeudaPage() {
         )}
 
         <button type="submit" disabled={loading || Boolean(photoError)} className={primaryButtonClassName}>
-          {loading ? 'Sending...' : 'Send certificate for review'}
+          {loading ? t('auth.sending') : t('forms.sendCertificate')}
         </button>
       </form>
     </div>

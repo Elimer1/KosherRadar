@@ -1,6 +1,7 @@
 // NEW (Milestone 4): one search result: name, place, food type, categories, kashrut status, distance, Call and Waze.
 // There are no ratings or reviews: KosherRadar is a factual directory.
 // חדש (אבן דרך 4): תוצאת חיפוש אחת: שם, מקום, סוג אוכל, קטגוריות, כשרות, מרחק, התקשר ו-Waze. אין דירוגים או ביקורות.
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import type { RestaurantCardData } from '../types/search';
 import type { HechsherOption } from '../types/submissions';
@@ -18,6 +19,7 @@ const actionClassName =
   'rounded border border-green-600 px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50';
 
 function RestaurantCard({ restaurant, hechsherOptions }: RestaurantCardProps) {
+  const { t } = useTranslation();
   const telUrl = buildTelUrl(restaurant.phone);
   const wazeUrl = buildWazeUrl(restaurant.latitude, restaurant.longitude);
   // The address often already contains the city; do not repeat it.
@@ -55,11 +57,11 @@ function RestaurantCard({ restaurant, hechsherOptions }: RestaurantCardProps) {
           to={`/restaurants/${restaurant.id}`}
           className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700"
         >
-          View details
+          {t('card.viewDetails')}
         </Link>
         {telUrl && (
-          <a href={telUrl} className={actionClassName} aria-label={`Call ${restaurant.name}`}>
-            Call
+          <a href={telUrl} className={actionClassName} aria-label={t('card.callName', { name: restaurant.name })}>
+            {t('card.call')}
           </a>
         )}
         {wazeUrl && (
@@ -68,9 +70,9 @@ function RestaurantCard({ restaurant, hechsherOptions }: RestaurantCardProps) {
             target="_blank"
             rel="noopener noreferrer"
             className={actionClassName}
-            aria-label={`Navigate to ${restaurant.name} with Waze`}
+            aria-label={t('card.wazeName', { name: restaurant.name })}
           >
-            Waze
+            {t('card.waze')}
           </a>
         )}
       </div>

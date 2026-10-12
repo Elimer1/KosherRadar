@@ -3,6 +3,7 @@
 // חדש (אבן דרך 3): תעודה אחת בדף המסעדה של המנהל. אפשר לערוך פרטים (כולל הערה פרטית), למחוק, ולאשר או לדחות.
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { approveTeuda, deleteTeuda, rejectTeuda, updateTeuda } from '../../api/adminApi';
 import { getErrorMessage } from '../../api/errors';
 import type { AdminTeuda, ConflictBrief } from '../../types/admin';
@@ -26,6 +27,7 @@ interface AdminTeudaCardProps {
 }
 
 function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: AdminTeudaCardProps) {
+  const { t } = useTranslation();
   const [mode, setMode] = useState<'view' | 'edit' | 'reject'>('view');
   const [values, setValues] = useState<TeudaFormValues>(() => teudaToFormValues(teuda));
   const [adminNote, setAdminNote] = useState(teuda.adminNote || '');
@@ -53,46 +55,46 @@ function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: Admin
     event.preventDefault();
     run(async () => {
       await updateTeuda(teuda.id, values, adminNote);
-      return [{ kind: 'success', message: 'Certificate saved.' }];
-    }, 'Could not save the certificate.');
+      return [{ kind: 'success', message: t('desk.certificateSaved') }];
+    }, t('desk.saveCertificateFailed'));
   };
 
   const handleApprove = () => {
     run(async () => {
       const result = await approveTeuda(teuda.id);
       const notices: Notice[] = [
-        { kind: 'success', message: 'Certificate approved.' },
+        { kind: 'success', message: t('desk.certificateApprovedShort') },
         { kind: 'success', message: describePoints(result.points) },
       ];
 
       if (result.conflictWarning.length > 0) {
         notices.push({
           kind: 'warning',
-          message: 'Note: another valid certificate with the same level already exists for this restaurant.',
+          message: t('desk.sameLevelNote'),
         });
       }
 
       return notices;
-    }, 'Could not approve the certificate.');
+    }, t('desk.approveCertificateFailed'));
   };
 
   const handleReject = (reason: string) => {
     run(async () => {
       const result = await rejectTeuda(teuda.id, reason);
-      return [{ kind: 'success', message: 'Certificate rejected.' }, describeEmailStatus(result.emailStatus)];
-    }, 'Could not reject the certificate.');
+      return [{ kind: 'success', message: t('desk.certificateRejected') }, describeEmailStatus(result.emailStatus)];
+    }, t('desk.rejectCertificateFailed'));
   };
 
   const handleDelete = () => {
     // Deleting is permanent, so the admin has to confirm it.
-    if (!window.confirm('Delete this certificate for good? This cannot be undone.')) {
+    if (!window.confirm(t('desk.deleteCertificateConfirm'))) {
       return;
     }
 
     run(async () => {
       await deleteTeuda(teuda.id);
-      return [{ kind: 'success', message: 'Certificate deleted.' }];
-    }, 'Could not delete the certificate.');
+      return [{ kind: 'success', message: t('desk.certificateDeleted') }];
+    }, t('desk.deleteCertificateFailed'));
   };
 
   return (
@@ -121,7 +123,7 @@ function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: Admin
           />
           <div>
             <label htmlFor={`edit-teuda-note-${teuda.id}`} className={labelClassName}>
-              Private note (only admins see it)
+              {t('desk.privateAdmins')}
             </label>
             <textarea
               id={`edit-teuda-note-${teuda.id}`}
@@ -139,7 +141,7 @@ function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: Admin
               disabled={busy}
               className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-60"
             >
-              {busy ? 'Saving...' : 'Save'}
+              {busy ? t('auth.saving') : t('common.save')}
             </button>
             <button
               type="button"
@@ -147,7 +149,7 @@ function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: Admin
               onClick={() => setMode('view')}
               className="rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
           </div>
         </form>
@@ -156,20 +158,20 @@ function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: Admin
           <TeudaFacts teuda={teuda} hechsherOptions={options.hechsherOptions} />
 
           {teuda.status === 'REJECTED' && teuda.rejectionReason && (
-            <p className="text-sm text-gray-700">Rejection reason: {teuda.rejectionReason}</p>
+            <p className="text-sm text-gray-700">{t('desk.rejectionReason', { reason: teuda.rejectionReason })}</p>
           )}
 
           {teuda.status === 'PENDING' && !restaurantApproved && (
             <FormAlert
               kind="warning"
-              message="This restaurant is not approved yet, so this certificate cannot be approved."
+              message={t('desk.cannotApproveYet')}
             />
           )}
 
           {teuda.status === 'PENDING' && teuda.conflicts.length > 0 && (
             <FormAlert
               kind="warning"
-              message="Possible conflict: this restaurant already has a valid approved certificate with the same level. You can still approve."
+              message={t('desk.conflictShort')}
             />
           )}
 
@@ -188,10 +190,10 @@ function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: Admin
                     type="button"
                     disabled={busy || !restaurantApproved}
                     onClick={handleApprove}
-                    title={restaurantApproved ? undefined : 'Approve the restaurant first'}
+                    title={restaurantApproved ? undefined : t('desk.approveFirstTitle')}
                     className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Approve
+                    {t('common.approve')}
                   </button>
                   <button
                     type="button"
@@ -199,7 +201,7 @@ function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: Admin
                     onClick={() => setMode('reject')}
                     className="rounded border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50"
                   >
-                    Reject...
+                    {t('common.reject')}
                   </button>
                 </>
               )}
@@ -209,7 +211,7 @@ function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: Admin
                 onClick={() => setMode('edit')}
                 className="rounded border border-green-300 px-3 py-1.5 text-sm font-medium text-green-800 hover:bg-green-50"
               >
-                Edit
+                {t('common.edit')}
               </button>
               <button
                 type="button"
@@ -217,7 +219,7 @@ function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: Admin
                 onClick={handleDelete}
                 className="rounded border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50"
               >
-                Delete
+                {t('common.delete')}
               </button>
             </div>
           )}

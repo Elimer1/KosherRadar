@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { getRestaurantDetails } from '../api/restaurantDetailsApi';
@@ -13,6 +14,7 @@ import { getCategoryLabel, getFoodTypeLabel, getHechsherLabel, getKashrutLevelLa
 import { buildGoogleMapsUrl, buildTelUrl, buildWazeUrl, restaurantPageUrl } from '../utils/navigationLinks';
 import ShareButton from '../components/ShareButton';
 import { isSafeHttpUrl } from '../utils/safeUrl';
+import { usePageMeta } from '../hooks/usePageMeta';
 
 // NEW (Milestone 4): the public page of one restaurant. It shows the status in words and, below it, all the
 // evidence on its own: certificates (verified or EXPIRED, with the photo) and unverified claims, kept apart.
@@ -31,6 +33,7 @@ const actionClassName =
   'rounded border border-green-600 px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50';
 
 function TeudaCard({ teuda, hechsherOptions }: { teuda: PublicTeuda; hechsherOptions: HechsherOption[] }) {
+  const { t } = useTranslation();
   const isExpired = teuda.visibility === 'RECENT_EXPIRED';
   const date = formatDateOnly(teuda.expirationDate);
   const mashgiachTel = buildTelUrl(teuda.mashgiachPhone);
@@ -43,18 +46,18 @@ function TeudaCard({ teuda, hechsherOptions }: { teuda: PublicTeuda; hechsherOpt
     >
       <p className="font-semibold">
         <span aria-hidden="true">{isExpired ? '✕ ' : '✓ '}</span>
-        {isExpired ? 'EXPIRED certificate' : 'Verified certificate'}
+        {isExpired ? t('details.expired') : t('details.verified')}
       </p>
       <p className="mt-0.5">
         {getHechsherLabel(teuda.hechsher, teuda.hechsherOther, hechsherOptions)},{' '}
         {getKashrutLevelLabel(teuda.kashrutLevel)}
       </p>
-      <p className="mt-0.5 font-medium">{isExpired ? `Expired on ${date}` : `Valid until ${date}`}</p>
+      <p className="mt-0.5 font-medium">{isExpired ? t('kashrut.expiredOn', { date }) : t('kashrut.validUntil', { date })}</p>
 
-      {teuda.mashgiachName && <p className="mt-1">Mashgiach: {teuda.mashgiachName}</p>}
+      {teuda.mashgiachName && <p className="mt-1">{t('details.mashgiach', { name: teuda.mashgiachName })}</p>}
       {teuda.mashgiachPhone && (
         <p>
-          Mashgiach phone:{' '}
+          {t('details.mashgiachPhone')}{' '}
           {mashgiachTel ? (
             <a href={mashgiachTel} className="font-medium underline">
               {teuda.mashgiachPhone}
@@ -68,7 +71,7 @@ function TeudaCard({ teuda, hechsherOptions }: { teuda: PublicTeuda; hechsherOpt
       {isSafeHttpUrl(teuda.photoUrl) && (
         <p className="mt-2">
           <a href={teuda.photoUrl} target="_blank" rel="noopener noreferrer" className="font-medium underline">
-            View the certificate photo (opens in a new tab)
+            {t('details.photo')}
           </a>
         </p>
       )}
@@ -77,9 +80,16 @@ function TeudaCard({ teuda, hechsherOptions }: { teuda: PublicTeuda; hechsherOpt
 }
 
 function RestaurantDetailsPage() {
+  const { t } = useTranslation();
   const { restaurantId = '' } = useParams();
   const { options } = useFormOptions();
   const [result, setResult] = useState<LoadResult | null>(null);
+  const loadedName = result && result.restaurantId === restaurantId ? result.details?.name : '';
+
+  usePageMeta(
+    loadedName ? t('meta.restaurantTitle', { name: loadedName }) : t('meta.title'),
+    loadedName ? t('meta.restaurantDescription', { name: loadedName }) : t('meta.description')
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -102,7 +112,7 @@ function RestaurantDetailsPage() {
           restaurantId,
           details: null,
           notFound,
-          error: notFound ? '' : getErrorMessage(err, 'Could not load this restaurant.'),
+          error: notFound ? '' : getErrorMessage(err, t('forms.loadRestaurant')),
         });
       }
     };
@@ -113,21 +123,21 @@ function RestaurantDetailsPage() {
     return () => {
       cancelled = true;
     };
-  }, [restaurantId]);
+  }, [restaurantId, t]);
 
   const hechsherOptions = options?.hechsherOptions || [];
 
   if (!result || result.restaurantId !== restaurantId) {
-    return <p className="text-gray-600">Loading...</p>;
+    return <p className="text-gray-600">{t('details.loading')}</p>;
   }
 
   if (result.notFound) {
     return (
       <div className="mx-auto max-w-lg space-y-4 text-center">
-        <h1 className="text-2xl font-bold text-gray-900">Restaurant not found</h1>
-        <p className="text-gray-600">This restaurant does not exist or is not listed on KosherRadar.</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('details.notFoundTitle')}</h1>
+        <p className="text-gray-600">{t('details.notFoundBody')}</p>
         <Link to="/" className="inline-block font-medium text-green-700 hover:underline">
-          Back to search
+          {t('details.back')}
         </Link>
       </div>
     );
@@ -138,7 +148,7 @@ function RestaurantDetailsPage() {
       <div className="mx-auto max-w-lg space-y-4">
         <FormAlert message={result.error} />
         <Link to="/" className="inline-block font-medium text-green-700 hover:underline">
-          Back to search
+          {t('details.back')}
         </Link>
       </div>
     );
@@ -172,19 +182,19 @@ function RestaurantDetailsPage() {
           )}
         </p>
         {restaurant.foodKeywords.length > 0 && (
-          <p className="mt-1 text-sm text-gray-600">Serves: {restaurant.foodKeywords.join(', ')}</p>
+          <p className="mt-1 text-sm text-gray-600">{t('details.serves', { food: restaurant.foodKeywords.join(', ') })}</p>
         )}
       </header>
 
       <section aria-labelledby="kashrut-heading" className="space-y-3">
         <h2 id="kashrut-heading" className="text-xl font-semibold text-gray-900">
-          Kashrut
+          {t('details.kashrut')}
         </h2>
         <KashrutBadge kashrut={restaurant.kashrut} hechsherOptions={hechsherOptions} />
 
         {restaurant.teudot.length > 0 && (
           <div>
-            <h3 className="mb-2 font-medium text-gray-900">Certificates</h3>
+            <h3 className="mb-2 font-medium text-gray-900">{t('details.certificates')}</h3>
             <ul className="space-y-2">
               {restaurant.teudot.map((teuda) => (
                 <TeudaCard key={teuda.id} teuda={teuda} hechsherOptions={hechsherOptions} />
@@ -195,7 +205,7 @@ function RestaurantDetailsPage() {
 
         {claims.length > 0 && (
           <div>
-            <h3 className="mb-2 font-medium text-gray-900">Unverified claim</h3>
+            <h3 className="mb-2 font-medium text-gray-900">{t('details.claim')}</h3>
             <ul className="space-y-2">
               {claims.map((claim, index) => (
                 <li
@@ -203,12 +213,11 @@ function RestaurantDetailsPage() {
                   className="rounded border border-dashed border-amber-500 bg-amber-50 p-3 text-sm text-amber-900"
                 >
                   <p className="font-semibold">
-                    <span aria-hidden="true">! </span>Unverified claim (no certificate)
+                    <span aria-hidden="true">! </span>
+                    {t('kashrut.UNVERIFIED')}
                   </p>
-                  <p className="mt-0.5">The restaurant says: {describeEvidenceName(claim, hechsherOptions)}.</p>
-                  <p className="mt-0.5">
-                    No certificate has been checked for this. Please ask the restaurant to show its certificate.
-                  </p>
+                  <p className="mt-0.5">{t('details.claimSays', { name: describeEvidenceName(claim, hechsherOptions) })}</p>
+                  <p className="mt-0.5">{t('details.claimNote')}</p>
                 </li>
               ))}
             </ul>
@@ -217,7 +226,7 @@ function RestaurantDetailsPage() {
 
         {restaurant.kashrut.status === 'UNKNOWN' && (
           <p className="text-sm text-gray-600">
-            Nobody has added a kashrut certificate or claim for this restaurant yet.
+            {t('details.unknown')}
           </p>
         )}
 
@@ -229,24 +238,23 @@ function RestaurantDetailsPage() {
               rel="noopener noreferrer"
               className="font-medium text-green-700 underline"
             >
-              View on Kosharot (opens in a new tab)
+              {t('details.kosharot')}
             </a>
           </p>
         )}
 
         <p className="text-xs text-gray-500">
-          KosherRadar is not a kashrut authority. We show the certificates people send us and an admin approved.
-          Always check the certificate in the restaurant if kashrut matters to you.
+          {t('details.disclaimer')}
         </p>
       </section>
 
       <section aria-labelledby="contact-heading" className="space-y-2">
         <h2 id="contact-heading" className="text-xl font-semibold text-gray-900">
-          Contact and directions
+          {t('details.contact')}
         </h2>
         {restaurant.phone && (
           <p className="text-gray-700">
-            Phone:{' '}
+            {t('details.phone')}{' '}
             {telUrl ? (
               <a href={telUrl} className="font-medium text-green-700 underline">
                 {restaurant.phone}
@@ -258,7 +266,7 @@ function RestaurantDetailsPage() {
         )}
         {isSafeHttpUrl(restaurant.website) && (
           <p className="text-gray-700">
-            Website:{' '}
+            {t('details.website')}{' '}
             <a
               href={restaurant.website}
               target="_blank"
@@ -272,17 +280,17 @@ function RestaurantDetailsPage() {
         <div className="flex flex-wrap gap-2 pt-1">
           {telUrl && (
             <a href={telUrl} className={actionClassName}>
-              Call
+              {t('card.call')}
             </a>
           )}
           {mapsUrl && (
             <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className={actionClassName}>
-              Google Maps
+              {t('details.googleMaps')}
             </a>
           )}
           {wazeUrl && (
             <a href={wazeUrl} target="_blank" rel="noopener noreferrer" className={actionClassName}>
-              Waze
+              {t('card.waze')}
             </a>
           )}
           <ShareButton
@@ -295,18 +303,18 @@ function RestaurantDetailsPage() {
 
       <section aria-labelledby="help-heading" className="space-y-2 border-t border-gray-200 pt-4">
         <h2 id="help-heading" className="text-xl font-semibold text-gray-900">
-          Help keep this page correct
+          {t('details.help')}
         </h2>
-        <p className="text-sm text-gray-600">You need an account to send a certificate or a report.</p>
+        <p className="text-sm text-gray-600">{t('details.needAccount')}</p>
         <div className="flex flex-wrap gap-2">
           <Link
             to={`/restaurants/${restaurant.id}/add-teuda`}
             className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700"
           >
-            Add a certificate
+            {t('details.addCertificate')}
           </Link>
           <Link to={`/restaurants/${restaurant.id}/report`} className={actionClassName}>
-            Report a problem
+            {t('details.report')}
           </Link>
         </div>
       </section>
