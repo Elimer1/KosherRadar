@@ -40,3 +40,15 @@ body {
   border: 2px solid #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
+
+/* NEW (Milestone 6): Leaflet places tiles in left-to-right space. A Hebrew page would otherwise shift the map.
+   The words inside a popup still follow the page language. */
+/* חדש (אבן דרך 6): Leaflet ממקם אריחים משמאל לימין. דף בעברית היה מזיז את המפה. המילים בחלון הקופץ נשארות לפי שפת הדף. */
+.leaflet-container {
+  direction: ltr;
+}
+
+html[dir='rtl'] .leaflet-popup-content {
+  direction: rtl;
+  text-align: right;
+}
