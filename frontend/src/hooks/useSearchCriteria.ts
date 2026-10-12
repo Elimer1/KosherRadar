@@ -19,7 +19,7 @@ import {
   type AppliedSearchCriteria,
   type SearchFilterPatch,
 } from '../search/searchCriteria';
-import { rememberSearchReturnPath, type SearchReturnState } from '../search/searchReturn';
+import { rememberSearchReturnPath, rememberSearchScroll, type SearchReturnState } from '../search/searchReturn';
 import { toggleValue } from '../utils/searchResults';
 import type { SearchFilters } from '../types/search';
 
@@ -404,6 +404,7 @@ export const useSearchCriteria = () => {
     setDraftQueryState(next.criteria.q);
     seenAppliedQ.current = next.criteria.q;
     rememberSearchReturnPath(path);
+    rememberSearchScroll(path, id, window.scrollY);
 
     const current = locationRef.current;
     const here = `${current.pathname}${current.search}`;

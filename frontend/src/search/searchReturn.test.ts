@@ -1,5 +1,14 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { rememberSearchReturnPath, resolveSearchReturnPath, safeSearchReturnPath, SEARCH_RETURN_STORAGE_KEY } from './searchReturn';
+import {
+  forgetSearchScroll,
+  readSearchScroll,
+  rememberSearchReturnPath,
+  rememberSearchScroll,
+  resolveSearchReturnPath,
+  safeSearchReturnPath,
+  SEARCH_RETURN_STORAGE_KEY,
+  SEARCH_SCROLL_STORAGE_KEY,
+} from './searchReturn';
 
 afterEach(() => {
   sessionStorage.clear();
@@ -33,6 +42,28 @@ describe('resolveSearchReturnPath', () => {
 
     sessionStorage.setItem(SEARCH_RETURN_STORAGE_KEY, 'https://other.example');
     expect(resolveSearchReturnPath(undefined)).toBe('/');
+  });
+
+  it('remembers a scroll position without coordinates', () => {
+    rememberSearchScroll('/?q=pizza&lat=31.7&lng=35.2', '6acc84e0953576757dad2141', 240.4);
+
+    expect(readSearchScroll()).toEqual({
+      path: '/?q=pizza',
+      scrollY: 240,
+      restaurantId: '6acc84e0953576757dad2141',
+    });
+    expect(sessionStorage.getItem(SEARCH_SCROLL_STORAGE_KEY)).not.toContain('31.7');
+
+    forgetSearchScroll();
+    expect(readSearchScroll()).toBe(null);
+  });
+
+  it('ignores a scroll memory that is not a restaurant return', () => {
+    rememberSearchScroll('/restaurants/abc', '6acc84e0953576757dad2141', 10);
+    rememberSearchScroll('/?q=pizza', 'not-an-id', 10);
+
+    expect(sessionStorage.getItem(SEARCH_SCROLL_STORAGE_KEY)).toBe(null);
+    expect(readSearchScroll()).toBe(null);
   });
 
   it('does not store a path that is not a search route', () => {

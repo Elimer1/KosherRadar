@@ -5,6 +5,13 @@ import { readInternalPath, SEARCH_RETURN_MAX_LENGTH } from '../utils/returnPath'
 import { canonicalSearchPath, parseSearchQuery } from './searchCriteria';
 
 export const SEARCH_RETURN_STORAGE_KEY = 'kosherradar-search-return';
+export const SEARCH_SCROLL_STORAGE_KEY = 'kosherradar-search-scroll';
+
+export interface SearchScrollMemory {
+  path: string;
+  scrollY: number;
+  restaurantId: string;
+}
 
 export interface SearchReturnLocation {
   source: 'named' | 'device';
@@ -49,6 +56,60 @@ export const safeSearchReturnPath = (value: unknown): string | null => {
   }
 
   return canonicalSearchPath(parseSearchQuery(url.search));
+};
+
+const restaurantIdPattern = /^[a-fA-F0-9]{24}$/;
+
+// Best-effort return position. The path is the shareable search. Coordinates are not stored.
+// מיקום חזרה בקירוב. הנתיב הוא החיפוש שאפשר לשתף. קואורדינטות לא נשמרות.
+export const rememberSearchScroll = (path: string, restaurantId: string, scrollY: number) => {
+  const safe = safeSearchReturnPath(path);
+
+  if (safe === null || !restaurantIdPattern.test(restaurantId)) {
+    return;
+  }
+
+  const y = Number.isFinite(scrollY) && scrollY >= 0 ? Math.round(scrollY) : 0;
+
+  try {
+    sessionStorage.setItem(
+      SEARCH_SCROLL_STORAGE_KEY,
+      JSON.stringify({ path: safe, scrollY: y, restaurantId } satisfies SearchScrollMemory)
+    );
+  } catch {
+    // Private mode can refuse storage. The search URL still restores the criteria.
+  }
+};
+
+export const readSearchScroll = (): SearchScrollMemory | null => {
+  try {
+    const raw = sessionStorage.getItem(SEARCH_SCROLL_STORAGE_KEY);
+
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as Partial<SearchScrollMemory>;
+    const path = safeSearchReturnPath(parsed.path);
+
+    if (path === null || typeof parsed.restaurantId !== 'string' || !restaurantIdPattern.test(parsed.restaurantId)) {
+      return null;
+    }
+
+    const scrollY = typeof parsed.scrollY === 'number' && Number.isFinite(parsed.scrollY) && parsed.scrollY >= 0 ? parsed.scrollY : 0;
+
+    return { path, scrollY, restaurantId: parsed.restaurantId };
+  } catch {
+    return null;
+  }
+};
+
+export const forgetSearchScroll = () => {
+  try {
+    sessionStorage.removeItem(SEARCH_SCROLL_STORAGE_KEY);
+  } catch {
+    // Storage can be blocked. There is nothing else to clear.
+  }
 };
 
 export const rememberSearchReturnPath = (path: string) => {

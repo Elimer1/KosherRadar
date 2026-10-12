@@ -25,9 +25,16 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
   return (
     <div className="space-y-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
       <div>
-        <label htmlFor="filter-level" className={labelClassName}>
-          {t('filters.level')}
-        </label>
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="filter-level" className={labelClassName}>
+            {t('filters.level')}
+          </label>
+          {filters.level !== '' && (
+            <button type="button" onClick={() => onChange({ ...filters, level: '' })} className="text-sm font-medium text-green-800 underline">
+              {t('filters.clearGroup')}
+            </button>
+          )}
+        </div>
         <select
           id="filter-level"
           value={filters.level}
@@ -44,7 +51,14 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
       </div>
 
       <fieldset>
-        <legend className={labelClassName}>{t('filters.hechsher')}</legend>
+        <legend className="flex items-center justify-between gap-2">
+          <span className={labelClassName}>{t('filters.hechsher')}</span>
+          {filters.hechsher.length > 0 && (
+            <button type="button" onClick={() => onChange({ ...filters, hechsher: [] })} className="text-sm font-medium text-green-800 underline">
+              {t('filters.clearGroup')}
+            </button>
+          )}
+        </legend>
         <div className="mt-1 grid max-h-44 gap-1.5 overflow-y-auto">
           {(options?.hechsherOptions || []).map((option) => (
             <label key={option.value} className={checkboxLabelClassName}>
@@ -74,7 +88,14 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
       </fieldset>
 
       <fieldset>
-        <legend className={labelClassName}>{t('filters.foodType')}</legend>
+        <legend className="flex items-center justify-between gap-2">
+          <span className={labelClassName}>{t('filters.foodType')}</span>
+          {filters.foodType.length > 0 && (
+            <button type="button" onClick={() => onChange({ ...filters, foodType: [] })} className="text-sm font-medium text-green-800 underline">
+              {t('filters.clearGroup')}
+            </button>
+          )}
+        </legend>
         <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1.5">
           {(options?.foodTypes || []).map((foodType) => (
             <label key={foodType} className={checkboxLabelClassName}>
@@ -91,7 +112,14 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
       </fieldset>
 
       <fieldset>
-        <legend className={labelClassName}>{t('filters.category')}</legend>
+        <legend className="flex items-center justify-between gap-2">
+          <span className={labelClassName}>{t('filters.category')}</span>
+          {filters.category.length > 0 && (
+            <button type="button" onClick={() => onChange({ ...filters, category: [] })} className="text-sm font-medium text-green-800 underline">
+              {t('filters.clearGroup')}
+            </button>
+          )}
+        </legend>
         <div className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1.5">
           {(options?.categories || []).map((category) => (
             <label key={category} className={checkboxLabelClassName}>
@@ -129,9 +157,20 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
       </div>
 
       <div>
-        <label htmlFor="filter-radius" className={labelClassName}>
-          {t('filters.distance')}
-        </label>
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="filter-radius" className={labelClassName}>
+            {t('filters.distance')}
+          </label>
+          {filters.radiusKm !== null && (
+            <button
+              type="button"
+              onClick={() => onChange({ ...filters, radiusKm: null })}
+              className="text-sm font-medium text-green-800 underline"
+            >
+              {t('filters.clearGroup')}
+            </button>
+          )}
+        </div>
         {filters.location ? (
           <select
             id="filter-radius"

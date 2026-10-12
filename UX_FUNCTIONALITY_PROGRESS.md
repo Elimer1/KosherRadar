@@ -9,23 +9,22 @@ This file is the handoff for `feature/ux-functionality`. Shared `PROGRESS.md` an
 - Branch: `feature/ux-functionality`
 - Worktree: `C:\FS\projects\KosherRadar-ux-functionality`
 - Baseline: `main` at `3bbb1e2da84215e62c82010de755be2b574aa6bf` (`main` had not moved; it was 12 commits ahead of `origin/main`)
-- Package: **1B — Live search**
-- Checkpoint: **1A and 1B complete**
-- Next package: **1C — Filter actions and navigation polish**
+- Package: **1C — Filter actions and navigation polish**
+- Checkpoint: **1A, 1B, and 1C complete**
+- Next package: **2 — Authentication and admin navigation**
 
 ## NEXT AGENT ONBOARDING
 
 Resume in `C:\FS\projects\KosherRadar-ux-functionality` on `feature/ux-functionality`. Read this file before changing code. Do not edit the design, QA, UI, or UX-review worktrees. Do not merge, rebase, or push.
 
-Work Packages 1A and 1B are implemented. Do not rewrite the search-state model. The next task is Work Package 1C.
+Work Packages 1A, 1B, and 1C are implemented. Do not rewrite the search-state model. The next task is Work Package 2.
 
-### Exact next task (Work Package 1C)
+### Exact next task (Work Package 2)
 
-1. When search text or any filter is active, show a clear-all control next to the result count. Keep the empty-state control.
-2. Let the visitor clear one active choice without clearing the rest: query, level, each hechsher, food type, and category, plus the two checkboxes and the location. Do not add a second chip system for the design agent to restyle; put the clear actions on the existing panel and the result line.
-3. Best-effort scroll and focus restoration when returning from a restaurant to the same search path. Do not restore Load More pages. Do not store coordinates.
-4. On the result line, when unknown places are excluded, say so with the existing no-match sentence. Change the expired checkbox label to say it hides restaurants whose only public evidence is an expired certificate. Hebrew for that label needs native-speaker review. Do not change who is included by default.
-5. Browser-check the flows on this branch. The design worktree is separate and must not be edited.
+1. When login was opened for a page inside this site, say that an account is required and name the return path's purpose when it is a known contribution route. Pass that same path to registration with router state. After sign-up, open that path instead of `/account`.
+2. Reuse `readInternalPath` through `safeReturnPath`. Do not add a second validator.
+3. Remember the open admin tab in the address (`?tab=`), so leaving a restaurant and coming back can open Pending reports again. Allowed values: `restaurants`, `teudot`, `reports`, `expiring`, `manage`. Unknown values fall back to restaurants.
+4. Do not change who can open admin, and do not change report submission fields.
 
 ### Do not repeat
 
@@ -259,11 +258,41 @@ Device geolocation and the live geocoder were not used. HTTP 429 was checked in 
 
 New tests: the 350 ms commit, a filter flushing a pending draft without clearing the box, a cancelled search leaving the newer result and an empty error, and the 429 message.
 
+## Work Package 1C
+
+Clear actions stay on the existing filter panel and the result line. There is no separate chip row.
+
+- A group **Clear** button appears for kashrut level, hechsher, food type, category, and distance when that group has a choice. It clears only that group. Location already had its own clear. The two checkboxes still turn off by themselves.
+- **Clear search and filters** sits next to the result count when a query or filter is active, and above the map in map view. The empty-state button remains.
+- When results are showing and unknown places are still excluded, the result line uses `home.unknownHidden`. That English sentence is the second sentence of the existing no-match text. The Hebrew is the same existing sentence. Default exclusion is unchanged.
+- `filters.hideExpired` now says the filter hides restaurants whose only public evidence is an expired certificate. The Hebrew label needs native-speaker review. `filters.clearGroup` ("ניקוי") also needs that review.
+- Opening a restaurant stores `{ path, scrollY, restaurantId }` in `sessionStorage` key `kosherradar-search-scroll`. The path is passed through `safeSearchReturnPath`, so coordinates are not stored. On the next list render for that same path, the restaurant link is focused when it is in the first page. Otherwise the saved scroll offset is used. The memory is then removed. Load More pages are not restored.
+
+### Browser (12 October 2026, `http://localhost:5181`)
+
+| Action | Observed |
+| --- | --- |
+| Home with no extra filter | Both restaurants. The unknown-kashrut sentence was visible. No clear-all button, because nothing beyond the default was selected. The expired checkbox read "Hide restaurants that only have an expired certificate". |
+| Check Meat | URL `/?foodType=MEAT`. Claimed Grill only. A food-type **Clear** button and **Clear search and filters** were both present. |
+| Food-type Clear | URL returned to `/`. Meat unchecked. Both restaurants returned. The group Clear button went away. |
+| Open Claimed Grill | `kosherradar-search-scroll` was `{"path":"/","scrollY":0,"restaurantId":"6acc84e0953576757dad2141"}`. No coordinates. |
+| Back to search | The Claimed Grill link was focused. The scroll memory was removed. The tab title stayed on the restaurant name; that remains Work Package 3. |
+
+### Tests after 1C
+
+| Command | Exit | Result |
+| --- | --- | --- |
+| `npm test` | 0 | 18 files, 118 tests passed |
+| `npm run lint` | 0 | oxlint, no warnings |
+| `npm run typecheck` | 0 | `tsc -b` |
+| `npm run build` | 0 | Vite build. JS chunk about 738.33 kB. The existing chunk-size warning remains. |
+
+New tests: scroll memory strips coordinates, and a non-search path or a bad restaurant id is not stored.
+
 ## Later packages
 
-1. **1C — Filter actions and navigation polish.** Per-filter clear, clear-all control, best-effort scroll and focus restoration. Unknown-kashrut sentence on the result line. Expired-checkbox wording. Browser check on this branch.
-2. **2 — Authentication and admin navigation.** Reuse `readInternalPath`. Do not add a second validator. Login explains a return path, registration keeps that path, and the admin tab is in the address.
-3. **3 — Localization and minor UX.** Restaurant display names, existing claim copy, document titles.
+1. **2 — Authentication and admin navigation.** Reuse `readInternalPath`. Do not add a second validator. Login explains a return path, registration keeps that path, and the admin tab is in the address.
+2. **3 — Localization and minor UX.** Restaurant display names, existing claim copy, document titles.
 
 ## Commits
 

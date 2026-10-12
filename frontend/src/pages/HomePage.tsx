@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import LocationField from '../components/LocationField';
@@ -9,6 +9,7 @@ import SearchFiltersPanel from '../components/SearchFiltersPanel';
 import { useFormOptions } from '../hooks/useFormOptions';
 import { useRestaurantSearch } from '../hooks/useRestaurantSearch';
 import { useSearchCriteria } from '../hooks/useSearchCriteria';
+import { forgetSearchScroll, readSearchScroll } from '../search/searchReturn';
 import type { SearchFilters } from '../types/search';
 import { readSavedView, saveView } from '../utils/mapView';
 import type { DiscoveryView } from '../utils/mapView';
@@ -61,6 +62,28 @@ function HomePage() {
     });
   };
 
+  useEffect(() => {
+    if (view !== 'list' || criteria.locationPending || search.loading) {
+      return;
+    }
+
+    const saved = readSearchScroll();
+
+    if (!saved || saved.path !== criteria.returnPath) {
+      return;
+    }
+
+    forgetSearchScroll();
+    const link = document.querySelector<HTMLElement>(`a[href="/restaurants/${saved.restaurantId}"]`);
+
+    if (link) {
+      link.focus();
+      return;
+    }
+
+    window.scrollTo(0, saved.scrollY);
+  }, [view, criteria.locationPending, criteria.returnPath, search.loading, search.items]);
+
   const handleViewChange = (next: DiscoveryView) => {
     setView(next);
     saveView(next);
@@ -86,7 +109,9 @@ function HomePage() {
     const countText =
       search.total === 1 ? t('home.foundOne', { count: search.total }) : t('home.foundMany', { count: search.total });
 
-    return search.error ? `${countText}. ${search.error}` : countText;
+    const unknownNote = !filters.includeUnknown ? t('home.unknownHidden') : '';
+
+    return [countText, unknownNote, search.error].filter((part) => part !== '').join('. ');
   })();
 
   const viewButtonClass = (selected: boolean) =>
@@ -170,6 +195,12 @@ function HomePage() {
             </button>
           </div>
 
+          {view === 'map' && hasAnySearchChoice && (
+            <button type="button" onClick={criteria.clearAll} className="mb-3 text-sm font-medium text-green-800 underline">
+              {t('home.clear')}
+            </button>
+          )}
+
           {view === 'map' && !criteria.locationPending && (
             <RestaurantMap
               filters={filters}
@@ -235,9 +266,17 @@ function HomePage() {
 
           {view === 'list' && search.items.length > 0 && (
             <>
-              <p className="mb-3 text-sm font-medium text-gray-700">
-                {search.total === 1 ? t('home.foundOne', { count: search.total }) : t('home.foundMany', { count: search.total })}
-              </p>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium text-gray-700">
+                  {search.total === 1 ? t('home.foundOne', { count: search.total }) : t('home.foundMany', { count: search.total })}
+                </p>
+                {hasAnySearchChoice && (
+                  <button type="button" onClick={criteria.clearAll} className="text-sm font-medium text-green-800 underline">
+                    {t('home.clear')}
+                  </button>
+                )}
+              </div>
+              {!filters.includeUnknown && <p className="mb-3 text-sm text-gray-600">{t('home.unknownHidden')}</p>}
 
               {search.capped && (
                 <p role="status" className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950">
