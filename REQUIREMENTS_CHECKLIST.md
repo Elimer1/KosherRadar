@@ -125,12 +125,12 @@ Evidence for Milestone 1 came from `npm test` runs on `main` after merging both 
 
 | Requirement | Status | Notes |
 | --- | --- | --- |
-| Leaflet map, clustering, bounds queries (9) | NOT STARTED | |
-| Geoapify location (8, 10) | NOT STARTED | |
-| Waze / Google Maps / share (8, 10) | IN PROGRESS | Waze and Call on result cards, Waze and Google Maps on the detail page were done in Milestone 4. Share button and map popup links are still to do |
-| English + Hebrew, RTL/LTR (11) | NOT STARTED | |
-| Responsive across four width ranges (11) | NOT STARTED | |
-| List/Map exclusive toggle, saved view (8, 18) | NOT STARTED | |
+| Leaflet map, clustering, bounds queries (9) | IN PROGRESS | Ownership recorded on `feature/map-discovery` (Eli Mermelstein) before coding |
+| Geoapify location (8, 10) | IN PROGRESS | Submission-form address search exists (post-Milestone 4 polish). Home-page location search is `feature/location-search` (Moshe Silber) |
+| Waze / Google Maps / share (8, 10) | IN PROGRESS | Waze and Call on result cards, Waze and Google Maps on the detail page were done in Milestone 4. Share button and map popup links are part of `feature/map-discovery` |
+| English + Hebrew, RTL/LTR (11) | IN PROGRESS | `feature/bilingual-ui` (Moshe Silber), after the map and location UI exist |
+| Responsive across four width ranges (11) | IN PROGRESS | Same branch as the translations |
+| List/Map exclusive toggle, saved view (8, 18) | IN PROGRESS | Part of `feature/map-discovery` |
 
 ## Milestone 6 — Full verification and fixes
 

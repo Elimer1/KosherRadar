@@ -4,7 +4,9 @@ Authoritative requirements: `PROJECT_SPEC.md` (do not edit without approval). Re
 
 ## Active milestone
 
-**Milestone 4 — Search and restaurant pages** (DONE and merged to `main`; waiting for your approval before Milestone 5). Scope from `PROJECT_SPEC.md` section 16: Atlas Search with a working Mongoose fallback, `ATLAS_SEARCH_SETUP.md` with the exact index JSON, bilingual food search, autocomplete, filters, pagination, restaurant details, status presentation, related tests.
+**Milestone 5 — Maps, location and interface polish** (IN PROGRESS). Scope from `PROJECT_SPEC.md` section 16: Leaflet visible-bounds queries and clustering, Geoapify for the map and for search-by-address, Waze / Google Maps / share, English and Hebrew with RTL/LTR, responsive layout across four width ranges, list/map view preference, UI integration. Kashrut status and filters keep using `kashrutStatusService.js` and `restaurantSearchService.js`.
+
+Milestone 4 is done and merged. The form/account polish that was sitting uncommitted after Milestone 4 is now on `main` (`feature/form-account-polish`). Real-database, Atlas Search, Cloudinary, Resend and Geoapify checks are still BLOCKED (see "Blockers").
 
 Milestones 1 to 4 are merged to `main`. Their real-database, Atlas Search, Cloudinary, Resend and real-backend browser checks are still BLOCKED (see "Blockers"). Milestone 4 (`main` and its three feature branches) has been pushed to `origin`.
 
@@ -26,6 +28,17 @@ Example:
 // חדש (אבן דרך 3): אישור מסעדה ממתינה (למנהלים בלבד)
 export async function approveRestaurant(id, adminId) { /* ... */ }
 ```
+
+## Feature ownership (Milestone 5)
+
+Recorded before implementation, per section 19. `--author` follows the responsible teammate. The code is AI-generated and must be reviewed by its owner. Merge order: `feature/map-discovery`, then `feature/location-search` (the location field recenters the map), then `feature/bilingual-ui` (it translates the map and location UI as well as the older pages), then the docs branch.
+
+| Feature branch | Responsible teammate | Scope |
+| --- | --- | --- |
+| `feature/map-discovery` | Eli Mermelstein | Public map bounds API (same search filters and kashrut rules, visible bounds, radius still applies, capped marker payload), Leaflet map with branded markers and clustering, list/map toggle saved in localStorage, map popups (Call, Waze, details), share button on the restaurant page and in popups, tests |
+| `feature/location-search` | Moshe Silber | Separate location field on the home page (not parsed out of the name/food box): public Geoapify autocomplete and manual geocode fallback, current-location button, radius stays in the filters, localized place names when Geoapify returns them, tests |
+| `feature/bilingual-ui` | Moshe Silber | English and Hebrew for the whole interface, persistent language toggle, RTL/LTR, labels for levels/food/categories/hechsher (hechsher names come from the existing option list), responsive layout across the four width ranges, page title and description, tests that the two languages cover the same keys |
+| `feature/milestone-5-docs` | Eli Mermelstein | Progress and checklist files, README and `.env.example` updates |
 
 ## Feature ownership (Milestone 4)
 
