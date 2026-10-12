@@ -76,6 +76,26 @@ function assertOneCertificate(results) {
   return winners[0].value;
 }
 
+test('the dated certificate index exists before concurrent submissions run', async () => {
+  const indexes = await models.Teuda.collection.indexes();
+  const datedIndex = indexes.find((index) => index.name === 'pending_dated_certificate_identity');
+
+  assert.ok(datedIndex, 'pending_dated_certificate_identity was not built');
+  assert.equal(datedIndex.unique, true);
+  assert.equal(datedIndex.key.mashgiachName, undefined);
+  assert.deepEqual(datedIndex.partialFilterExpression, {
+    status: 'PENDING',
+    expirationDate: { $type: 'date' },
+  });
+
+  const undatedIndex = indexes.find((index) => index.name === 'pending_undated_certificate_identity');
+  assert.ok(undatedIndex, 'pending_undated_certificate_identity was not built');
+  assert.equal(undatedIndex.unique, true);
+  assert.equal(undatedIndex.key.mashgiachName, 1);
+  assert.equal(undatedIndex.key.photoFingerprint, 1);
+  assert.deepEqual(undatedIndex.partialFilterExpression, { status: 'PENDING', expirationDate: null });
+});
+
 test('two concurrent dated certificates for the same restaurant collapse to one', async () => {
   const user = await makeUser();
   const restaurant = await makeApprovedRestaurant(user);
@@ -122,6 +142,60 @@ test('a dated certificate with a different mashgiach is still the same pending c
 
   assertOneCertificate(results);
   assert.equal(await models.Teuda.countDocuments({ restaurant: restaurant._id, status: 'PENDING' }), 1);
+});
+
+test('two concurrent identical undated certificates collapse to one', async () => {
+  const user = await makeUser();
+  const restaurant = await makeApprovedRestaurant(user);
+  const teudaData = { hechsher: 'LOCAL_RABBANUT', mashgiachName: 'Same Mashgiach', mashgiachPhone: '0501234567' };
+  const results = await Promise.all([
+    capture(() => models.submitTeudaService({ restaurantId: restaurant._id, teudaData, user })),
+    capture(() => models.submitTeudaService({ restaurantId: restaurant._id, teudaData, user })),
+  ]);
+
+  assertOneCertificate(results);
+  assert.equal(await models.Teuda.countDocuments({ restaurant: restaurant._id, status: 'PENDING' }), 1);
+});
+
+test('undated certificates with the same mashgiach and a different phone both stay pending', async () => {
+  const user = await makeUser();
+  const restaurant = await makeApprovedRestaurant(user);
+  const first = await models.submitTeudaService({
+    restaurantId: restaurant._id,
+    teudaData: { hechsher: 'LOCAL_RABBANUT', mashgiachName: 'Avi Cohen', mashgiachPhone: '0501111111' },
+    user,
+  });
+  const second = await models.submitTeudaService({
+    restaurantId: restaurant._id,
+    teudaData: { hechsher: 'LOCAL_RABBANUT', mashgiachName: 'Avi Cohen', mashgiachPhone: '0502222222' },
+    user,
+  });
+
+  assert.notEqual(first.id, second.id);
+  assert.equal(await models.Teuda.countDocuments({ restaurant: restaurant._id, status: 'PENDING' }), 2);
+});
+
+test('a legacy undated certificate without a fingerprint still blocks a later no-photo submission', async () => {
+  const user = await makeUser();
+  const restaurant = await makeApprovedRestaurant(user);
+  await models.Teuda.create({
+    restaurant: restaurant._id,
+    hechsher: 'LOCAL_RABBANUT',
+    mashgiachName: 'Legacy Mashgiach',
+    status: 'PENDING',
+    submittedBy: user._id,
+  });
+  const duplicate = await capture(() =>
+    models.submitTeudaService({
+      restaurantId: restaurant._id,
+      teudaData: { hechsher: 'LOCAL_RABBANUT', mashgiachName: 'Legacy Mashgiach' },
+      user,
+    })
+  );
+
+  assert.equal(duplicate.status, 409);
+  assert.equal(duplicate.message, DUPLICATE_MESSAGE);
+  assert.equal(await models.Teuda.countDocuments({ restaurant: restaurant._id }), 1);
 });
 
 test('undated certificates with different mashgichim both stay pending', async () => {

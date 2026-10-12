@@ -46,5 +46,47 @@ const teudaSchema = new mongoose.Schema(
 teudaSchema.index({ restaurant: 1, status: 1 });
 teudaSchema.index({ status: 1, expirationDate: 1 });
 teudaSchema.index({ submittedBy: 1 });
+// NEW (Backend QA): one pending dated certificate per user, restaurant, hechsher, and expiration date.
+// Mashgiach is intentionally absent: a dated retry with a different mashgiach is already a 409.
+// Undated certificates stay out of this index so a different mashgiach can still be stored.
+// חדש (בדיקת שרת): תעודה מתוארכת ממתינה אחת לכל משתמש, מסעדה, השגחה ותאריך תפוגה.
+// שם המשגיח לא נכלל: שליחה חוזרת עם משגיח אחר כבר מקבלת 409.
+// תעודות בלי תאריך נשארות מחוץ לאינדקס, כדי שמשגיח אחר עדיין יישמר.
+teudaSchema.index(
+  {
+    restaurant: 1,
+    submittedBy: 1,
+    hechsher: 1,
+    hechsherOther: 1,
+    kashrutLevel: 1,
+    expirationDate: 1,
+  },
+  {
+    unique: true,
+    partialFilterExpression: { status: 'PENDING', expirationDate: { $type: 'date' } },
+    name: 'pending_dated_certificate_identity',
+  }
+);
+// NEW (Backend QA): undated pending certificates use mashgiach and photo bytes as well as the hechsher.
+// A missing photo fingerprint stays null, which is the existing legacy match. Different mashgichim stay distinct.
+// חדש (בדיקת שרת): תעודה ממתינה בלי תאריך מזוהה גם לפי המשגיח ותוכן התמונה.
+// תמונה בלי טביעת אצבע נשארת null, כמו ההתאמה הקיימת. משגיחים שונים נשארים נפרדים.
+teudaSchema.index(
+  {
+    restaurant: 1,
+    submittedBy: 1,
+    hechsher: 1,
+    hechsherOther: 1,
+    kashrutLevel: 1,
+    mashgiachName: 1,
+    mashgiachPhone: 1,
+    photoFingerprint: 1,
+  },
+  {
+    unique: true,
+    partialFilterExpression: { status: 'PENDING', expirationDate: null },
+    name: 'pending_undated_certificate_identity',
+  }
+);
 
 export const Teuda = mongoose.model('Teuda', teudaSchema);

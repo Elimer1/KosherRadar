@@ -40,9 +40,10 @@ async function loadApp() {
     applyAgent2ProcessEnv();
     const mongoose = (await import(pathToFileURL(require.resolve('mongoose')).href)).default;
     const bcrypt = (await import(pathToFileURL(require.resolve('bcrypt')).href)).default;
-    const [restaurant, teuda, user, submission, teudaSubmission] = await Promise.all([
+    const [restaurant, teuda, report, user, submission, teudaSubmission] = await Promise.all([
       import('../src/models/Restaurant.js'),
       import('../src/models/Teuda.js'),
+      import('../src/models/Report.js'),
       import('../src/models/User.js'),
       import('../src/services/restaurantSubmissionService.js'),
       import('../src/services/teudaSubmissionService.js'),
@@ -53,6 +54,7 @@ async function loadApp() {
       bcrypt,
       Restaurant: restaurant.Restaurant,
       Teuda: teuda.Teuda,
+      Report: report.Report,
       User: user.User,
       submitRestaurantService: submission.submitRestaurantService,
       submitTeudaService: teudaSubmission.submitTeudaService,
@@ -124,7 +126,7 @@ export async function disconnectAgent2() {
 }
 
 export async function deleteAgent2Records() {
-  const { User, Restaurant, Teuda } = await loadApp();
+  const { User, Restaurant, Teuda, Report } = await loadApp();
   const users = await User.find({ email: AGENT2_EMAIL_PATTERN }).select('_id');
   const userIds = users.map((user) => user._id);
   const restaurants = await Restaurant.find({
@@ -132,6 +134,9 @@ export async function deleteAgent2Records() {
   }).select('_id');
   const restaurantIds = restaurants.map((restaurant) => restaurant._id);
 
+  await Report.deleteMany({
+    $or: [{ restaurant: { $in: restaurantIds } }, { submittedBy: { $in: userIds } }],
+  });
   await Teuda.deleteMany({
     $or: [{ restaurant: { $in: restaurantIds } }, { submittedBy: { $in: userIds } }],
   });

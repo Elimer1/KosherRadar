@@ -108,6 +108,45 @@ describe('Restaurant model', () => {
 });
 
 describe('Teuda model', () => {
+  it('keeps one pending dated certificate per user, restaurant, hechsher, and date', () => {
+    const datedIdentity = Teuda.schema
+      .indexes()
+      .find(([, options]) => options.name === 'pending_dated_certificate_identity');
+
+    expect(datedIdentity[0]).toEqual({
+      restaurant: 1,
+      submittedBy: 1,
+      hechsher: 1,
+      hechsherOther: 1,
+      kashrutLevel: 1,
+      expirationDate: 1,
+    });
+    expect(datedIdentity[1]).toMatchObject({
+      unique: true,
+      partialFilterExpression: { status: 'PENDING', expirationDate: { $type: 'date' } },
+    });
+    expect(datedIdentity[0]).not.toHaveProperty('mashgiachName');
+
+    const undatedIdentity = Teuda.schema
+      .indexes()
+      .find(([, options]) => options.name === 'pending_undated_certificate_identity');
+
+    expect(undatedIdentity[0]).toEqual({
+      restaurant: 1,
+      submittedBy: 1,
+      hechsher: 1,
+      hechsherOther: 1,
+      kashrutLevel: 1,
+      mashgiachName: 1,
+      mashgiachPhone: 1,
+      photoFingerprint: 1,
+    });
+    expect(undatedIdentity[1]).toMatchObject({
+      unique: true,
+      partialFilterExpression: { status: 'PENDING', expirationDate: null },
+    });
+  });
+
   it('requires a rejection reason when REJECTED', async () => {
     const teuda = new Teuda({
       restaurant: someId(),
