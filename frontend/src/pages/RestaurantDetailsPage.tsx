@@ -9,8 +9,9 @@ import KashrutBadge from '../components/KashrutBadge';
 import { useFormOptions } from '../hooks/useFormOptions';
 import type { PublicTeuda, RestaurantDetails } from '../types/restaurantDetails';
 import type { HechsherOption } from '../types/submissions';
-import { formatDateOnly } from '../utils/kashrutText';
+import { describeEvidenceName, formatDateOnly } from '../utils/kashrutText';
 import { getCategoryLabel, getFoodTypeLabel, getHechsherLabel, getKashrutLevelLabel } from '../utils/labels';
+import { restaurantDisplayNames } from '../utils/restaurantName';
 import { buildGoogleMapsUrl, buildTelUrl, buildWazeUrl, restaurantPageUrl } from '../utils/navigationLinks';
 import ShareButton from '../components/ShareButton';
 import { primaryButtonCompactClassName, secondaryButtonClassName } from '../components/formStyles';
@@ -92,7 +93,8 @@ function RestaurantDetailsPage() {
   const backState = rememberedLocation ? { searchLocation: rememberedLocation } : undefined;
   const { options } = useFormOptions();
   const [result, setResult] = useState<LoadResult | null>(null);
-  const loadedName = result && result.restaurantId === restaurantId ? result.details?.name : '';
+  const loadedRestaurant = result && result.restaurantId === restaurantId ? result.details : null;
+  const loadedName = loadedRestaurant ? restaurantDisplayNames(loadedRestaurant).primary : '';
 
   usePageMeta(
     loadedName ? t('meta.restaurantTitle', { name: loadedName }) : t('meta.title'),
@@ -167,10 +169,9 @@ function RestaurantDetailsPage() {
   const wazeUrl = buildWazeUrl(restaurant.latitude, restaurant.longitude);
   const showCity = restaurant.city && !restaurant.address.includes(restaurant.city);
   const place = showCity ? `${restaurant.address}, ${restaurant.city}` : restaurant.address;
-  const mapsUrl = buildGoogleMapsUrl(restaurant.name, place);
-  const otherNames = [restaurant.nameHe, restaurant.nameEn].filter(
-    (name): name is string => Boolean(name) && name !== restaurant.name
-  );
+  const names = restaurantDisplayNames(restaurant);
+  const mapsUrl = buildGoogleMapsUrl(names.primary, place);
+  const claims = restaurant.kashrut.items.filter((item) => item.kind === 'UNVERIFIED');
 
   return (
     <article className="mx-auto max-w-3xl space-y-6">
@@ -181,8 +182,8 @@ function RestaurantDetailsPage() {
         </Link>
 
       <header className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-        <h1 className="text-3xl font-bold text-gray-900">{restaurant.name}</h1>
-        {otherNames.length > 0 && <p className="text-gray-600">{otherNames.join(' · ')}</p>}
+        <h1 className="text-3xl font-bold text-gray-900">{names.primary}</h1>
+        {names.secondary.length > 0 && <p className="text-gray-600">{names.secondary.join(' · ')}</p>}
         <p className="mt-1 text-gray-700">{place}</p>
         {(restaurant.foodType || restaurant.categories.length > 0) && (
           <p className="mt-2 text-sm text-gray-700">
@@ -205,6 +206,17 @@ function RestaurantDetailsPage() {
           {t('details.kashrut')}
         </h2>
         <KashrutBadge kashrut={restaurant.kashrut} hechsherOptions={hechsherOptions} />
+
+        {claims.length > 0 && (
+          <ul className="space-y-2 text-sm text-gray-800">
+            {claims.map((claim, index) => (
+              <li key={`${claim.hechsher ?? 'claim'}-${claim.kashrutLevel ?? 'level'}-${index}`}>
+                <p>{t('details.claimSays', { name: describeEvidenceName(claim, hechsherOptions) })}</p>
+                <p className="text-gray-600">{t('details.claimNote')}</p>
+              </li>
+            ))}
+          </ul>
+        )}
 
         {restaurant.teudot.length > 0 && (
           <div>
@@ -287,7 +299,7 @@ function RestaurantDetailsPage() {
             </a>
           )}
           <ShareButton
-            title={restaurant.name}
+            title={names.primary}
             url={restaurantPageUrl(restaurant.id, window.location.origin)}
             className={actionClassName}
           />

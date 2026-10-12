@@ -9,6 +9,7 @@ import type { HechsherOption } from '../types/submissions';
 import { getCategoryLabel, getFoodTypeLabel } from '../utils/labels';
 import { formatDistance } from '../utils/kashrutText';
 import { buildTelUrl, buildWazeUrl } from '../utils/navigationLinks';
+import { restaurantDisplayNames } from '../utils/restaurantName';
 import type { SearchReturnState } from '../search/searchReturn';
 import KashrutBadge from './KashrutBadge';
 import { primaryButtonCompactClassName, secondaryButtonClassName } from './formStyles';
@@ -28,6 +29,7 @@ function RestaurantCard({ restaurant, hechsherOptions, returnState, onOpenRestau
   const showCity = restaurant.city && !restaurant.address.includes(restaurant.city);
   const place = showCity ? `${restaurant.address}, ${restaurant.city}` : restaurant.address;
   const distanceText = formatDistance(restaurant.distanceKm);
+  const names = restaurantDisplayNames(restaurant);
   const handleOpen = (event: MouseEvent<HTMLAnchorElement>) => {
     if (!onOpenRestaurant) {
       return;
@@ -48,9 +50,10 @@ function RestaurantCard({ restaurant, hechsherOptions, returnState, onOpenRestau
         <div className="min-w-0">
           <h2 className="text-lg font-semibold text-gray-900">
             <Link to={`/restaurants/${restaurant.id}`} state={returnState} onClick={handleOpen} className="rounded-sm hover:text-green-800 hover:underline">
-              {restaurant.name}
+              {names.primary}
             </Link>
           </h2>
+          {names.secondary.length > 0 && <p className="text-sm text-gray-600">{names.secondary.join(' · ')}</p>}
           <p className="mt-0.5 text-sm text-gray-600">{place}</p>
         </div>
         {distanceText && (
@@ -84,7 +87,7 @@ function RestaurantCard({ restaurant, hechsherOptions, returnState, onOpenRestau
           {t('card.viewDetails')}
         </Link>
         {telUrl && (
-          <a href={telUrl} className={secondaryButtonClassName} aria-label={t('card.callName', { name: restaurant.name })}>
+          <a href={telUrl} className={secondaryButtonClassName} aria-label={t('card.callName', { name: names.primary })}>
             {t('card.call')}
           </a>
         )}
@@ -94,7 +97,7 @@ function RestaurantCard({ restaurant, hechsherOptions, returnState, onOpenRestau
             target="_blank"
             rel="noopener noreferrer"
             className={secondaryButtonClassName}
-            aria-label={t('card.wazeName', { name: restaurant.name })}
+            aria-label={t('card.wazeName', { name: names.primary })}
           >
             {t('card.waze')}
           </a>

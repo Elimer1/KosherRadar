@@ -12,6 +12,7 @@ import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import type { RestaurantSuggestion, SearchFilters } from '../types/search';
 import type { HechsherOption } from '../types/submissions';
 import { describeKashrutShort } from '../utils/kashrutText';
+import { restaurantDisplayNames } from '../utils/restaurantName';
 
 const MIN_CHARACTERS = 2;
 const DEBOUNCE_MS = 300;
@@ -148,26 +149,31 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
           role="listbox"
           className="absolute inset-x-0 z-20 mt-2 max-h-96 overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg"
         >
-          {suggestions.map((suggestion, index) => (
-            <li
-              key={suggestion.id}
-              id={`suggestion-${index}`}
-              role="option"
-              aria-selected={index === activeIndex}
-              // mousedown (not click) so the choice is registered before the input loses focus and closes the list.
-              onMouseDown={(event) => {
-                event.preventDefault();
-                onPickSuggestion(suggestion.id);
-              }}
-              className={`cursor-pointer px-4 py-2.5 ${
-                index === activeIndex ? 'bg-green-50' : 'hover:bg-gray-50'
-              }`}
-            >
-              <p className="font-medium text-gray-900">{suggestion.name}</p>
-              <p className="text-sm text-gray-600">{suggestion.city || suggestion.address}</p>
-              <p className="text-sm text-gray-700">{describeKashrutShort(suggestion.kashrut, hechsherOptions)}</p>
-            </li>
-          ))}
+          {suggestions.map((suggestion, index) => {
+            const names = restaurantDisplayNames(suggestion);
+
+            return (
+              <li
+                key={suggestion.id}
+                id={`suggestion-${index}`}
+                role="option"
+                aria-selected={index === activeIndex}
+                // mousedown (not click) so the choice is registered before the input loses focus and closes the list.
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  onPickSuggestion(suggestion.id);
+                }}
+                className={`cursor-pointer px-4 py-2.5 ${
+                  index === activeIndex ? 'bg-green-50' : 'hover:bg-gray-50'
+                }`}
+              >
+                <p className="font-medium text-gray-900">{names.primary}</p>
+                {names.secondary.length > 0 && <p className="text-sm text-gray-600">{names.secondary.join(' · ')}</p>}
+                <p className="text-sm text-gray-600">{suggestion.city || suggestion.address}</p>
+                <p className="text-sm text-gray-700">{describeKashrutShort(suggestion.kashrut, hechsherOptions)}</p>
+              </li>
+            );
+          })}
         </ul>
       )}
     </form>

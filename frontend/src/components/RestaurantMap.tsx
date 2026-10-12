@@ -20,6 +20,7 @@ import type { SearchReturnState } from '../search/searchReturn';
 import type { HechsherOption } from '../types/submissions';
 import type { MapBounds, RestaurantCardData, SearchFilters } from '../types/search';
 import { getFoodTypeLabel } from '../utils/labels';
+import { restaurantDisplayNames } from '../utils/restaurantName';
 import { ISRAEL_MAP_BOUNDS, boundsCrossDateLine, zoomForRadius } from '../utils/mapView';
 import { buildTelUrl, buildWazeUrl, restaurantPageUrl } from '../utils/navigationLinks';
 import KashrutBadge from './KashrutBadge';
@@ -125,6 +126,7 @@ function MapPopup({
   const telUrl = buildTelUrl(restaurant.phone);
   const wazeUrl = buildWazeUrl(restaurant.latitude, restaurant.longitude);
   const pageUrl = restaurantPageUrl(restaurant.id, window.location.origin);
+  const names = restaurantDisplayNames(restaurant);
   const handleOpen = (event: MouseEvent<HTMLAnchorElement>) => {
     if (!onOpenRestaurant) {
       return;
@@ -141,7 +143,8 @@ function MapPopup({
 
   return (
     <div className="min-w-52 space-y-2 text-sm text-gray-800">
-      <p className="text-base font-semibold text-gray-900">{restaurant.name}</p>
+      <p className="text-base font-semibold text-gray-900">{names.primary}</p>
+      {names.secondary.length > 0 && <p className="text-gray-600">{names.secondary.join(' · ')}</p>}
       {restaurant.foodType && <p>{getFoodTypeLabel(restaurant.foodType)}</p>}
       <KashrutBadge kashrut={restaurant.kashrut} hechsherOptions={hechsherOptions} />
       <div className="flex flex-wrap gap-2 pt-1">
@@ -158,7 +161,7 @@ function MapPopup({
             {t('card.waze')}
           </a>
         )}
-        <ShareButton title={restaurant.name} url={pageUrl} className={actionClassName} />
+        <ShareButton title={names.primary} url={pageUrl} className={actionClassName} />
       </div>
     </div>
   );

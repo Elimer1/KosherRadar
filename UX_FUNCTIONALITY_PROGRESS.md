@@ -1,6 +1,6 @@
 # KosherRadar — UX functionality progress
 
-Work packages 1A and 1B: search-state contract, then live search.
+Work packages 1A through 3: search state, live search, filter actions, login and admin navigation, then names, claims, and document titles.
 
 This file is the handoff for `feature/ux-functionality`. Shared `PROGRESS.md` and `FIX_TRACKER.md` were not modified. The design, QA, UI, and UX-review worktrees were not modified.
 
@@ -9,22 +9,21 @@ This file is the handoff for `feature/ux-functionality`. Shared `PROGRESS.md` an
 - Branch: `feature/ux-functionality`
 - Worktree: `C:\FS\projects\KosherRadar-ux-functionality`
 - Baseline: `main` at `3bbb1e2da84215e62c82010de755be2b574aa6bf` (`main` had not moved; it was 12 commits ahead of `origin/main`)
-- Package: **2 — Authentication and admin navigation**
-- Checkpoint: **1A, 1B, 1C, and 2 complete**
-- Next package: **3 — Localization and minor UX**
+- Package: **3 — Localization and minor UX**
+- Checkpoint: **1A, 1B, 1C, 2, and 3 complete**
+- Next package: none in this branch. The design agent can consume the hook interface below.
 
 ## NEXT AGENT ONBOARDING
 
 Resume in `C:\FS\projects\KosherRadar-ux-functionality` on `feature/ux-functionality`. Read this file before changing code. Do not edit the design, QA, UI, or UX-review worktrees. Do not merge, rebase, or push.
 
-Work Packages 1A through 2 are implemented. Do not rewrite the search-state model. The next task is Work Package 3.
+Work Packages 1A through 3 are implemented on `feature/ux-functionality`. Do not rewrite the search-state model. Do not start another package in this worktree unless the user asks.
 
-### Exact next task (Work Package 3)
+### Exact next task
 
-1. When the interface is Hebrew and `nameHe` is stored, use it as the heading on cards, suggestions, the map popup, and the restaurant page. Show the other stored name second. Do the same for English and `nameEn`. Do not invent a translation.
-2. Under the kashrut badge, list each unverified claim with the existing `details.claimSays` and `details.claimNote` sentences. Keep certificates in their own list. Do not change status words.
-3. Restore the previous document title when a page that set one unmounts, so Back to search does not keep the restaurant name in the tab.
-4. Hebrew added in earlier packages still needs native-speaker review. Do not change kashrut status labels.
+None for this branch. If a new session is opened here, confirm `git status` is clean except that `frontend/vite.proxy.config.ts` must not be present, and leave the branch unpushed.
+
+The design agent should import `useSearchCriteria` (`SearchCriteriaApi`) and `restaurantDisplayNames`. Headings are `primary`. Other stored names are `secondary`. Do not put `restaurant.name` back as the only heading.
 
 ### Do not repeat
 
@@ -126,7 +125,7 @@ Implemented and wired. Module: `frontend/src/hooks/useSearchCriteria.ts`. Type: 
 | `locationPending` / `locationSource` | — | Geocode wait, and `named`, `device`, or null |
 | `returnPath` | — | Canonical `/` or `/?...` |
 | `restaurantState` | — | `{ from, searchLocation? }` for links that need it |
-| `openRestaurant(id, background?)` | replace the search entry when needed, then push the restaurant unless `background` | 24-hex id only. Writes `kosherradar-search-return` |
+| `openRestaurant(id, background?)` | replace the search entry when needed, then push the restaurant unless `background` | 24-hex id only. Writes `kosherradar-search-return` and `kosherradar-search-scroll` (`path`, `scrollY`, `restaurantId` only) |
 
 `SearchFiltersPanel` still emits a full filters object. `HomePage` passes that object to `updateFilters` and ignores `next.q`, because the hook flushes `draftQuery`. `updateFilters`, place changes, and clear actions cancel a pending pause first, then keep the latest draft.
 
@@ -166,7 +165,7 @@ Both agents touch these files. This branch changed behavior only:
 - `frontend/src/components/RestaurantCard.tsx` and `RestaurantMap.tsx` — optional `returnState` and `onOpenRestaurant(id, background)`.
 - `frontend/src/pages/RestaurantDetailsPage.tsx` — Back to search uses `resolveSearchReturnPath`.
 
-List/map layout, filter chips, the filter drawer, cards, and CSS stay with the design agent. No new Hebrew UI strings were added.
+List/map layout, filter chips, the filter drawer, cards, and CSS stay with the design agent. Public headings go through `restaurantDisplayNames` in `frontend/src/utils/restaurantName.ts`. The layout's `PageMetaProvider` owns `document.title`; pages still call `usePageMeta`. Hebrew strings added in packages 1B, 1C, and 2 still need native-speaker review. Package 3 reused existing claim sentences and added no new Hebrew copy.
 
 Integration order: this branch first, then the design branch consuming this interface, then combined verification.
 
@@ -319,12 +318,44 @@ The admin dashboard itself was not opened. This browser has no admin session, an
 | `npm run lint` | 0 | oxlint, no warnings after removing the unused tab type |
 | `npm run typecheck` | 0 | `tsc -b` |
 
-## Later packages
+## Work Package 3
 
-1. **3 — Localization and minor UX.** Restaurant display names, existing claim copy, document titles.
+`restaurantDisplayNames` chooses the heading from the stored name for the current language. Hebrew uses `nameHe` when it exists. English uses `nameEn` when it exists. Otherwise the submitted `name` stays. The other stored names are shown second. Nothing is translated.
+
+Cards, suggestions, the map popup, the restaurant heading, the document title, share, and the maps link use that heading. Admin and submission screens still show the submitted `name`.
+
+Under the kashrut badge, each `UNVERIFIED` item uses the existing `details.claimSays` and `details.claimNote` sentences. Certificates stay in their own list. Status words were not changed.
+
+The layout's `PageMetaProvider` is the only writer of the document title. A page's `usePageMeta` sets an override and clears it on the way out, so Back to search returns the home title. Changing language while a restaurant is open updates the restaurant title instead of leaving the home title in place.
+
+### Browser (12 October 2026, `http://localhost:5181`)
+
+| Action | Observed |
+| --- | --- |
+| English home | Claimed Grill had no second name. Pizza Place showed `מקום פיצה` under the heading. |
+| Hebrew home | The Pizza Place heading was `מקום פיצה`, with `Pizza Place` second. Call and Waze named `מקום פיצה`. |
+| Type `piz` | The suggestion heading was `מקום פיצה`, with `Pizza Place` second. The URL became `/?q=piz`. |
+| Open that result | Heading `מקום פיצה`, second line `Pizza Place`. Under the badge: "המסעדה אומרת: בד״ץ מחפוד, מהדרין." and the existing note that no certificate was checked. No certificate list. Tab title `מקום פיצה - KosherRadar`. |
+| Switch that page to English | Heading `Pizza Place`, second line `מקום פיצה`. Claim sentence: "The restaurant says: Badatz Machpud, Mehadrin." Tab title became `Pizza Place - KosherRadar`. |
+| Back to search | URL `/?q=piz`. Tab title returned to `KosherRadar - מידע כשרות למסעדות בישראל`. The result heading was still `מקום פיצה`. |
+
+The map popup was not opened. With `/?q=piz` the map reported no saved-location matches in the visible area, which is the existing empty-area message. The popup uses the same `restaurantDisplayNames` helper as the card.
+
+### Tests after 3
+
+| Command | Exit | Result |
+| --- | --- | --- |
+| `npm test` | 0 | 22 files, 127 tests passed |
+| `npm run lint` | 0 | oxlint, no warnings |
+| `npm run typecheck` | 0 | `tsc -b` |
+| `npm run build` | 0 | Vite build. JS chunk about 742.89 kB. The existing chunk-size warning remains. |
 
 ## Commits
 
 - `03293d47e06ca1c8a4342dd74bae791d432690a8` — `feat(ux-1a): persist applied search in the URL`
 - `6382a0d` — `docs(ux-1a): record the search-state checkpoint hash`
 - `f182009` — `docs(ux-1a): record the independent search-state browser recheck`
+- `fcfd59d` — `feat(ux-1b): search as the visitor types and cancel stale requests`
+- `7945748` — `feat(ux-1c): clear one filter at a time and restore search focus`
+- `435f692` — `feat(ux-2): keep the page that asked for an account, and the admin tab`
+- Work Package 3 is the commit that adds this section.
