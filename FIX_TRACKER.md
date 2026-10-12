@@ -6,11 +6,11 @@ Counts below are derived from the issue statuses in this file.
 
 | Status | Count |
 | --- | ---: |
-| NOT STARTED | 15 |
+| NOT STARTED | 14 |
 | ALREADY WORKING | 8 |
 | BLOCKED | 5 |
 | DEFERRED | 1 |
-| VERIFIED | 7 |
+| VERIFIED | 8 |
 | Other | 0 |
 | **Total** | **36** |
 
@@ -27,7 +27,7 @@ The user asked to finish important fixes and to defer low-impact, cosmetic, end-
 | M1-003 | A typed address must not take the first geocode hit | VERIFIED |
 | M2-002 | Confirmed bug: report correction can stick when the report does not | VERIFIED |
 | M2-003 | Admin cannot save a user restaurant that omitted food type or categories | VERIFIED |
-| M4-001 | Confirmed bug: password reset leaves existing JWTs valid | NOT STARTED |
+| M4-001 | Confirmed bug: password reset leaves existing JWTs valid | VERIFIED |
 | M5-002 | Confirmed bug: a failed password write burns the reset link | NOT STARTED |
 
 `CORRECTION_ALREADY_MADE` still awards +1 on the admin's word. Changing that would change the points rule and was not done.
@@ -56,7 +56,7 @@ No application code was changed in the audit. No issue is `VERIFIED`. Blocked an
 | M3-001 | 3 Kashrut status | Critical | ALREADY WORKING | Already implemented |
 | M3-002 | 3 Kashrut status | Critical | ALREADY WORKING | Product decision |
 | M3-003 | 3 Kashrut status | Critical | NOT STARTED | UX improvement |
-| M4-001 | 4 Authentication and security | High | NOT STARTED | Confirmed bug |
+| M4-001 | 4 Authentication and security | High | VERIFIED | Confirmed bug |
 | M4-002 | 4 Authentication and security | High | ALREADY WORKING | Already implemented |
 | M4-003 | 4 Authentication and security | High | NOT STARTED | Security risk |
 | M4-004 | 4 Authentication and security | High | DEFERRED | Security risk |
@@ -261,16 +261,16 @@ Priority: High
 
 - **Milestone:** 4
 - **Priority:** High
-- **Status:** NOT STARTED
+- **Status:** VERIFIED
 - **Description:** A successful password reset does not invalidate JWTs that were already issued. Those tokens keep working until `JWT_EXPIRES_IN` (default `24h`).
 - **Evidence:** `signTokenService` signs `{ sub, role }` only. `resetPasswordService` updates `passwordHash` and reset-token rows. `User` has no session version or `passwordChangedAt`. `getUserFromTokenService` loads the user and rejects a missing user, then returns the user. It does not compare the token to the password-change time. `PROGRESS.md` Milestone 3 already states this limitation.
 - **Root cause:** Stateless JWTs with no version claim. Password hash is not part of the token, so changing it does not affect `jwt.verify`.
 - **Relevant files/functions:** `backend/src/services/authService.js` (`signTokenService`, `getUserFromTokenService`); `backend/src/services/passwordResetService.js` (`resetPasswordService`); `backend/src/models/User.js`.
 - **Planned solution:** Add a numeric session version or a password-changed timestamp on `User`, put it in new tokens, and reject tokens whose value is older. Existing tokens without the claim can remain valid until they expire, which avoids logging everyone out at deploy. Set the version in the same update as the new password hash. This is an additive field with a default of `0`. No backfill is required if missing means `0`. Do not switch storage to cookies in this fix (M4-004).
-- **Files changed:** none
-- **Tests added or modified:** none
-- **Verification:** Static inspection only. `passwordResetService.test.js` was not re-run.
-- **Blockers:** none for the additive field. Confirm the default-for-old-tokens behavior before coding if the user wants an immediate global logout instead.
+- **Files changed:** `backend/src/models/User.js`, `backend/src/services/authService.js`, `backend/src/repositories/userRepository.js`.
+- **Tests added or modified:** `backend/tests/authService.test.js`, `backend/tests/userRepository.test.js`. `passwordResetService.test.js` still passed.
+- **Verification:** `cd backend; npm test -- tests/authService.test.js tests/userRepository.test.js tests/passwordResetService.test.js` exit 0, 26 tests passed. Mocks only. No live database. Existing tokens with no `tv` stay valid while `tokenVersion` is missing or 0. Logout still only clears localStorage (M4-004).
+- **Blockers:** none. A missing `tokenVersion` on an old account is treated as 0, so this deploy does not log everyone out. No backfill.
 
 ### M4-002 — Authentication and authorization audit
 

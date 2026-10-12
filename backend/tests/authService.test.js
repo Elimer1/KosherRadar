@@ -130,6 +130,7 @@ describe('JWT tokens', () => {
 
     expect(payload.sub).toBe('user-1');
     expect(payload.role).toBe('ADMIN');
+    expect(payload.tv).toBe(0);
     expect(payload.exp - payload.iat).toBe(24 * 60 * 60);
   });
 
@@ -169,5 +170,26 @@ describe('getUserFromTokenService', () => {
     findUserByIdRepo.mockResolvedValue(null);
 
     await expect(getUserFromTokenService(token)).rejects.toMatchObject({ statusCode: 401 });
+  });
+
+  it('accepts an older token with no session version while the account is still at 0', async () => {
+    const token = jwt.sign({ sub: 'user-1', role: 'USER' }, SECRET, { expiresIn: '24h' });
+    findUserByIdRepo.mockResolvedValue({ _id: 'user-1', role: 'USER' });
+
+    await expect(getUserFromTokenService(token)).resolves.toMatchObject({ role: 'USER' });
+  });
+
+  it('rejects a token issued before the password was reset', async () => {
+    const token = signTokenService({ _id: 'user-1', role: 'USER', tokenVersion: 0 });
+    findUserByIdRepo.mockResolvedValue({ _id: 'user-1', role: 'USER', tokenVersion: 1 });
+
+    await expect(getUserFromTokenService(token)).rejects.toMatchObject({ statusCode: 401, code: 'INVALID_TOKEN' });
+  });
+
+  it('accepts a token signed after the password reset', async () => {
+    const token = signTokenService({ _id: 'user-1', role: 'USER', tokenVersion: 1 });
+    findUserByIdRepo.mockResolvedValue({ _id: 'user-1', role: 'USER', tokenVersion: 1 });
+
+    await expect(getUserFromTokenService(token)).resolves.toMatchObject({ tokenVersion: 1 });
   });
 });

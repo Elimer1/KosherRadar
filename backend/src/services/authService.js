@@ -22,7 +22,7 @@ export const toPublicUser = (user) => {
 };
 
 export const signTokenService = (user) => {
-  return jwt.sign({ sub: String(user._id), role: user.role }, env.jwtSecret, {
+  return jwt.sign({ sub: String(user._id), role: user.role, tv: user.tokenVersion ?? 0 }, env.jwtSecret, {
     expiresIn: env.jwtExpiresIn,
   });
 };
@@ -67,6 +67,14 @@ export const getUserFromTokenService = async (token) => {
   const user = await findUserByIdRepo(payload.sub);
 
   if (!user) {
+    throw appError('Invalid or expired token', 401, 'INVALID_TOKEN');
+  }
+
+  // NEW (Audit M4): a token from before this field, or an old account, both count as version 0.
+  // חדש (ביקורת M4): טוקן מלפני השדה, או חשבון ישן, שניהם נחשבים גרסה 0.
+  const tokenVersion = payload.tv ?? 0;
+
+  if (tokenVersion !== (user.tokenVersion ?? 0)) {
     throw appError('Invalid or expired token', 401, 'INVALID_TOKEN');
   }
 

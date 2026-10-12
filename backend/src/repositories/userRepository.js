@@ -33,8 +33,11 @@ export const awardPointsOnceRepo = async (userId, key, points) => {
 
 // NEW (Milestone 3): saves a new password hash after a successful password reset.
 // חדש (אבן דרך 3): שומר hash חדש של סיסמה אחרי איפוס סיסמה מוצלח.
+// NEW (Audit M4): the new hash and the session bump are one update, so a reset cannot save the password
+// and leave the old token valid.
+// חדש (ביקורת M4): ה-hash החדש והעלאת גרסת הסשן הם עדכון אחד, כדי שאיפוס לא ישמור סיסמה וישאיר טוקן ישן בתוקף.
 export const setUserPasswordHashRepo = async (userId, passwordHash) => {
-  return User.findByIdAndUpdate(userId, { passwordHash }, { new: true });
+  return User.findByIdAndUpdate(userId, { $set: { passwordHash }, $inc: { tokenVersion: 1 } }, { new: true });
 };
 
 // Award keys are hidden on a normal user read. This loads only that list for the owner's submissions page.

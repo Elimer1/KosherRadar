@@ -20,6 +20,15 @@ const userSchema = new mongoose.Schema(
       enum: ROLES,
       default: 'USER',
     },
+    // NEW (Audit M4): bumped when the password changes. Missing on an old account means 0, so a deploy
+    // does not log everyone out. A token without tv is also treated as 0.
+    // חדש (ביקורת M4): עולה כשהסיסמה משתנה. חשבון ישן בלי השדה נחשב 0, כדי שפריסה לא תנתק את כולם.
+    // טוקן בלי tv נחשב גם הוא 0.
+    tokenVersion: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     points: {
       type: Number,
       default: 0,
@@ -35,6 +44,13 @@ const userSchema = new mongoose.Schema(
       type: [String],
       default: [],
       select: false,
+    },
+    // NEW (Audit M4): bumped when the password changes. Missing on an old account means 0.
+    // חדש (ביקורת M4): עולה כשהסיסמה משתנה. חשבון ישן בלי השדה נחשב 0.
+    tokenVersion: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
   },
   { timestamps: true }
