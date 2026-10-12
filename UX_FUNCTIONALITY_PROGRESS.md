@@ -10,14 +10,14 @@ This file is the handoff for `feature/ux-functionality`. Shared `PROGRESS.md` an
 - Worktree: `C:\FS\projects\KosherRadar-ux-functionality`
 - Baseline: `main` at `3bbb1e2da84215e62c82010de755be2b574aa6bf` (`main` had not moved; it was 12 commits ahead of `origin/main`)
 - Package: **1A — Search-state contract, URL persistence, and navigation**
-- Checkpoint: **complete for 1A**
-- Next package: **1B — Live search**. Do not start it until a new session is asked to.
+- Checkpoint: **complete for 1A**, independently rechecked in the browser on 12 October 2026
+- Next package: **1B — Live search**
 
 ## NEXT AGENT ONBOARDING
 
 Resume in `C:\FS\projects\KosherRadar-ux-functionality` on `feature/ux-functionality`. Read this file before changing code. Do not edit the design, QA, UI, or UX-review worktrees. Do not merge, rebase, or push.
 
-Work Package 1A is implemented and verified. The next session should start **Work Package 1B** only when asked. Do not rewrite the search-state model.
+Work Package 1A is implemented and independently rechecked. Do not rewrite the search-state model. The next task is Work Package 1B.
 
 ### Exact next task (Work Package 1B)
 
@@ -185,6 +185,25 @@ Observed on 12 October 2026 in Cursor's browser at `http://localhost:5174`. The 
 | Unknown parameter | `/?nocache=1` was replaced with `/` | empty | none | Home list loaded |
 
 Device geolocation was not granted in the browser. Named-place geocoding was not exercised against the live places service.
+
+### Independent recheck (12 October 2026)
+
+A second session opened this branch on its own frontend at `http://localhost:5181`, with `VITE_API_URL=http://localhost:5181/api` and an uncommitted Vite proxy to the API already running on port 5000. The proxy file is `frontend/vite.proxy.config.ts`. It is not part of the feature and must not be committed. The page origin has to match that API URL (`localhost`, not `127.0.0.1`), because those are different browser origins.
+
+No product regression was found. The title staying on the restaurant name after Back to search is the known document-title bug (Work Package 3), not a search-state failure. A full reload of the results page restored the home title.
+
+| Action | Observed |
+| --- | --- |
+| Type `pizza` without Search | URL stayed `/`. Input stayed `pizza`. Both restaurants stayed listed. |
+| Check Meat | URL became `/?q=pizza&foodType=MEAT` in one step. Meat was checked. The list became the empty state. |
+| Search with only spaces | URL became `/?foodType=MEAT`. The input was empty. Meat stayed checked. Claimed Grill was the only result. `sessionStorage` `kosherradar-search-return` was `/?foodType=MEAT`. |
+| Open Claimed Grill, then Back to search | Details URL, then `/?foodType=MEAT` with Meat checked and Claimed Grill. |
+| Browser Back, then Forward | Restaurant page, then `/?foodType=MEAT` with Meat and Claimed Grill. |
+| Refresh results | `/?foodType=MEAT`, empty input, Meat checked, Claimed Grill. Tab title returned to the home title. |
+| List and Map | URL stayed `/?foodType=MEAT`. List still showed Claimed Grill. |
+| `/?nocache=1` | Replaced with `/`. Meat unchecked. Both restaurants listed. |
+| Hebrew query, then language switch | Search applied `/?q=%D7%A4%D7%99%D7%A6%D7%94`. One result, Pizza Place. After Hebrew, `dir` was `rtl`, the query and the word `פיצה` stayed, and the result line was Hebrew. |
+| Direct restaurant link | After clearing `kosherradar-search-return` and reloading the restaurant URL, Back to search pointed at `/`. |
 
 ## Tests
 
