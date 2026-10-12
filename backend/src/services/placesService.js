@@ -41,12 +41,16 @@ const toSuggestion = (result) => {
   };
 };
 
-const requestGeoapify = async (kind, text) => {
+// NEW (Milestone 5): `lang` asks Geoapify for a Hebrew or English place name when it has one.
+// A missing translation is left as Geoapify sent it. This code never invents a translated name.
+// חדש (אבן דרך 5): lang מבקש שם מקום בעברית או באנגלית כשיש כזה. לא ממציאים תרגום.
+const requestGeoapify = async (kind, text, lang = 'en') => {
   const url = new URL(ENDPOINTS[kind]);
   url.searchParams.set('text', text);
   url.searchParams.set('filter', 'countrycode:il');
   url.searchParams.set('limit', '5');
   url.searchParams.set('format', 'json');
+  url.searchParams.set('lang', lang === 'he' ? 'he' : 'en');
   url.searchParams.set('apiKey', env.geoapifyApiKey);
 
   const response = await fetch(url);
@@ -59,17 +63,33 @@ const requestGeoapify = async (kind, text) => {
   return (data.results || []).map(toSuggestion).filter(Boolean);
 };
 
-export const autocompleteAddressesService = async (text) => {
+export const autocompleteAddressesService = async (text, lang = 'en') => {
   if (!env.geoapifyApiKey) {
     return { available: false, suggestions: [] };
   }
 
   try {
-    const suggestions = await requestGeoapify('autocomplete', text);
+    const suggestions = await requestGeoapify('autocomplete', text, lang);
     return { available: true, suggestions };
   } catch (error) {
     console.error('Address search failed:', error.message);
     return { available: false, suggestions: [] };
+  }
+};
+
+// NEW (Milestone 5): one place for the public search location. A miss is null. Coordinates are never invented.
+// חדש (אבן דרך 5): מקום אחד למיקום החיפוש הציבורי. החטאה היא null. לא ממציאים קואורדינטות.
+export const geocodePlaceService = async (text, lang = 'en') => {
+  if (!env.geoapifyApiKey) {
+    return { available: false, place: null };
+  }
+
+  try {
+    const [place] = await requestGeoapify('search', text, lang);
+    return { available: true, place: place || null };
+  } catch (error) {
+    console.error('Place geocoding failed:', error.message);
+    return { available: false, place: null };
   }
 };
 
