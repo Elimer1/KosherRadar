@@ -34,6 +34,7 @@ vi.mock('../src/repositories/userRepository.js', () => ({
 vi.mock('../src/services/emailService.js', () => ({
   EMAIL_FAILED: 'FAILED',
   sendRejectionEmailService: vi.fn(),
+  sendApprovalEmailService: vi.fn().mockResolvedValue('SENT'),
 }));
 
 vi.mock('../src/services/imageUploadService.js', () => ({
@@ -59,7 +60,7 @@ import {
 } from '../src/repositories/adminTeudaRepository.js';
 import { removeTeudaFromReportsRepo } from '../src/repositories/adminReportRepository.js';
 import { awardPointsOnceRepo, findUserByIdRepo } from '../src/repositories/userRepository.js';
-import { sendRejectionEmailService } from '../src/services/emailService.js';
+import { sendApprovalEmailService, sendRejectionEmailService } from '../src/services/emailService.js';
 import { checkImageFile, deleteImageService, uploadTeudaImageService } from '../src/services/imageUploadService.js';
 import {
   approveTeudaService,
@@ -150,6 +151,7 @@ describe('approveTeudaService', () => {
     expect(result.alreadyApproved).toBe(false);
     expect(result.points).toMatchObject({ awarded: true, points: 2 });
     expect(awardPointsOnceRepo).toHaveBeenCalledWith('user-1', 'TEUDA:teuda-1', 2);
+    expect(sendApprovalEmailService).toHaveBeenCalledTimes(1);
   });
 
   it('gives +3 when the certificate was sent together with a new restaurant', async () => {
@@ -186,6 +188,7 @@ describe('approveTeudaService', () => {
     expect(result.alreadyApproved).toBe(true);
     expect(approvePendingTeudaRepo).not.toHaveBeenCalled();
     expect(result.points).toMatchObject({ awarded: false, reason: 'ALREADY_AWARDED' });
+    expect(sendApprovalEmailService).not.toHaveBeenCalled();
   });
 
   it('repairs a missing award when an approved certificate is approved again', async () => {

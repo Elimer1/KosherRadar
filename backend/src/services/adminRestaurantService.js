@@ -31,7 +31,7 @@ import { toAdminRestaurant, toAdminTeuda } from './adminSerializerService.js';
 import { findPossibleDuplicatesService } from './duplicateService.js';
 import { checkImageFile, deleteImageService, uploadTeudaImageService } from './imageUploadService.js';
 import { buildKashrutSummary, findConflictingTeudot } from './kashrutStatusService.js';
-import { notifyRejectionService } from './moderationNotificationService.js';
+import { notifyApprovalService, notifyRejectionService } from './moderationNotificationService.js';
 import { checkExpirationForAdmin } from './teudaRulesService.js';
 import { buildTeudaRecord } from './teudaSubmissionService.js';
 
@@ -212,6 +212,7 @@ export const approveRestaurantService = async ({ restaurantId }) => {
     throw appError('This restaurant was just handled by another admin. Please refresh.', 409);
   }
 
+  await notifyApprovalService({ submitterId: approved.submittedBy, kind: 'restaurant', subjectName: approved.name });
   return { restaurant: toAdminRestaurant(approved), alreadyApproved: false };
 };
 

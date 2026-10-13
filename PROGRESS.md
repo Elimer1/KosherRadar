@@ -620,6 +620,8 @@ Deferred: native-speaker review of Hebrew copy, including design strings and the
 
 ## NEXT AGENT ONBOARDING
 
+**Email milestone update:** EP-002 verified after EP-001 checkpoint `b3417b7`: backend `npm test` exit 0 / 42 files / 534 tests. Neutral response detached from account lookup/writes, safe failures, password confirmation and approval messages after successful saves, winner-only approval with admin skip, bcrypt UTF-8 bound. Next EP-003 frontend localization/privacy/forms and final checks. See `EMAIL_PASSWORD_MILESTONE_PROGRESS.md` for current handoff and FIX_TRACKER.md for limitations. No live email/database or migration.
+
 **Active override — Email/password recovery, 13 October 2026:** User explicitly requested this milestone after accepted V2 at verified main `dc5dc24`. Branch `feature/email-password-recovery`; preserve unrelated untracked `PRE_PUSH_REVIEW.md`. Read `EMAIL_PASSWORD_MILESTONE_PROGRESS.md` and FIX_TRACKER.md EP entries first; historical onboarding below is retained. EP-001 verified (22 mocked email tests, exit 0): Gmail/Nodemailer replaces actual Resend checkout, separate transport/templates/services, English/Hebrew HTML/text and trusted links, safe logs, EMAIL_SETUP.md. User's explicit Gmail requirement authorizes Nodemailer only and supersedes historical provider; PROJECT_SPEC.md unchanged. Next EP-002 recovery/notification integration, then EP-003 UX and full checks. No main merge/push/deploy/live email/data. New Hebrew requires native review.
 **Accepted V2 merge into local main — 13 October 2026 (current handoff; supersedes historical worktree instructions below)**
 

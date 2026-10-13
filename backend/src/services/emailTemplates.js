@@ -48,7 +48,7 @@ const copy = {
     changedBody: 'הסיסמה שלכם שונתה וההתחברויות הקודמות בוטלו.',
     warning: 'אם לא ביצעתם את השינוי, בקשו מיד איפוס סיסמה.',
     recovery: 'בקשת איפוס סיסמה',
-    kinds: { restaurant: 'הגשת המסעדה', certificate: 'הגשת תעודת הכשרות', report: 'הדיווח' },
+    kinds: { restaurant: 'הגשת המסעדה', certificate: 'הגשת תעודת הכשרות', report: 'הגשת הדיווח' },
     rejected: (kind) => `${kind} שלכם ב־KosherRadar לא אושרה`,
     rejectedBody: (kind, name) => `תודה על התרומה שלכם. ${kind} עבור ״${name}״ לא אושרה.`,
     reason: 'סיבה', correction: 'אפשר להגיש מידע מתוקן.',

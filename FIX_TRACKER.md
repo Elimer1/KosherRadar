@@ -10,9 +10,9 @@ Counts below are derived from the issue statuses in this file.
 | ALREADY WORKING | 8 |
 | BLOCKED | 5 |
 | DEFERRED | 1 |
-| VERIFIED | 14 |
+| VERIFIED | 15 |
 | Other | 0 |
-| **Total** | **41** |
+| **Total** | **42** |
 
 ## Priority bands (12 October 2026)
 
@@ -49,6 +49,7 @@ QA-001 and QA-002 were found on 12 October 2026 while checking `feature/qa-testi
 | ID | Milestone | Priority | Status | Class |
 | --- | --- | --- | --- | --- |
 | EP-001 | Email/password recovery (explicit request) | High | VERIFIED | Delivery/templates |
+| EP-002 | Email/password recovery (explicit request) | High | VERIFIED | Recovery and notification safety |
 | M1-001 | 1 Restaurant and certificate submission | Critical | VERIFIED | Confirmed bug |
 | M1-002 | 1 Restaurant and certificate submission | Critical | VERIFIED | UX improvement |
 | M1-003 | 1 Restaurant and certificate submission | Critical | VERIFIED | Reliability risk |
@@ -737,6 +738,17 @@ Priority: High before launch
 ---
 
 ## Audit session record
+
+### EP-002 — Recovery privacy and saved-decision notifications
+
+- **Milestone:** Email/password recovery, 13 October 2026.
+- **Priority/status:** High / VERIFIED.
+- **Evidence/root cause:** forgotPasswordController awaited account lookup/token writes and said mail was sent; no confirmation/approval notifications. resetPasswordService threw if cleanup failed after password save. Shared new-password validation limited characters, not bcrypt's UTF-8 byte length.
+- **Relevant files/solution:** Auth controller/routes/schemas, reset service, moderation notification service, restaurant/certificate approval services. Return neutral response without awaiting account processing; sanitize detached failures, no-store recovery responses, enforce 72 UTF-8 bytes, keep existing 60-minute hashed random tokens, atomic consume/release and tokenVersion invalidation. Best-effort password-changed email and cleanup. Approval mail only for winning PENDING transition, skip admins and retries; public rejection data only. Points/authority rules unchanged.
+- **Files changed:** Those backend files; emailTemplates.js (Hebrew report grammar); passwordResetService/RoutesHttp, adminRestaurant/Teuda test files; new passwordResetRepository.test.js and moderationNotificationService.test.js; tracking notes.
+- **Tests:** Route response parity for known/unknown/processing failure; response while lookup pending; actual five-per-IP limiter; bcrypt multibyte bound; atomic expiration/unused filter; modeled concurrent winner; confirmation and saved-approval delivery failures; no repeated approval mail. Existing JWT/session tests retained. Updated cleanup-failure expectation because saved passwords now correctly report success; retained failed-write release assertions.
+- **Verification:** targeted eight-file run exit 0 / 94 tests; expanded routes exit 0 / 10 tests; full `cd backend; npm test` exit 0 / 42 files / 534 tests. Gmail/database mocked, local HTTP used. Backend has no build/lint/typecheck scripts. Frontend/browser pending EP-003.
+- **Limitations:** In-process background recovery can be lost on process termination (no durable queue). IP limiter is single-process memory; distributed/email-wide throttling is not implemented. MongoDB atomic filter is inspected/mocked, not verified on a live database. Crash between token consumption and save can still burn a link; release failure also can. Concurrent issuance of distinct links is not serialized. Delivery has no durable retry/outbox, intentionally avoids duplicate retries. No migrations/backfills or auth-storage change.
 
 ### EP-001 — Gmail transport and branded bilingual email
 
