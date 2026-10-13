@@ -780,3 +780,53 @@ User accepted V2 and authorized local-main promotion. No new identified issue or
 Actual post-merge main commands: frontend `npm run lint`, `npm run typecheck`, `npm test` (26 files / 158 passed), `npm run build`; backend `npm test` (40 files / 505 passed); `git -c core.whitespace=cr-at-eol diff 5393037 HEAD --check`: all exit 0. Backend has no lint/typecheck/build scripts. Existing bundle warning persists (JS 766.92 kB). Tests mocked; no live database/services, production data, email or upload. No browser rerun; prior accepted browser evidence remains in integration worktree. Public trust terminology, moderation and administrator authority/zero-point rules unchanged. Native-speaker Hebrew review and live-service/production-readiness issues remain as tracked.
 
 Only post-merge documentation files updated: this file, PROGRESS.md, REDESIGN_INTEGRATION_PROGRESS.md. Main's untracked PRE_PUSH_REVIEW.md preserved unchanged and excluded from commit. No source branch/worktree edit, push, deploy, branch/worktree deletion, reset or clean. Exact next step: stop; accepted local merge complete.
+## Agent 1 admin authority and data integrity ? 13 October 2026
+
+Explicit request authorizes this assigned batch, including the listed historical LATER integrity risks.
+
+### A1-001 / SEC-002 ? Administrator public submissions
+- **Milestone:** Agent 1 admin authority and data integrity.
+- **Priority:** P1.
+- **Status:** VERIFIED.
+- **Evidence/root cause:** Both public endpoints accept ADMIN; services hardcode PENDING. Existing restaurant test explicitly expects that obsolete behavior.
+- **Relevant files/solution:** Public routes and services reject ADMIN before upload/persistence; navigation and bookmarked forms redirect to existing full-validation admin forms. USER moderation preserved.
+- **Files changed:** userSubmissionMiddleware, public submission services/routes, Navbar, RestaurantActions, App, UserSubmissionRoute and regression tests; isolated runner/authority integration test.
+- **Tests:** Replace obsolete ADMIN-PENDING expectation because the explicit business requirements prohibit it; retain ordinary-user/admin validation/zero-point cases.
+- **Verification:** Backend targeted npm test (4 files / 88 tests), HTTP npm test (1 file / 2 tests), frontend npm test -- src/components/UserSubmissionRoute.test.tsx (4 tests), npm run lint/typecheck/build, disposable database node integration/runAgent1Isolated.mjs --run-isolated (1 real MongoDB test): all exit 0. Existing ~767 kB build warning. Backend has no build/lint/typecheck scripts. Browser not run; external services not called. First isolated test failed because assertion used contributionPoints instead of actual points; corrected test field and rerun passed. Sandbox cache/listener restrictions required approved escalated check runs.
+- **Blockers/limitations:** No browser/live-service verification. No Hebrew strings changed.
+
+### A1-002 / SEC-001 ? Premature correction awards
+- **Milestone:** Agent 1 admin authority and data integrity.
+- **Priority:** P1.
+- **Status:** NOT STARTED.
+- **Evidence/root cause:** RESOLVED/correctionApplied is written before proposal application; concurrent retry/process interruption can award prematurely.
+- **Relevant files/solution:** Investigate adminReportService, adminReportRepository, pointsService and existing database/test infrastructure for atomic completion/recovery.
+- **Files changed/tests/verification:** None yet.
+- **Blockers:** Replica-set assumptions need inspection.
+
+### A1-R1 / SEC-010 ? Partial database deletion and creation compensation
+- **Milestone:** Agent 1 admin authority and data integrity.
+- **Priority:** P1.
+- **Status:** NOT STARTED.
+- **Evidence/root cause:** Separate database writes and best-effort compensation (M5-001/M5-002).
+- **Relevant files/solution:** Investigate adminRestaurantService, adminTeudaService, restaurantSubmissionService; separate database atomicity from external cleanup.
+- **Files changed/tests/verification:** None yet.
+- **Blockers/limitations:** No production operations authorized.
+
+### A1-R2 ? Pending certificates after rejection
+- **Milestone:** Agent 1 admin authority and data integrity.
+- **Priority:** P1.
+- **Status:** NOT STARTED.
+- **Evidence/root cause:** Restaurant rejection precedes best-effort certificate rejection.
+- **Relevant files/solution:** Investigate adminRestaurantService/repositories for atomic or retryable behavior.
+- **Files changed/tests/verification:** None yet.
+- **Blockers/limitations:** None identified yet.
+
+### A1-R4 ? Unique-index enforcement
+- **Milestone:** Agent 1 admin authority and data integrity.
+- **Priority:** P1.
+- **Status:** NOT STARTED.
+- **Evidence/root cause:** Declarations need checking against initialization assumptions.
+- **Relevant files/solution:** Review models, database initialization, isolated harnesses; no application-data index migration.
+- **Files changed/tests/verification:** None yet.
+- **Blockers:** No approved application database.

@@ -1,4 +1,5 @@
 import { appError } from '../utils/appError.js';
+import { assertUserSubmission } from '../middleware/userSubmissionMiddleware.js';
 import { normalizeText } from '../utils/normalizeText.js';
 import {
   createRestaurantRepo,
@@ -69,6 +70,7 @@ const pendingRestaurantConflict = () =>
 // A signed-in user proposes a new restaurant, optionally with its first certificate.
 // Everything starts as PENDING: only an admin can approve, and the user never chooses status or points.
 export const submitRestaurantService = async ({ restaurantData, teudaData, file, user, lang }) => {
+  assertUserSubmission(user);
   const evidence = hasCertificateEvidence(teudaData, file) ? withoutUserKashrutLevel(teudaData) : null;
 
   if (file && !evidence?.hechsher) {

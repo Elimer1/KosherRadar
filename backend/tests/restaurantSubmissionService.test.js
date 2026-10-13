@@ -94,13 +94,18 @@ describe('submitRestaurantService', () => {
     expect(uploadTeudaImageService).not.toHaveBeenCalled();
   });
 
-  it('forces PENDING even for an admin user (approval belongs to the moderation workflow)', async () => {
-    await submitRestaurantService({
+  it('rejects administrators before any upload or database access', async () => {
+    await expect(submitRestaurantService({
       restaurantData: { ...restaurantData(), status: 'APPROVED' },
+      teudaData: teudaData(),
+      file,
       user: { _id: 'admin-1', role: 'ADMIN' },
-    });
+    })).rejects.toMatchObject({ statusCode: 403 });
 
-    expect(createRestaurantRepo.mock.calls[0][0].status).toBe('PENDING');
+    expect(createRestaurantRepo).not.toHaveBeenCalled();
+    expect(createTeudaRepo).not.toHaveBeenCalled();
+    expect(uploadTeudaImageService).not.toHaveBeenCalled();
+    expect(geocodeAddressService).not.toHaveBeenCalled();
   });
 
   it('saves a pending teuda marked as sent with a new restaurant', async () => {

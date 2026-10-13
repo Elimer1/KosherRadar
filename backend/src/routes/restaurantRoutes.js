@@ -11,6 +11,7 @@ import {
   searchRestaurantsController,
 } from '../controllers/publicRestaurantController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
+import { userSubmissionMiddleware } from '../middleware/userSubmissionMiddleware.js';
 import { parseJsonFields } from '../middleware/parseJsonFields.js';
 import {
   submissionRateLimiter,
@@ -50,6 +51,7 @@ router.get(
 router.post(
   '/',
   authMiddleware,
+  userSubmissionMiddleware,
   submissionRateLimiter,
   uploadPhotoMiddleware,
   optionalUploadRateLimiter,
@@ -70,6 +72,7 @@ router.get(
 router.post(
   '/:restaurantId/teudot',
   authMiddleware,
+  userSubmissionMiddleware,
   validateObjectIdParam('restaurantId'),
   submissionRateLimiter,
   uploadPhotoMiddleware,

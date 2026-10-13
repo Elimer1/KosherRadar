@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { appError } from '../utils/appError.js';
+import { assertUserSubmission } from '../middleware/userSubmissionMiddleware.js';
 import { dateOnlyToDate, dateToDateOnly } from '../utils/israelDate.js';
 import { findRestaurantByIdRepo } from '../repositories/restaurantRepository.js';
 import {
@@ -146,6 +147,7 @@ export const buildTeudaRecord = ({
 // A user can add a teuda only to an approved restaurant. The new teuda is PENDING and does not
 // touch any approved teuda until an admin approves it.
 export const submitTeudaService = async ({ restaurantId, teudaData, file, user }) => {
+  assertUserSubmission(user);
   const restaurant = await findRestaurantByIdRepo(restaurantId);
 
   if (!restaurant || restaurant.status !== 'APPROVED') {

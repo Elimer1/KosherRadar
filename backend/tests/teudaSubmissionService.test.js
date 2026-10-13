@@ -60,6 +60,14 @@ describe('submitTeudaService', () => {
 
   afterEach(() => vi.useRealTimers());
 
+  it('rejects administrator submissions before database access or upload', async () => {
+    await expect(submitTeudaService({ restaurantId: 'rest-1', teudaData: teudaData(), file,
+      user: { _id: 'admin-1', role: 'ADMIN' } })).rejects.toMatchObject({ statusCode: 403 });
+    expect(findRestaurantByIdRepo).not.toHaveBeenCalled();
+    expect(createTeudaRepo).not.toHaveBeenCalled();
+    expect(uploadTeudaImageService).not.toHaveBeenCalled();
+  });
+
   it('saves a PENDING teuda owned by the logged-in user', async () => {
     const result = await submitTeudaService({
       restaurantId: 'rest-1',
