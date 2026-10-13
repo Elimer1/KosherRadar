@@ -3,6 +3,7 @@ import { HECHSHER_VALUES } from '../config/constants.js';
 import {
   dateOnlyField,
   dropOtherTextUnlessOther,
+  optionalHechsherOtherField,
   phoneField,
   requireOtherTextWhenOther,
 } from './commonSchemas.js';
@@ -15,7 +16,7 @@ const emptyToUndefined = (value) => (value === '' || value === null ? undefined 
 export const pendingEvidenceSchema = z
   .object({
     hechsher: z.enum(HECHSHER_VALUES, 'Choose a hechsher'),
-    hechsherOther: z.string().trim().min(1).max(100).optional(),
+    hechsherOther: optionalHechsherOtherField,
     expirationDate: z.preprocess(emptyToUndefined, dateOnlyField.optional()),
     mashgiachName: z.preprocess(emptyToUndefined, z.string().trim().min(1).max(100).optional()),
     mashgiachPhone: z.preprocess(emptyToUndefined, phoneField.optional()),
