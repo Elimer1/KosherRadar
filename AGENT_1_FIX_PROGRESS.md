@@ -35,3 +35,59 @@ Historical M5-001/M5-003/M5-004 statuses reconciled to VERIFIED with current A1 
 Integration considerations: public restaurant/teuda endpoints now reject ADMIN (403); route bookmarked forms to existing admin pages. Public USER moderation and certificate-validation requirements remain. Changed shared submission/image cleanup services may overlap Agent 3 backend work; preserve transaction/parent-write guards and response behavior when integrating. Agent 2 search/geocoding and Agent 4 password/auth/email code were not modified. config/db startup now requires approved indexes for all models, including password-reset hash and the new cleanup collection. Deletion responses add imageCleanup counts; frontend callers can continue ignoring the additive field. MongoDB replica-set/sharded support is required for transaction-dependent paths. No merge, push or deploy.
 
 Remaining limitations: live Atlas/Cloudinary/Resend/Geoapify and browser journeys unverified; native-speaker review and existing bundle warning remain tracked. Historical inconsistent reports/awards/rejections need separately approved data inspection/repair. Upload-before-durable-record crash window remains; uncertain commit retains uploads for reconciliation. Standalone MongoDB fails closed with explicit 503 on transactional paths. Application startup rejects missing unique indexes; obtain approval before target provisioning. Stop after final checkpoint/handoff; all assigned code issues verified.
+
+## Final checkpoints and changed files
+
+- 37725fc fix(a1-r4): verify unique-index enforcement before accepting requests
+- 6faa1a2 fix(a1-r2): reject restaurants and pending certificates atomically
+- 351f9d6 fix(a1-r1): preserve database integrity across cascades and creation failures
+- b106482 fix(a1-002): commit report corrections and awards atomically
+- af86d50 fix(a1-001): separate authoritative admin creation from public submissions
+
+- `AGENT_1_FIX_PROGRESS.md`
+- `FIX_TRACKER.md`
+- `PROGRESS.md`
+- `README.md`
+- `backend/integration/agent1Authority.integration.mjs`
+- `backend/integration/agent1Corrections.integration.mjs`
+- `backend/integration/agent1Indexes.integration.mjs`
+- `backend/integration/agent1Integrity.integration.mjs`
+- `backend/integration/agent1Rejection.integration.mjs`
+- `backend/integration/runAgent1Isolated.mjs`
+- `backend/scripts/provisionIntegrityIndexes.js`
+- `backend/scripts/retryImageCleanup.js`
+- `backend/scripts/verifyIntegrityIndexes.js`
+- `backend/src/config/db.js`
+- `backend/src/middleware/userSubmissionMiddleware.js`
+- `backend/src/models/ImageCleanup.js`
+- `backend/src/models/Restaurant.js`
+- `backend/src/repositories/imageCleanupRepository.js`
+- `backend/src/repositories/indexIntegrityRepository.js`
+- `backend/src/repositories/restaurantIntegrityRepository.js`
+- `backend/src/repositories/transaction.js`
+- `backend/src/routes/restaurantRoutes.js`
+- `backend/src/services/adminReportService.js`
+- `backend/src/services/adminRestaurantService.js`
+- `backend/src/services/adminTeudaService.js`
+- `backend/src/services/imageCleanupService.js`
+- `backend/src/services/imageUploadService.js`
+- `backend/src/services/reportSubmissionService.js`
+- `backend/src/services/restaurantSubmissionService.js`
+- `backend/src/services/teudaSubmissionService.js`
+- `backend/tests/adminReportService.test.js`
+- `backend/tests/adminRestaurantService.test.js`
+- `backend/tests/adminTeudaService.test.js`
+- `backend/tests/imageUpload.test.js`
+- `backend/tests/qaPendingCertificateIdentity.test.js`
+- `backend/tests/reportSubmissionService.test.js`
+- `backend/tests/restaurantSubmissionService.test.js`
+- `backend/tests/teudaSubmissionService.test.js`
+- `backend/tests/transaction.test.js`
+- `backend/tests/userSubmissionRoutesHttp.test.js`
+- `frontend/src/App.tsx`
+- `frontend/src/components/Navbar.tsx`
+- `frontend/src/components/UserSubmissionRoute.test.tsx`
+- `frontend/src/components/UserSubmissionRoute.tsx`
+- `frontend/src/components/details/RestaurantActions.tsx`
+
+Final code HEAD 37725fc; the subsequent documentation checkpoint records hashes/file inventory only. Assigned batch complete; stop. Worktree was clean after code checkpoints. No merge, push or deployment.
