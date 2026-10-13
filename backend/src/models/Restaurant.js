@@ -77,6 +77,7 @@ const restaurantSchema = new mongoose.Schema(
     // Lookup copies used by the duplicate check. Always derived from name, address and phone.
     nameNormalized: { type: String, index: true },
     addressNormalized: { type: String },
+    cityNormalized: { type: String },
     phoneNormalized: { type: String },
 
     // NEW (Milestone 4): search copies, always derived from the names and the food keywords (see utils/searchFields.js).
@@ -98,6 +99,7 @@ restaurantSchema.pre('validate', function syncDerivedFields() {
 
   this.nameNormalized = normalizeText(this.name);
   this.addressNormalized = normalizeText(this.address);
+  this.cityNormalized = normalizeText(this.city);
   this.phoneNormalized = normalizePhone(this.phone) || undefined;
 
   // NEW (Milestone 4): rebuild the search copies on every save, so an admin edit keeps search correct.
@@ -125,11 +127,11 @@ restaurantSchema.index({ submittedBy: 1 });
 // החיפוש בשירות אינו אטומי. האינדקס דוחה את ההכנסה המקבילה שמפסידה.
 // שורות מאושרות ונדחות נשארות מחוץ לאינדקס, כדי שאפשר לשלוח שוב אחרי החלטה.
 restaurantSchema.index(
-  { submittedBy: 1, nameNormalized: 1, addressNormalized: 1 },
+  { submittedBy: 1, nameNormalized: 1, addressNormalized: 1, cityNormalized: 1 },
   {
     unique: true,
-    partialFilterExpression: { status: 'PENDING' },
-    name: 'pending_submitter_name_address',
+    partialFilterExpression: { status: 'PENDING', cityNormalized: { $type: 'string' } },
+    name: 'pending_submitter_name_address_city',
   }
 );
 // NEW (Milestone 4): multikey indexes behind the public search (anchored prefix matches use them).

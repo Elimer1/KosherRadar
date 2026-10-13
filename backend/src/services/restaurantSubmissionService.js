@@ -85,6 +85,7 @@ export const submitRestaurantService = async ({ restaurantData, teudaData, file,
     submittedBy: user._id,
     nameNormalized: normalizeText(restaurantData.name),
     addressNormalized: normalizeText(restaurantData.address),
+    cityNormalized: normalizeText(restaurantData.city),
   });
 
   if (alreadySent) {

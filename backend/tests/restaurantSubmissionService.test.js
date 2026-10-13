@@ -94,6 +94,11 @@ describe('submitRestaurantService', () => {
     expect(uploadTeudaImageService).not.toHaveBeenCalled();
   });
 
+  it('passes normalized locality to pending duplicate detection', async () => {
+    await submitRestaurantService({ restaurantData: { ...restaurantData(), city: '  TEL AVIV! ' }, user });
+    expect(findPendingRestaurantBySubmitterRepo).toHaveBeenCalledWith(expect.objectContaining({ cityNormalized: 'tel aviv' }));
+  });
+
   it('forces PENDING even for an admin user (approval belongs to the moderation workflow)', async () => {
     await submitRestaurantService({
       restaurantData: { ...restaurantData(), status: 'APPROVED' },

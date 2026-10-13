@@ -858,15 +858,15 @@ Explicit user assignment supersedes historical stop instructions for this worktr
 
 - **Milestone:** Agent 2 search/location reliability.
 - **Priority:** P1/P2 per assignment.
-- **Status:** NOT STARTED
+- **Status:** VERIFIED
 - **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
-- **Root cause:** Pending investigation.
-- **Relevant files/functions:** Assigned search/location files in pasted request.
+- **Root cause:** pending lookup and unique index identify submitter/name/address without locality.
+- **Relevant files/functions:** Restaurant prevalidate/index; restaurantRepository.findPendingRestaurantBySubmitterRepo; restaurantSubmissionService.
 - **Planned solution:** Focused compatible fix with mocked regressions.
-- **Files changed:** None yet.
-- **Tests added or modified:** Pending verification.
-- **Verification:** Not run yet.
-- **Blockers/limitations:** No live service/data testing authorized.
+- **Files changed:** Restaurant.js; restaurantRepository.js; restaurantSubmissionService.js; models/submission/pending-identity tests; SEARCH_LOCATION_INDEX_ROLLOUT.md.
+- **Tests added or modified:** normalized city derived, city-aware index, preflight city argument, distinct-city legacy rows allowed and same-city legacy rows detected.
+- **Verification:** backend npm test -- tests/restaurantPendingIdentity.test.js tests/restaurantSubmissionService.test.js tests/models.test.js exit 0, 3 files/34 passed. Backend has no lint/typecheck/build. Mocked queries and in-memory model validation only; live uniqueness/index replacement not tested.
+- **Blockers/limitations:** Existing DB requires approved replacement of pending_submitter_name_address with pending_submitter_name_address_city. No database/index operations performed; old index will still block cross-city branches until replaced. Read-time legacy normalization avoids a required record backfill. Partial new index excludes missing legacy cityNormalized; use coordinated single-version rollout. Rollback old broader index may fail after legitimate cross-city submissions; never delete records to resolve that. Review SEARCH_LOCATION_INDEX_ROLLOUT.md before deployment.
 
 ### SEARCH-008 ? City search versus precise address geocoding
 
