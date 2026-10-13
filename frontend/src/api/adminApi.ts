@@ -68,8 +68,8 @@ export const searchRestaurants = async (search: string, status: string, page: nu
   return response.data;
 };
 
-export const getRestaurantDetails = async (restaurantId: string) => {
-  const response = await api.get<AdminRestaurantDetails>(`/admin/restaurants/${restaurantId}`);
+export const getRestaurantDetails = async (restaurantId: string, signal?: AbortSignal) => {
+  const response = await api.get<AdminRestaurantDetails>(`/admin/restaurants/${restaurantId}`, { signal });
   return response.data;
 };
 

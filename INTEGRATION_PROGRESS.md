@@ -1,5 +1,43 @@
 # Completed-agent integration — 13 October 2026
 
+## Current P1 integration - 13 October 2026 (supersedes historical promotion authorizations)
+
+**Conditional promotion follow-up - 13 October 2026:** User now approves merging the verified branch into main and normally pushing origin/main only after confirming the push will not trigger automatic deployment. Read-only fetch succeeds; actual local main and fetched origin/main both remain 1931d4557ea5d197276fa669a66b3e2d9f7981a5. Integration remained exactly 1a638ff3bf847203e87b3673acf23b4f1f6ee65c, clean, with only the two expected fix commits and its tracking checkpoint beyond main; no unexpected application changes.
+
+Public GitHub REST checks returned zero Actions workflows, zero deployments and zero check runs on latest main; connector combined statuses are empty. Tracked main has no .github workflows or recognized hosting/deployment configuration. GitHub connector rejects repository hooks/workflow-list URLs as unsupported endpoints; public queries cannot inspect authenticated webhook/GitHub App/provider auto-deploy settings. Therefore absence of deployment history/configuration does not establish that this push is deployment-free. Stopped before merge/push; no external setting changed or deployment performed. Need repository-owner/provider confirmation that main-triggered deployment integrations are absent or disabled, or authorized read-only access to those settings. Conditional promotion authorization persists; once this prerequisite is established, fetch/reconcile again, merge without rewriting history, push normally and confirm hashes/clean tree. Previous tests remain evidence for unchanged application; no rerun claimed. Only PROGRESS.md and this report changed for the blocked handoff.
+
+User authorized review, preparation and verification only. No main merge, push, deployment, existing database/index operation, migration or other-agent worktree modification is authorized. This section supersedes the older authorization and unresolved-P1 statements below; those remain historical records.
+
+Clean starting integration checkout was on main at 1931d4557ea5d197276fa669a66b3e2d9f7981a5. `git fetch origin` succeeded after a shared-Git-metadata sandbox permission retry; fetched origin/main equals local main. Created integration/p1-security-admin-navigation from origin/main. Each source branch has exactly one commit outside main; no additional dependency commits required.
+
+| Fix | Exact source | Integrated cherry-pick (-x) |
+| --- | --- | --- |
+| SEC-006 | fb31498da640d1686fd669726106093addbff0af | 4a958dc |
+| UIAUD-001 | 587bac18bc02c0ff68dbf6eb8bf839462d44b060 | c454188 |
+
+Both cherry-picks completed without conflicts. Reviewed application and regression diffs, affected repositories/services/models, JWT validation and public-user mapping, real API serialization and route/card lifetimes, isolation runner and browser interception. No unresolved implementation issue found. Backend changes match SEC-006 source; frontend changes match UIAUD-001 except the previously integrated ADMINCERT-001 blank hechsherOther serialization remains intact. Existing certificate authority, required OTHER validation, points, kashrut labels, translations, localStorage authentication, package manifests/lockfiles and database index declarations are unchanged by this batch. No added dependency or UI copy; existing Hebrew review remains outstanding.
+
+SEC-006 uses hidden optional account hash/expiry fields and one conditional majority-acknowledged password/authority/tokenVersion write. Issuance compares the captured credential epoch; expired, superseded, consumed and old collection links fail closed. Removing cleanup/compensation removes the account-authority gap. Existing accounts need no migration/backfill; no new index is required for correctness. UIAUD-001 keys editor/creator state by route, validates loaded identity, aborts/invalidates reads and guards detached mutations/completions; payload builders capture the original inputs synchronously. Existing certificate serialization was inspected and its regressions passed in the combined suite.
+
+| Actual verification command | Directory | Exit/result |
+| --- | --- | --- |
+| npm test | backend | 0; 51 files, 684 passed |
+| node integration/runAgent1Isolated.mjs --run-isolated passwordResetConcurrency.integration.mjs passwordResetAudit.integration.mjs | backend | 0; 16 passed, 0 failed |
+| npm test | frontend | 0; 39 files, 246 passed (19 navigation regressions included) |
+| npm run lint | frontend | 0; no lint warnings |
+| npm run typecheck | frontend | 0 |
+| npm run build | frontend | 0; existing >500 kB bundle warning |
+| node scripts/reviewAdminNavigation.mjs | root | 0; four production-build Chrome scenarios, zero exceptions |
+| git -c core.whitespace=cr-at-eol diff main...HEAD --check | root | 0 |
+
+Initial frontend test and typecheck attempts exited 1 due to sandbox EPERM writing generated Vite/TypeScript metadata; authorized retries passed without source/config/test modifications. Backend has no build/lint/typecheck scripts. Existing non-failing jsdom document-navigation diagnostic and Mongoose `new` deprecation warnings remain.
+
+Real database verification was limited to a newly created temporary loopback MongoDB 7 replica set with its own ephemeral port/path and validated cleanup. The runner supplies no application URI/credentials and disables email. Tests cover real concurrent account writes, separate processes, legacy compatibility, expiry, JWT invalidation and synthetic before/after-write acknowledgement failures; they do not prove multi-node failover. No existing MongoDB data/index was touched. Unit HTTP/services/uploads/email use mocks. Chrome uses synthetic fixtures, intercepts every API write and blocks nonlocal traffic: delayed B cannot expose A actions, normal B save uses B endpoint/payload, failed B leaves no A form, and late A Save preserves B draft. No live external integration was tested.
+
+Remaining operational risks: old recovery links require a fresh request; all recovery backends must run fixed code together, mixed old/new writers are unsafe. Rollback must disable recovery rather than restore the vulnerable implementation; preserve optional fields and legacy collection. A lost acknowledgement may leave a changed password while returning an error, with no compensating authority restoration. Reset hash lookup scans User; a performance index requires separate review/approval. UI route navigation intentionally discards unsaved drafts; accepted writes remain bound to their original record. Live Geoapify rendering, other live services, native Hebrew review and existing release/database gates remain unresolved; this is no production approval.
+
+Documentation checkpoint updates this report, FIX_TRACKER.md (derived counts: 68 issues, 44 VERIFIED, 1 DEFERRED), PROGRESS.md current onboarding and release checklist. Original source progress reports are retained unchanged. Exact next step: STOP and request explicit approval for a history-preserving main merge and normal push. If approved later, fetch/reconcile main again and reverify any intervening application changes before promotion. Do not resume historical automatic-push instructions. Retrieve final checkpoint with `git rev-parse integration/p1-security-admin-navigation`.
+
 ## Scope and baseline
 
 Local integration only in `C:/FS/projects/KosherRadar-integration`, branch `integration/agent-fixes`. Clean starting HEAD and local main: `dc5dc24aab5ecac8701fd5083238d4de9f75a5b7`, descending from accepted V2 merge `406dd65`. No main merge, push, deployment, source branch/worktree edits, existing database operations or live external services authorized.

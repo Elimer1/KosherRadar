@@ -1,35 +1,30 @@
-// NEW (Milestone 3): database operations for password reset tokens. Only the SHA-256 hash of a token is
-// stored, never the token itself, so a leaked database cannot be used to reset anyone's password.
-// חדש (אבן דרך 3): פעולות מסד נתונים לטוקני איפוס סיסמה. נשמר רק ה-hash של הטוקן, לעולם לא הטוקן עצמו.
-import { PasswordResetToken } from '../models/PasswordResetToken.js';
+// NEW (SEC-006): recovery authority lives beside the password, independent of token cleanup.
+// חדש (SEC-006): סמכות האיפוס נשמרת לצד הסיסמה ואינה תלויה בניקוי טוקנים.
+import { User } from '../models/User.js';
 
-export const createResetTokenRepo = async ({ userId, tokenHash, expiresAt }) => {
-  return PasswordResetToken.create({ user: userId, tokenHash, expiresAt });
-};
-
-// Removes every token of the user that was not used yet, so only the newest link works.
-// מוחק כל טוקן של המשתמש שלא נוצל, כך שרק הקישור האחרון עובד.
-export const deleteUnusedResetTokensRepo = async (userId) => {
-  return PasswordResetToken.deleteMany({ user: userId, usedAt: null });
-};
-
-// Marks a valid token as used in ONE atomic update. If two requests arrive together with the same token,
-// only one of them gets the document back; the other gets null. Returns null for unknown, used or expired tokens.
-// מסמן טוקן תקף כמנוצל בעדכון אטומי אחד. אם שתי בקשות מגיעות יחד, רק אחת מקבלת את המסמך. null לטוקן לא תקף.
-export const consumeResetTokenRepo = async (tokenHash, now) => {
-  return PasswordResetToken.findOneAndUpdate(
-    { tokenHash, usedAt: null, expiresAt: { $gt: now } },
-    { usedAt: now },
-    { new: true }
+// NEW (SEC-006): a credential epoch guard prevents issuance delayed across a password change.
+// חדש (SEC-006): בדיקת גרסת האישורים מונעת הנפקה מאוחרת לאחר שינוי סיסמה.
+export const authorizeResetTokenRepo = async ({ userId, tokenVersion, tokenHash, expiresAt }) => {
+  const epoch = tokenVersion === 0
+    ? { $or: [{ tokenVersion: 0 }, { tokenVersion: { $exists: false } }] }
+    : { tokenVersion };
+  return User.findOneAndUpdate(
+    { _id: userId, ...epoch },
+    { $set: { resetTokenHash: tokenHash, resetTokenExpiresAt: expiresAt } },
+    { new: true, writeConcern: { w: 'majority' } },
   );
 };
 
-// NEW (Audit M5): make a consumed link usable again when the new password was not saved.
-// חדש (ביקורת M5): מחזיר קישור שסומן כמנוצל לשימוש, כשהסיסמה החדשה לא נשמרה.
-export const releaseResetTokenRepo = async (tokenId) => {
-  return PasswordResetToken.findOneAndUpdate(
-    { _id: tokenId, usedAt: { $ne: null } },
-    { $set: { usedAt: null } },
-    { new: true }
+// NEW (SEC-006): authority, server-time expiry, password and session invalidation are ONE write.
+// חדש (SEC-006): סמכות, תוקף לפי זמן השרת, סיסמה וביטול סשנים מתבצעים בכתיבה אחת.
+export const resetAuthorizedPasswordRepo = async (tokenHash, passwordHash) => {
+  return User.findOneAndUpdate(
+    { resetTokenHash: tokenHash, $expr: { $gt: ['$resetTokenExpiresAt', '$$NOW'] } },
+    {
+      $set: { passwordHash },
+      $unset: { resetTokenHash: 1, resetTokenExpiresAt: 1 },
+      $inc: { tokenVersion: 1 },
+    },
+    { new: true, writeConcern: { w: 'majority' } },
   );
 };
