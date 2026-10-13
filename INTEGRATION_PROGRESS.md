@@ -4,6 +4,12 @@
 
 Local integration only in `C:/FS/projects/KosherRadar-integration`, branch `integration/agent-fixes`. Clean starting HEAD and local main: `dc5dc24aab5ecac8701fd5083238d4de9f75a5b7`, descending from accepted V2 merge `406dd65`. No main merge, push, deployment, source branch/worktree edits, existing database operations or live external services authorized.
 
+## Final result
+
+All five sources are integrated with preserved histories. Full available automated checks pass. One confirmed integration defect (INT-001) is fixed and verified. SEC-006 remains a confirmed pre-existing production release blocker; it was assessed and documented within the requested scope. Local integration is complete, but this is not approval for production or an unconditional recommendation to merge main.
+
+Final application fix: `7cdc1fb`. Final handoff HEAD is the commit containing this document; retrieve its exact hash with `git rev-parse integration/agent-fixes`. The user-facing final report records that exact hash after committing. No source history was squashed or rewritten.
+
 ## Frozen source tips
 
 | Source | Exact tip | Expected checkpoint |
@@ -18,9 +24,9 @@ All source branches start from the baseline. Email verification descends from th
 
 ## Current position
 
-Preflight complete; no merges yet. Existing dependency directories are being copied into this checkout from source worktrees without package installation or source edits. Integrated Nodemailer is already an explicitly authorized source dependency.
+Local integration COMPLETE. All five source histories are incorporated; verified application fix INT-001 at 7cdc1fb. Final handoff is the commit containing the completion record below (resolve with git rev-parse HEAD). Sources and main remain at their starting tips. No push/deployment or existing application database operations.
 
-Approval requested for fresh disposable replica-set regression tests; do not run database tests before an answer. Continue mock suites independently. No environment secrets read.
+User explicitly approved fresh disposable replica-set regressions with dedicated temporary storage, separate port, no original URI, mocked/disabled external services and cleanup only of newly created resources. Approval applied only to disposable tests; no target migration approval inferred.
 
 ## Risks and required preparation
 
@@ -61,3 +67,46 @@ Agent 3 merge checkpoint 0adf745. INT-001 confirmed with actual disposable Mongo
 Read-only startup now rejects obsolete broader pending uniqueness by index keys even with a different name. It never repairs catalogs or records. Approved full MongoDB command: node integration/runAgent1Isolated.mjs --run-isolated agent1Authority.integration.mjs agent1Corrections.integration.mjs agent1Integrity.integration.mjs agent1Rejection.integration.mjs agent1Indexes.integration.mjs: exit 0, 21 passed / 0 failed. Tests verify correction/award atomicity and crash rollback, USER/ADMIN workflows, cascade/child races, durable mocked image cleanup, rejection rollback, index provisioning only in disposable DB, city-aware concurrent uniqueness and legacy read/save. Runner stopped its own mongod and removed only its validated fresh temporary directory. Mongoose deprecated-new warnings and deliberate failure-injection logs are non-failing.
 
 SEC-006 diagnostic on separate fresh disposable runner: node integration/runAgent1Isolated.mjs --run-isolated passwordResetAudit.integration.mjs: exit 0, 2 diagnostic checks passed. Same-token four-way consumption has exactly one winner, but synchronized distinct reset issuance leaves two unused/unexpired hashes, and BOTH can be consumed. This passing diagnostic is evidence of an unresolved vulnerability, not a verified security fix. No raw links/passwords logged and Gmail explicitly disabled. Add separate production blocker record after index checkpoint; no speculative authentication rewrite.
+
+## Final verification
+
+| Command | Exit | Result / boundaries |
+| --- | --- | --- |
+| `cd backend; npm test` | 0 | 49 files / 580 passed; repositories/providers mocked, local HTTP fixtures; external credentials disabled and non-listening loopback test URI |
+| `cd frontend; npm test` | 0 | 35 files / 215 passed; jsdom/mocked APIs; non-failing jsdom navigation diagnostic |
+| `cd frontend; npm run lint` | 0 | Actual package script is oxlint, not ESLint; no separate ESLint script/config |
+| `cd frontend; npm run typecheck` | 0 | TypeScript passed |
+| `cd frontend; npm run build` | 0 | Production build passed; JS 774.93 kB / gzip 226.52 kB; existing >500 kB warning remains |
+| `cd backend; node integration/runAgent1Isolated.mjs --run-isolated agent1Authority.integration.mjs agent1Corrections.integration.mjs agent1Integrity.integration.mjs agent1Rejection.integration.mjs agent1Indexes.integration.mjs` | 0 | 21 actual disposable MongoDB regressions passed; external services disabled/mocked |
+| `cd backend; node integration/runAgent1Isolated.mjs --run-isolated passwordResetAudit.integration.mjs` | 0 | 2 actual disposable diagnostic checks; one confirms unresolved SEC-006, not a fix |
+| `cd backend; node integration/runAgent1Isolated.mjs --run-isolated agent1Authority.integration.mjs` | 0 | Final strengthened direct admin certificate and combined restaurant/certificate success assertions pass; both APPROVED immediately, zero ADMIN points, SDK upload mocked |
+| `node scripts/reviewPasswordRecovery.mjs` | 0 | Integrated production frontend in installed Chrome with intercepted API fixtures; 88 renders / 8 EN/HE journeys at 375/768/1024/1280, zero exceptions/referrer headers; no external requests |
+| `git -c core.whitespace=cr-at-eol diff dc5dc24 --check` | 0 | CRLF-aware full integration whitespace check |
+
+Backend has no build/lint/typecheck scripts. No separate ESLint invocation was invented. Full suites include auth/recovery, admin moderation/correction/points, consistency/duplicates/search, readiness, photo/history and UI regressions. Relevant MongoDB regressions actually ran, rather than treating source claims as proof.
+
+The added admin success fixture initially failed (exit 1, 0/1) because it omitted a mandatory certificate photo. Corrected only the fixture: valid synthetic JPEG bytes and mocked Cloudinary SDK, preserving input validation; final run exit 0, 1/1. No app behavior was weakened. The earlier index-fixture order failure and actual INT-001 reproduction are recorded above. No final failing check or partial code remains.
+
+Browser recovery fixture results and screenshots are local ignored artifacts in `design-screenshots/email-password/`; EN mobile reset and HE mobile expired screenshots were visually inspected. Search/map/details/admin/photo browser journeys were not rerun in this integration; component tests and source historical browser evidence do not imply a new live end-to-end pass. No actual Gmail, Geoapify, Cloudinary, Atlas, production behavior or real user files were accessed. Historical Agent 4 live evidence remains explicitly attributed to that isolated source session.
+
+## Completed merges and conflict resolutions
+
+| Local merge | Incorporated source |
+| --- | --- |
+| `8ff573a` | Email feature `1fa1c54` |
+| `de83b93` | Email verification `1beaaa9`, unique documentation only |
+| `8a92e0e` | Agent 1 `5c830e0`, including expected `37725fc` |
+| `86124f7` | Agent 2 `2ca7b50`, including expected `64457fc` and final Atlas fallback completeness change |
+| `0adf745` | Agent 3 `8fcede8` |
+
+Only application/test conflict: `restaurantSubmissionService.test.js`, retaining normalized-city detection and ADMIN rejection/no-side-effect assertions. Shared admin/model/service changes auto-merged and were reviewed/tested together: transactions/parent guards, city identity, stale-location clearing and post-decision notifications retained. Tracking conflicts preserve all source issues and historical records; repeated source onboarding headings are labelled historical and current onboarding supersedes them. Status fields standardized so counts include the source's inline statuses; 64 issues derive to 40 VERIFIED, 8 ALREADY WORKING, 10 NOT STARTED, 4 BLOCKED and 2 DEFERRED. SEC-006 is deferred, never counted as verified.
+
+README corrected stale Resend/current-index references and distinguishes historical Gmail evidence from this session. New detailed rollout/rollback checklist: `INTEGRATION_DEPLOYMENT_CHECKLIST.md`, alongside preserved `SEARCH_LOCATION_INDEX_ROLLOUT.md`. Unique startup enforcement never auto-migrates indexes. Transactions require replica-set/sharded topology. All test mongod instances and validated newly created data directories were cleaned up by their runner; no existing database or source-worktree resource was cleaned up.
+
+## Remaining risks and exact next step
+
+- **Production blocker SEC-006:** separately fix/review concurrent reset issuance and distinct-token interleavings before public release. Same-token single-use/JWT invalidation remain intact; no speculative redesign here.
+- **Required deployment preparation:** approve a target/topology and city-aware index replacement, provision all unique/query/geospatial/TTL indexes plus cleanup collection, verify catalog and legacy compatibility. Do not run existing-target operator commands under the disposable-test approval.
+- Native Hebrew review, live service/Atlas compatibility/performance, moderation email delivery, real browser workflows, backups/operations remain outstanding. Existing large bundle, localStorage risk and upload-before-durable-record crash window remain documented.
+
+Recommendation: suitable for local review as the consolidated integration candidate. Hold production release and unconditional main promotion until SEC-006 and deployment gates are addressed. No merge into main, push or deploy occurred. Exact next step: STOP and provide final report. Future work must reconcile this document/FIX_TRACKER/PROGRESS against Git, preserve all frozen source worktrees, and obtain separate scope/resource authorization where required.

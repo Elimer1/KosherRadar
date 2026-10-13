@@ -50,7 +50,7 @@ Transactional emails use Gmail through Nodemailer: password reset, password-chan
 2. Use HTTPS `CLIENT_URL` for hosted sites (HTTP allowed only on localhost/loopback). New reset links use `/reset-password#token=...`; legacy query links still work. The page removes the token from the URL and holds it only in memory. Reloading the cleaned page requires reopening the email.
 3. Delivery returns SENT, FAILED or NOT_CONFIGURED. SENT means SMTP acceptance, not inbox placement. Failure cannot reverse saved moderation or password changes; guarded approval retries do not resend mail. No private admin notes enter templates.
 4. Recovery requests return a neutral response independent of account lookup and mail processing. Background processing is best effort, not a durable queue. Five requests/hour/IP and the existing auth limiter protect the endpoints; limits are per process.
-5. Setup, account restrictions, practical Gmail quotas and diagnostic guidance are in [EMAIL_SETUP.md](EMAIL_SETUP.md). No live email has been verified; tests mock Nodemailer. Hebrew copy needs native-speaker review.
+5. Setup, account restrictions, practical Gmail quotas and diagnostic guidance are in [EMAIL_SETUP.md](EMAIL_SETUP.md). Automated tests mock Nodemailer. Agent 4's historical isolated live Gmail/recovery evidence is in `EMAIL_PASSWORD_MILESTONE_PROGRESS.md`; this integration sent no mail and did not verify live moderation delivery. Hebrew copy needs native-speaker review.
 
 ### Backend commands
 
@@ -184,7 +184,7 @@ To try the admin area: run `npm run seed:admin`, log in with that account, and o
 
 ## External services
 
-Cloudinary is used for certificate photos and Resend for emails (see setup above). Atlas Search is optional (see `ATLAS_SEARCH_SETUP.md`). Geoapify is used for address and place lookup when `GEOAPIFY_API_KEY` is set. The key stays on the server. Without it, a typed address can still be submitted, and the search location field explains that lookup is unavailable. No coordinates are invented. A missing Geoapify key was checked and returned no coordinates. Geoapify itself has not been called with a real key. A missing Cloudinary account was checked: the upload answered 503 and no certificate was saved. A real Cloudinary upload has not been done.
+Cloudinary is used for certificate photos and Gmail/Nodemailer for emails (see setup above). Atlas Search is optional (see `ATLAS_SEARCH_SETUP.md`). Geoapify is used for address and place lookup when `GEOAPIFY_API_KEY` is set. The key stays on the server. Without it, a typed address can still be submitted, and the search location field explains that lookup is unavailable. No coordinates are invented. A missing Geoapify key was checked and returned no coordinates. Geoapify itself has not been called with a real key. A missing Cloudinary account was checked: the upload answered 503 and no certificate was saved. A real Cloudinary upload has not been done.
 
 ### Transactional administrator workflows
 
@@ -204,8 +204,10 @@ Restaurant rejection also commits related pending certificate rejections in one 
 
 ### Required unique indexes at startup
 
-Application database connections now disable implicit collection/index creation and verify actual unique indexes before the HTTP listener starts. Missing or incompatible uniqueness fails startup without changing records/indexes. Checks include User email, Restaurant pending submitter/name/address, Teuda dated/undated pending identities, Report pending fingerprint, PasswordResetToken hash and ImageCleanup publicId. Existing report rows without a fingerprint remain outside their partial index; no record backfill is performed.
+Application database connections now disable implicit collection/index creation and verify actual unique indexes before the HTTP listener starts. Missing or incompatible uniqueness fails startup without changing records/indexes. Checks include User email, Restaurant pending submitter/name/address/city, Teuda dated/undated pending identities, Report pending fingerprint, PasswordResetToken hash and ImageCleanup publicId. The obsolete broader restaurant constraint also fails startup; replacement requires operator approval. Existing report rows without a fingerprint remain outside their partial index; no record backfill is performed.
 
 From backend, `node scripts/verifyIntegrityIndexes.js` performs read-only verification. A fresh database or one missing indexes (including the new cleanup collection) needs provisioning before starting or seeding. After explicitly approving the configured target, an operator can run `node scripts/provisionIntegrityIndexes.js --allow-index-creation`. This creates declared indexes and missing collections, including geospatial/query indexes and the existing reset-token TTL declaration; it never drops indexes or repairs duplicate records. Approval for an existing target must cover TTL expiry of old reset tokens. If conflicting index definitions or old duplicates block a build, stop and arrange an approved compatibility review. The agent did not run either operator command against existing application databases. The disposable integration harness provisions only its own fresh data.
 
 Rollback requires keeping provisioned indexes and cleanup jobs; avoid dropping uniqueness protections. No existing-record schema migration/backfill or package addition is required. Before integration/deployment, verify replica-set support and obtain approval for any required application-database index creation.
+
+Integrated release preparation, exact unique definitions, city-index replacement, legacy-data limits and rollback are in [INTEGRATION_DEPLOYMENT_CHECKLIST.md](INTEGRATION_DEPLOYMENT_CHECKLIST.md). Local integration checks are in [INTEGRATION_PROGRESS.md](INTEGRATION_PROGRESS.md). SEC-006 (concurrent reset issuance allowing distinct valid links) is confirmed and remains a production release blocker; passing diagnostic checks are not a security fix.

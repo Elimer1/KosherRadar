@@ -9,10 +9,10 @@ Counts below are derived from the issue statuses in this file.
 | NOT STARTED | 10 |
 | ALREADY WORKING | 8 |
 | BLOCKED | 4 |
-| DEFERRED | 1 |
-| VERIFIED | 31 |
+| DEFERRED | 2 |
+| VERIFIED | 40 |
 | Other | 0 |
-| **Total** | **54** |
+| **Total** | **64** |
 
 ## Priority bands (12 October 2026)
 
@@ -770,7 +770,8 @@ Priority: High before launch
 ### EP-003 — Localized V2 recovery and token privacy
 
 - **Milestone:** Email/password recovery, 13 October 2026.
-- **Priority/status:** High / VERIFIED.
+- **Priority:** High.
+- **Status:** VERIFIED.
 - **Evidence/root cause:** Forgot page displayed English API success text in Hebrew mode; reset page retained query token in URL, used generic English server failures and did not clear the existing local login. Recovery panels did not match the accepted login panel. No component tests covered these forms.
 - **Relevant files/solution:** Recovery pages, auth API/error helpers, locale/reset-token utilities and index.html; fragment links prevent new tokens reaching frontend HTTP logs; same-origin validated legacy query links retained. Remove token from URL into component memory, no referrers, localized success/errors, explicit expired-link/retry paths, busy feedback, password validation/show-hide, clear current login after successful reset, accepted V2 form styling. No redesign of other pages.
 - **Files changed:** Those frontend files; PasswordRecovery.test.tsx/resetToken.test.ts; backend reset-link builder/template validation and corresponding tests; README.md, EMAIL_SETUP.md, scripts/reviewPasswordRecovery.mjs and tracking docs.
@@ -782,7 +783,8 @@ Priority: High before launch
 ### EP-002 — Recovery privacy and saved-decision notifications
 
 - **Milestone:** Email/password recovery, 13 October 2026.
-- **Priority/status:** High / VERIFIED.
+- **Priority:** High.
+- **Status:** VERIFIED.
 - **Evidence/root cause:** forgotPasswordController awaited account lookup/token writes and said mail was sent; no confirmation/approval notifications. resetPasswordService threw if cleanup failed after password save. Shared new-password validation limited characters, not bcrypt's UTF-8 byte length.
 - **Relevant files/solution:** Auth controller/routes/schemas, reset service, moderation notification service, restaurant/certificate approval services. Return neutral response without awaiting account processing; sanitize detached failures, no-store recovery responses, enforce 72 UTF-8 bytes, keep existing 60-minute hashed random tokens, atomic consume/release and tokenVersion invalidation. Best-effort password-changed email and cleanup. Approval mail only for winning PENDING transition, skip admins and retries; public rejection data only. Points/authority rules unchanged.
 - **Files changed:** Those backend files; emailTemplates.js (Hebrew report grammar); passwordResetService/RoutesHttp, adminRestaurant/Teuda test files; new passwordResetRepository.test.js and moderationNotificationService.test.js; tracking notes.
@@ -793,7 +795,8 @@ Priority: High before launch
 ### EP-001 — Gmail transport and branded bilingual email
 
 - **Milestone:** Email/password recovery, explicitly authorized 13 October 2026.
-- **Priority/status:** High / VERIFIED.
+- **Priority:** High.
+- **Status:** VERIFIED.
 - **Evidence/root cause:** Verified main dc5dc24 uses Resend REST, has no Nodemailer, and renders English plain text only; request explicitly requires Gmail/Nodemailer and bilingual HTML/text. Existing transport logs provider response text that could expose sensitive content.
 - **Relevant files/planned solution:** emailService.js/env.js; separate Gmail transport, safe templates and caller-compatible services.
 - **Files changed:** backend/src/services/emailTransport.js, emailTemplates.js, emailService.js, config/env.js, backend/.env.example, backend/package.json/package-lock.json, backend/tests/emailService.test.js, EMAIL_SETUP.md and tracking documents.
@@ -1034,7 +1037,9 @@ Final batch: frontend npm test exit 0 (30 files / 174 passed); npm run lint, npm
 
 ### SEARCH-003 - Certificate-photo validation race
 
-- **Milestone:** User-assigned Submission & Application Reliability; **Priority:** P1; **Status:** VERIFIED.
+- **Milestone:** User-assigned Submission & Application Reliability.
+- **Priority:** P1.
+- **Status:** VERIFIED.
 - **Evidence/root cause:** Five failing baseline hook regressions; photo cleared before signature read and stale results accepted; consumers did not coordinate validation.
 - **Solution/files changed:** Versioned pending state, synchronous submit guard, catch read errors, preserve latest valid evidence and block failed replacements; usePhotoField.ts, five photo-consuming submission pages, TeudaFields.tsx, en.ts/he.ts. imageCheck protections unchanged.
 - **Tests added:** usePhotoField.test.tsx (7); photoSubmission.test.tsx (5 forms).
@@ -1043,7 +1048,9 @@ Final batch: frontend npm test exit 0 (30 files / 174 passed); npm run lint, npm
 
 ### A1-003 - Contribution outcome independent of points
 
-- **Milestone:** User-assigned Submission & Application Reliability; **Priority:** P2; **Status:** VERIFIED.
+- **Milestone:** User-assigned Submission & Application Reliability.
+- **Priority:** P2.
+- **Status:** VERIFIED.
 - **Evidence/root cause:** 3 backend and 2 frontend failing baseline regressions; report projection omitted correctionApplied and UI inferred outcome from awards.
 - **Solution/files changed:** Read and expose stored outcome with legacy false default; render independently of awards. userSubmissionsRepository.js, userSubmissionsService.js, MySubmissionsPage.tsx, mySubmissions.ts and locale notice for the existing 50-record limit. Photo Hebrew encoding correction included. No admin correction/points writes or authorization changes.
 - **Tests:** qaSubmissionHistory.test.js expanded; userSubmissionsRepository.test.js, userSubmissionsRoutesHttp.test.js, MySubmissionsPage.test.tsx added. Covers applied/admin/failed award, legacy/no-change, authenticated scoping, projection/limit and UI points independence.
@@ -1052,7 +1059,9 @@ Final batch: frontend npm test exit 0 (30 files / 174 passed); npm run lint, npm
 
 ### SEC-011 - Health endpoint database readiness
 
-- **Milestone:** User-assigned Submission & Application Reliability; **Priority:** P2; **Status:** VERIFIED.
+- **Milestone:** User-assigned Submission & Application Reliability.
+- **Priority:** P2.
+- **Status:** VERIFIED.
 - **Evidence/root cause:** Legacy handler always returned 200 even for readyState 0; baseline HTTP regression exit 1, 6 failed after behavior-preserving extraction.
 - **Solution/files changed:** server.js mounts healthRoutes.js; /api/health and /ready return 503 unless readyState 1; /live provides independent liveness. Safe generic payload, no-store caching; connected legacy shape preserved. README documents semantics.
 - **Tests:** healthRoutesHttp.test.js added, 6 cases with loopback HTTP and mocked Mongoose states 0/1/2/3/unknown/recovery.
@@ -1061,7 +1070,9 @@ Final batch: frontend npm test exit 0 (30 files / 174 passed); npm run lint, npm
 
 ### APP3-001 - Browser detail-page certificate expiry rollover
 
-- **Milestone:** User-assigned secondary Submission & Application Reliability; **Priority:** P2; **Status:** VERIFIED.
+- **Milestone:** User-assigned secondary Submission & Application Reliability.
+- **Priority:** P2.
+- **Status:** VERIFIED.
 - **Evidence/root cause:** Loaded details never refreshed merely because Israel calendar date changed. Baseline page tests exit 1, 3 failed/14 passed.
 - **Solution/files:** useIsraelDay.ts; RestaurantDetailsPage.tsx and test. Detect day changes every minute/on foreground return and refetch server-derived details; hide stale previous-day evidence and use existing error/retry flow. No public terminology/rules changes.
 - **Tests/verification:** Four new page regressions; full frontend npm test exit 0, 29 files/178 passed; lint/typecheck/build exit 0, existing chunk warning. Backend unchanged; no browser/live services tested.
@@ -1069,7 +1080,9 @@ Final batch: frontend npm test exit 0 (30 files / 174 passed); npm run lint, npm
 
 ### APP3-002 - Explicit photo clearing and error recovery
 
-- **Milestone:** User-assigned secondary Submission & Application Reliability; **Priority:** P2; **Status:** VERIFIED.
+- **Milestone:** User-assigned secondary Submission & Application Reliability.
+- **Priority:** P2.
+- **Status:** VERIFIED.
 - **Evidence/root cause:** Invalid/read-failed selection blocked sending but native file inputs offered no consistent explicit clear action. Pending clear also must invalidate asynchronous validation.
 - **Solution/files:** Shared PhotoFieldRecovery.tsx and hook clearPhoto; reset file input and invalidate validation without clearing text fields; wired into all five consuming forms. Localized Clear photo selection, disabled only during submission. Submission guard also holds until rendered pending state clears.
 - **Tests:** usePhotoField.test.tsx clear case; five additional real form clear-during-validation regressions in photoSubmission.test.tsx.
@@ -1080,7 +1093,7 @@ Agent 3 final result: all three assigned IDs and two scoped follow-up IDs verifi
 
 ## Completed-agent integration ? 13 October 2026
 
-### INT-001 ? Legacy index bypasses the integrated startup compatibility gate
+### INT-001 - Legacy index bypasses the integrated startup compatibility gate
 
 - **Milestone:** Completed-agent local integration.
 - **Priority:** High deployment compatibility.
@@ -1093,3 +1106,21 @@ Agent 3 final result: all three assigned IDs and two scoped follow-up IDs verifi
 - **Tests added or modified:** New real MongoDB legacy-index startup gate, normalized same-city concurrency, cross-city acceptance and legacy read/save compatibility; existing weakened-uniqueness/wrong-filter regressions retained against current definition.
 - **Verification:** node integration/runAgent1Isolated.mjs --run-isolated agent1Authority.integration.mjs agent1Corrections.integration.mjs agent1Integrity.integration.mjs agent1Rejection.integration.mjs agent1Indexes.integration.mjs: exit 0, 21 real MongoDB tests passed; includes actual rollback/concurrency/crash recovery, zero ADMIN points and all seven index checks. Fresh disposable replica set and validated cleanup only; no live external services. Backend has no build/lint/typecheck scripts. Browser not tested.
 - **Blockers/limitations:** Existing database index replacement still requires target/operator approval; none performed.
+
+### SEC-006 - Concurrent password-reset issuance admits multiple links
+
+- **Milestone:** Completed-agent integration security assessment (explicit user request).
+- **Priority:** High; production release blocker.
+- **Status:** DEFERRED.
+- **Description/evidence:** Two reset requests can both delete prior unused rows before either inserts a new row, leaving two different unused, unexpired token hashes. Disposable real-MongoDB diagnostic confirms both are consumable. This contradicts latest-link-only invalidation and increases exposure from an older still-valid recovery link. Same-token single-use remains atomic and was independently verified.
+- **Root cause:** requestPasswordResetService uses separate deleteUnusedResetTokensRepo and createResetTokenRepo operations; schema uniqueness is per tokenHash, not per user issuance.
+- **Relevant files/functions:** passwordResetService.requestPasswordResetService; passwordResetRepository; PasswordResetToken; backend/integration/passwordResetAudit.integration.mjs.
+- **Planned solution:** Separately scoped reviewed fix for atomic/serialized issuance per user and distinct-token reset interleavings, preserving recovery behavior and session invalidation. No speculative authentication redesign during integration.
+- **Files changed:** Diagnostic integration test and tracking/deployment documents only; authentication implementation unchanged.
+- **Tests added or modified:** Actual four-way same-hash consumption has one winner; actual synchronized issuance leaves two different valid hashes, both consumed. The latter is explicitly a known-vulnerability diagnostic, not a passing fix regression.
+- **Verification:** node integration/runAgent1Isolated.mjs --run-isolated passwordResetAudit.integration.mjs: exit 0, 2 diagnostic checks passed on fresh disposable replica set; emails explicitly disabled. No raw token/password output, real user or existing application database.
+- **Blockers/limitations:** Unresolved pre-existing security defect; do not approve public production release until fixed/reviewed. Not introduced by merges. Deferred from this integration's implementation scope as requested, never counted as verified.
+
+## Final integrated verification (13 October 2026)
+
+All five source histories incorporated locally in integration/agent-fixes; source tips/main untouched. Full backend npm test exit 0, 49 files/580 passed; frontend npm test exit 0, 35 files/215 passed; frontend npm run lint (oxlint), npm run typecheck and npm run build exit 0. Backend has no build/lint/typecheck scripts. Actual disposable MongoDB regression set exit 0, 21 passed; final strengthened authoritative admin restaurant/certificate success assertions exit 0, 1 passed with required photo bytes and SDK upload mocked. First added fixture omitted required photo and failed 0/1; corrected fixture only, validation retained. Reset diagnostic exit 0, 2 checks confirms SEC-006 unresolved; not a security fix. Browser node scripts/reviewPasswordRecovery.mjs exit 0, 88 fixture renders/8 EN/HE recovery journeys, no exceptions/referrer headers. Other browser workflows/live services not rerun; historical source evidence remains attributed. CRLF-aware full integration whitespace exit 0. Details, source hashes and rollout/rollback in INTEGRATION_PROGRESS.md and INTEGRATION_DEPLOYMENT_CHECKLIST.md. No main merge/push/deploy/existing database or user files touched.
