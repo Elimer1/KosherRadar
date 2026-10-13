@@ -8,6 +8,7 @@ The assignment prompt is the visual source of truth. Historical design documents
 
 - Worktree: `C:\FS\projects\KosherRadar-visual-v2-discovery`
 - Branch: `redesign/v2-discovery`
+- Implementation commit: `a75b82b9de770169320d129efdaa2dbd96b1ed65`
 - Baseline: `0140d195474c44011dbfd285b4b47338dab73451`
 - Source branch inspected: `redesign/wave-1-integration` (same commit)
 - Other agents' worktrees, branches, and progress files were not modified.
@@ -122,6 +123,7 @@ The four kashrut statuses were inspected in the English and Hebrew result screen
 
 - Branch: `redesign/v2-discovery`
 - Worktree: `C:\FS\projects\KosherRadar-visual-v2-discovery`
+- Implementation commit: `a75b82b9de770169320d129efdaa2dbd96b1ed65`
 - Baseline: `0140d195474c44011dbfd285b4b47338dab73451`
 - Current issue: visual v2 discovery rebuild implemented and verified in this worktree
 - Next outstanding issue: none for this assignment. Do not start another milestone. Do not merge or push.
