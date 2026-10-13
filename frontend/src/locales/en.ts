@@ -421,6 +421,7 @@ export const en = {
     backAccount: 'Back to my account',
     mySubmissions: 'My submissions',
     submissionsBody: 'Restaurants, certificates and reports you sent, and what happened to each one.',
+    submissionsLimit: 'Showing up to the 50 most recent submissions in each category.',
     restaurants: 'Restaurants',
     noRestaurants: 'You have not sent a restaurant yet.',
     certificates: 'Certificates',

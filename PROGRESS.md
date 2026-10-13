@@ -620,6 +620,10 @@ Deferred: native-speaker review of Hebrew copy, including design strings and the
 
 ## NEXT AGENT ONBOARDING
 
+**Agent 3 latest position ? A1-003 verified; next SEC-011 (13 October 2026).**
+SEARCH-003 checkpoint f00109b. A1-003 returns stored correctionApplied and displays it independently of awards; authentication/privacy/zero-admin points preserved. Existing newest-50-per-category limit is now stated. Backend history checks: 13 passed; frontend history/locales/photo consumers: 11 passed; lint/typecheck/build exit 0. New Hebrew copy awaits native review; shell-encoding damage found in new photo strings/comments has been corrected. Files/decisions/commands in AGENT_3_FIX_PROGRESS.md and FIX_TRACKER.md. No partial changes beyond this fix. Next: readiness must fail when MongoDB is unavailable; add separate liveness and tests for states. Then full suites and final handoff. No browser/live-service testing.
+
+
 **Agent 3 current handoff ? 13 October 2026, fix/submissions-app (supersedes older stop instruction for this assigned scope).**
 SEARCH-003 verified: shared photo hook and all five consumers guard pending validation, ignore obsolete results, show read errors; photo accessibility and localized messages added. See AGENT_3_FIX_PROGRESS.md for files, tests and decisions. Focused tests 19 passed; full frontend 170 passed before final test cleanup; lint/typecheck/build exit 0. No browser or external integrations; Hebrew requires native review. Next: A1-003 history outcome (do not edit correction/award logic), then SEC-011 readiness. Final full suites still pending. No partially implemented source changes outside SEARCH-003. Read Git state plus this branch's progress before continuing.
 

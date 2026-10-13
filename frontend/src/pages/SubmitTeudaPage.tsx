@@ -50,7 +50,7 @@ function SubmitTeudaPage() {
     setError('');
 
     // NEW (Agent 3): guard keyboard submission as well as the button.
-    // ??? (???? 3): ????? ????? ?? ??????? ?????.
+    // חדש (סוכן 3): חסימת שליחה גם באמצעות מקלדת.
     const photoProblem = getPhotoSubmissionError();
     if (photoProblem) {
       setError(photoProblem);

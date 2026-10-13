@@ -790,3 +790,12 @@ Only post-merge documentation files updated: this file, PROGRESS.md, REDESIGN_IN
 - **Tests added:** usePhotoField.test.tsx (7); photoSubmission.test.tsx (5 forms).
 - **Actual verification:** focused frontend tests exit 0, 19 passed including existing imageCheck tests. Full suite before final test cleanup exit 0, 28 files/170 passed. Frontend lint/typecheck/build exit 0; existing chunk warning. Backend unchanged.
 - **Limitations:** Mocked APIs, no browser/live upload; Hebrew strings need native-speaker review. Details and next task: AGENT_3_FIX_PROGRESS.md.
+
+### A1-003 ? Contribution outcome independent of points
+
+- **Milestone:** User-assigned Submission & Application Reliability; **Priority:** P2; **Status:** VERIFIED.
+- **Evidence/root cause:** 3 backend and 2 frontend failing baseline regressions; report projection omitted correctionApplied and UI inferred outcome from awards.
+- **Solution/files changed:** Read and expose stored outcome with legacy false default; render independently of awards. userSubmissionsRepository.js, userSubmissionsService.js, MySubmissionsPage.tsx, mySubmissions.ts and locale notice for the existing 50-record limit. Photo Hebrew encoding correction included. No admin correction/points writes or authorization changes.
+- **Tests:** qaSubmissionHistory.test.js expanded; userSubmissionsRepository.test.js, userSubmissionsRoutesHttp.test.js, MySubmissionsPage.test.tsx added. Covers applied/admin/failed award, legacy/no-change, authenticated scoping, projection/limit and UI points independence.
+- **Verification:** backend focused history command (four files, exact command in AGENT_3_FIX_PROGRESS.md) exit 0, 13 passed. Frontend history/locales/photo form tests exit 0, 11 passed; lint/typecheck/build exit 0, existing chunk warning. Backend has no build/lint/typecheck scripts.
+- **Limitations:** Mocked dependencies, loopback HTTP only; no live DB, award write integration or browser. No schema/backfill required. Hebrew notice needs native review.

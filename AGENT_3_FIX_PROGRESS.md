@@ -14,3 +14,12 @@ A1-003: expose correctionApplied from persisted report separately from awards; b
 
 ### Exact next step
 Implement A1-003, then SEC-011; run both full suites and frontend lint/typecheck/build. Do not change admin correction/award writes or search/address/email/auth recovery logic.
+
+### A1-003 ? VERIFIED
+- Baseline reproduction: backend qaSubmissionHistory.test.js 3 failed / 6 passed; frontend MySubmissionsPage.test.tsx 2 failed / 2 passed, exit 1. Stored correctionApplied was excluded from repository projection and service response; UI inferred outcome from points.
+- Expose correctionApplied boolean, default false for old documents without it (consistent with existing schema). Display outcome independently of points; administrator zero points and award-key semantics remain unchanged. No schema, migration or backfill required; rollback is removing the additive response field/UI use.
+- Authenticated router regression rejects anonymous requests and ignores query userId. Repository regression checks user filter, allowlisted projection, restaurant name-only population and newest-50 limit. Mocked applied correction without award covers administrators and failed awarding. No admin write logic changed.
+- Added explicit 50-most-recent-per-category notice in both locales. Fixed PowerShell stdin encoding damage to new Hebrew photo strings/comments found during locale inspection; native review still required.
+- Files: userSubmissionsRepository.js, userSubmissionsService.js, qaSubmissionHistory.test.js, new userSubmissionsRepository.test.js and userSubmissionsRoutesHttp.test.js; MySubmissionsPage.tsx and test, mySubmissions.ts, en.ts/he.ts, five photo form comment corrections.
+- Verification: backend npm test -- tests/qaSubmissionHistory.test.js tests/userSubmissionsService.test.js tests/userSubmissionsRepository.test.js tests/userSubmissionsRoutesHttp.test.js exit 0, 4 files / 13 passed. Frontend npm test -- src/pages/MySubmissionsPage.test.tsx src/locales/locales.test.ts src/pages/photoSubmission.test.tsx exit 0, 11 passed; npm run lint, npm run typecheck, npm run build exit 0 (existing large-chunk warning). HTTP uses loopback and mocked auth/service; no real DB, browser or external service.
+- Next: SEC-011 health readiness/liveness; final full verification.
