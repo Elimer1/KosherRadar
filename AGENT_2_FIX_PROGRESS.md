@@ -15,3 +15,5 @@ SEARCH-006 verified: admin address update resolves missing/stale pin, replaces/c
 SEARCH-007 code verified: normalized city in model/query/unique index; legacy city normalized at read time without backfill. 34 tests/3 files pass. Existing databases MUST replace old pending_submitter_name_address index; not performed or live verified. Concrete rollout/rollback assessment in SEARCH_LOCATION_INDEX_ROLLOUT.md. Keep code verification distinct from operational rollout. SEARCH-006 checkpoint 8c828ac. Next SEARCH-008.
 
 SEARCH-008 verified: city-level public search supported; city/street/coarse results cannot become precise typed restaurant pins or address suggestions. Public place suggestions use separate service. 13 mocked provider tests pass, no live accuracy claims. SEARCH-007 checkpoint 8923a3a. Next SEARCH-009.
+
+SEARCH-009 verified: exact 0.2 gap tolerates only floating-point machine rounding; near-tied candidates below eligibility threshold or coarse matches still compete. Invalid/missing confidence conservatively refuses selection. 20 mocked provider tests pass. SEARCH-008 checkpoint 7883208. Next SEARCH-010.

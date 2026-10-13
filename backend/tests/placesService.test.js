@@ -188,6 +188,20 @@ describe('selectUnambiguousPlace', () => {
     expect(selectUnambiguousPlace([place(1, 'match_by_city')])).toBeNull();
     expect(selectUnambiguousPlace([place(null, 'full_match')])).toBeNull();
   });
+
+  it('accepts the exact confidence-gap boundary despite floating-point subtraction', () => {
+    expect(selectUnambiguousPlace([place(1, 'full_match'), place(0.8, 'full_match', 'b')])?.placeId).toBe('a');
+    expect(selectUnambiguousPlace([place(1, 'full_match'), place(0.8000000001, 'full_match', 'b')])).toBeNull();
+  });
+  it('compares lower-confidence and imprecise competitors before accepting a building', () => {
+    expect(selectUnambiguousPlace([place(0.8, 'full_match'), place(0.79, 'full_match', 'b')])).toBeNull();
+    expect(selectUnambiguousPlace([place(1, 'full_match'), place(0.99, 'match_by_city', 'b')])).toBeNull();
+    expect(selectUnambiguousPlace([place(1, 'full_match'), place(0.7, 'match_by_city', 'b')])?.placeId).toBe('a');
+    expect(selectUnambiguousPlace([place(0.9, 'full_match'), place(1, 'match_by_city', 'b')])).toBeNull();
+  });
+  it.each([NaN, Infinity, -0.1, 1.1, null])('refuses an invalid or unknown competing confidence %s', (confidence) => {
+    expect(selectUnambiguousPlace([place(1, 'full_match'), place(confidence, 'full_match', 'b')])).toBeNull();
+  });
 });
 
 describe('addressQuerySchema', () => {

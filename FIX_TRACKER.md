@@ -886,14 +886,14 @@ Explicit user assignment supersedes historical stop instructions for this worktr
 
 - **Milestone:** Agent 2 search/location reliability.
 - **Priority:** P1/P2 per assignment.
-- **Status:** NOT STARTED
+- **Status:** VERIFIED
 - **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
-- **Root cause:** Pending investigation.
-- **Relevant files/functions:** Assigned search/location files in pasted request.
+- **Root cause:** binary subtraction makes 1 - 0.8 less than 0.2; filtering competitors before comparing confidence allowed near-tied weaker or coarse matches to disappear.
+- **Relevant files/functions:** placesService.selectUnambiguousPlace.
 - **Planned solution:** Focused compatible fix with mocked regressions.
-- **Files changed:** None yet.
-- **Tests added or modified:** Pending verification.
-- **Verification:** Not run yet.
+- **Files changed:** placesService.js; placesService.test.js.
+- **Tests added or modified:** exact gap boundary versus just below; low-confidence/coarse competitors; invalid/unknown confidence.
+- **Verification:** backend npm test -- tests/placesService.test.js exit 0, 20 passed. Mocks only; no live accuracy/browser testing. Backend has no build/lint/typecheck.
 - **Blockers/limitations:** No live service/data testing authorized.
 
 ### SEARCH-010 ? Geoapify request deadlines

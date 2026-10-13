@@ -72,20 +72,23 @@ const isSearchArea = (place) => place.confidence !== null && place.confidence >=
 // A result with no rank is refused. The first row is never accepted just because it is first.
 // חדש (ביקורת M1): נשמרת נקודה רק להתאמה מדויקת אחת, או להתאמה מדויקת שברור שהיא טובה מהבאה.
 export const selectUnambiguousPlace = (places, { allowArea = false } = {}) => {
-  const precise = places
-    .filter(place => isPrecisePlace(place) || (allowArea && isSearchArea(place)))
+  // Unknown/invalid confidence cannot establish that a competing address is worse.
+  if (places.some(place => !Number.isFinite(place.confidence) || place.confidence < 0 || place.confidence > 1)) return null;
+  const ranked = [...places]
     .sort((left, right) => right.confidence - left.confidence || left.placeId.localeCompare(right.placeId));
 
-  if (precise.length === 0) {
+  const best = ranked[0];
+  if (!best || !(isPrecisePlace(best) || (allowArea && isSearchArea(best)))) {
     return null;
   }
 
-  if (precise.length === 1) {
-    return precise[0];
+  if (ranked.length === 1) {
+    return best;
   }
 
-  if (precise[0].confidence - precise[1].confidence >= CLEAR_CONFIDENCE_GAP) {
-    return precise[0];
+  // 1 - 0.8 is represented just below 0.2; tolerate only machine rounding.
+  if (best.confidence - ranked[1].confidence + Number.EPSILON * 4 >= CLEAR_CONFIDENCE_GAP) {
+    return best;
   }
 
   return null;
