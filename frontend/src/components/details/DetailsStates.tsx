@@ -1,5 +1,6 @@
-// NEW (Redesign wave 1): loading, missing, and failed states for the restaurant page.
-// חדש (גל עיצוב 1): מצבי טעינה, מסעדה חסרה, וכשל טעינה בדף המסעדה.
+// NEW (Visual v2): restaurant details presentation; existing contracts and status labels stay authoritative.
+// חדש (עיצוב 2): תצוגת פרטי מסעדה תוך שמירה על חוזים ותוויות קיימים.
+// Loading, missing, and failed states. They use the same light page, not a green band.
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import FormAlert from '../FormAlert';
@@ -18,7 +19,7 @@ export function DetailsBackLink({ to, state }: BackLinkProps) {
   const { t } = useTranslation();
 
   return (
-    <Link to={to} state={state} className="kr-back kr-details-back">
+    <Link to={to} state={state} className="kr-back kr-details-back kr-v2-details-back">
       <span aria-hidden="true" className="kr-back-mark">
         ‹
       </span>
@@ -31,9 +32,9 @@ export function DetailsLoading({ to, state }: BackLinkProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="kr-details">
+    <div className="kr-v2-details">
       <DetailsBackLink to={to} state={state} />
-      <p className="kr-details-hero kr-details-loading" role="status">
+      <p className="kr-v2-details-loading" role="status">
         <span className="kr-spinner" aria-hidden="true" />
         {t('details.loading')}
       </p>
@@ -45,13 +46,11 @@ export function DetailsNotFound({ to, state }: BackLinkProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="kr-details">
-      <section className="kr-details-hero kr-details-state">
-        <h1 className="kr-details-title">{t('details.notFoundTitle')}</h1>
-        <p className="kr-details-hero-copy">{t('details.notFoundBody')}</p>
-        <Link to={to} state={state} className="kr-details-command">
-          {t('details.back')}
-        </Link>
+    <div className="kr-v2-details">
+      <section className="kr-v2-details-state">
+        <h1 className="kr-v2-details-state-title">{t('details.notFoundTitle')}</h1>
+        <p className="kr-v2-details-state-copy">{t('details.notFoundBody')}</p>
+        <DetailsBackLink to={to} state={state} />
       </section>
     </div>
   );
@@ -66,11 +65,11 @@ export function DetailsLoadError({ message, onRetry, to, state }: LoadErrorProps
   const { t } = useTranslation();
 
   return (
-    <div className="kr-details">
-      <section className="kr-details-sheet kr-details-state">
+    <div className="kr-v2-details">
+      <section className="kr-v2-details-state">
         <FormAlert message={message} />
-        <div className="kr-details-state-actions">
-          <button type="button" className="kr-details-solid" onClick={onRetry}>
+        <div className="kr-v2-details-state-actions">
+          <button type="button" className="kr-v2-details-primary" onClick={onRetry}>
             {t('common.tryAgain')}
           </button>
           <DetailsBackLink to={to} state={state} />

@@ -1,90 +1,79 @@
-// NEW (Redesign wave 1): the kashrut summary. Status still comes from the existing badge and payload.
-// חדש (גל עיצוב 1): סיכום הכשרות. הסטטוס עדיין מגיע מהתג הקיים ומהנתונים.
+// NEW (Visual v2): restaurant details presentation; existing contracts and status labels stay authoritative.
+// חדש (עיצוב 2): תצוגת פרטי מסעדה תוך שמירה על חוזים ותוויות קיימים.
+// One concise kashrut line. The full record stays in the evidence column.
 import { useTranslation } from 'react-i18next';
-import KashrutBadge from '../KashrutBadge';
 import type { RestaurantDetails } from '../../types/restaurantDetails';
-import type { KashrutPrimary } from '../../types/search';
+import type { KashrutPrimary, KashrutStatus } from '../../types/search';
 import type { HechsherOption } from '../../types/submissions';
-import { describeValidity } from '../../utils/kashrutText';
+import { describeEvidenceName, describeValidity, formatMoreCount, getStatusHeadline } from '../../utils/kashrutText';
 import { getHechsherLabel, getKashrutLevelLabel } from '../../utils/labels';
 import { isSafeHttpUrl } from '../../utils/safeUrl';
+import StatusIcon from './StatusIcon';
 
 interface KashrutOverviewProps {
   restaurant: RestaurantDetails;
   hechsherOptions: HechsherOption[];
 }
 
-function authorityLabel(primary: KashrutPrimary, hechsherOptions: HechsherOption[]) {
-  if (!primary.hechsher) {
-    return '';
+function summaryParts(status: KashrutStatus, primary: KashrutPrimary | null, moreCount: number, hechsherOptions: HechsherOption[]) {
+  const parts = [getStatusHeadline(status)];
+
+  if (!primary) {
+    return parts;
   }
 
-  return getHechsherLabel(primary.hechsher, primary.hechsherOther, hechsherOptions);
-}
-
-function OverviewFacts({
-  kashrut,
-  hechsherOptions,
-}: {
-  kashrut: RestaurantDetails['kashrut'];
-  hechsherOptions: HechsherOption[];
-}) {
-  const { t } = useTranslation();
-  const primary = kashrut.primary;
-
-  // A claim is not given certificate rows. Those stay in the unverified section.
-  // טענה לא מקבלת שורות של תעודה. הן נשארות באזור הטענות הלא מאומתות.
-  if (!primary || (primary.kind !== 'VERIFIED' && primary.kind !== 'EXPIRED')) {
-    return null;
+  if (status === 'VERIFIED' || status === 'EXPIRED') {
+    const hechsher = primary.hechsher ? getHechsherLabel(primary.hechsher, primary.hechsherOther, hechsherOptions) : '';
+    const level = primary.kashrutLevel ? getKashrutLevelLabel(primary.kashrutLevel) : '';
+    const validity = describeValidity(primary);
+    if (hechsher) {
+      parts.push(hechsher);
+    }
+    if (level) {
+      parts.push(level);
+    }
+    if (validity) {
+      parts.push(validity);
+    }
+    const more = formatMoreCount(moreCount);
+    if (more) {
+      parts.push(more);
+    }
+    return parts;
   }
 
-  const hechsher = authorityLabel(primary, hechsherOptions);
-  const level = primary.kashrutLevel ? getKashrutLevelLabel(primary.kashrutLevel) : '';
-  const validity = describeValidity(primary);
-  const isExpired = primary.kind === 'EXPIRED';
-
-  if (hechsher === '' && level === '' && validity === '') {
-    return null;
+  if (status === 'UNVERIFIED') {
+    parts.push(describeEvidenceName(primary, hechsherOptions));
   }
 
-  return (
-    <div className={isExpired ? 'kr-details-overview-facts kr-details-overview-facts--expired' : 'kr-details-overview-facts'}>
-      <dl className="kr-details-facts">
-        {hechsher !== '' && (
-          <div>
-            <dt>{t('filters.hechsher')}</dt>
-            <dd className="kr-details-record-name kr-details-break" dir="auto">
-              {hechsher}
-            </dd>
-          </div>
-        )}
-        {level !== '' && (
-          <div>
-            <dt>{t('filters.level')}</dt>
-            <dd dir="auto">{level}</dd>
-          </div>
-        )}
-      </dl>
-      {validity !== '' && (
-        <p className={isExpired ? 'kr-details-validity kr-details-validity--expired' : 'kr-details-validity'}>{validity}</p>
-      )}
-    </div>
-  );
+  return parts;
 }
 
 function KashrutOverview({ restaurant, hechsherOptions }: KashrutOverviewProps) {
   const { t } = useTranslation();
+  const kashrut = restaurant.kashrut;
+  const status = kashrut.status;
+  const parts = summaryParts(status, kashrut.primary, kashrut.moreCount, hechsherOptions);
+  const showHistory = kashrut.hasRecentExpired && status !== 'EXPIRED';
+  const summaryClass = [
+    'kr-v2-details-summary',
+    `kr-v2-details-summary--${status.toLowerCase()}`,
+    status === 'EXPIRED' ? 'kr-details-overview-facts kr-details-overview-facts--expired' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
-    <section className="kr-details-sheet" aria-labelledby="kashrut-heading">
-      <h2 id="kashrut-heading" className="kr-details-heading">
+    <section className="kr-v2-details-overview" aria-labelledby="kashrut-heading">
+      <h2 id="kashrut-heading" className="kr-v2-details-heading">
         {t('details.kashrut')}
       </h2>
-      <div className="kr-details-badge">
-        <KashrutBadge kashrut={restaurant.kashrut} hechsherOptions={hechsherOptions} />
-      </div>
-      <OverviewFacts kashrut={restaurant.kashrut} hechsherOptions={hechsherOptions} />
-      {restaurant.kashrut.status === 'UNKNOWN' && <p className="kr-details-unknown">{t('details.unknown')}</p>}
+      <p className={summaryClass} data-overview={status}>
+        <StatusIcon status={status} />
+        <span>{parts.join(' · ')}</span>
+      </p>
+      {showHistory && <p className="kr-v2-details-history">{t('kashrut.alsoExpired')}</p>}
+      {status === 'UNKNOWN' && <p className="kr-v2-details-unknown">{t('details.unknown')}</p>}
     </section>
   );
 }
@@ -94,7 +83,7 @@ export function EvidenceFooter({ kosharotUrl }: { kosharotUrl: string | null }) 
   const safeKosharot = isSafeHttpUrl(kosharotUrl) ? kosharotUrl : null;
 
   return (
-    <div className="kr-details-note">
+    <div className="kr-v2-details-footnote">
       {safeKosharot && (
         <p>
           <a href={safeKosharot} target="_blank" rel="noopener noreferrer">
@@ -102,7 +91,7 @@ export function EvidenceFooter({ kosharotUrl }: { kosharotUrl: string | null }) 
           </a>
         </p>
       )}
-      <p className="kr-details-disclaimer">{t('details.disclaimer')}</p>
+      <p className="kr-v2-details-disclaimer">{t('details.disclaimer')}</p>
     </div>
   );
 }

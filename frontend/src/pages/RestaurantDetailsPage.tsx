@@ -8,6 +8,7 @@ import CertificateList from '../components/details/CertificateList';
 import DetailsIdentity from '../components/details/DetailsIdentity';
 import { DetailsBackLink, DetailsLoadError, DetailsLoading, DetailsNotFound } from '../components/details/DetailsStates';
 import KashrutOverview, { EvidenceFooter } from '../components/details/KashrutOverview';
+import { evidenceHeading } from '../components/details/labels';
 import { ContactDock, QuickActions } from '../components/details/RestaurantActions';
 import UnverifiedClaims from '../components/details/UnverifiedClaims';
 import '../components/details/details.css';
@@ -18,14 +19,9 @@ import { resolveSearchReturnPath } from '../search/searchReturn';
 import type { RestaurantDetails } from '../types/restaurantDetails';
 import { restaurantDisplayNames } from '../utils/restaurantName';
 
-// NEW (Milestone 4): the public page of one restaurant. It shows the status in words and, below it, all the
-// evidence on its own: certificates (verified or EXPIRED, with the photo) and unverified claims, kept apart.
-// KosherRadar only shows what was submitted and approved; it never certifies anything itself.
-// חדש (אבן דרך 4): הדף הציבורי של מסעדה. הסטטוס במילים ומתחתיו כל הראיות בנפרד: תעודות (תקפות או פג תוקף,
-// עם תמונה) וטענות לא מאומתות. KosherRadar מציג רק מה שנשלח ואושר, ואינו מעניק כשרות בעצמו.
-
-// NEW (Redesign wave 1): the same evidence, arranged so identity, status, certificates, and claims are separate.
-// חדש (גל עיצוב 1): אותן ראיות, בפריסה שמפרידה זהות, סטטוס, תעודות, וטענות.
+// The public page of one restaurant. Identity is a light heading. One kashrut line
+// sits above the records that actually support it. KosherRadar does not certify restaurants.
+// דף ציבורי של מסעדה. כותרת בהירה, שורת כשרות אחת, ומתחתיה הראיות עצמן.
 
 interface LoadResult {
   restaurantId: string;
@@ -38,8 +34,6 @@ function RestaurantDetailsPage() {
   const { t } = useTranslation();
   const { restaurantId = '' } = useParams();
   const location = useLocation();
-  // NEW (UX WP1A): Back to search uses the originating search, then the same-tab search, then home.
-  // חדש (חבילת UX 1A): חזרה לחיפוש משתמשת בחיפוש המקורי, אחר כך בחיפוש בלשונית, ולבסוף בדף הבית.
   const backTo = resolveSearchReturnPath(location.state);
   const rememberedLocation = readRememberedLocation(location.state);
   const backState = rememberedLocation ? { searchLocation: rememberedLocation } : undefined;
@@ -68,7 +62,6 @@ function RestaurantDetailsPage() {
           return;
         }
 
-        // 404 (not public or no such restaurant) and 400 (not a valid id) both mean "no such page".
         const status = axios.isAxiosError(err) ? err.response?.status : undefined;
         const notFound = status === 404 || status === 400;
         setResult({
@@ -82,7 +75,6 @@ function RestaurantDetailsPage() {
 
     load();
 
-    // A fast click to another restaurant must not show the answer of the previous one.
     return () => {
       cancelled = true;
     };
@@ -110,19 +102,31 @@ function RestaurantDetailsPage() {
   const restaurant = result.details;
   const names = restaurantDisplayNames(restaurant);
   const claims = restaurant.kashrut.items.filter((item) => item.kind === 'UNVERIFIED');
+  const hasEvidence = restaurant.teudot.length > 0 || claims.length > 0;
+  const sectionTitle = restaurant.teudot.length > 0 ? evidenceHeading() : t('details.claim');
 
   return (
-    <article className="kr-details">
+    <article className="kr-v2-details">
       <DetailsBackLink to={backTo} state={backState} />
-      <header className="kr-details-hero">
-        <DetailsIdentity restaurant={restaurant} names={names} />
+      <header className="kr-v2-details-identity">
+        <div className="kr-v2-details-identity-main">
+          <DetailsIdentity restaurant={restaurant} names={names} />
+        </div>
         <QuickActions restaurant={restaurant} primaryName={names.primary} />
       </header>
-      <div className="kr-details-layout">
-        <div className="kr-details-evidence">
-          <KashrutOverview restaurant={restaurant} hechsherOptions={hechsherOptions} />
-          <CertificateList teudot={restaurant.teudot} hechsherOptions={hechsherOptions} />
-          <UnverifiedClaims claims={claims} hechsherOptions={hechsherOptions} />
+      <hr className="kr-v2-details-rule" />
+      <KashrutOverview restaurant={restaurant} hechsherOptions={hechsherOptions} />
+      <div className="kr-v2-details-columns">
+        <div className="kr-v2-details-evidence">
+          {hasEvidence && (
+            <section className="kr-v2-details-evidence-block" aria-labelledby="certificates-heading">
+              <h2 id="certificates-heading" className="kr-v2-details-heading">
+                {sectionTitle}
+              </h2>
+              <CertificateList teudot={restaurant.teudot} hechsherOptions={hechsherOptions} />
+              <UnverifiedClaims claims={claims} hechsherOptions={hechsherOptions} />
+            </section>
+          )}
           <EvidenceFooter kosharotUrl={restaurant.kosharotUrl} />
         </div>
         <ContactDock restaurant={restaurant} primaryName={names.primary} />

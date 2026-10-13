@@ -408,6 +408,7 @@ describe('RestaurantDetailsPage', () => {
     expect(container.querySelector('h1')?.textContent).toBe('קפה גליל');
     expect(container.textContent).toContain('Cafe Galil');
     expect(container.textContent).toContain('חזרה לחיפוש');
+    expect(container.textContent).toContain('ניווט');
     expect(container.textContent).toContain('תעודה מאומתת');
     expect(container.textContent).toContain('תעודה שפג תוקפה');
     expect(container.textContent).toContain('טענה לא מאומתת');
@@ -422,6 +423,71 @@ describe('RestaurantDetailsPage', () => {
     expect(document.documentElement.dir).toBe('ltr');
     expect(container.querySelector('h1')?.textContent).toBe('Cafe Galil');
     expect(container.textContent).toContain('Back to search');
+  });
+
+  // NEW (Visual v2): cover summary hierarchy, certificate ordering, fallback images, and keyboard navigation.
+  // חדש (עיצוב 2): בדיקות סיכום, סדר תעודות, תמונות שלא נטענו וניווט מקלדת.
+  it('keeps one short kashrut overview and the full record in the evidence list', async () => {
+    getRestaurantDetails.mockResolvedValue(sample());
+    const { container } = await show(`/restaurants/${ID}`);
+    const overview = container.querySelector('[data-overview="VERIFIED"]');
+
+    expect(container.querySelector('.kr-details-hero')).toBeNull();
+    expect(container.querySelector('.kr-v2-details-title')?.textContent).toBe('Cafe Galil');
+    expect(overview?.textContent).toContain('Verified certificate');
+    expect(overview?.textContent).toContain('Local Rabbinate');
+    expect(overview?.textContent).toContain('Valid until 1 Dec 2026');
+    expect(overview?.textContent).toContain('+1 more');
+    expect(overview?.textContent).not.toContain('Mashgiach');
+    expect(overview?.querySelector('a')).toBeNull();
+    expect(container.querySelector('.kr-v2-details-history')?.textContent).toContain('Also has an EXPIRED certificate.');
+    expect(container.querySelector('.kr-details-certificate--current')?.textContent).toContain('Mashgiach: Ruth Levi');
+    expect(container.querySelector('summary')?.textContent).toContain('Directions');
+
+    const directions = container.querySelector('[data-directions]');
+    expect(directions?.querySelector('a[href*="google.com/maps"]')).not.toBeNull();
+    expect(directions?.querySelector('a[href*="waze.com"]')).not.toBeNull();
+    expect(container.querySelector('button')?.textContent).toBe('Share');
+  });
+
+  it('lists a current certificate before an expired one when the payload is reversed', async () => {
+    const reversed = sample();
+    reversed.teudot = [reversed.teudot[1], reversed.teudot[0]];
+    getRestaurantDetails.mockResolvedValue(reversed);
+    const { container } = await show(`/restaurants/${ID}`);
+    const records = [...container.querySelectorAll('[data-evidence="certificate"]')];
+
+    expect(records.map((record) => record.getAttribute('data-visibility'))).toEqual(['VALID', 'RECENT_EXPIRED']);
+    expect(container.querySelector('.kr-v2-details-record--claim')).not.toBeNull();
+    expect(container.querySelector('.kr-v2-details-record--claim')?.textContent).toContain(
+      'No certificate has been checked for this.'
+    );
+  });
+
+  it('keeps the photo link when its preview fails and survives a language change', async () => {
+    getRestaurantDetails.mockResolvedValue(sample());
+    const { container } = await show(`/restaurants/${ID}`);
+    await act(async () => {
+      container.querySelector('img')?.dispatchEvent(new Event('error'));
+    });
+    expect(container.querySelector('img')).toBeNull();
+    expect(container.querySelector('a[href="https://cdn.example/cert.jpg"]')).not.toBeNull();
+    await act(async () => { await i18n.changeLanguage('he'); });
+    expect(container.querySelector('a[href="https://cdn.example/cert.jpg"]')?.textContent).toContain(i18n.t('details.photo'));
+    expect(container.querySelector('h1')?.textContent).toBe('קפה גליל');
+  });
+
+  it('starts directions collapsed and restores focus when Escape closes it', async () => {
+    getRestaurantDetails.mockResolvedValue(sample());
+    const { container } = await show(`/restaurants/${ID}`);
+    const chooser = container.querySelector('details')!;
+    expect(chooser.open).toBe(false);
+    chooser.open = true;
+    await act(async () => {
+      chooser.querySelector('a')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(chooser.open).toBe(false);
+    expect(document.activeElement).toBe(chooser.querySelector('summary'));
   });
 });
 

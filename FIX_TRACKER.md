@@ -10,9 +10,9 @@ Counts below are derived from the issue statuses in this file.
 | ALREADY WORKING | 8 |
 | BLOCKED | 5 |
 | DEFERRED | 1 |
-| VERIFIED | 11 |
+| VERIFIED | 12 |
 | Other | 0 |
-| **Total** | **38** |
+| **Total** | **39** |
 
 ## Priority bands (12 October 2026)
 
@@ -61,6 +61,7 @@ QA-001 and QA-002 were found on 12 October 2026 while checking `feature/qa-testi
 | M3-003 | 3 Kashrut status | Critical | NOT STARTED | UX improvement |
 | M4-001 | 4 Authentication and security | High | VERIFIED | Confirmed bug |
 | QA-002 | Integration QA | Low | VERIFIED | Cleanup |
+| V2-D001 | Visual v2 restaurant details | High | VERIFIED | Visual redesign recovery |
 | M4-002 | 4 Authentication and security | High | ALREADY WORKING | Already implemented |
 | M4-003 | 4 Authentication and security | High | NOT STARTED | Security risk |
 | M4-004 | 4 Authentication and security | High | DEFERRED | Security risk |
@@ -734,6 +735,22 @@ Priority: High before launch
 ---
 
 ## Audit session record
+
+### V2-D001 — Recover and complete restaurant details redesign
+
+- **Milestone:** Visual v2 restaurant details (explicitly requested recovery; no LATER audit work started).
+- **Priority:** High.
+- **Status:** VERIFIED.
+- **Description/evidence:** Baseline `0140d19` used a large green identity band, equally weighted action pills and multiple card surfaces. Interrupted uncommitted work already replaced this composition; its onboarding incorrectly said implementation had not started. Directions was expanded by default and failed certificate images were removed directly from React's DOM.
+- **Root cause:** Interrupted implementation and stale handoff; default-open navigation added visual weight, DOM mutation bypassed React ownership, and a nested bidi isolate prevented the Hebrew heading's automatic direction detection.
+- **Relevant files/functions:** `RestaurantDetailsPage`, scoped details components/CSS, `DirectionsControl`, `CertificatePhoto`.
+- **Solution/files changed:** Preserved and completed the existing light identity, concise summary, editorial evidence and contact sidebar. Directions becomes a collapsed anchored chooser with keyboard dismissal; failed thumbnail uses state and retains its safe link. Details page, its tests, details components/CSS, `VISUAL_V2_DETAILS_PROGRESS.md`, and tracking notes in `PROGRESS.md` / this file.
+- **Tests added/modified:** Existing recovered overview/order/RTL cases retained; added thumbnail failure across language change and Escape/focus behavior.
+- **Verification:** `cd frontend; npm test` exit 0, 26 files / 154 tests passed; `npm run lint`, `npm run typecheck`, `npm run build` exit 0. Existing large JS chunk warning persists (~762.44 kB). `git -c core.whitespace=cr-at-eol diff --check` exit 0 (repository CRLF convention). Backend build/tests not applicable to this frontend-only change and not run.
+- **Browser:** Production frontend against synthetic local API fixtures, installed Chrome, no new packages: 80 completed renders, English/Hebrew at 390/700/900/1280; zero horizontal overflow. Screenshots visually inspected. Server-error retry, keyboard directions, clipboard fallback with native sharing unavailable, and both logged-out contribution redirects passed. Local ignored screenshots/results in `design-screenshots/details-v2/`.
+- **Blockers/limitations:** New Hebrew labels await native-speaker review (M8-004). No real services, external destinations, native share sheet, phone calls, or backend integration tested. Existing untracked temporary preview config preserved outside the checkpoint. Other worktrees/branches untouched; no merge/push.
+
+### Original audit record
 
 - **Date:** 12 October 2026
 - **Application code modified:** no
