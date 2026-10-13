@@ -807,11 +807,11 @@ Explicit request authorizes this assigned batch, including the listed historical
 ### A1-R1 / SEC-010 ? Partial database deletion and creation compensation
 - **Milestone:** Agent 1 admin authority and data integrity.
 - **Priority:** P1.
-- **Status:** NOT STARTED.
+- **Status:** VERIFIED.
 - **Evidence/root cause:** Separate database writes and best-effort compensation (M5-001/M5-002).
 - **Relevant files/solution:** Investigate adminRestaurantService, adminTeudaService, restaurantSubmissionService; separate database atomicity from external cleanup.
-- **Files changed/tests/verification:** None yet.
-- **Blockers/limitations:** No production operations authorized.
+- **Files changed/tests/verification:** Atomic creation/cascade services, internal parent serialization counter/repository, durable ImageCleanup outbox/repository/service, retry operator script and real failure-injection regressions. Baseline exit 1, 0 pass / 3 fail. Targeted npm test: exit 0, 7 files / 117 tests. Full backend npm test with services disabled: exit 0, 42 files / 510 tests. node integration/runAgent1Isolated.mjs --run-isolated agent1Integrity.integration.mjs: exit 0, 7 real MongoDB tests covering cascade/unlink/final-delete rollback, cleanup outbox rollback, mocked external failure/acknowledgement loss/retry, concurrent parent/child and certificate/report races, USER/ADMIN creation failures. Diff check exit 0. Frontend/browser not rerun (backend-only); backend has no build/lint/typecheck scripts. Cloudinary SDK mocked; no live services.
+- **Blockers/limitations:** Replica set/sharded MongoDB required. Additive internal counter/outbox collection, no record migration/backfill. Cloudinary live behavior unverified; upload-to-durable-record interruption window requires provider/operator reconciliation. Unknown commit retains image; unreachable DB compensation logs id. No existing application data touched.
 
 ### A1-R2 ? Pending certificates after rejection
 - **Milestone:** Agent 1 admin authority and data integrity.

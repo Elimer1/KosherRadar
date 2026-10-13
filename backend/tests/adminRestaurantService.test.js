@@ -1,3 +1,10 @@
+vi.mock('../src/repositories/transaction.js', () => ({ withTransaction: vi.fn(async (work) => work()) }));
+vi.mock('../src/repositories/restaurantIntegrityRepository.js', () => ({ lockRestaurantForWriteRepo: vi.fn() }));
+vi.mock('../src/repositories/imageCleanupRepository.js', () => ({
+  enqueueImageCleanupRepo: vi.fn(),
+  findImageCleanupRepo: vi.fn(async (ids) => (ids || []).map((publicId) => ({ publicId }))),
+  completeImageCleanupRepo: vi.fn(), failImageCleanupRepo: vi.fn(),
+}));
 // NEW (Milestone 3): tests for admin restaurant moderation (create, edit, approve, reject, delete, lists).
 // חדש (אבן דרך 3): בדיקות לניהול מסעדות על ידי מנהל (יצירה, עריכה, אישור, דחייה, מחיקה, רשימות).
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -193,14 +200,14 @@ describe('createRestaurantByAdminService', () => {
     expect(result.restaurant.status).toBe('APPROVED');
   });
 
-  it('removes the restaurant and the photo when the certificate cannot be saved', async () => {
+  it('aborts creation and cleans the photo when the certificate cannot be saved', async () => {
     createTeudaRepo.mockRejectedValue(new Error('database down'));
 
     await expect(
       createRestaurantByAdminService({ restaurantData: restaurantFields(), extras: {}, teudaData, file, admin })
     ).rejects.toThrow('database down');
 
-    expect(deleteRestaurantByIdRepo).toHaveBeenCalledWith('rest-new');
+    expect(deleteRestaurantByIdRepo).not.toHaveBeenCalled();
     expect(deleteImageService).toHaveBeenCalledWith('new-id');
   });
 
@@ -348,7 +355,7 @@ describe('deleteRestaurantService', () => {
 
     const result = await deleteRestaurantService({ restaurantId: 'rest-1' });
 
-    expect(result).toEqual({ deleted: true, deletedCertificates: 2 });
+    expect(result).toMatchObject({ deleted: true, deletedCertificates: 2, imageCleanup: expect.any(Object) });
     expect(deleteTeudotOfRestaurantRepo).toHaveBeenCalledWith('rest-1');
     expect(deleteReportsOfRestaurantRepo).toHaveBeenCalledWith('rest-1');
     expect(deleteRestaurantByIdRepo).toHaveBeenCalledWith('rest-1');

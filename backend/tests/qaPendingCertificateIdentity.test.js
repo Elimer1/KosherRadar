@@ -1,3 +1,10 @@
+vi.mock('../src/repositories/transaction.js', () => ({ withTransaction: vi.fn(async (work) => work()) }));
+vi.mock('../src/repositories/restaurantIntegrityRepository.js', () => ({ lockRestaurantForWriteRepo: vi.fn() }));
+vi.mock('../src/repositories/imageCleanupRepository.js', () => ({
+  enqueueImageCleanupRepo: vi.fn(),
+  findImageCleanupRepo: vi.fn(async (ids) => (ids || []).map((publicId) => ({ publicId }))),
+  completeImageCleanupRepo: vi.fn(), failImageCleanupRepo: vi.fn(),
+}));
 // NEW (QA): what the add-certificate flow uses as a "same certificate" lookup. No database or upload.
 // חדש (בדיקות): לפי מה זרימת הוספת התעודה מחליטה שזו אותה תעודה. בלי מסד נתונים ובלי העלאה.
 import { describe, it, expect, vi, beforeEach } from 'vitest';

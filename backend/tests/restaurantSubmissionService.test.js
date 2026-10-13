@@ -1,3 +1,10 @@
+vi.mock('../src/repositories/transaction.js', () => ({ withTransaction: vi.fn(async (work) => work()) }));
+vi.mock('../src/repositories/restaurantIntegrityRepository.js', () => ({ lockRestaurantForWriteRepo: vi.fn() }));
+vi.mock('../src/repositories/imageCleanupRepository.js', () => ({
+  enqueueImageCleanupRepo: vi.fn(),
+  findImageCleanupRepo: vi.fn(async (ids) => (ids || []).map((publicId) => ({ publicId }))),
+  completeImageCleanupRepo: vi.fn(), failImageCleanupRepo: vi.fn(),
+}));
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('../src/repositories/restaurantRepository.js', () => ({
@@ -255,17 +262,17 @@ describe('submitRestaurantService', () => {
     expect(deleteImageService).toHaveBeenCalledWith('kosherradar/teudot/photo');
   });
 
-  it('removes the new restaurant and the photo when the teuda cannot be saved', async () => {
+  it('aborts creation without a compensating database delete when the teuda cannot be saved', async () => {
     createTeudaRepo.mockRejectedValue(new Error('database down'));
 
     await expect(
       submitRestaurantService({ restaurantData: restaurantData(), teudaData: teudaData(), file, user })
     ).rejects.toThrow('database down');
-    expect(deleteRestaurantByIdRepo).toHaveBeenCalledWith('rest-1');
+    expect(deleteRestaurantByIdRepo).not.toHaveBeenCalled();
     expect(deleteImageService).toHaveBeenCalledWith('kosherradar/teudot/photo');
   });
 
-  it('keeps the original error when the restaurant cleanup also fails', async () => {
+  it('preserves the original creation error without relying on fallible database compensation', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     const originalError = new Error('teuda database down');
     createTeudaRepo.mockRejectedValue(originalError);
@@ -276,7 +283,7 @@ describe('submitRestaurantService', () => {
     ).rejects.toBe(originalError);
 
     expect(deleteImageService).toHaveBeenCalledWith('kosherradar/teudot/photo');
-    expect(consoleError).toHaveBeenCalled();
+    expect(consoleError).not.toHaveBeenCalled();
     consoleError.mockRestore();
   });
 });

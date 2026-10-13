@@ -124,11 +124,11 @@ describe('uploadTeudaImageService', () => {
 describe('deleteImageService', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('only logs when the delete fails', async () => {
+  it('returns a retryable outcome and logs when deletion fails', async () => {
     isCloudinaryConfigured.mockReturnValue(true);
     vi.spyOn(console, 'error').mockImplementation(() => {});
     getCloudinary.mockReturnValue({ uploader: { destroy: vi.fn().mockRejectedValue(new Error('boom')) } });
 
-    await expect(deleteImageService('some/id')).resolves.toBeUndefined();
+    await expect(deleteImageService('some/id')).resolves.toEqual({ deleted: false, reason: 'CLEANUP_FAILED' });
   });
 });

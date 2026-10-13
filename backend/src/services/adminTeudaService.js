@@ -1,3 +1,7 @@
+import { withTransaction } from '../repositories/transaction.js';
+import { lockRestaurantForWriteRepo } from '../repositories/restaurantIntegrityRepository.js';
+import { enqueueImageCleanupRepo } from '../repositories/imageCleanupRepository.js';
+import { cleanupFailedUploadService, retryImageCleanupService } from './imageCleanupService.js';
 // NEW (Milestone 3): admin moderation of kashrut certificates (teudot): list, create, edit, approve, reject, delete.
 // חדש (אבן דרך 3): ניהול תעודות כשרות (teudot) על ידי מנהל: רשימות, יצירה, עריכה, אישור, דחייה, מחיקה.
 import { EXPIRING_SOON_DAYS } from '../config/constants.js';
@@ -21,7 +25,7 @@ import {
 } from '../repositories/adminTeudaRepository.js';
 import { removeTeudaFromReportsRepo } from '../repositories/adminReportRepository.js';
 import { toAdminTeuda } from './adminSerializerService.js';
-import { checkImageFile, deleteImageService, uploadTeudaImageService } from './imageUploadService.js';
+import { checkImageFile, uploadTeudaImageService } from './imageUploadService.js';
 import { findConflictingTeudot } from './kashrutStatusService.js';
 import { notifyRejectionService } from './moderationNotificationService.js';
 import { awardPointsForApprovedTeudaService } from './pointsService.js';
@@ -122,21 +126,24 @@ export const createTeudaByAdminService = async ({ restaurantId, teudaData, file,
   const image = await uploadTeudaImageService(file);
 
   try {
-    const teuda = await createTeudaRepo({
-      ...buildTeudaRecord({
-        teudaData,
-        image,
-        restaurantId: restaurant._id,
-        userId: admin._id,
-        withNewRestaurant: false,
-      }),
-      status: 'APPROVED',
-      adminNote: teudaData.adminNote,
+    const teuda = await withTransaction(async () => {
+      await lockRestaurantForWriteRepo(restaurant._id, 'APPROVED');
+      return createTeudaRepo({
+        ...buildTeudaRecord({
+          teudaData,
+          image,
+          restaurantId: restaurant._id,
+          userId: admin._id,
+          withNewRestaurant: false,
+        }),
+        status: 'APPROVED',
+        adminNote: teudaData.adminNote,
+      });
     });
 
     return toAdminTeuda(teuda);
   } catch (error) {
-    await deleteImageService(image.cloudinaryPublicId);
+    await cleanupFailedUploadService(image.cloudinaryPublicId, error);
     throw error;
   }
 };
@@ -244,14 +251,18 @@ export const rejectTeudaService = async ({ teudaId, reason }) => {
 
 // Deleting keeps points as they are (the contribution was real when it was approved). Reports about the
 // certificate stay, without the link, so an admin can still close them. The photo is removed from
-// Cloudinary afterwards; if that fails it is only logged.
+// Cloudinary afterwards; failures remain in the durable cleanup queue for retry.
 // מחיקה משאירה את הנקודות כמות שהן. דיווחים על התעודה נשארים בלי הקישור. התמונה נמחקת מ-Cloudinary בסוף.
 export const deleteTeudaService = async ({ teudaId }) => {
-  const teuda = await loadTeudaOr404(teudaId);
-
-  await deleteTeudaByIdRepo(teuda._id);
-  await removeTeudaFromReportsRepo(teuda._id);
-  await deleteImageService(teuda.cloudinaryPublicId);
-
-  return { deleted: true };
+  const ids = await withTransaction(async () => {
+    const teuda = await loadTeudaOr404(teudaId);
+    await lockRestaurantForWriteRepo(teuda.restaurant);
+    const ids = [teuda.cloudinaryPublicId].filter(Boolean);
+    await enqueueImageCleanupRepo(ids);
+    await deleteTeudaByIdRepo(teuda._id);
+    await removeTeudaFromReportsRepo(teuda._id);
+    return ids;
+  });
+  const imageCleanup = await retryImageCleanupService(ids);
+  return { deleted: true, imageCleanup };
 };
