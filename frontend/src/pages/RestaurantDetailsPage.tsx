@@ -15,6 +15,7 @@ import '../components/details/details.css';
 import { useFormOptions } from '../hooks/useFormOptions';
 import { readRememberedLocation } from '../hooks/useSearchCriteria';
 import { usePageMeta } from '../hooks/usePageMeta';
+import { useIsraelDay } from '../hooks/useIsraelDay';
 import { resolveSearchReturnPath } from '../search/searchReturn';
 import type { RestaurantDetails } from '../types/restaurantDetails';
 import { restaurantDisplayNames } from '../utils/restaurantName';
@@ -25,6 +26,7 @@ import { restaurantDisplayNames } from '../utils/restaurantName';
 
 interface LoadResult {
   restaurantId: string;
+  israelDay: string;
   details: RestaurantDetails | null;
   notFound: boolean;
   error: string;
@@ -38,9 +40,10 @@ function RestaurantDetailsPage() {
   const rememberedLocation = readRememberedLocation(location.state);
   const backState = rememberedLocation ? { searchLocation: rememberedLocation } : undefined;
   const { options } = useFormOptions();
+  const israelDay = useIsraelDay();
   const [attempt, setAttempt] = useState(0);
   const [result, setResult] = useState<LoadResult | null>(null);
-  const loadedRestaurant = result && result.restaurantId === restaurantId ? result.details : null;
+  const loadedRestaurant = result && result.restaurantId === restaurantId && result.israelDay === israelDay ? result.details : null;
   const loadedName = loadedRestaurant ? restaurantDisplayNames(loadedRestaurant).primary : '';
 
   usePageMeta(
@@ -55,7 +58,7 @@ function RestaurantDetailsPage() {
       try {
         const details = await getRestaurantDetails(restaurantId);
         if (!cancelled) {
-          setResult({ restaurantId, details, notFound: false, error: '' });
+          setResult({ restaurantId, israelDay, details, notFound: false, error: '' });
         }
       } catch (err) {
         if (cancelled) {
@@ -66,6 +69,7 @@ function RestaurantDetailsPage() {
         const notFound = status === 404 || status === 400;
         setResult({
           restaurantId,
+          israelDay,
           details: null,
           notFound,
           error: notFound ? '' : getErrorMessage(err, t('forms.loadRestaurant')),
@@ -78,7 +82,7 @@ function RestaurantDetailsPage() {
     return () => {
       cancelled = true;
     };
-  }, [restaurantId, t, attempt]);
+  }, [restaurantId, t, attempt, israelDay]);
 
   const retry = () => {
     setResult(null);
@@ -87,7 +91,7 @@ function RestaurantDetailsPage() {
 
   const hechsherOptions = options?.hechsherOptions || [];
 
-  if (!result || result.restaurantId !== restaurantId) {
+  if (!result || result.restaurantId !== restaurantId || result.israelDay !== israelDay) {
     return <DetailsLoading to={backTo} state={backState} />;
   }
 

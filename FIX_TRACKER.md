@@ -808,3 +808,11 @@ Only post-merge documentation files updated: this file, PROGRESS.md, REDESIGN_IN
 - **Tests:** healthRoutesHttp.test.js added, 6 cases with loopback HTTP and mocked Mongoose states 0/1/2/3/unknown/recovery.
 - **Verification:** focused health tests exit 0, 6 passed; full backend npm test exit 0, 43 files/517 passed. Backend has no build/lint/typecheck scripts. Frontend unchanged for this fix.
 - **Limitations:** Readiness checks connection state, not an active query. Startup continues to wait for initial connection. No real database/external integrations.
+
+### APP3-001 ? Browser detail-page certificate expiry rollover
+
+- **Milestone:** User-assigned secondary Submission & Application Reliability; **Priority:** P2; **Status:** VERIFIED.
+- **Evidence/root cause:** Loaded details never refreshed merely because Israel calendar date changed. Baseline page tests exit 1, 3 failed/14 passed.
+- **Solution/files:** useIsraelDay.ts; RestaurantDetailsPage.tsx and test. Detect day changes every minute/on foreground return and refetch server-derived details; hide stale previous-day evidence and use existing error/retry flow. No public terminology/rules changes.
+- **Tests/verification:** Four new page regressions; full frontend npm test exit 0, 29 files/178 passed; lint/typecheck/build exit 0, existing chunk warning. Backend unchanged; no browser/live services tested.
+- **Limitations:** Normal timers can delay refresh up to one minute; suspended tabs refresh upon foreground return. Browser clock is only a refresh trigger.

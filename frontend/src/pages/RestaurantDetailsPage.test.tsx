@@ -154,9 +154,60 @@ describe('RestaurantDetailsPage', () => {
     }
 
     mounted.length = 0;
+    vi.useRealTimers();
     sessionStorage.clear();
     await i18n.changeLanguage('en');
     applyDocumentLanguage('en');
+  });
+
+  // NEW (Agent 3): a long-lived page must refresh the server's date-sensitive evidence.
+  // חדש (סוכן 3): רענון ראיות תלויות תאריך בדף שנשאר פתוח.
+  it.each(['timer', 'focus', 'visibility'])('refreshes evidence after Israel midnight on %s', async (trigger) => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-13T20:59:30Z'));
+    const current = sample();
+    current.kashrut.primary!.expirationDate = '2026-10-13';
+    current.teudot[0].expirationDate = '2026-10-13';
+    const expired = sample({
+      kashrut: { ...current.kashrut, status: 'EXPIRED',
+        primary: { ...current.kashrut.primary!, kind: 'EXPIRED' }, items: [], moreCount: 0 },
+      teudot: [{ ...current.teudot[0], visibility: 'RECENT_EXPIRED' }],
+    });
+    getRestaurantDetails.mockResolvedValueOnce(current).mockResolvedValueOnce(expired);
+    const { container } = await show(`/restaurants/${ID}`);
+    expect(getRestaurantDetails).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      if (trigger === 'timer') await vi.advanceTimersByTimeAsync(60_000);
+      else {
+        vi.setSystemTime(new Date('2026-10-13T21:00:30Z'));
+        if (trigger === 'focus') window.dispatchEvent(new Event('focus'));
+        else document.dispatchEvent(new Event('visibilitychange'));
+      }
+    });
+    expect(getRestaurantDetails).toHaveBeenCalledTimes(2);
+    expect(container.textContent).toContain(i18n.t('kashrut.EXPIRED'));
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
+    expect(getRestaurantDetails).toHaveBeenCalledTimes(2);
+  });
+
+  it('hides yesterday\'s evidence during rollover and supports recovery if refreshing fails', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-13T20:59:30Z'));
+    let reject!: (error: Error) => void;
+    getRestaurantDetails.mockResolvedValueOnce(sample()).mockReturnValueOnce(new Promise((_, no) => { reject = no; }));
+    const { container } = await show(`/restaurants/${ID}`);
+    await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+    expect(container.querySelector('[data-overview="VERIFIED"]')).toBeNull();
+    expect(container.textContent).toContain(i18n.t('common.loading'));
+    await act(async () => { reject(new AxiosError('offline')); });
+    expect(container.querySelector('[role="alert"]')).not.toBeNull();
+    expect(container.querySelector('[data-overview="VERIFIED"]')).toBeNull();
+    getRestaurantDetails.mockResolvedValueOnce(sample({ kashrut: {
+      status: 'UNKNOWN', primary: null, items: [], moreCount: 0, hasRecentExpired: false,
+    }, teudot: [] }));
+    await act(async () => { [...container.querySelectorAll('button')].find((button) => button.textContent === 'Try again')?.click(); });
+    expect(container.querySelector('[data-overview="UNKNOWN"]')).not.toBeNull();
+    expect(getRestaurantDetails).toHaveBeenCalledTimes(3);
   });
 
   it('shows a loading state and keeps the return path before the restaurant arrives', async () => {

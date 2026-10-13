@@ -30,3 +30,11 @@ Implement A1-003, then SEC-011; run both full suites and frontend lint/typecheck
 - Files: server.js, new routes/healthRoutes.js, tests/healthRoutesHttp.test.js, README.md. Tests cover connected/disconnected/connecting/disconnecting/unknown, recovery to connected, aliases and liveness.
 - Verification: backend npm test -- tests/healthRoutesHttp.test.js exit 0, 6 passed; full npm test exit 0, 43 files / 517 passed. No backend build/lint/typecheck scripts. Mongoose state mocked; no real DB or production/service resources. Readiness does not actively ping MongoDB.
 - Next: scoped detail-page Israel-date rollover refresh; final frontend checks and handoff.
+
+### APP3-001 ? VERIFIED: long-lived detail-page expiry refresh
+- Evidence: detail fetch depended only on restaurantId, translation and explicit retry; timer/focus/visibility rollover regressions failed 3/17 before changes (exit 1).
+- useIsraelDay checks Asia/Jerusalem calendar day every minute and on focus/visible return. A changed day refetches the existing details API; no duplicated or changed kashrut classification logic. Previous-day data is hidden during refresh; failed refresh uses existing retry UI. Timers/listeners cleaned up.
+- Files: new hooks/useIsraelDay.ts, RestaurantDetailsPage.tsx and test. Four regressions cover midnight polling, foreground return, no redundant same-day requests, loading/error/retry.
+- Verification: frontend full npm test exit 0, 29 files / 178 passed; npm run lint, npm run typecheck, npm run build exit 0; chunk warning persists. Backend unchanged after full 517-pass check. No browser testing.
+- Limitations: visible-page rollover detected within one minute under normal timer scheduling; background timer suspension handled when focus/visibility resumes. Server remains source of status truth; browser clock schedules refetch.
+- Next: explicit photo clear control for recovery, then final frontend verification.

@@ -620,6 +620,10 @@ Deferred: native-speaker review of Hebrew copy, including design strings and the
 
 ## NEXT AGENT ONBOARDING
 
+**Agent 3 latest position ? expiry refresh verified (13 October 2026).**
+All three assigned issues verified/committed (SEARCH-003 f00109b, A1-003 494ac7e, SEC-011 e50ce79). APP3-001 additionally refreshes server-derived restaurant evidence on Israel-day rollover with loading/error recovery. Full frontend 178 tests, lint/typecheck/build exit 0; backend 517 tests exit 0. Files and limitations in AGENT_3_FIX_PROGRESS.md. Next: provide explicit photo clear/recovery control, verify final frontend and stop. No unrelated changes, browser or live-service checks.
+
+
 **Agent 3 latest position ? SEC-011 verified (13 October 2026).**
 SEARCH-003 f00109b and A1-003 494ac7e committed. Health/readiness now returns 503 unless database connected; /live is independent liveness. New router and HTTP tests, README updated. Full backend npm test exit 0, 43 files/517 passed with mocks. No partial backend changes. Next: implement scoped detail-day rollover by refetching server details without changing kashrut rules, then final frontend test/lint/typecheck/build and clean handoff. All commands/files/limitations in AGENT_3_FIX_PROGRESS.md. No browser or real service checks.
 
