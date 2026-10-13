@@ -6,13 +6,13 @@ Counts below are derived from the issue statuses in this file.
 
 | Status | Count |
 | --- | ---: |
-| NOT STARTED | 13 |
+| NOT STARTED | 10 |
 | ALREADY WORKING | 8 |
 | BLOCKED | 5 |
 | DEFERRED | 1 |
-| VERIFIED | 13 |
+| VERIFIED | 21 |
 | Other | 0 |
-| **Total** | **40** |
+| **Total** | **45** |
 
 ## Priority bands (12 October 2026)
 
@@ -34,7 +34,7 @@ The user asked to finish important fixes and to defer low-impact, cosmetic, end-
 
 ### LATER
 
-M2-004, M3-003, M4-003, M4-004, M5-001, M5-003, M5-004, M6-001, M6-002, M6-004, M8-003, M8-004, M9-001, M9-002, M9-003, M9-004, M10A-001, M10B-001, M11-001.
+M2-004, M3-003, M4-003, M4-004, M6-001, M6-002, M6-004, M8-003, M8-004, M9-001, M9-002, M9-003, M9-004, M10A-001, M10B-001, M11-001.
 
 M6-003 is verified with M1-003: the same unambiguous-match rule covers restaurant submit and the search location field. Live Geoapify accuracy stays blocked under M9-002. M8-002 is verified with M1-002: optional certificate fields are labeled, and the required hechsher is no longer inside the optional certificate block.
 
@@ -42,7 +42,7 @@ Classification of those 36 issues: **4 confirmed bugs**, **12 risks**, **12 impr
 
 Blocked and deferred issues are not counted as verified. The sentence above is the audit classification; current statuses are in the tables.
 
-QA-001 and QA-002 were found on 12 October 2026 while checking `feature/qa-testing` at `54d9605`. They are not part of the original 36. Both are verified. LATER issues were not started.
+QA-001 and QA-002 were found on 12 October 2026 while checking `feature/qa-testing` at `54d9605`. They are not part of the original 36. Both are verified. That earlier batch did not start LATER work; the explicit Agent 1 request on 13 October authorizes the assigned integrity follow-ups below.
 
 ## Milestone index
 
@@ -66,10 +66,10 @@ QA-001 and QA-002 were found on 12 October 2026 while checking `feature/qa-testi
 | M4-002 | 4 Authentication and security | High | ALREADY WORKING | Already implemented |
 | M4-003 | 4 Authentication and security | High | NOT STARTED | Security risk |
 | M4-004 | 4 Authentication and security | High | DEFERRED | Security risk |
-| M5-001 | 5 Database integrity | High | NOT STARTED | Reliability risk |
+| M5-001 | 5 Database integrity | High | VERIFIED | Reliability risk |
 | M5-002 | 5 Database integrity | High | VERIFIED | Confirmed bug and reliability risk |
-| M5-003 | 5 Database integrity | High | NOT STARTED | Reliability risk |
-| M5-004 | 5 Database integrity | High | NOT STARTED | Reliability risk |
+| M5-003 | 5 Database integrity | High | VERIFIED | Reliability risk |
+| M5-004 | 5 Database integrity | High | VERIFIED | Reliability risk |
 | M6-001 | 6 Search and map | High | NOT STARTED | Reliability risk |
 | M6-002 | 6 Search and map | High | NOT STARTED | Architectural improvement |
 | M6-003 | 6 Search and map | High | VERIFIED | Reliability risk |
@@ -88,6 +88,11 @@ QA-001 and QA-002 were found on 12 October 2026 while checking `feature/qa-testi
 | M10A-001 | 10A Core end-to-end testing | High before launch | NOT STARTED | Test gap |
 | M10B-001 | 10B Submission and admin end-to-end testing | High before launch | NOT STARTED | Test gap |
 | M11-001 | 11 Documentation and production readiness | High before launch | NOT STARTED | Readiness gap |
+| A1-001 / SEC-002 | Agent 1 admin/data integrity | P1 | VERIFIED | Admin submission separation |
+| A1-002 / SEC-001 | Agent 1 admin/data integrity | P1 | VERIFIED | Atomic corrections/awards |
+| A1-R1 / SEC-010 | Agent 1 admin/data integrity | P1 | VERIFIED | Atomic cascades/creation |
+| A1-R2 | Agent 1 admin/data integrity | P1 | VERIFIED | Atomic rejection |
+| A1-R4 | Agent 1 admin/data integrity | P1 | VERIFIED | Unique-index enforcement |
 
 ---
 
@@ -190,6 +195,8 @@ Priority: Critical
 - **Tests added or modified:** `backend/tests/adminReportService.test.js`. The old test expected the certificate write to run before the claim and to skip the claim when the write failed. That assertion described the bug, so it was replaced: a lost claim does not write, and a failed write reopens the report. `CORRECTION_ALREADY_MADE` still awards +1.
 - **Verification:** `cd backend; npm test -- tests/adminReportService.test.js` exit 0, 18 tests passed. Mocks only. No browser. No live database.
 - **Blockers:** If reopening the report also fails, the report can stay resolved without the correction. That is logged and the original error is still thrown. A field-diff requirement for `CORRECTION_ALREADY_MADE` still needs approval because it changes who gets +1.
+
+- **Current Agent 1 follow-up:** A1-002 / SEC-001 (b106482) replaces claim/reopen compensation with atomic correction/report/award. Four real MongoDB regressions pass, including premature retry awards, award rollback, idempotency/ADMIN zero points and abrupt worker death/recovery. Older evidence/verification above are historical. Existing inconsistent records need an approved data review.
 
 ### M2-003 — Admin review experience
 
@@ -363,16 +370,18 @@ Priority: High
 
 - **Milestone:** 5
 - **Priority:** High
-- **Status:** NOT STARTED
-- **Description:** Deleting a restaurant deletes its certificates and reports, then tries to delete Cloudinary images. Points already awarded stay. The writes are sequential and not one transaction. The user's submission list loses those rows because it queries the live documents.
-- **Evidence:** `deleteRestaurantService` loads image ids, `deleteTeudotOfRestaurantRepo`, `deleteReportsOfRestaurantRepo`, `deleteRestaurantByIdRepo`, then `deleteImageService` per id. `pointsService` never subtracts points. `listMyRestaurantsRepo` filters `submittedBy` with no tombstone. The UI uses `window.confirm` before calling delete.
+- **Status:** VERIFIED
+- **Description (original audit; superseded by follow-up below):** Deleting a restaurant deletes its certificates and reports, then tries to delete Cloudinary images. Points already awarded stay. The writes are sequential and not one transaction. The user's submission list loses those rows because it queries the live documents.
+- **Original audit evidence:** `deleteRestaurantService` loads image ids, `deleteTeudotOfRestaurantRepo`, `deleteReportsOfRestaurantRepo`, `deleteRestaurantByIdRepo`, then `deleteImageService` per id. `pointsService` never subtracts points. `listMyRestaurantsRepo` filters `submittedBy` with no tombstone. The UI uses `window.confirm` before calling delete.
 - **Root cause:** Deletion was specified as a permanent cascade implemented as separate commands. Image deletion is best-effort (M5-004).
 - **Relevant files/functions:** `backend/src/services/adminRestaurantService.js` (`deleteRestaurantService`); `backend/src/repositories/adminTeudaRepository.js`; `backend/src/repositories/adminReportRepository.js`; `frontend/src/pages/AdminRestaurantPage.tsx` (`handleDelete`).
 - **Planned solution:** Perform the three database deletes in one transaction when a replica set is available, or document a compensating order and test it. Delete images after the database commit, and record failures for a retry (M5-004). Keep points. Ask before adding tombstones that change what users see in submission history.
-- **Files changed:** none
-- **Tests added or modified:** none. Existing unit tests mock the repositories.
-- **Verification:** Static inspection only.
-- **Blockers:** A transaction test needs an approved isolated replica set. Do not run this against a shared or production database.
+- **Historical files changed:** none; see current follow-up
+- **Historical tests added or modified:** none. Existing unit tests mock the repositories.
+- **Historical verification:** Static inspection only.
+- **Historical blockers (current limits below):** A transaction test needs an approved isolated replica set. Do not run this against a shared or production database.
+
+- **Current verified follow-up/files/tests/verification/limitations:** A1-R1 / SEC-010 (351f9d6) now commits cascades and cleanup jobs atomically, serializes concurrent children and retains points. Targeted 117 / full 510 backend tests and 7 real isolated MongoDB regressions pass (exit 0); external SDK mocked. Replica set and approved cleanup index provisioning required. No tombstones/status changes.
 
 ### M5-002 — Multi-document consistency
 
@@ -389,35 +398,41 @@ Priority: High
 - **Verification:** `cd backend; npm test` exit 0, 38 files, 485 tests passed. Mocks only. No live database and no email was sent.
 - **Blockers:** Restaurant submit and restaurant rejection still use separate writes. Those were not the confirmed defect and stay in the rest of this issue's evidence as later work. No transaction library was added.
 
+- **Current Agent 1 follow-up:** Creation compensation is replaced by a transaction in A1-R1 (351f9d6); rejection is atomic in A1-R2 (6faa1a2); report correction/outcome/award is atomic in A1-002 (b106482). Earlier description, files, verification and separate-write blockers above are historical. Password-reset behavior was outside Agent 1 scope and preserved. No packages/backfill.
+
 ### M5-003 — Duplicate handling and indexes
 
 - **Milestone:** 5
 - **Priority:** High
-- **Status:** NOT STARTED
-- **Description:** Duplicate restaurants are a warning, not a unique constraint. Two overlapping submits can both pass the pending check and both insert. Email and reset-token hash are unique.
-- **Evidence:** `findPendingRestaurantBySubmitterRepo` runs before `createRestaurantRepo`. There is no unique index on name plus address. `Restaurant` indexes `nameNormalized`, `addressNormalized`, `phoneNormalized`, and sparse `geoapifyPlaceId`, none unique. `findPossibleDuplicatesService` stores at most 10 warnings and never blocks. `User.email` is unique. `PasswordResetToken.tokenHash` is unique. A double click is reduced by disabling the submit button after `setLoading(true)`, which does not cover two browsers.
+- **Status:** VERIFIED
+- **Description (original audit; superseded by follow-up below):** Duplicate restaurants are a warning, not a unique constraint. Two overlapping submits can both pass the pending check and both insert. Email and reset-token hash are unique.
+- **Original audit evidence:** `findPendingRestaurantBySubmitterRepo` runs before `createRestaurantRepo`. There is no unique index on name plus address. `Restaurant` indexes `nameNormalized`, `addressNormalized`, `phoneNormalized`, and sparse `geoapifyPlaceId`, none unique. `findPossibleDuplicatesService` stores at most 10 warnings and never blocks. `User.email` is unique. `PasswordResetToken.tokenHash` is unique. A double click is reduced by disabling the submit button after `setLoading(true)`, which does not cover two browsers.
 - **Root cause:** The product rule is "warn, do not block", implemented as a read-then-insert.
 - **Relevant files/functions:** `backend/src/services/duplicateService.js`; `backend/src/services/restaurantSubmissionService.js`; `backend/src/models/Restaurant.js`; `backend/src/repositories/restaurantRepository.js`.
 - **Planned solution:** Keep non-blocking duplicate warnings. Close the same-user pending race with a unique partial index on submitter plus normalized name and address for `PENDING` only, if that matches the existing 409 rule, and confirm it does not reject two different pending restaurants. Ask before any unique index that would block the public from submitting a similar place.
-- **Files changed:** none
-- **Tests added or modified:** none
-- **Verification:** Static inspection only. The index build was not run.
-- **Blockers:** A new unique index needs a compatibility check against existing pending rows. Do not build it on a production cluster from this work without approval.
+- **Historical files changed:** none; see current follow-up
+- **Historical tests added or modified:** none
+- **Historical verification:** Static inspection only. The index build was not run.
+- **Historical blockers (current limits below):** A new unique index needs a compatibility check against existing pending rows. Do not build it on a production cluster from this work without approval.
+
+- **Current verified follow-up/files/tests/verification/limitations:** Existing pending-identity indexes at baseline dc5dc24 now receive read-only actual-enforcement verification at startup under A1-R4. Four isolated MongoDB regressions pass (exit 0), including actual duplicate rejection for all model identities and missing/incompatible indexes. Pending report legacy rows without fingerprint remain outside their partial index; no backfill. Application indexes require separately approved provisioning.
 
 ### M5-004 — External cleanup reliability
 
 - **Milestone:** 5
 - **Priority:** High
-- **Status:** NOT STARTED
-- **Description:** Cloudinary deletes log the error and continue. A failed delete after a successful database delete leaves an orphan image. A failed delete during a failed save can do the same.
-- **Evidence:** `deleteImageService` returns immediately when the id is missing or Cloudinary is not configured. On `destroy` failure it `console.error`s and does not throw. Callers in restaurant submit, teuda submit, report submit, admin delete, and admin teuda delete rely on that. There is no retry queue or orphan record.
+- **Status:** VERIFIED
+- **Description (original audit; superseded by follow-up below):** Cloudinary deletes log the error and continue. A failed delete after a successful database delete leaves an orphan image. A failed delete during a failed save can do the same.
+- **Original audit evidence:** `deleteImageService` returns immediately when the id is missing or Cloudinary is not configured. On `destroy` failure it `console.error`s and does not throw. Callers in restaurant submit, teuda submit, report submit, admin delete, and admin teuda delete rely on that. There is no retry queue or orphan record.
 - **Root cause:** Cleanup is deliberately non-blocking so the user sees the original error. Nothing records the leftover `public_id` for another attempt.
 - **Relevant files/functions:** `backend/src/services/imageUploadService.js` (`deleteImageService`); callers in `restaurantSubmissionService.js`, `teudaSubmissionService.js`, `reportSubmissionService.js`, `adminRestaurantService.js`, `adminTeudaService.js`.
 - **Planned solution:** Persist the public id of a failed destroy and retry it from an admin or scheduled path. Do not call live Cloudinary while designing this. Do not delete remote files as part of the audit or as an unapproved cleanup.
-- **Files changed:** none
-- **Tests added or modified:** none. `imageUpload.test.js` mocks the SDK.
-- **Verification:** Static inspection only.
-- **Blockers:** Retry execution against Cloudinary needs approved test credentials (M9-003).
+- **Historical files changed:** none; see current follow-up
+- **Historical tests added or modified:** none. `imageUpload.test.js` mocks the SDK.
+- **Historical verification:** Static inspection only.
+- **Historical blockers (current limits below):** Retry execution against Cloudinary needs approved test credentials (M9-003).
+
+- **Current verified follow-up/files/tests/verification/limitations:** A1-R1 (351f9d6) adds persistent ImageCleanup jobs, explicit deletion outcomes and an operator retry command. Seven real MongoDB tests cover jobs/rollback/external failure/acknowledgement retry (Cloudinary SDK mocked), exit 0. Live Cloudinary remains M9-003. Upload-before-durable-record crash window and unavailable-database compensation require provider/operator reconciliation.
 
 ---
 
@@ -780,11 +795,11 @@ User accepted V2 and authorized local-main promotion. No new identified issue or
 Actual post-merge main commands: frontend `npm run lint`, `npm run typecheck`, `npm test` (26 files / 158 passed), `npm run build`; backend `npm test` (40 files / 505 passed); `git -c core.whitespace=cr-at-eol diff 5393037 HEAD --check`: all exit 0. Backend has no lint/typecheck/build scripts. Existing bundle warning persists (JS 766.92 kB). Tests mocked; no live database/services, production data, email or upload. No browser rerun; prior accepted browser evidence remains in integration worktree. Public trust terminology, moderation and administrator authority/zero-point rules unchanged. Native-speaker Hebrew review and live-service/production-readiness issues remain as tracked.
 
 Only post-merge documentation files updated: this file, PROGRESS.md, REDESIGN_INTEGRATION_PROGRESS.md. Main's untracked PRE_PUSH_REVIEW.md preserved unchanged and excluded from commit. No source branch/worktree edit, push, deploy, branch/worktree deletion, reset or clean. Exact next step: stop; accepted local merge complete.
-## Agent 1 admin authority and data integrity ? 13 October 2026
+## Agent 1 admin authority and data integrity — 13 October 2026
 
 Explicit request authorizes this assigned batch, including the listed historical LATER integrity risks.
 
-### A1-001 / SEC-002 ? Administrator public submissions
+### A1-001 / SEC-002 — Administrator public submissions
 - **Milestone:** Agent 1 admin authority and data integrity.
 - **Priority:** P1.
 - **Status:** VERIFIED.
@@ -795,7 +810,7 @@ Explicit request authorizes this assigned batch, including the listed historical
 - **Verification:** Backend targeted npm test (4 files / 88 tests), HTTP npm test (1 file / 2 tests), frontend npm test -- src/components/UserSubmissionRoute.test.tsx (4 tests), npm run lint/typecheck/build, disposable database node integration/runAgent1Isolated.mjs --run-isolated (1 real MongoDB test): all exit 0. Existing ~767 kB build warning. Backend has no build/lint/typecheck scripts. Browser not run; external services not called. First isolated test failed because assertion used contributionPoints instead of actual points; corrected test field and rerun passed. Sandbox cache/listener restrictions required approved escalated check runs.
 - **Blockers/limitations:** No browser/live-service verification. No Hebrew strings changed.
 
-### A1-002 / SEC-001 ? Premature correction awards
+### A1-002 / SEC-001 — Premature correction awards
 - **Milestone:** Agent 1 admin authority and data integrity.
 - **Priority:** P1.
 - **Status:** VERIFIED.
@@ -804,7 +819,7 @@ Explicit request authorizes this assigned batch, including the listed historical
 - **Files changed/tests/verification:** Transaction helper/report service; unit abort expectation updated; real MongoDB concurrency/rollback tests added. Baseline exit 1: 1 pass / 2 fail, reproducing premature +1 and partial state. npm test -- tests/adminReportService.test.js tests/pointsService.test.js tests/transaction.test.js: exit 0, 3 files / 34 tests. node integration/runAgent1Isolated.mjs --run-isolated agent1Corrections.integration.mjs: exit 0, 4 real MongoDB tests including concurrent failure, concurrent success/idempotency/ADMIN zero points, award rollback/retry and abrupt worker termination/recovery. Browser/frontend not rerun for this backend-only fix; backend has no build/lint/typecheck scripts. No external services.
 - **Blockers/limitations:** Requires a replica-set/sharded deployment; explicit 503 on standalone. No migration/backfill. Historical inconsistencies need separately approved data review; no live Atlas tested.
 
-### A1-R1 / SEC-010 ? Partial database deletion and creation compensation
+### A1-R1 / SEC-010 — Partial database deletion and creation compensation
 - **Milestone:** Agent 1 admin authority and data integrity.
 - **Priority:** P1.
 - **Status:** VERIFIED.
@@ -813,7 +828,7 @@ Explicit request authorizes this assigned batch, including the listed historical
 - **Files changed/tests/verification:** Atomic creation/cascade services, internal parent serialization counter/repository, durable ImageCleanup outbox/repository/service, retry operator script and real failure-injection regressions. Baseline exit 1, 0 pass / 3 fail. Targeted npm test: exit 0, 7 files / 117 tests. Full backend npm test with services disabled: exit 0, 42 files / 510 tests. node integration/runAgent1Isolated.mjs --run-isolated agent1Integrity.integration.mjs: exit 0, 7 real MongoDB tests covering cascade/unlink/final-delete rollback, cleanup outbox rollback, mocked external failure/acknowledgement loss/retry, concurrent parent/child and certificate/report races, USER/ADMIN creation failures. Diff check exit 0. Frontend/browser not rerun (backend-only); backend has no build/lint/typecheck scripts. Cloudinary SDK mocked; no live services.
 - **Blockers/limitations:** Replica set/sharded MongoDB required. Additive internal counter/outbox collection, no record migration/backfill. Cloudinary live behavior unverified; upload-to-durable-record interruption window requires provider/operator reconciliation. Unknown commit retains image; unreachable DB compensation logs id. No existing application data touched.
 
-### A1-R2 ? Pending certificates after rejection
+### A1-R2 — Pending certificates after rejection
 - **Milestone:** Agent 1 admin authority and data integrity.
 - **Priority:** P1.
 - **Status:** VERIFIED.
@@ -822,11 +837,11 @@ Explicit request authorizes this assigned batch, including the listed historical
 - **Files changed/tests/verification:** adminRestaurantService rejection transaction; unit failure expectation updated; isolated rejection/race regression. Baseline exit 1, 1 pass / 1 fail. npm test -- tests/adminRestaurantService.test.js: exit 0, 23 tests. node integration/runAgent1Isolated.mjs --run-isolated agent1Rejection.integration.mjs: exit 0, 2 real MongoDB failure/retry and concurrent approve/reject regressions. Diff check exit 0. No build/lint/typecheck scripts in backend; frontend/browser not rerun; email unconfigured, no real email sent.
 - **Blockers/limitations:** Replica-set/sharded MongoDB required; old inconsistent rejected records need separately authorized review/backfill. Notifications run only after commit; live delivery unverified.
 
-### A1-R4 ? Unique-index enforcement
+### A1-R4 — Unique-index enforcement
 - **Milestone:** Agent 1 admin authority and data integrity.
 - **Priority:** P1.
-- **Status:** NOT STARTED.
-- **Evidence/root cause:** Declarations need checking against initialization assumptions.
+- **Status:** VERIFIED.
+- **Evidence/root cause:** connectDb previously accepted requests before index builds completed and did not check actual enforcement. Mongoose autoIndex default was relied on.
 - **Relevant files/solution:** Review models, database initialization, isolated harnesses; no application-data index migration.
-- **Files changed/tests/verification:** None yet.
-- **Blockers:** No approved application database.
+- **Files changed/tests/verification:** db startup, indexIntegrityRepository, verification/provisioning operator scripts and isolated index tests. node integration/runAgent1Isolated.mjs --run-isolated agent1Indexes.integration.mjs: exit 0, 3 real MongoDB tests (missing indexes/no startup writes, actual duplicate enforcement across all models, incompatible nonunique index). Final backend npm test: exit 0, 42 files / 510 tests. Frontend npm test: exit 0, 27 files / 162 tests; lint/typecheck/build exit 0. Combined isolated database run: exit 0, 18 tests. Final index script rerun: exit 0, 4 tests including explicit provision/verify/no-flag paths, geospatial/TTL declarations and wrong partial filter. Diff check exit 0. Browser not run; external SDK mocked.
+- **Blockers/limitations:** Existing application database untouched; missing indexes/new cleanup collection require operator-approved provisioning before deployment. Legacy report rows without fingerprint stay outside partial index; no backfill.
