@@ -1,5 +1,4 @@
-// Renders a map popup from stored restaurant fields and the existing actions.
-// מציג חלון מפה משדות המסעדה השמורים ומהפעולות הקיימות.
+// Renders the map panel from stored restaurant fields and the existing actions.
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
@@ -65,12 +64,13 @@ describe('MapPopupCard', () => {
     await i18n.changeLanguage('en');
   });
 
-  it('shows the stored name, place, kashrut summary, and the existing actions', async () => {
+  it('shows the stored name, place, one kashrut summary, and the existing actions', async () => {
     await i18n.changeLanguage('en');
     ({ container, root } = renderCard(
       <MapPopupCard
         restaurant={restaurant}
         hechsherOptions={[{ value: 'LOCAL', labelEn: 'Local Rabbinate', labelHe: 'רבנות מקומית' }]}
+        onClose={() => undefined}
       />
     ));
 
@@ -82,22 +82,37 @@ describe('MapPopupCard', () => {
     expect(text).toContain('Verified certificate');
     expect(text).toContain('Local Rabbinate');
     expect(text).toContain('Mehadrin');
+    expect(text.match(/Local Rabbinate/g)).toHaveLength(1);
+    expect(text.match(/Mehadrin/g)).toHaveLength(1);
     expect(text).not.toMatch(/rating|stars|open now|photo/i);
 
     const details = container?.querySelector('a[href="/restaurants/abc"]');
     expect(details?.textContent).toContain('View details');
+    expect(details?.className).toContain('kr-v2-map-action-primary');
     expect(container?.querySelector('a[href="tel:031234567"]')).not.toBeNull();
     expect(container?.querySelector('a[href="https://waze.com/ul?ll=32.07,34.77&navigate=yes"]')).not.toBeNull();
-    expect(container?.querySelector('button')?.textContent).toContain('Share');
+    expect(container?.querySelector('.kr-v2-map-action-secondary')?.textContent).toContain('Waze');
+
+    const share = Array.from(container?.querySelectorAll('button') ?? []).find((button) => button.textContent?.includes('Share'));
+    expect(share?.className).toContain('kr-v2-map-action-quiet');
+
+    const close = container?.querySelector('.kr-v2-map-panel-close');
+    expect(close?.getAttribute('aria-label')).toBe('Dismiss');
   });
 
   it('opens the restaurant in place, and leaves a modified click for a new tab', () => {
     const onOpen = vi.fn();
     ({ container, root } = renderCard(
-      <MapPopupCard restaurant={{ ...restaurant, phone: null }} hechsherOptions={[]} onOpenRestaurant={onOpen} />
+      <MapPopupCard
+        restaurant={{ ...restaurant, phone: null, latitude: null, longitude: null }}
+        hechsherOptions={[]}
+        onOpenRestaurant={onOpen}
+        onClose={() => undefined}
+      />
     ));
 
     expect(container?.querySelector('a[href^="tel:"]')).toBeNull();
+    expect(container?.querySelector('a[href^="https://waze.com"]')).toBeNull();
 
     const details = container?.querySelector('a[href="/restaurants/abc"]') as HTMLAnchorElement;
     const plain = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
@@ -117,12 +132,25 @@ describe('MapPopupCard', () => {
 
   it('uses the Hebrew name and kashrut wording when the interface is Hebrew', async () => {
     await i18n.changeLanguage('he');
-    ({ container, root } = renderCard(<MapPopupCard restaurant={restaurant} hechsherOptions={[]} />));
+    ({ container, root } = renderCard(
+      <MapPopupCard restaurant={restaurant} hechsherOptions={[]} onClose={() => undefined} />
+    ));
 
-    const title = container?.querySelector('.kr-map-popup-title');
+    const title = container?.querySelector('.kr-v2-map-panel-title');
     expect(title?.textContent).toBe('בית הגריל');
     expect(title?.getAttribute('dir')).toBe('auto');
     expect(container?.textContent).toContain('תעודה מאומתת');
     expect(container?.textContent).toContain('לפרטים');
+  });
+
+  it('closes from the panel control', () => {
+    const onClose = vi.fn();
+    ({ container, root } = renderCard(<MapPopupCard restaurant={restaurant} hechsherOptions={[]} onClose={onClose} />));
+
+    const close = container?.querySelector('.kr-v2-map-panel-close') as HTMLButtonElement;
+    act(() => {
+      close.click();
+    });
+    expect(onClose).toHaveBeenCalledOnce();
   });
 });

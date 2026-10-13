@@ -1,17 +1,15 @@
-// Popup body: stored name, place, and the existing kashrut summary. No ratings, hours, or photos.
-// גוף החלון: שם שמור, מקום, וסיכום הכשרות הקיים. בלי דירוג, שעות או תמונות.
+// Selected-restaurant panel. Stored name, place, and one kashrut summary. No ratings, hours, or photos.
 import type { MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import type { SearchReturnState } from '../../search/searchReturn';
 import type { HechsherOption } from '../../types/submissions';
-import type { RestaurantCardData } from '../../types/search';
+import type { KashrutStatus, RestaurantCardData } from '../../types/search';
 import { getFoodTypeLabel } from '../../utils/labels';
-import { popupPlaceLine } from './mapChrome';
+import { evidenceSummaryLine, popupPlaceLine } from './mapChrome';
 import { restaurantDisplayNames } from '../../utils/restaurantName';
-import { formatDistance } from '../../utils/kashrutText';
+import { formatDistance, getStatusHeadline } from '../../utils/kashrutText';
 import { buildTelUrl, buildWazeUrl, restaurantPageUrl } from '../../utils/navigationLinks';
-import KashrutBadge from '../KashrutBadge';
 import ShareButton from '../ShareButton';
 
 interface MapPopupCardProps {
@@ -19,9 +17,24 @@ interface MapPopupCardProps {
   hechsherOptions: HechsherOption[];
   returnState?: SearchReturnState;
   onOpenRestaurant?: (restaurantId: string, background: boolean) => void;
+  onClose: () => void;
 }
 
-function MapPopupCard({ restaurant, hechsherOptions, returnState, onOpenRestaurant }: MapPopupCardProps) {
+const STATUS_MARK: Record<KashrutStatus, string> = {
+  VERIFIED: '✓',
+  UNVERIFIED: '!',
+  EXPIRED: '✕',
+  UNKNOWN: '?',
+};
+
+const STATUS_CLASS: Record<KashrutStatus, string> = {
+  VERIFIED: 'kr-v2-map-status-verified',
+  UNVERIFIED: 'kr-v2-map-status-unverified',
+  EXPIRED: 'kr-v2-map-status-expired',
+  UNKNOWN: 'kr-v2-map-status-unknown',
+};
+
+function MapPopupCard({ restaurant, hechsherOptions, returnState, onOpenRestaurant, onClose }: MapPopupCardProps) {
   const { t } = useTranslation();
   const telUrl = buildTelUrl(restaurant.phone);
   const wazeUrl = buildWazeUrl(restaurant.latitude, restaurant.longitude);
@@ -29,6 +42,10 @@ function MapPopupCard({ restaurant, hechsherOptions, returnState, onOpenRestaura
   const names = restaurantDisplayNames(restaurant);
   const place = popupPlaceLine(restaurant.address, restaurant.city);
   const distance = formatDistance(restaurant.distanceKm);
+  const evidence = evidenceSummaryLine(restaurant.kashrut, hechsherOptions);
+  const food = restaurant.foodType ? getFoodTypeLabel(restaurant.foodType) : '';
+  const meta = [food, distance].filter((part) => part !== '').join(' · ');
+  const mentionsHiddenExpired = restaurant.kashrut.hasRecentExpired && restaurant.kashrut.status !== 'EXPIRED';
   const handleOpen = (event: MouseEvent<HTMLAnchorElement>) => {
     if (!onOpenRestaurant) {
       return;
@@ -44,50 +61,83 @@ function MapPopupCard({ restaurant, hechsherOptions, returnState, onOpenRestaura
   };
 
   return (
-    <div className="kr-map-popup-card">
-      <div className="kr-map-popup-names">
-        <p className="kr-map-popup-title" dir="auto">
-          <bdi>{names.primary}</bdi>
-        </p>
-        {names.secondary.length > 0 && (
-          <p className="kr-map-popup-alt">
-            {names.secondary.map((name, index) => (
-              <span key={`${name}-${index}`}>
-                {index > 0 && <span aria-hidden="true"> · </span>}
-                <bdi>{name}</bdi>
-              </span>
-            ))}
+    <div className="kr-v2-map-panel-card">
+      {/* NEW (Visual v2): scroll restaurant content together so short maps keep actions visible. */}
+      {/* חדש (עיצוב v2): גלילת פרטי המסעדה יחד כדי לשמור על כפתורים גלויים במפה נמוכה. */}
+      <div className="kr-v2-map-panel-body">
+        <div className="kr-v2-map-panel-fixed-top">
+          <div className="kr-v2-map-panel-head">
+            <div className="kr-v2-map-panel-names">
+              <p className="kr-v2-map-panel-title" dir="auto">
+                <bdi>{names.primary}</bdi>
+              </p>
+              {names.secondary.length > 0 && (
+                <p className="kr-v2-map-panel-alt">
+                  {names.secondary.map((name, index) => (
+                    <span key={`${name}-${index}`}>
+                      {index > 0 && <span aria-hidden="true"> · </span>}
+                      <bdi>{name}</bdi>
+                    </span>
+                  ))}
+                </p>
+              )}
+            </div>
+            <button type="button" className="kr-v2-map-panel-close" onClick={onClose} aria-label={t('layout.dismiss')}>
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
+          {place !== '' && (
+            <p className="kr-v2-map-panel-address">
+              <bdi>{place}</bdi>
+            </p>
+          )}
+          <p className={`kr-v2-map-panel-status ${STATUS_CLASS[restaurant.kashrut.status]}`}>
+            <span aria-hidden="true" className="kr-v2-map-panel-status-mark">
+              {STATUS_MARK[restaurant.kashrut.status]}
+            </span>
+            {getStatusHeadline(restaurant.kashrut.status)}
           </p>
-        )}
+        </div>
+        <div className="kr-v2-map-panel-scroll">
+          {evidence !== '' && <p className="kr-v2-map-panel-evidence">{evidence}</p>}
+          {mentionsHiddenExpired && <p className="kr-v2-map-panel-evidence">{t('kashrut.alsoExpired')}</p>}
+          {meta !== '' && <p className="kr-v2-map-panel-meta">{meta}</p>}
+        </div>
       </div>
-      {place !== '' && (
-        <p className="kr-map-popup-place">
-          <bdi>{place}</bdi>
-        </p>
-      )}
-      {(restaurant.foodType || distance !== '') && (
-        <p className="kr-map-popup-meta">
-          {restaurant.foodType ? getFoodTypeLabel(restaurant.foodType) : ''}
-          {restaurant.foodType && distance !== '' ? ' · ' : ''}
-          {distance}
-        </p>
-      )}
-      <KashrutBadge kashrut={restaurant.kashrut} hechsherOptions={hechsherOptions} />
-      <div className="kr-map-popup-actions">
-        <Link to={`/restaurants/${restaurant.id}`} state={returnState} onClick={handleOpen} className="kr-map-action kr-map-action-primary">
-          {t('card.viewDetails')}
-        </Link>
-        {telUrl && (
-          <a href={telUrl} className="kr-map-action" aria-label={t('card.callName', { name: names.primary })}>
-            {t('card.call')}
-          </a>
-        )}
-        {wazeUrl && (
-          <a href={wazeUrl} target="_blank" rel="noopener noreferrer" className="kr-map-action" aria-label={t('card.wazeName', { name: names.primary })}>
-            {t('card.waze')}
-          </a>
-        )}
-        <ShareButton title={names.primary} url={pageUrl} className="kr-map-action" />
+      <div className="kr-v2-map-panel-fixed-bottom">
+        <div className="kr-v2-map-panel-actions">
+          <Link
+            to={`/restaurants/${restaurant.id}`}
+            state={returnState}
+            onClick={handleOpen}
+            className="kr-v2-map-action kr-v2-map-action-primary"
+          >
+            {t('card.viewDetails')}
+          </Link>
+          <div className="kr-v2-map-panel-secondary">
+            {wazeUrl && (
+              <a
+                href={wazeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="kr-v2-map-action kr-v2-map-action-secondary"
+                aria-label={t('card.wazeName', { name: names.primary })}
+              >
+                {t('card.waze')}
+              </a>
+            )}
+            {telUrl && (
+              <a
+                href={telUrl}
+                className="kr-v2-map-action kr-v2-map-action-secondary"
+                aria-label={t('card.callName', { name: names.primary })}
+              >
+                {t('card.call')}
+              </a>
+            )}
+            <ShareButton title={names.primary} url={pageUrl} className="kr-v2-map-action kr-v2-map-action-quiet" />
+          </div>
+        </div>
       </div>
     </div>
   );
