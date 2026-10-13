@@ -466,6 +466,7 @@ describe('Atlas Search and the fallback', () => {
 
     expect(idsOf(result)).toEqual([match._id]);
     expect(result.search).toEqual({ mode: 'BASIC', atlasUnavailable: true });
+    expect(result.completeness).toEqual({ complete: false, reasons: ['atlas_unavailable'] });
     expect(findSearchCandidatesRepo.mock.calls[0][0].extraIds).toEqual([]);
   });
 });

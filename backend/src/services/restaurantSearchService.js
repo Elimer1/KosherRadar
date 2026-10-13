@@ -99,7 +99,7 @@ const findAtlasHits = async (parsed) => {
     return { hits: hits.slice(0, ATLAS_SEARCH_HIT_LIMIT), atlasUnavailable: false, atlasCapped: hits.length > ATLAS_SEARCH_HIT_LIMIT };
   } catch (error) {
     console.error('Atlas Search failed, using the basic search instead:', error.message);
-    return { hits: [], atlasUnavailable: true };
+    return { hits: [], atlasUnavailable: true, atlasCapped: false };
   }
 };
 
@@ -206,7 +206,9 @@ export const searchRestaurantsService = async (query, pageSize = SEARCH_PAGE_SIZ
     .map(match => toPublicRestaurantCard(match.restaurant, match.summary, match.distanceKm));
   return {
     items, page: query.page, pageSize, total, hasMore: start + pageSize < total, capped,
-    completeness: { complete: !capped, reasons: capped ? ['atlas_candidate_limit'] : [] },
+    completeness: { complete: !capped && !atlasUnavailable, reasons: [
+      ...(capped ? ['atlas_candidate_limit'] : []), ...(atlasUnavailable ? ['atlas_unavailable'] : []),
+    ] },
     search: searchMode(atlasUnavailable),
   };
 };
@@ -221,8 +223,9 @@ export const findMapRestaurantsService = async (query) => {
   return {
     items: matches.map(match => toPublicRestaurantCard(match.restaurant, match.summary, match.distanceKm)),
     total, capped,
-    completeness: { complete: !capped, reasons: [
+    completeness: { complete: !capped && !atlasUnavailable, reasons: [
       ...(atlasCapped ? ['atlas_candidate_limit'] : []), ...(total > MAP_MARKER_LIMIT ? ['map_marker_limit'] : []),
+      ...(atlasUnavailable ? ['atlas_unavailable'] : []),
     ] },
     search: searchMode(atlasUnavailable),
   };

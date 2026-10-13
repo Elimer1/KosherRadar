@@ -19,3 +19,66 @@ SEARCH-008 verified: city-level public search supported; city/street/coarse resu
 SEARCH-009 verified: exact 0.2 gap tolerates only floating-point machine rounding; near-tied candidates below eligibility threshold or coarse matches still compete. Invalid/missing confidence conservatively refuses selection. 20 mocked provider tests pass. SEARCH-008 checkpoint 7883208. Next SEARCH-010.
 
 SEARCH-010 verified: server fetch/body bounded at 5 seconds with abort plus Promise.race; client /places requests bounded at 10 seconds, existing uploads and explicit overrides preserved. Controlled stalled headers/body and fake XHR tests pass: 23 backend/13 frontend tests, lint/typecheck pass. SEARCH-009 checkpoint 166e551. Next full suites/build/final review.
+
+## Completion and handoff
+
+Final batch: frontend npm test exit 0 (30 files / 174 passed); npm run lint, npm run typecheck, npm run build exit 0. Production JS 768.71 kB, existing >500 kB warning. Backend npm test exit 0 (42 files / 534 passed); no backend lint/typecheck/build scripts. Final completeness follow-up: backend npm test -- tests/restaurantSearchService.test.js tests/restaurantSearchRepository.test.js tests/mapSearchService.test.js exit 0 (57 passed). Git CRLF-aware diff check exit 0. Tests mocked/jsdom; browser and live services not tested.
+
+Implementation checkpoints:
+
+be20298 fix(search-001): ignore obsolete location lookups and show failures
+a997409 fix(search-002): block searches when URL location restoration fails
+0578a6d fix(search-004): evaluate candidates in bounded batches before ranking
+65945b0 fix(search-005): show partial-result warnings for empty lists
+8c828ac fix(search-006): keep admin address and provider location consistent
+8923a3a fix(search-007): include normalized city in pending branch identity
+7883208 fix(search-008): separate city search areas from precise restaurant pins
+166e551 fix(search-009): compare all geocoding candidates at confidence boundaries
+64457fc fix(search-010): bound provider and client location request deadlines
+
+Final SEARCH-004 metadata follow-up also reports incomplete Atlas fallback. ATLAS_SEARCH_SETUP.md refreshed to match batch/cap semantics.
+
+Changed tracked files:
+
+- `AGENT_2_FIX_PROGRESS.md`
+- `ATLAS_SEARCH_SETUP.md`
+- `FIX_TRACKER.md`
+- `PROGRESS.md`
+- `SEARCH_LOCATION_INDEX_ROLLOUT.md`
+- `backend/src/config/constants.js`
+- `backend/src/controllers/placesController.js`
+- `backend/src/models/Restaurant.js`
+- `backend/src/repositories/restaurantRepository.js`
+- `backend/src/repositories/restaurantSearchRepository.js`
+- `backend/src/services/adminRestaurantLocationService.js`
+- `backend/src/services/adminRestaurantService.js`
+- `backend/src/services/placesService.js`
+- `backend/src/services/restaurantSearchService.js`
+- `backend/src/services/restaurantSubmissionService.js`
+- `backend/tests/adminRestaurantLocationService.test.js`
+- `backend/tests/adminRestaurantService.test.js`
+- `backend/tests/mapSearchService.test.js`
+- `backend/tests/models.test.js`
+- `backend/tests/placesService.test.js`
+- `backend/tests/restaurantPendingIdentity.test.js`
+- `backend/tests/restaurantSearchRepository.test.js`
+- `backend/tests/restaurantSearchService.test.js`
+- `backend/tests/restaurantSubmissionService.test.js`
+- `frontend/src/api/adminApi.ts`
+- `frontend/src/api/axiosInstance.ts`
+- `frontend/src/api/locationDeadline.test.ts`
+- `frontend/src/components/AddressSearch.test.tsx`
+- `frontend/src/components/AddressSearch.tsx`
+- `frontend/src/components/LocationField.test.tsx`
+- `frontend/src/components/LocationField.tsx`
+- `frontend/src/hooks/useSearchCriteria.test.tsx`
+- `frontend/src/hooks/useSearchCriteria.ts`
+- `frontend/src/pages/AdminRestaurantPage.tsx`
+- `frontend/src/pages/HomePage.test.tsx`
+- `frontend/src/pages/HomePage.tsx`
+
+Additional risks investigated by local code/document inspection: near-tied candidates confirmed and fixed under SEARCH-009; Atlas fallback regression passes but live index compatibility (including multi-name autocomplete mapping/query) remains unverified under M9-001; no live service called. Map uses existing chunked clustering, shared filters, bounds cancellation and capped status; no mobile/browser regression confirmed by this session and none claimed tested. Cloudinary is not called by the location resolver; uploads retain prior timeout settings and remain subject to existing integration limitations.
+
+Required operational rollout: SEARCH_LOCATION_INDEX_ROLLOUT.md, mandatory old pending index replacement on approved resource; no backfill required due legacy read compatibility. No real indexes changed. Integration conflicts may occur in adminRestaurantService.js (import/mapping/update only), its tests, Restaurant.js and shared tracking documents. Existing bundle warning persists. No added Hebrew UI strings.
+
+Exact next step: stop; no pending code work. Do not merge, push, deploy, access real data or apply index changes without separate approval. Final documentation/metadata checkpoint recorded by git log.

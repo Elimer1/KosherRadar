@@ -10,9 +10,9 @@ Counts below are derived from the issue statuses in this file.
 | ALREADY WORKING | 8 |
 | BLOCKED | 5 |
 | DEFERRED | 1 |
-| VERIFIED | 13 |
+| VERIFIED | 22 |
 | Other | 0 |
-| **Total** | **40** |
+| **Total** | **49** |
 
 ## Priority bands (12 October 2026)
 
@@ -782,12 +782,14 @@ Actual post-merge main commands: frontend `npm run lint`, `npm run typecheck`, `
 Only post-merge documentation files updated: this file, PROGRESS.md, REDESIGN_INTEGRATION_PROGRESS.md. Main's untracked PRE_PUSH_REVIEW.md preserved unchanged and excluded from commit. No source branch/worktree edit, push, deploy, branch/worktree deletion, reset or clean. Exact next step: stop; accepted local merge complete.
 ## Search and location reliability ? Agent 2, 13 October 2026
 
-Explicit user assignment supersedes historical stop instructions for this worktree. Existing issue statuses unchanged.
+Explicit user assignment supersedes historical stop instructions for this worktree. Original audit statuses unchanged; nine assigned SEARCH issues added. All nine code fixes verified with mocks, subject to documented live rollout limits.
+
+Final batch: frontend npm test exit 0 (30 files / 174 passed); npm run lint, npm run typecheck, npm run build exit 0. Production JS 768.71 kB, existing >500 kB warning. Backend npm test exit 0 (42 files / 534 passed); no backend lint/typecheck/build scripts. Final completeness follow-up: backend npm test -- tests/restaurantSearchService.test.js tests/restaurantSearchRepository.test.js tests/mapSearchService.test.js exit 0 (57 passed). Git CRLF-aware diff check exit 0. Tests mocked/jsdom; browser and live services not tested.
 
 ### SEARCH-001 ? Out-of-order location lookups
 
 - **Milestone:** Agent 2 search/location reliability.
-- **Priority:** P1/P2 per assignment.
+- **Priority:** P1.
 - **Status:** VERIFIED
 - **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
 - **Root cause:** Typed lookup has no generation guard or rejection catch.
@@ -801,7 +803,7 @@ Explicit user assignment supersedes historical stop instructions for this worktr
 ### SEARCH-002 ? Failed URL location removes geography
 
 - **Milestone:** Agent 2 search/location reliability.
-- **Priority:** P1/P2 per assignment.
+- **Priority:** P1.
 - **Status:** VERIFIED
 - **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
 - **Root cause:** failedNear ends loading but search enablement only checks locationPending.
@@ -815,7 +817,7 @@ Explicit user assignment supersedes historical stop instructions for this worktr
 ### SEARCH-004 ? Candidate caps omit eligible and nearest results
 
 - **Milestone:** Agent 2 search/location reliability.
-- **Priority:** P1/P2 per assignment.
+- **Priority:** P1.
 - **Status:** VERIFIED
 - **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
 - **Root cause:** alphabetical limit/slice before shared kashrut filtering and distance/relevance ranking.
@@ -824,12 +826,12 @@ Explicit user assignment supersedes historical stop instructions for this worktr
 - **Files changed:** restaurantSearchRepository.js, restaurantSearchService.js, constants.js, Restaurant.js, search repository/service/map tests.
 - **Tests added or modified:** late eligible/nearest candidates beyond 2000, stable pages, map filtering beyond 500, keyset/deadline, Atlas overflow with zero eligible results. Old cap expectation intentionally changed because preliminary truncation is the confirmed defect; map output cap remains.
 - **Verification:** backend npm test -- tests/restaurantSearchService.test.js tests/restaurantSearchRepository.test.js tests/mapSearchService.test.js exit 0, 3 files/57 passed. node --check service exit 0. Backend has no build/lint/typecheck. Mocks only; no live DB/Atlas/browser.
-- **Blockers/limitations:** All candidates read in 2000-row keyset batches, certificates fetched per batch, best K retained; memory O(batch + page*20), total cost O(matching candidates), each DB query maxTimeMS 10000. Added nonunique status/_id index: compatible with existing records, no migration/backfill; not applied live; rollback removes this new index declaration/index. Atlas fuzzy hits remain bounded at 100 with overflow detection and truthful capped/completeness reasons; totals then lower bounds. Map caps only final ranked markers. Pagination deterministic for unchanged data; concurrent edits are not snapshot-isolated. Production performance/index compatibility unverified.
+- **Blockers/limitations:** All candidates read in 2000-row keyset batches, certificates fetched per batch, best K retained; memory O(batch + page*20), total cost O(matching candidates), each DB query maxTimeMS 10000. Added nonunique status/_id index: compatible with existing records, no migration/backfill; not applied live; rollback removes this new index declaration/index. Atlas fuzzy hits remain bounded at 100 with overflow detection and truthful capped/completeness reasons; totals then lower bounds. Atlas fallback also marks completeness false with atlas_unavailable. Map caps only final ranked markers. Pagination deterministic for unchanged data; concurrent edits are not snapshot-isolated. Production performance/index compatibility unverified.
 
 ### SEARCH-005 ? Missing zero-result completeness warning
 
 - **Milestone:** Agent 2 search/location reliability.
-- **Priority:** P1/P2 per assignment.
+- **Priority:** P2.
 - **Status:** VERIFIED
 - **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
 - **Root cause:** capped warning was nested inside nonempty list rendering.
@@ -843,7 +845,7 @@ Explicit user assignment supersedes historical stop instructions for this worktr
 ### SEARCH-006 ? Admin address/location identity consistency
 
 - **Milestone:** Agent 2 search/location reliability.
-- **Priority:** P1/P2 per assignment.
+- **Priority:** P2.
 - **Status:** VERIFIED
 - **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
 - **Root cause:** admin full-field mapping omitted provider ID and never geocoded missing/obsolete coordinates; selecting a suggestion without city retained old city; city edits allowed stale suggestions.
@@ -857,7 +859,7 @@ Explicit user assignment supersedes historical stop instructions for this worktr
 ### SEARCH-007 ? Pending duplicate identity omits city
 
 - **Milestone:** Agent 2 search/location reliability.
-- **Priority:** P1/P2 per assignment.
+- **Priority:** P2.
 - **Status:** VERIFIED
 - **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
 - **Root cause:** pending lookup and unique index identify submitter/name/address without locality.
@@ -871,7 +873,7 @@ Explicit user assignment supersedes historical stop instructions for this worktr
 ### SEARCH-008 ? City search versus precise address geocoding
 
 - **Milestone:** Agent 2 search/location reliability.
-- **Priority:** P1/P2 per assignment.
+- **Priority:** P2.
 - **Status:** VERIFIED
 - **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
 - **Root cause:** public geocode shared building-only selector while address autocomplete trusted coarse city results; full_match alone did not exclude city result types.
@@ -885,7 +887,7 @@ Explicit user assignment supersedes historical stop instructions for this worktr
 ### SEARCH-009 ? Confidence boundary and competing candidates
 
 - **Milestone:** Agent 2 search/location reliability.
-- **Priority:** P1/P2 per assignment.
+- **Priority:** P2.
 - **Status:** VERIFIED
 - **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
 - **Root cause:** binary subtraction makes 1 - 0.8 less than 0.2; filtering competitors before comparing confidence allowed near-tied weaker or coarse matches to disappear.
@@ -899,7 +901,7 @@ Explicit user assignment supersedes historical stop instructions for this worktr
 ### SEARCH-010 ? Geoapify request deadlines
 
 - **Milestone:** Agent 2 search/location reliability.
-- **Priority:** P1/P2 per assignment.
+- **Priority:** P1.
 - **Status:** VERIFIED
 - **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
 - **Root cause:** server fetch/body parsing had no deadline and public client location calls inherited Axios timeout 0.
