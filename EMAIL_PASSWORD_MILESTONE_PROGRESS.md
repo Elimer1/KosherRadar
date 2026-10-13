@@ -17,9 +17,31 @@ Issues tracked in FIX_TRACKER.md: EP-001 delivery/templates; EP-002 recovery sec
 - Keep localStorage auth and existing tokenVersion model. No new auth storage or moderation/points rules.
 - All new Hebrew copy needs native-speaker review (M8-004).
 
+## Live verification postponed — 13 October 2026
+
+The user configured EMAIL_USER and EMAIL_APP_PASSWORD locally and initially requested live verification, then explicitly postponed it before authorizing a recipient or password change. Do not send emails, change passwords, or continue live testing until the user resumes and confirms those actions.
+
+Completed safe preflight only: the backend's own configuration loader/validator recognized both Gmail settings as configured and format-valid; required backend configuration passed. Output contained only booleans and fixed diagnostic labels, no credential values. The configured MongoDB target is loopback, and a TCP listener answered on port 27017; this does not verify database authentication, database purpose/isolation, or account access. Ports 5000 and 5173 were not listening. No frontend/backend services were started and no database queries or writes were performed.
+
+A non-sending Nodemailer SMTP verify attempt exited 1 with the sanitized code EDNS. Gmail connection/authentication could not be verified in the restricted execution environment; this result does not establish that the credentials are invalid. No network-permission retry occurred because the user postponed testing. No emails were sent, no account was selected/created, no reset tokens were generated, no passwords changed, and no actual delivery/inbox receipt was confirmed. Live forgot/reset, single-use, password-changed notification and login checks remain pending. Previous mock/fixture test results below remain historical evidence, not live verification.
+
+No application code or configuration was changed. An ignored local preflight helper exists at design-screenshots/email-password/live-preflight.mjs and is excluded from Git; it prints sanitized configuration/SMTP status only. PRE_PUSH_REVIEW.md remains unchanged (same recorded SHA256) and uncommitted. This follow-up changes documentation only; no merge, push or deployment.
+
 ## NEXT AGENT ONBOARDING
 
-**Current position:** Email/password recovery implementation complete. EP-001, EP-002 and EP-003 VERIFIED in FIX_TRACKER.md. Branch `feature/email-password-recovery`; starting main `dc5dc24`. Checkpoints: `b3417b7` (Gmail/templates), `153cfcc` (backend safety/notifications); final EP-003 checkpoint is the commit containing this handoff (`git log -1 --oneline`). Main/source worktrees untouched, no merge/push/deploy.
+**Latest user instruction:** Live Gmail/password-reset testing is postponed. Stop after committing this documentation update on feature/email-password-recovery. Do not automatically resume from the earlier implementation-complete handoff below. Last implementation commit is ff7705d; the current follow-up checkpoint is documentation only.
+
+**How to resume later:**
+
+1. Wait for the user to explicitly resume live testing. Reconcile Git, read AGENTS.md, FIX_TRACKER.md, this section and EMAIL_SETUP.md; preserve PRE_PUSH_REVIEW.md and all existing work.
+2. Obtain explicit confirmation and the recipient test address before sending any real email or changing an account password. Confirm whether to use an existing authorized test account or create one in an approved isolated local test database. Loopback alone does not prove isolation. Never use production data.
+3. Re-run sanitized configuration diagnostics through the application's loader without displaying .env contents. Repeat non-sending SMTP connection/authentication verification; resolve DNS/network access if EDNS recurs. Do not print SMTP response bodies, credentials or reset URLs/tokens. An SMTP verify success is not proof of sending or delivery.
+4. Start local MongoDB/backend/frontend only for the approved test stack. Confirm backend health/database connectivity and frontend API origin; use available Chrome tooling without fixture interception for the live recovery flow. The preflight found local MongoDB listening but did not start either app.
+5. With recipient/password-change approval, request reset in the browser. Have the authorized recipient confirm inbox/spam receipt and open the reset link privately; never paste tokens into chat, logs, screenshots or committed files. If inbox/browser access is unavailable, identify that blocker instead of claiming delivery or completing a mock flow as live.
+6. Change only the authorized test account's password, verify login with the new password and rejection of the old password, then verify the reset link cannot be reused. Confirm password-changed mail separately: SMTP acceptance and recipient-confirmed delivery are distinct results. Preserve secrets in memory/private local interaction, never output them.
+7. Record actual commands/results and limitations in this document and FIX_TRACKER.md M9-004. Keep live verification pending unless the required checks actually complete. Change application code only to fix a verified issue; no merge, push or deployment.
+
+**Previous implementation position:** Email/password recovery implementation complete. EP-001, EP-002 and EP-003 VERIFIED in FIX_TRACKER.md. Branch `feature/email-password-recovery`; starting main `dc5dc24`. Checkpoints: `b3417b7` (Gmail/templates), `153cfcc` (backend safety/notifications), `ff7705d` (EP-003 recovery UX/token privacy). Main/source worktrees untouched, no merge/push/deploy. The latest postponement above controls the next session.
 
 **Completed files/behavior:** backend emailTransport/emailTemplates/emailService, env/example/package/lock; auth controller/routes/schemas; reset and moderation notification services; admin restaurant/certificate approval services; associated/new email, reset repository/service/HTTP and moderation tests. Frontend ForgotPasswordPage/ResetPasswordPage, authApi/errors, locale keys, resetToken and component tests, index.html referrer policy. README/EMAIL_SETUP document provider/setup; scripts/reviewPasswordRecovery.mjs provides repeatable fixture browser checks. Details in FIX_TRACKER.md.
 

@@ -660,6 +660,8 @@ Live services were not called. Mocked unit tests are not evidence that these int
 
 ### M9-004 — Live email delivery (Gmail; historically Resend)
 
+**13 October follow-up (user postponed live testing):** Sanitized application preflight recognizes local Gmail credentials as configured/format-valid; required backend configuration passes. Non-sending Nodemailer verify exited 1 / EDNS under restricted network access, so SMTP authentication/connection remain unverified; no retry after postponement and no conclusion that credentials are invalid. Loopback MongoDB TCP listener exists; database authentication/isolation not checked, no app services started. No approved recipient/account, email, password change, token generation or database read/write. Actual delivery, live browser recovery/login, token reuse rejection and password-changed notification remain pending. Status stays BLOCKED; no verified counts change. Documentation-only follow-up; exact resumption steps in EMAIL_PASSWORD_MILESTONE_PROGRESS.md. Historical automated results below were not rerun.
+
 - **Milestone:** 9
 - **Priority:** High before launch
 - **Status:** BLOCKED
