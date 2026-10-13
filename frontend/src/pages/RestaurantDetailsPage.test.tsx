@@ -305,6 +305,7 @@ describe('RestaurantDetailsPage', () => {
     );
     const claimOnly = await show(`/restaurants/${ID}`);
     expect(claimOnly.container.querySelector('[data-evidence="certificate"]')).toBeNull();
+    expect(claimOnly.container.querySelector('[data-evidence="claim"] .kr-v2-details-status')).toBeNull();
     expect(claimOnly.container.querySelector('.kr-details-facts')).toBeNull();
     expect(claimOnly.container.textContent).toContain('Unverified claim (no certificate)');
     expect(claimOnly.container.textContent).toContain('Neighborhood mashgiach');

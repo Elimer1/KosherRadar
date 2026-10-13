@@ -9,9 +9,10 @@ import { describeEvidenceName } from '../../utils/kashrutText';
 interface UnverifiedClaimsProps {
   claims: KashrutEvidenceItem[];
   hechsherOptions: HechsherOption[];
+  showStatusLabel?: boolean;
 }
 
-function UnverifiedClaims({ claims, hechsherOptions }: UnverifiedClaimsProps) {
+function UnverifiedClaims({ claims, hechsherOptions, showStatusLabel = true }: UnverifiedClaimsProps) {
   const { t } = useTranslation();
 
   if (claims.length === 0) {
@@ -27,7 +28,7 @@ function UnverifiedClaims({ claims, hechsherOptions }: UnverifiedClaimsProps) {
           data-evidence="claim"
         >
           <p className="kr-v2-details-claim-note">{t('details.claimNote')}</p>
-          <p className="kr-v2-details-status kr-v2-details-status--claim">{t('details.claim')}</p>
+          {showStatusLabel && <p className="kr-v2-details-status kr-v2-details-status--claim">{t('details.claim')}</p>}
           <p className="kr-v2-details-claim-body" dir="auto">
             {t('details.claimSays', { name: describeEvidenceName(claim, hechsherOptions) })}
           </p>

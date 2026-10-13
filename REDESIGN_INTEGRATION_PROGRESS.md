@@ -136,8 +136,12 @@ The previous Wave 1 visual target and completion notes above are historical. V2 
 ## NEXT AGENT ONBOARDING
 
 - Current milestone: V2 integration and release review, explicitly requested by user.
-- Current issue: preflight complete; merge discovery, map, details sequentially with preserved histories.
+- Current issue: combined browser/functional review in progress; merges completed cleanly.
 - Starting HEAD: `0140d19`; source tips and preserved untracked source file listed above.
 - Completed: read standing instructions/tracking/source handoffs; audited clean integration, local ancestry, separate paths, and installed browser.
-- Tests: none yet for V2 combined tree. Prior source/browser claims are historical evidence only.
-- Next: merge the three local branches, inspect combined implementation, run frontend scripts and available isolated backend tests, browser-check actual app using fixtures at 375/768/1280 plus another width in both languages, document screenshots and limitations, commit locally. Do not modify source worktrees or main; do not push.
+- Merge commits: discovery `bca213b`, map `ab71efa`, details `6d13d2d`, all `--no-ff`, no textual conflicts. Current committed HEAD `6d13d2d`. Source histories preserved. The details branch brings historical worktree-specific onboarding; the integration handoff supersedes it for this checkout.
+- Tests: combined frontend `npm run lint`, `npm run typecheck`, `npm test`, `npm run build` exit 0; 26 files / 158 tests, no failures. Build JS 766.86 kB, CSS 70.70 kB; pre-existing >500 kB warning remains. jsdom navigation notice is nonfatal. Backend tests running with existing installed dependencies copied into this worktree (no install, dependency or lockfile change).
+- Browser review: `node design-screenshots/v2-integration/review.mjs` running against this checkout's production build using Chrome DevTools. Every API, tile, and certificate response is intercepted; external requests blocked. Screenshots/results local ignored under `design-screenshots/v2-integration/`.
+- Backend `cd backend; npm test`: exit 0, 40 files / 505 tests passed, mocks only. Existing dependencies copied from local main's installed node_modules into this worktree; no install, dependency addition or lockfile modification. Backend has no lint/typecheck/build scripts. No database or live integration run.
+- Integration fix `V2-I001`: browser-confirmed repeated claim label, minimal conditional record-label suppression while retaining mixed-evidence labels and warning/attribution. Details suite exit 0, 14 tests; final full frontend suite exit 0, 158 tests in 26 files; lint/typecheck/build exit 0. Final JS 766.92 kB (224.38 kB gzip), CSS 70.70 kB. Post-fix combined browser capture in progress.
+- Next: finish browser matrix/interactions, inspect screenshots, resolve demonstrated regressions sequentially, record final checks and accurate handoff, commit locally. Do not modify source worktrees or main; do not push.

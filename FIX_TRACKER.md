@@ -10,9 +10,9 @@ Counts below are derived from the issue statuses in this file.
 | ALREADY WORKING | 8 |
 | BLOCKED | 5 |
 | DEFERRED | 1 |
-| VERIFIED | 12 |
+| VERIFIED | 13 |
 | Other | 0 |
-| **Total** | **39** |
+| **Total** | **40** |
 
 ## Priority bands (12 October 2026)
 
@@ -62,6 +62,7 @@ QA-001 and QA-002 were found on 12 October 2026 while checking `feature/qa-testi
 | M4-001 | 4 Authentication and security | High | VERIFIED | Confirmed bug |
 | QA-002 | Integration QA | Low | VERIFIED | Cleanup |
 | V2-D001 | Visual v2 restaurant details | High | VERIFIED | Visual redesign recovery |
+| V2-I001 | Visual v2 integration | Medium | VERIFIED | Repeated claim status |
 | M4-002 | 4 Authentication and security | High | ALREADY WORKING | Already implemented |
 | M4-003 | 4 Authentication and security | High | NOT STARTED | Security risk |
 | M4-004 | 4 Authentication and security | High | DEFERRED | Security risk |
@@ -735,6 +736,21 @@ Priority: High before launch
 ---
 
 ## Audit session record
+
+### V2-I001 — Remove a redundant status inside claim-only evidence
+
+- **Milestone:** Visual v2 integration and release review (explicit user request).
+- **Priority:** Medium.
+- **Status:** VERIFIED.
+- **Description/evidence:** Actual combined production render `design-screenshots/v2-integration/en-1280-details-unverified.png` repeats "Unverified claim" in the summary, section heading, and record label. The record label is redundant when the whole section already identifies unverified claims.
+- **Root cause:** The shared claim record needs its label in mixed certificate/claim sections, but also renders it in claim-only sections.
+- **Relevant files/functions:** `RestaurantDetailsPage`, `UnverifiedClaims`.
+- **Planned solution:** Suppress only the redundant record status in claim-only sections. Keep the summary, section heading, restaurant attribution, warning, mixed-evidence labels, and existing public terminology.
+- **Files changed:** `frontend/src/components/details/UnverifiedClaims.tsx`, `frontend/src/pages/RestaurantDetailsPage.tsx`, its test; this file, `PROGRESS.md`, `REDESIGN_INTEGRATION_PROGRESS.md`.
+- **Tests added/modified:** Claim-only component scenario asserts absence of the redundant record label. Existing mixed-evidence test still requires the label and warning beside certificates.
+- **Verification:** `cd frontend; npm test -- src/pages/RestaurantDetailsPage.test.tsx` exit 0, 14 tests passed. Final `npm test` exit 0, 26 files / 158 tests; `npm run lint`, `npm run typecheck`, `npm run build` exit 0. JS 766.92 kB; existing >500 kB warning remains. `git -c core.whitespace=cr-at-eol diff --check` exit 0. `cd backend; npm test` exit 0, 40 files / 505 mocked tests (backend unchanged). Backend has no build/lint/typecheck scripts.
+- **Browser:** `node design-screenshots/v2-integration/review.mjs` exit 0 against the actual combined production build, installed Chrome and intercepted fixtures: 89 render/geometry records, 26 journey/interaction checks, no app exceptions or horizontal overflow, English/Hebrew at 375/768/1024/1280. Inspected final claim-only screenshots: redundant record label gone; warning/attribution intact. Full results in local ignored `design-screenshots/v2-integration/full-matrix-results.json`; screenshots and final fixture refresh in that directory. Earlier harness failures were selectors, fixture IDs, Chrome sandbox initialization and transient-state waits, not application regressions; corrected without weakening app validation/tests.
+- **Blockers/limitations:** No live integrations; native-speaker review remains M8-004.
 
 ### V2-D001 — Recover and complete restaurant details redesign
 

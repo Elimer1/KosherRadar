@@ -124,7 +124,7 @@ function RestaurantDetailsPage() {
                 {sectionTitle}
               </h2>
               <CertificateList teudot={restaurant.teudot} hechsherOptions={hechsherOptions} />
-              <UnverifiedClaims claims={claims} hechsherOptions={hechsherOptions} />
+              <UnverifiedClaims claims={claims} hechsherOptions={hechsherOptions} showStatusLabel={restaurant.teudot.length > 0} />
             </section>
           )}
           <EvidenceFooter kosharotUrl={restaurant.kosharotUrl} />
