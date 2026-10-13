@@ -1124,6 +1124,8 @@ Agent 3 final result: all three assigned IDs and two scoped follow-up IDs verifi
 
 ### SEC-006 / EMAILAUD-001 - Account-level recovery races permit password overwrite
 
+**Main incorporation (13 October 2026):** Explicitly authorized --no-ff merge 2091732 incorporates SEC-006 and UIAUD-001 from verified integration 8a86104 with identical tree/no conflicts. Existing combined checks below remain evidence for unchanged application. No new issue/status change, live service/database or deployment claim. Final main checkpoint/normal push remote equality is confirmed in the promotion report; see latest INTEGRATION_PROGRESS.md entry.
+
 **Current integration verification (13 October 2026):** Source fb31498da640d1686fd669726106093addbff0af incorporated as 4a958dc on integration/p1-security-admin-navigation, based on fetched main 1931d45. Full combined backend `npm test`: exit 0, 684 passed/51 files. Disposable `node integration/runAgent1Isolated.mjs --run-isolated passwordResetConcurrency.integration.mjs passwordResetAudit.integration.mjs`: exit 0, 16 passed/0 failed; new temporary loopback database only, mail disabled. Combined frontend 246 passed/39 files, lint/typecheck/build exit 0. No existing data/index/migration changes or live service verification. Full review and limitations in INTEGRATION_PROGRESS.md; source results below are historical branch evidence. VERIFIED locally, main promotion pending explicit approval.
 
 - **Milestone:** User-assigned SEC-006 password-reset concurrency remediation, 13 October 2026.
