@@ -58,6 +58,9 @@ export const getMySubmissionsService = async (userId) => {
       restaurantName: restaurantName(report),
       description: report.description,
       status: report.status,
+      // NEW (Agent 3): report outcome is stored independently of point awards.
+      // חדש (סוכן 3): תוצאת הדיווח נשמרת בנפרד מהנקודות.
+      correctionApplied: report.correctionApplied === true,
       rejectionReason: report.rejectionReason || null,
       createdAt: toWhen(report.createdAt),
       points: pointsFor(keys, `REPORT:${report._id}`, POINTS_APPLIED_CORRECTION),

@@ -31,6 +31,32 @@ describe('getMySubmissionsService history rules', () => {
     listMyReportsRepo.mockResolvedValue([]);
   });
 
+  // NEW (Agent 3): correction outcome is independent of a stored award key.
+  // חדש (סוכן 3): תוצאת התיקון אינה תלויה בנקודות.
+  it.each(['admin-1', 'user-award-failed'])('returns applied correction with zero points for %s', async (userId) => {
+    listMyReportsRepo.mockResolvedValue([{
+      _id: 'report-fixed', description: 'Wrong phone', status: 'RESOLVED',
+      correctionApplied: true, restaurant: { name: 'Cafe' }, createdAt,
+      adminNote: 'private', submittedBy: userId,
+    }]);
+    const result = await getMySubmissionsService(userId);
+    expect(listMyReportsRepo).toHaveBeenCalledWith(userId);
+    expect(result.reports[0]).toMatchObject({ correctionApplied: true, points: 0 });
+    expect(result.reports[0].adminNote).toBeUndefined();
+    expect(result.reports[0].submittedBy).toBeUndefined();
+  });
+
+  it('does not infer an applied correction from an award or a missing legacy field', async () => {
+    findUserAwardKeysRepo.mockResolvedValue({ awardedPointKeys: ['REPORT:report-old'] });
+    listMyReportsRepo.mockResolvedValue([
+      { _id: 'report-old', status: 'RESOLVED', createdAt },
+      { _id: 'report-no-change', status: 'RESOLVED', correctionApplied: false, createdAt },
+    ]);
+    const result = await getMySubmissionsService('user-1');
+    expect(result.reports.map((report) => report.correctionApplied)).toEqual([false, false]);
+    expect(result.reports[0].points).toBe(1);
+  });
+
   it('asks only for this user and returns empty lists when they have nothing', async () => {
     findUserAwardKeysRepo.mockResolvedValue(null);
 

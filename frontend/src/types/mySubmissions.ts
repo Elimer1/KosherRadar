@@ -20,6 +20,7 @@ export interface SubmissionReport {
   restaurantName: string | null;
   description: string;
   status: 'PENDING' | 'RESOLVED' | 'REJECTED';
+  correctionApplied: boolean;
   rejectionReason: string | null;
   createdAt: string;
   points: number;

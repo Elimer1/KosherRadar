@@ -71,6 +71,7 @@ export function SubmissionsPanel() {
       <div>
         <h2 className="text-xl font-semibold tracking-tight text-ink">{t('forms.mySubmissions')}</h2>
         <p className="mt-2 text-sm text-muted">{t('forms.submissionsBody')}</p>
+        <p className="mt-2 text-sm text-muted">{t('forms.submissionsLimit')}</p>
       </div>
 
       <StatusList title={t('forms.restaurants')} empty={t('forms.noRestaurants')}>
@@ -136,7 +137,7 @@ export function SubmissionsPanel() {
                 </p>
                 {report.status === 'RESOLVED' && (
                   <p className="mt-2 text-sm text-ink">
-                    {report.points > 0 ? t('forms.correctionApplied') : t('forms.closedWithoutChange')}
+                    {report.correctionApplied ? t('forms.correctionApplied') : t('forms.closedWithoutChange')}
                   </p>
                 )}
                 {report.rejectionReason && (

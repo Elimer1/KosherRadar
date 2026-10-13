@@ -1029,3 +1029,51 @@ Final batch: frontend npm test exit 0 (30 files / 174 passed); npm run lint, npm
 - **Tests added or modified:** stalled headers/body, aborted signal, deadline cleanup, fake stalled XHR Axios timeout, unchanged upload and explicit longer timeout settings.
 - **Verification:** backend npm test -- tests/placesService.test.js exit 0, 23 passed. Frontend npm test -- src/api/locationDeadline.test.ts src/api/axiosInstance.test.ts exit 0, 13 passed; npm run typecheck/lint exit 0. Provider/XHR mocked with controlled timers; no live integration/browser.
 - **Blockers/limitations:** Five-second server deadline covers fetch and JSON body, abort plus Promise.race bounds even noncompliant transport. Ten-second client timeout scoped to /places/; uploads unchanged. Live infrastructure timeout behavior unverified.
+
+## Agent 3 assigned reliability fixes (13 October 2026)
+
+### SEARCH-003 - Certificate-photo validation race
+
+- **Milestone:** User-assigned Submission & Application Reliability; **Priority:** P1; **Status:** VERIFIED.
+- **Evidence/root cause:** Five failing baseline hook regressions; photo cleared before signature read and stale results accepted; consumers did not coordinate validation.
+- **Solution/files changed:** Versioned pending state, synchronous submit guard, catch read errors, preserve latest valid evidence and block failed replacements; usePhotoField.ts, five photo-consuming submission pages, TeudaFields.tsx, en.ts/he.ts. imageCheck protections unchanged.
+- **Tests added:** usePhotoField.test.tsx (7); photoSubmission.test.tsx (5 forms).
+- **Actual verification:** focused frontend tests exit 0, 19 passed including existing imageCheck tests. Full suite before final test cleanup exit 0, 28 files/170 passed. Frontend lint/typecheck/build exit 0; existing chunk warning. Backend unchanged.
+- **Limitations:** Mocked APIs, no browser/live upload; Hebrew strings need native-speaker review. Details and next task: AGENT_3_FIX_PROGRESS.md.
+
+### A1-003 - Contribution outcome independent of points
+
+- **Milestone:** User-assigned Submission & Application Reliability; **Priority:** P2; **Status:** VERIFIED.
+- **Evidence/root cause:** 3 backend and 2 frontend failing baseline regressions; report projection omitted correctionApplied and UI inferred outcome from awards.
+- **Solution/files changed:** Read and expose stored outcome with legacy false default; render independently of awards. userSubmissionsRepository.js, userSubmissionsService.js, MySubmissionsPage.tsx, mySubmissions.ts and locale notice for the existing 50-record limit. Photo Hebrew encoding correction included. No admin correction/points writes or authorization changes.
+- **Tests:** qaSubmissionHistory.test.js expanded; userSubmissionsRepository.test.js, userSubmissionsRoutesHttp.test.js, MySubmissionsPage.test.tsx added. Covers applied/admin/failed award, legacy/no-change, authenticated scoping, projection/limit and UI points independence.
+- **Verification:** backend focused history command (four files, exact command in AGENT_3_FIX_PROGRESS.md) exit 0, 13 passed. Frontend history/locales/photo form tests exit 0, 11 passed; lint/typecheck/build exit 0, existing chunk warning. Backend has no build/lint/typecheck scripts.
+- **Limitations:** Mocked dependencies, loopback HTTP only; no live DB, award write integration or browser. No schema/backfill required. Hebrew notice needs native review.
+
+### SEC-011 - Health endpoint database readiness
+
+- **Milestone:** User-assigned Submission & Application Reliability; **Priority:** P2; **Status:** VERIFIED.
+- **Evidence/root cause:** Legacy handler always returned 200 even for readyState 0; baseline HTTP regression exit 1, 6 failed after behavior-preserving extraction.
+- **Solution/files changed:** server.js mounts healthRoutes.js; /api/health and /ready return 503 unless readyState 1; /live provides independent liveness. Safe generic payload, no-store caching; connected legacy shape preserved. README documents semantics.
+- **Tests:** healthRoutesHttp.test.js added, 6 cases with loopback HTTP and mocked Mongoose states 0/1/2/3/unknown/recovery.
+- **Verification:** focused health tests exit 0, 6 passed; full backend npm test exit 0, 43 files/517 passed. Backend has no build/lint/typecheck scripts. Frontend unchanged for this fix.
+- **Limitations:** Readiness checks connection state, not an active query. Startup continues to wait for initial connection. No real database/external integrations.
+
+### APP3-001 - Browser detail-page certificate expiry rollover
+
+- **Milestone:** User-assigned secondary Submission & Application Reliability; **Priority:** P2; **Status:** VERIFIED.
+- **Evidence/root cause:** Loaded details never refreshed merely because Israel calendar date changed. Baseline page tests exit 1, 3 failed/14 passed.
+- **Solution/files:** useIsraelDay.ts; RestaurantDetailsPage.tsx and test. Detect day changes every minute/on foreground return and refetch server-derived details; hide stale previous-day evidence and use existing error/retry flow. No public terminology/rules changes.
+- **Tests/verification:** Four new page regressions; full frontend npm test exit 0, 29 files/178 passed; lint/typecheck/build exit 0, existing chunk warning. Backend unchanged; no browser/live services tested.
+- **Limitations:** Normal timers can delay refresh up to one minute; suspended tabs refresh upon foreground return. Browser clock is only a refresh trigger.
+
+### APP3-002 - Explicit photo clearing and error recovery
+
+- **Milestone:** User-assigned secondary Submission & Application Reliability; **Priority:** P2; **Status:** VERIFIED.
+- **Evidence/root cause:** Invalid/read-failed selection blocked sending but native file inputs offered no consistent explicit clear action. Pending clear also must invalidate asynchronous validation.
+- **Solution/files:** Shared PhotoFieldRecovery.tsx and hook clearPhoto; reset file input and invalidate validation without clearing text fields; wired into all five consuming forms. Localized Clear photo selection, disabled only during submission. Submission guard also holds until rendered pending state clears.
+- **Tests:** usePhotoField.test.tsx clear case; five additional real form clear-during-validation regressions in photoSubmission.test.tsx.
+- **Verification:** final frontend npm test exit 0, 29 files/183 passed; lint/typecheck/build exit 0, existing chunk warning. Backend unchanged since npm test exit 0, 43 files/517 passed. CRLF-aware diff check exit 0.
+- **Limitations:** jsdom/mocked APIs; browser and live uploads not tested; Hebrew labels require native review.
+
+Agent 3 final result: all three assigned IDs and two scoped follow-up IDs verified; full commands/results, changed files, checkpoints and integration dependencies in AGENT_3_FIX_PROGRESS.md. No points/classification/auth write changes, schema migrations, dependencies, live services, merges, pushes or deployments.

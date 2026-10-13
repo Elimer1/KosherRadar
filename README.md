@@ -64,7 +64,7 @@ npm run search:rebuild  # fill the search fields of restaurants that already exi
 
 **After updating to Milestone 4, run `npm run search:rebuild` once.** Search uses three fields (`nameTokens`, `foodTokens`, `foodGroups`) that are built every time a restaurant is saved. Restaurants saved before Milestone 4 do not have them yet, so they will not be found until the script has run. It is safe to run again.
 
-The API listens on `http://localhost:5000`. Health check: `GET /api/health`.
+The API listens on `http://localhost:5000`. Readiness: `GET /api/health` (also `/api/health/ready`) returns 200 with the existing connected response when Mongoose is connected, and 503 when disconnected, connecting or disconnecting. `GET /api/health/live` returns 200 while the application can answer requests, independently of database readiness. These checks expose no connection configuration and are not cached. Readiness reflects connection state rather than an active database query; startup still waits for the initial database connection.
 
 ## Frontend setup
 
@@ -100,6 +100,8 @@ npm run preview      # serve the production build locally
 | Method | Path | Access |
 | --- | --- | --- |
 | GET | `/api/health` | public |
+| GET | `/api/health/ready` | public readiness |
+| GET | `/api/health/live` | public liveness |
 | POST | `/api/auth/register` | public, rate-limited; always creates a `USER` |
 | POST | `/api/auth/login` | public, rate-limited |
 | POST | `/api/auth/forgot-password` | public, limited to 5 per hour per IP; same answer for every email |
