@@ -183,3 +183,13 @@ To try the admin area: run `npm run seed:admin`, log in with that account, and o
 ## External services
 
 Cloudinary is used for certificate photos and Resend for emails (see setup above). Atlas Search is optional (see `ATLAS_SEARCH_SETUP.md`). Geoapify is used for address and place lookup when `GEOAPIFY_API_KEY` is set. The key stays on the server. Without it, a typed address can still be submitted, and the search location field explains that lookup is unavailable. No coordinates are invented. A missing Geoapify key was checked and returned no coordinates. Geoapify itself has not been called with a real key. A missing Cloudinary account was checked: the upload answered 503 and no certificate was saved. A real Cloudinary upload has not been done.
+
+### Transactional administrator workflows
+
+Report resolution now commits the proposed correction, report outcome and guarded contribution award in one MongoDB transaction. It requires a replica set or sharded MongoDB deployment (including compatible Atlas deployments). A standalone server returns HTTP 503 / TRANSACTIONS_REQUIRED rather than writing partial state. This branch has been tested against a fresh local replica set, not Atlas; verify the target topology before deployment. No package addition, record migration or backfill is required. Historical partial writes/incorrect awards require a separately authorized data review; this change does not repair existing data automatically. Roll back application code only after assessing the integrity protections being removed.
+
+Run isolated database regressions from backend with:
+
+`node integration/runAgent1Isolated.mjs --run-isolated agent1Authority.integration.mjs agent1Corrections.integration.mjs`
+
+The runner starts installed mongod on a new loopback port with a fresh temporary database and removes only its own temporary files. It does not accept an application connection string or load application .env files. Set AGENT1_MONGOD_BINARY to an installed mongod path when needed. The test replica set uses a five-second transaction lifetime to verify recovery after a killed worker; application deployments retain their configured transaction lifetime. No external services are called.

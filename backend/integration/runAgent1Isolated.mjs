@@ -15,7 +15,8 @@ const listener = createServer(); listener.listen(0, '127.0.0.1'); await once(lis
 const port = listener.address().port; await new Promise((done) => listener.close(done));
 const replicaSet = `agent1_${port}`;
 const mongod = spawn(process.env.AGENT1_MONGOD_BINARY || 'C:/Program Files/MongoDB/Server/7.0/bin/mongod.exe',
-  ['--dbpath', dbpath, '--port', String(port), '--bind_ip', '127.0.0.1', '--replSet', replicaSet, '--logpath', join(root, 'mongod.log')],
+  ['--dbpath', dbpath, '--port', String(port), '--bind_ip', '127.0.0.1', '--replSet', replicaSet,
+    '--setParameter', 'transactionLifetimeLimitSeconds=5', '--logpath', join(root, 'mongod.log')],
   { windowsHide: true, stdio: 'ignore' });
 let spawnError; mongod.on('error', (error) => { spawnError = error; });
 const direct = `mongodb://127.0.0.1:${port}/?directConnection=true`;

@@ -798,11 +798,11 @@ Explicit request authorizes this assigned batch, including the listed historical
 ### A1-002 / SEC-001 ? Premature correction awards
 - **Milestone:** Agent 1 admin authority and data integrity.
 - **Priority:** P1.
-- **Status:** NOT STARTED.
+- **Status:** VERIFIED.
 - **Evidence/root cause:** RESOLVED/correctionApplied is written before proposal application; concurrent retry/process interruption can award prematurely.
 - **Relevant files/solution:** Investigate adminReportService, adminReportRepository, pointsService and existing database/test infrastructure for atomic completion/recovery.
-- **Files changed/tests/verification:** None yet.
-- **Blockers:** Replica-set assumptions need inspection.
+- **Files changed/tests/verification:** Transaction helper/report service; unit abort expectation updated; real MongoDB concurrency/rollback tests added. Baseline exit 1: 1 pass / 2 fail, reproducing premature +1 and partial state. npm test -- tests/adminReportService.test.js tests/pointsService.test.js tests/transaction.test.js: exit 0, 3 files / 34 tests. node integration/runAgent1Isolated.mjs --run-isolated agent1Corrections.integration.mjs: exit 0, 4 real MongoDB tests including concurrent failure, concurrent success/idempotency/ADMIN zero points, award rollback/retry and abrupt worker termination/recovery. Browser/frontend not rerun for this backend-only fix; backend has no build/lint/typecheck scripts. No external services.
+- **Blockers/limitations:** Requires a replica-set/sharded deployment; explicit 503 on standalone. No migration/backfill. Historical inconsistencies need separately approved data review; no live Atlas tested.
 
 ### A1-R1 / SEC-010 ? Partial database deletion and creation compensation
 - **Milestone:** Agent 1 admin authority and data integrity.

@@ -1,5 +1,6 @@
 // NEW (Milestone 3): admin handling of user reports and corrections: list, resolve (apply or not), reject.
 // חדש (אבן דרך 3): טיפול מנהל בדיווחים ותיקונים של משתמשים: רשימה, סגירה (עם תיקון או בלי), דחייה.
+import { withTransaction } from '../repositories/transaction.js';
 import { HECHSHER_OTHER } from '../config/constants.js';
 import { appError } from '../utils/appError.js';
 import { buildPage } from '../utils/pagination.js';
@@ -11,7 +12,6 @@ import {
   findReportByIdRepo,
   listPendingReportsRepo,
   rejectPendingReportRepo,
-  reopenResolvedReportRepo,
   resolvePendingReportRepo,
 } from '../repositories/adminReportRepository.js';
 import { toAdminReport } from './adminSerializerService.js';
@@ -98,25 +98,13 @@ const applyProposedCorrection = async (report) => {
   await saveRestaurantChangesRepo(restaurant, buildCorrectionChanges(report, 'RESTAURANT'));
 };
 
-// NEW (Audit M2): the report is already RESOLVED when this runs. Put it back if the data write failed.
-// חדש (ביקורת M2): הדיווח כבר סגור כשזה רץ. מחזירים אותו אם כתיבת הנתונים נכשלה.
-const reopenAfterFailedCorrection = async (reportId, error) => {
-  try {
-    await reopenResolvedReportRepo(reportId);
-  } catch (reopenError) {
-    console.error('Could not reopen report after a failed correction:', reportId, reopenError.message);
-  }
-
-  throw error;
-};
-
 // Resolve a report in one of three ways (spec 6 and 7):
 //   APPLY_PROPOSED           the server applies the proposal  -> correctionApplied, +1 point
 //   CORRECTION_ALREADY_MADE  the admin edited the record by hand -> correctionApplied, +1 point
 //   NO_CORRECTION            informational only                -> no change, 0 points
 // Only a real applied correction earns the point, and never twice for the same report.
 // סגירת דיווח באחת משלוש דרכים. רק תיקון שהוחל בפועל מזכה בנקודה, ולעולם לא פעמיים על אותו דיווח.
-export const resolveReportService = async ({ reportId, resolution, adminNote }) => {
+export const resolveReportService = async ({ reportId, resolution, adminNote }) => withTransaction(async () => {
   const report = await loadReportOr404(reportId);
 
   if (report.status === 'REJECTED') {
@@ -129,9 +117,7 @@ export const resolveReportService = async ({ reportId, resolution, adminNote }) 
   if (!alreadyResolved) {
     const correctionApplied = resolution !== 'NO_CORRECTION';
 
-    // NEW (Audit M2): claim the PENDING row before writing the certificate or claim. The loser of a race
-    // gets null and must not write. If the write fails, the claim is put back.
-    // חדש (ביקורת M2): תופסים את הדיווח הממתין לפני כתיבת התעודה או הטענה. מי שמפסיד במרוץ מקבל null ולא כותב.
+    // Claim, correction and award commit together; no intermediate state is visible.
     if (resolution === 'APPLY_PROPOSED') {
       await assertProposedCorrection(report);
     }
@@ -143,11 +129,7 @@ export const resolveReportService = async ({ reportId, resolution, adminNote }) 
     }
 
     if (resolution === 'APPLY_PROPOSED') {
-      try {
-        await applyProposedCorrection(report);
-      } catch (error) {
-        await reopenAfterFailedCorrection(report._id, error);
-      }
+      await applyProposedCorrection(report);
     }
   }
 
@@ -156,7 +138,7 @@ export const resolveReportService = async ({ reportId, resolution, adminNote }) 
   const points = await awardPointsForAppliedCorrectionService({ report: resolved });
 
   return { report: toAdminReport(resolved), alreadyResolved, points };
-};
+});
 
 export const rejectReportService = async ({ reportId, reason }) => {
   const report = await loadReportOr404(reportId);
