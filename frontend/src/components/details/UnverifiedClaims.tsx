@@ -1,5 +1,6 @@
-// NEW (Redesign wave 1): unverified claims stay apart from approved certificates.
-// חדש (גל עיצוב 1): טענות לא מאומתות נשארות בנפרד מתעודות שאושרו.
+// NEW (Visual v2): restaurant details presentation; existing contracts and status labels stay authoritative.
+// חדש (עיצוב 2): תצוגת פרטי מסעדה תוך שמירה על חוזים ותוויות קיימים.
+// Unverified claims stay out of the certificate list and never use a verified label.
 import { useTranslation } from 'react-i18next';
 import type { KashrutEvidenceItem } from '../../types/restaurantDetails';
 import type { HechsherOption } from '../../types/submissions';
@@ -18,29 +19,21 @@ function UnverifiedClaims({ claims, hechsherOptions }: UnverifiedClaimsProps) {
   }
 
   return (
-    <section className="kr-details-sheet kr-details-claims" aria-labelledby="claims-heading">
-      <h2 id="claims-heading" className="kr-details-heading">
-        {t('details.claim')}
-      </h2>
-      <ul className="kr-details-list">
-        {claims.map((claim, index) => (
-          <li
-            key={`${claim.hechsher ?? 'none'}-${claim.kashrutLevel ?? 'none'}-${index}`}
-            className="kr-details-claim"
-            data-evidence="claim"
-          >
-            <p className="kr-details-claim-note">{t('details.claimNote')}</p>
-            <p className="kr-details-claim-kicker">
-              <span aria-hidden="true">! </span>
-              {t('details.claim')}
-            </p>
-            <p className="kr-details-break" dir="auto">
-              {t('details.claimSays', { name: describeEvidenceName(claim, hechsherOptions) })}
-            </p>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <ul className="kr-v2-details-records">
+      {claims.map((claim, index) => (
+        <li
+          key={`${claim.hechsher ?? 'none'}-${claim.kashrutLevel ?? 'none'}-${index}`}
+          className="kr-v2-details-record kr-v2-details-record--claim"
+          data-evidence="claim"
+        >
+          <p className="kr-v2-details-claim-note">{t('details.claimNote')}</p>
+          <p className="kr-v2-details-status kr-v2-details-status--claim">{t('details.claim')}</p>
+          <p className="kr-v2-details-claim-body" dir="auto">
+            {t('details.claimSays', { name: describeEvidenceName(claim, hechsherOptions) })}
+          </p>
+        </li>
+      ))}
+    </ul>
   );
 }
 

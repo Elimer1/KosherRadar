@@ -620,6 +620,10 @@ Deferred: native-speaker review of Hebrew copy, including design strings and the
 
 ## NEXT AGENT ONBOARDING
 
+**Worktree-specific handoff — Visual v2 details, 13 October 2026**
+
+This checkout is `C:/FS/projects/KosherRadar-visual-v2-details`, branch `redesign/v2-details`, recovered from `0140d19`. The user explicitly requested completing and committing the interrupted restaurant details redesign. `V2-D001` is verified; see `FIX_TRACKER.md` and `VISUAL_V2_DETAILS_PROGRESS.md` for files, decisions, and evidence. The existing light editorial redesign was preserved and completed with a collapsed keyboard-operable directions chooser and React-managed thumbnail failure handling. Frontend: 154 tests in 26 files, lint, typecheck, and build passed (exit 0). Browser: 80 synthetic fixture renders across four widths and both languages, no horizontal overflow; retry, directions keyboard controls, clipboard fallback, and login redirects passed. No live integration or backend verification was performed. New Hebrew labels need native-speaker review. All changes are local; no merge or push. Exact next step: stop after this checkpoint; preserve the untracked temporary preview config and do not modify other worktrees. Historical global-project onboarding below remains for context and is not this checkout's branch state.
+
 **Current position**
 
 - Branch: `main` (not pushed). It is ahead of `origin/main`.

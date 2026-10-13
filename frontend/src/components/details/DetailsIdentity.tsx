@@ -1,5 +1,6 @@
-// NEW (Redesign wave 1): the restaurant name sits on a full-width band. No photo is invented.
-// חדש (גל עיצוב 1): שם המסעדה על פס רחב. לא מומצאת תמונה.
+// NEW (Visual v2): restaurant details presentation; existing contracts and status labels stay authoritative.
+// חדש (עיצוב 2): תצוגת פרטי מסעדה תוך שמירה על חוזים ותוויות קיימים.
+// Light identity: name, place, and food. No photo is invented.
 import { useTranslation } from 'react-i18next';
 import type { RestaurantDetails } from '../../types/restaurantDetails';
 import { getCategoryLabel, getFoodTypeLabel } from '../../utils/labels';
@@ -22,12 +23,12 @@ function DetailsIdentity({ restaurant, names }: DetailsIdentityProps) {
   const hasMeta = Boolean(restaurant.foodType) || restaurant.categories.length > 0;
 
   return (
-    <div className="kr-details-identity">
-      <h1 className="kr-details-title kr-details-break" dir="auto">
-        <bdi>{names.primary}</bdi>
+    <div className="kr-v2-details-nameblock">
+      <h1 className="kr-v2-details-title" dir="auto">
+        {names.primary}
       </h1>
       {names.secondary.length > 0 && (
-        <p className="kr-details-secondary kr-details-break">
+        <p className="kr-v2-details-alt">
           {names.secondary.map((name, index) => (
             <span key={`${name}-${index}`}>
               {index > 0 && <span aria-hidden="true"> · </span>}
@@ -37,22 +38,20 @@ function DetailsIdentity({ restaurant, names }: DetailsIdentityProps) {
         </p>
       )}
       {place !== '' && (
-        <p className="kr-details-place kr-details-break">
+        <p className="kr-details-place kr-v2-details-address">
           <bdi>{place}</bdi>
         </p>
       )}
       {hasMeta && (
-        <ul className="kr-details-chips">
-          {restaurant.foodType && <li className="kr-details-chip kr-details-break">{getFoodTypeLabel(restaurant.foodType)}</li>}
+        <ul className="kr-v2-details-tags">
+          {restaurant.foodType && <li>{getFoodTypeLabel(restaurant.foodType)}</li>}
           {restaurant.categories.map((category) => (
-            <li key={category} className="kr-details-chip kr-details-break">
-              {getCategoryLabel(category)}
-            </li>
+            <li key={category}>{getCategoryLabel(category)}</li>
           ))}
         </ul>
       )}
       {keywords.length > 0 && (
-        <p className="kr-details-serves kr-details-break">
+        <p className="kr-v2-details-serves">
           <bdi>{t('details.serves', { food: keywords.join(', ') })}</bdi>
         </p>
       )}
