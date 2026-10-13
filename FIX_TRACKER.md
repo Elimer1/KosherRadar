@@ -6,12 +6,12 @@ Counts below are derived from the issue statuses in this file.
 
 | Status | Count |
 | --- | ---: |
-| NOT STARTED | 12 |
+| NOT STARTED | 11 |
 | ALREADY WORKING | 8 |
 | BLOCKED | 4 |
 | DEFERRED | 3 |
 | VERIFIED | 41 |
-| Other | 0 |
+| Other | 1 |
 | **Total** | **68** |
 
 ## Priority bands (12 October 2026)
@@ -1176,15 +1176,14 @@ Independent-audit follow-up verification (13 October 2026): targeted npm test --
 
 - **Milestone:** Authorized final integration promotion/handoff.
 - **Priority:** High; observed map availability limitation.
-- **Status:** NOT STARTED.
+- **Status:** FIXED — UNVERIFIED.
 - **Description/evidence:** User reports OpenStreetMap tiles return HTTP 403 in the observed environment. No live tile request in promotion; fixture/mocked map tests do not verify real tile availability.
-- **Root cause:** Undetermined; distinguish provider/environment response from application integration regression before changing provider/configuration.
+- **Root cause:** Reported upstream OSM volunteer tile block; exact trigger unknown. MAP-001 replaces that endpoint with Geoapify, but actual browser-key/provider availability remains unverified.
 - **Relevant files/functions:** Public map tile layer/configuration and map UI; inspect request origin/headers/provider requirements without credentials or production data.
-- **Planned solution:** Separately authorized investigation; no provider/hosting change during merge/push.
-- **Files changed:** Tracking notes only.
-- **Tests added or modified:** None; recommend tile-error feedback regression and approved environment browser verification of successful tile loads.
-- **Verification:** User-supplied observed HTTP 403, not a new live reproduction.
-- **Blockers/limitations:** Outstanding map rendering limitation; do not count fixture tiles as real service verification.
+- **Planned solution:** User explicitly authorized cherry-pick of dc826fc. Provider replacement integrated; configure separate public origin-restricted VITE_GEOAPIFY_MAPS_API_KEY and verify live rendering separately, without committing a key.
+- **Files changed:** See MAP-001 and MAP_TILES_FIX_PROGRESS.md for source files; cherry-picked e8e952d and integration tracking notes.
+- **Tests added or modified:** Source provider contracts and real Leaflet jsdom tile/attribution/marker/missing-key regressions incorporated; obsolete OSM URL assertion replaced under explicit provider-change request.
+- **Verification:** Integrated frontend npm test exit 0, 37 files/223 passed; npm run lint/typecheck/build exit 0. Fake keys/mocked API, no live tile requests. Backend/package manifests unchanged; prior 580 backend tests remain evidence.
+- **Blockers/limitations:** MAP-001 implementation verified only; actual tile recovery/live rendering unverified. Missing browser key deliberately leaves blank basemap with localized notice. Real key not read/set/committed, no live requests. New Hebrew copy needs native review.
 
 Authorized main promotion verification - 13 October 2026: main --no-ff merge f252e4c incorporates integration a9c2b0e with history preserved/no conflicts. Post-merge backend npm test exit 0 (580/49 files), frontend npm test exit 0 (215/35 files), npm run lint/typecheck/build exit 0; CRLF-aware whitespace exit 0. No issue resolution/status changes from promotion. SEC-006, UIAUD-001, ADMINCERT-001 and MAPTILE-001 remain outstanding. Final main/normal-push remote confirmation reported after tracking checkpoint. Production/database/hosting actions remain unauthorized.
-
