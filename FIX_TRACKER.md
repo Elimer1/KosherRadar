@@ -6,13 +6,13 @@ Counts below are derived from the issue statuses in this file.
 
 | Status | Count |
 | --- | ---: |
-| NOT STARTED | 13 |
+| NOT STARTED | 12 |
 | ALREADY WORKING | 8 |
-| BLOCKED | 5 |
-| DEFERRED | 1 |
-| VERIFIED | 13 |
+| BLOCKED | 4 |
+| DEFERRED | 3 |
+| VERIFIED | 40 |
 | Other | 0 |
-| **Total** | **40** |
+| **Total** | **67** |
 
 ## Priority bands (12 October 2026)
 
@@ -34,7 +34,7 @@ The user asked to finish important fixes and to defer low-impact, cosmetic, end-
 
 ### LATER
 
-M2-004, M3-003, M4-003, M4-004, M5-001, M5-003, M5-004, M6-001, M6-002, M6-004, M8-003, M8-004, M9-001, M9-002, M9-003, M9-004, M10A-001, M10B-001, M11-001.
+M2-004, M3-003, M4-003, M4-004, M6-001, M6-002, M6-004, M8-003, M8-004, M9-001, M9-002, M9-003, M9-004, M10A-001, M10B-001, M11-001.
 
 M6-003 is verified with M1-003: the same unambiguous-match rule covers restaurant submit and the search location field. Live Geoapify accuracy stays blocked under M9-002. M8-002 is verified with M1-002: optional certificate fields are labeled, and the required hechsher is no longer inside the optional certificate block.
 
@@ -42,12 +42,15 @@ Classification of those 36 issues: **4 confirmed bugs**, **12 risks**, **12 impr
 
 Blocked and deferred issues are not counted as verified. The sentence above is the audit classification; current statuses are in the tables.
 
-QA-001 and QA-002 were found on 12 October 2026 while checking `feature/qa-testing` at `54d9605`. They are not part of the original 36. Both are verified. LATER issues were not started.
+QA-001 and QA-002 were found on 12 October 2026 while checking `feature/qa-testing` at `54d9605`. They are not part of the original 36. Both are verified. That earlier batch did not start LATER work; the explicit Agent 1 request on 13 October authorizes the assigned integrity follow-ups below.
 
 ## Milestone index
 
 | ID | Milestone | Priority | Status | Class |
 | --- | --- | --- | --- | --- |
+| EP-001 | Email/password recovery (explicit request) | High | VERIFIED | Delivery/templates |
+| EP-002 | Email/password recovery (explicit request) | High | VERIFIED | Recovery and notification safety |
+| EP-003 | Email/password recovery (explicit request) | High | VERIFIED | Localized recovery UX and token privacy |
 | M1-001 | 1 Restaurant and certificate submission | Critical | VERIFIED | Confirmed bug |
 | M1-002 | 1 Restaurant and certificate submission | Critical | VERIFIED | UX improvement |
 | M1-003 | 1 Restaurant and certificate submission | Critical | VERIFIED | Reliability risk |
@@ -66,10 +69,10 @@ QA-001 and QA-002 were found on 12 October 2026 while checking `feature/qa-testi
 | M4-002 | 4 Authentication and security | High | ALREADY WORKING | Already implemented |
 | M4-003 | 4 Authentication and security | High | NOT STARTED | Security risk |
 | M4-004 | 4 Authentication and security | High | DEFERRED | Security risk |
-| M5-001 | 5 Database integrity | High | NOT STARTED | Reliability risk |
+| M5-001 | 5 Database integrity | High | VERIFIED | Reliability risk |
 | M5-002 | 5 Database integrity | High | VERIFIED | Confirmed bug and reliability risk |
-| M5-003 | 5 Database integrity | High | NOT STARTED | Reliability risk |
-| M5-004 | 5 Database integrity | High | NOT STARTED | Reliability risk |
+| M5-003 | 5 Database integrity | High | VERIFIED | Reliability risk |
+| M5-004 | 5 Database integrity | High | VERIFIED | Reliability risk |
 | M6-001 | 6 Search and map | High | NOT STARTED | Reliability risk |
 | M6-002 | 6 Search and map | High | NOT STARTED | Architectural improvement |
 | M6-003 | 6 Search and map | High | VERIFIED | Reliability risk |
@@ -84,10 +87,15 @@ QA-001 and QA-002 were found on 12 October 2026 while checking `feature/qa-testi
 | M9-001 | 9 External integrations | High before launch | BLOCKED | Unable to verify live |
 | M9-002 | 9 External integrations | High before launch | BLOCKED | Unable to verify live |
 | M9-003 | 9 External integrations | High before launch | BLOCKED | Unable to verify live |
-| M9-004 | 9 External integrations | High before launch | BLOCKED | Unable to verify live |
+| M9-004 | 9 External integrations | High before launch | VERIFIED | Authorized live Gmail recovery/delivery/browser checks |
 | M10A-001 | 10A Core end-to-end testing | High before launch | NOT STARTED | Test gap |
 | M10B-001 | 10B Submission and admin end-to-end testing | High before launch | NOT STARTED | Test gap |
 | M11-001 | 11 Documentation and production readiness | High before launch | NOT STARTED | Readiness gap |
+| A1-001 / SEC-002 | Agent 1 admin/data integrity | P1 | VERIFIED | Admin submission separation |
+| A1-002 / SEC-001 | Agent 1 admin/data integrity | P1 | VERIFIED | Atomic corrections/awards |
+| A1-R1 / SEC-010 | Agent 1 admin/data integrity | P1 | VERIFIED | Atomic cascades/creation |
+| A1-R2 | Agent 1 admin/data integrity | P1 | VERIFIED | Atomic rejection |
+| A1-R4 | Agent 1 admin/data integrity | P1 | VERIFIED | Unique-index enforcement |
 
 ---
 
@@ -190,6 +198,8 @@ Priority: Critical
 - **Tests added or modified:** `backend/tests/adminReportService.test.js`. The old test expected the certificate write to run before the claim and to skip the claim when the write failed. That assertion described the bug, so it was replaced: a lost claim does not write, and a failed write reopens the report. `CORRECTION_ALREADY_MADE` still awards +1.
 - **Verification:** `cd backend; npm test -- tests/adminReportService.test.js` exit 0, 18 tests passed. Mocks only. No browser. No live database.
 - **Blockers:** If reopening the report also fails, the report can stay resolved without the correction. That is logged and the original error is still thrown. A field-diff requirement for `CORRECTION_ALREADY_MADE` still needs approval because it changes who gets +1.
+
+- **Current Agent 1 follow-up:** A1-002 / SEC-001 (b106482) replaces claim/reopen compensation with atomic correction/report/award. Four real MongoDB regressions pass, including premature retry awards, award rollback, idempotency/ADMIN zero points and abrupt worker death/recovery. Older evidence/verification above are historical. Existing inconsistent records need an approved data review.
 
 ### M2-003 — Admin review experience
 
@@ -363,16 +373,18 @@ Priority: High
 
 - **Milestone:** 5
 - **Priority:** High
-- **Status:** NOT STARTED
-- **Description:** Deleting a restaurant deletes its certificates and reports, then tries to delete Cloudinary images. Points already awarded stay. The writes are sequential and not one transaction. The user's submission list loses those rows because it queries the live documents.
-- **Evidence:** `deleteRestaurantService` loads image ids, `deleteTeudotOfRestaurantRepo`, `deleteReportsOfRestaurantRepo`, `deleteRestaurantByIdRepo`, then `deleteImageService` per id. `pointsService` never subtracts points. `listMyRestaurantsRepo` filters `submittedBy` with no tombstone. The UI uses `window.confirm` before calling delete.
+- **Status:** VERIFIED
+- **Description (original audit; superseded by follow-up below):** Deleting a restaurant deletes its certificates and reports, then tries to delete Cloudinary images. Points already awarded stay. The writes are sequential and not one transaction. The user's submission list loses those rows because it queries the live documents.
+- **Original audit evidence:** `deleteRestaurantService` loads image ids, `deleteTeudotOfRestaurantRepo`, `deleteReportsOfRestaurantRepo`, `deleteRestaurantByIdRepo`, then `deleteImageService` per id. `pointsService` never subtracts points. `listMyRestaurantsRepo` filters `submittedBy` with no tombstone. The UI uses `window.confirm` before calling delete.
 - **Root cause:** Deletion was specified as a permanent cascade implemented as separate commands. Image deletion is best-effort (M5-004).
 - **Relevant files/functions:** `backend/src/services/adminRestaurantService.js` (`deleteRestaurantService`); `backend/src/repositories/adminTeudaRepository.js`; `backend/src/repositories/adminReportRepository.js`; `frontend/src/pages/AdminRestaurantPage.tsx` (`handleDelete`).
 - **Planned solution:** Perform the three database deletes in one transaction when a replica set is available, or document a compensating order and test it. Delete images after the database commit, and record failures for a retry (M5-004). Keep points. Ask before adding tombstones that change what users see in submission history.
-- **Files changed:** none
-- **Tests added or modified:** none. Existing unit tests mock the repositories.
-- **Verification:** Static inspection only.
-- **Blockers:** A transaction test needs an approved isolated replica set. Do not run this against a shared or production database.
+- **Historical files changed:** none; see current follow-up
+- **Historical tests added or modified:** none. Existing unit tests mock the repositories.
+- **Historical verification:** Static inspection only.
+- **Historical blockers (current limits below):** A transaction test needs an approved isolated replica set. Do not run this against a shared or production database.
+
+- **Current verified follow-up/files/tests/verification/limitations:** A1-R1 / SEC-010 (351f9d6) now commits cascades and cleanup jobs atomically, serializes concurrent children and retains points. Targeted 117 / full 510 backend tests and 7 real isolated MongoDB regressions pass (exit 0); external SDK mocked. Replica set and approved cleanup index provisioning required. No tombstones/status changes.
 
 ### M5-002 — Multi-document consistency
 
@@ -389,35 +401,41 @@ Priority: High
 - **Verification:** `cd backend; npm test` exit 0, 38 files, 485 tests passed. Mocks only. No live database and no email was sent.
 - **Blockers:** Restaurant submit and restaurant rejection still use separate writes. Those were not the confirmed defect and stay in the rest of this issue's evidence as later work. No transaction library was added.
 
+- **Current Agent 1 follow-up:** Creation compensation is replaced by a transaction in A1-R1 (351f9d6); rejection is atomic in A1-R2 (6faa1a2); report correction/outcome/award is atomic in A1-002 (b106482). Earlier description, files, verification and separate-write blockers above are historical. Password-reset behavior was outside Agent 1 scope and preserved. No packages/backfill.
+
 ### M5-003 — Duplicate handling and indexes
 
 - **Milestone:** 5
 - **Priority:** High
-- **Status:** NOT STARTED
-- **Description:** Duplicate restaurants are a warning, not a unique constraint. Two overlapping submits can both pass the pending check and both insert. Email and reset-token hash are unique.
-- **Evidence:** `findPendingRestaurantBySubmitterRepo` runs before `createRestaurantRepo`. There is no unique index on name plus address. `Restaurant` indexes `nameNormalized`, `addressNormalized`, `phoneNormalized`, and sparse `geoapifyPlaceId`, none unique. `findPossibleDuplicatesService` stores at most 10 warnings and never blocks. `User.email` is unique. `PasswordResetToken.tokenHash` is unique. A double click is reduced by disabling the submit button after `setLoading(true)`, which does not cover two browsers.
+- **Status:** VERIFIED
+- **Description (original audit; superseded by follow-up below):** Duplicate restaurants are a warning, not a unique constraint. Two overlapping submits can both pass the pending check and both insert. Email and reset-token hash are unique.
+- **Original audit evidence:** `findPendingRestaurantBySubmitterRepo` runs before `createRestaurantRepo`. There is no unique index on name plus address. `Restaurant` indexes `nameNormalized`, `addressNormalized`, `phoneNormalized`, and sparse `geoapifyPlaceId`, none unique. `findPossibleDuplicatesService` stores at most 10 warnings and never blocks. `User.email` is unique. `PasswordResetToken.tokenHash` is unique. A double click is reduced by disabling the submit button after `setLoading(true)`, which does not cover two browsers.
 - **Root cause:** The product rule is "warn, do not block", implemented as a read-then-insert.
 - **Relevant files/functions:** `backend/src/services/duplicateService.js`; `backend/src/services/restaurantSubmissionService.js`; `backend/src/models/Restaurant.js`; `backend/src/repositories/restaurantRepository.js`.
 - **Planned solution:** Keep non-blocking duplicate warnings. Close the same-user pending race with a unique partial index on submitter plus normalized name and address for `PENDING` only, if that matches the existing 409 rule, and confirm it does not reject two different pending restaurants. Ask before any unique index that would block the public from submitting a similar place.
-- **Files changed:** none
-- **Tests added or modified:** none
-- **Verification:** Static inspection only. The index build was not run.
-- **Blockers:** A new unique index needs a compatibility check against existing pending rows. Do not build it on a production cluster from this work without approval.
+- **Historical files changed:** none; see current follow-up
+- **Historical tests added or modified:** none
+- **Historical verification:** Static inspection only. The index build was not run.
+- **Historical blockers (current limits below):** A new unique index needs a compatibility check against existing pending rows. Do not build it on a production cluster from this work without approval.
+
+- **Current verified follow-up/files/tests/verification/limitations:** Existing pending-identity indexes at baseline dc5dc24 now receive read-only actual-enforcement verification at startup under A1-R4. Four isolated MongoDB regressions pass (exit 0), including actual duplicate rejection for all model identities and missing/incompatible indexes. Pending report legacy rows without fingerprint remain outside their partial index; no backfill. Application indexes require separately approved provisioning.
 
 ### M5-004 — External cleanup reliability
 
 - **Milestone:** 5
 - **Priority:** High
-- **Status:** NOT STARTED
-- **Description:** Cloudinary deletes log the error and continue. A failed delete after a successful database delete leaves an orphan image. A failed delete during a failed save can do the same.
-- **Evidence:** `deleteImageService` returns immediately when the id is missing or Cloudinary is not configured. On `destroy` failure it `console.error`s and does not throw. Callers in restaurant submit, teuda submit, report submit, admin delete, and admin teuda delete rely on that. There is no retry queue or orphan record.
+- **Status:** VERIFIED
+- **Description (original audit; superseded by follow-up below):** Cloudinary deletes log the error and continue. A failed delete after a successful database delete leaves an orphan image. A failed delete during a failed save can do the same.
+- **Original audit evidence:** `deleteImageService` returns immediately when the id is missing or Cloudinary is not configured. On `destroy` failure it `console.error`s and does not throw. Callers in restaurant submit, teuda submit, report submit, admin delete, and admin teuda delete rely on that. There is no retry queue or orphan record.
 - **Root cause:** Cleanup is deliberately non-blocking so the user sees the original error. Nothing records the leftover `public_id` for another attempt.
 - **Relevant files/functions:** `backend/src/services/imageUploadService.js` (`deleteImageService`); callers in `restaurantSubmissionService.js`, `teudaSubmissionService.js`, `reportSubmissionService.js`, `adminRestaurantService.js`, `adminTeudaService.js`.
 - **Planned solution:** Persist the public id of a failed destroy and retry it from an admin or scheduled path. Do not call live Cloudinary while designing this. Do not delete remote files as part of the audit or as an unapproved cleanup.
-- **Files changed:** none
-- **Tests added or modified:** none. `imageUpload.test.js` mocks the SDK.
-- **Verification:** Static inspection only.
-- **Blockers:** Retry execution against Cloudinary needs approved test credentials (M9-003).
+- **Historical files changed:** none; see current follow-up
+- **Historical tests added or modified:** none. `imageUpload.test.js` mocks the SDK.
+- **Historical verification:** Static inspection only.
+- **Historical blockers (current limits below):** Retry execution against Cloudinary needs approved test credentials (M9-003).
+
+- **Current verified follow-up/files/tests/verification/limitations:** A1-R1 (351f9d6) adds persistent ImageCleanup jobs, explicit deletion outcomes and an operator retry command. Seven real MongoDB tests cover jobs/rollback/external failure/acknowledgement retry (Cloudinary SDK mocked), exit 0. Live Cloudinary remains M9-003. Upload-before-durable-record crash window and unavailable-database compensation require provider/operator reconciliation.
 
 ---
 
@@ -655,20 +673,32 @@ Live services were not called. Mocked unit tests are not evidence that these int
 - **Verification:** Not run live.
 - **Blockers:** Needs approved Cloudinary test credentials and permission to upload and delete a test image. Question: which Cloudinary cloud may be used?
 
-### M9-004 — Resend
+### M9-004 — Live email delivery (Gmail; historically Resend)
+
+**Agent 4 FINAL LIVE VERIFICATION — 13 October 2026:** VERIFIED within authorized Gmail/reset/password-changed scope. Actual dedicated local DB empty before one regular browser-created USER/zero points, no admin/copied data/original DB access. Actual frontend/Express/MongoDB/Chrome/Gmail (no mocks). Browser reset request/success, initial/baseline old login, post-reset old rejection/new login, JWT invalidation/local login clearing, actual used-link browser/API rejection, hash-only storage/~60-minute unused expiry and mismatch/weak/malformed/unknown errors passed. User confirmed five reset emails and specifically latest changed notification in Inbox; latest reset/changed SMTP accepted. Combined 33 passing checks. Harness cwd/ESM observer/timestamp/same-document-language issues caused exit-1 interruptions and extra authorized mail; same single account preserved, no application defect/source changes. Main final run passed core then failed extra Hebrew check; display-only retry exit 0, finalization exit 0. Seven observed acceptances across runs (four reset/three changed) plus first unobserved reset, not two emails total; not every extra notification delivery confirmed. Exact command/exit/evidence in EMAIL_PASSWORD_MILESTONE_PROGRESS.md. All app/browser processes stopped; encrypted password checkpoint removed, isolated DB retains one USER, three consumed/zero unused tokens. Actual elapsed expiry/concurrency/TTL, moderation email, email-client link click/rendering remain untested. No secret output/screenshots/commit or merge/push/deploy.
+
+**Agent 4 authorized live run — 13 October 2026:** Status now IN PROGRESS. User approved dedicated recipient, one USER creation, reset/changed email and password/login/reuse testing. Emptiness rechecked before actual browser registration; exactly one regular USER/zero points, initial and known-baseline browser login passed. Real app/backend/MongoDB/Gmail, no fixtures or mocked transport. Latest actual reset SMTP acceptance/hash-only token/unused ~60-minute expiry passed; inbox confirmation gate pending. Main reset/reuse/new-old login/changed notification pending. Harness-only cwd/CommonJS-vs-ESM observer/exact timestamp errors corrected; extra recovery emails sent on the same account, no application defect/source edits. Ignored sanitized results/private Windows-DPAPI state, no screenshots/secret output. Detailed active session 57022/gate instructions in EMAIL_PASSWORD_MILESTONE_PROGRESS.md. No original database/admin/copy/merge/push/deploy.
+
+**Agent 4 approved database isolation verified — 13 October 2026:** User approved exact dedicated local URI/worktree configuration and one regular USER once email supplied; mail/reset/password tests await separate permission. Only testing worktree ignored backend/.env MONGODB_URI applied. Sanitized helper command restricted exit 1/configuration-stage failure, expanded-permission retry exit 0. Read-only check: approved database kosherradar_email_e2e_20261013_agent4 at 127.0.0.1:27017, zero collections/documents before and after actual backend startup. Live server mongoose connection host/name inspected; health HTTP 200/database connected. autoCreate/autoIndex disabled in verification process to prevent schema writes; backend then stopped. Original app environment/database untouched; no records/account/token/email/password operations. Isolation/current emptiness now VERIFIED as a subcheck; M9-004 overall remains BLOCKED pending recipient/final live-send/password/login authorization. Recheck emptiness before account creation and stop/ask if populated. Detailed evidence and next step in EMAIL_PASSWORD_MILESTONE_PROGRESS.md; no source/test/dependency changes, no merge/push/deploy.
+
+**Agent 4 database isolation review — 13 October 2026:** Sanitized app-loader inspection exit 0: host 127.0.0.1:27017, database kosherradar. This is the original application's configured target, not an independently isolated email-test database; treat as application data. No DB connection/query/write or secret output. Proposed NOT APPLIED local target kosherradar_email_e2e_20261013_agent4 on the same loopback server; verify target/freshness before any authorized writes, use a different unique name if populated. Existing app registration creates regular USER/bcrypt password/zero points without signup email; fresh account creation awaits explicit permission. No code defect/fix/test changes. M9-004 stays BLOCKED for database/account/live-send/password/login authorization. Handoff and rollback in EMAIL_PASSWORD_MILESTONE_PROGRESS.md; prior actual SMTP authentication passed, delivery/account flows still unperformed.
+
+**Agent 4 verification — 13 October 2026:** User resumed Phases 1/2 on test/email-verification at 1fa1c54. Missing ignored env/dependency copies restored from original checkout, source lockfile hashes match. Sanitized config passes; origins match. Non-sending Nodemailer verify first exit 1 / sandbox EDNS, expanded-network retry exit 0 / SMTP_VERIFY_PASSED. Actual Gmail connection/authentication now passed; no email/recipient acceptance/inbox test. Backend npm test exit 0 / 42 files / 534 mocks with live-service credentials disabled/non-listening DB URI. Frontend npm test retry exit 0 / 27 files / 170 tests after sandbox EPERM; lint/typecheck/build exit 0, existing bundle/jsdom warnings. Frontend startup/HTTP 200 confirmed, then stopped. Backend startup deferred pending database isolation (loopback listener alone insufficient). No live account/reset/reuse/login/password-change-notification checks or database operations. No confirmed code defect, new tests or source edits. M9-004 stays BLOCKED pending dedicated recipient, send/password/login authorization and isolated local database/account permission. Tracking docs updated only; current evidence/handoff in EMAIL_PASSWORD_MILESTONE_PROGRESS.md; historical notes below preserved. No merge/push/deployment.
+
+**13 October follow-up (user postponed live testing):** Sanitized application preflight recognizes local Gmail credentials as configured/format-valid; required backend configuration passes. Non-sending Nodemailer verify exited 1 / EDNS under restricted network access, so SMTP authentication/connection remain unverified; no retry after postponement and no conclusion that credentials are invalid. Loopback MongoDB TCP listener exists; database authentication/isolation not checked, no app services started. No approved recipient/account, email, password change, token generation or database read/write. Actual delivery, live browser recovery/login, token reuse rejection and password-changed notification remain pending. Status stays BLOCKED; no verified counts change. Documentation-only follow-up; exact resumption steps in EMAIL_PASSWORD_MILESTONE_PROGRESS.md. Historical automated results below were not rerun.
 
 - **Milestone:** 9
 - **Priority:** High before launch
-- **Status:** BLOCKED
-- **Description:** Rejection and reset mail go through the Resend REST API. Failure does not roll back a moderation decision. Delivery was not attempted. Reset links cannot be completed without the email or a database read of the hash, and the raw token is not stored.
-- **Evidence:** `emailService.js` returns `SENT`, `FAILED`, or `NOT_CONFIGURED` and does not throw. `emailService.test.js` mocks `fetch`. `backend/.env.example` documents the sandbox limit: without a verified domain, mail goes only to the account owner.
-- **Root cause:** Live send was out of scope. The sandbox rule is documented.
-- **Relevant files/functions:** `backend/src/services/emailService.js`; `backend/src/services/passwordResetService.js`; `backend/src/services/moderationNotificationService.js`.
-- **Planned solution:** Send one reset and one rejection to an approved recipient on an isolated stack. Confirm the reset link works once and fails the second time. Do not email real users.
-- **Files changed:** none
-- **Tests added or modified:** none
-- **Verification:** Not run live. Mocked tests prove the client builds a request, not that Resend delivers it.
-- **Blockers:** Needs approved Resend key, from-address, and a recipient mailbox. Question: which address may receive the test messages?
+- **Status:** VERIFIED
+- **Description:** Authorized real Gmail recovery delivery, browser password reset/login/session invalidation and single-use token checks passed against the dedicated isolated local database. EP-001 replaced historical Resend REST with Gmail/Nodemailer at the user's explicit request. SENT means SMTP acceptance; recipient separately confirmed reset delivery and latest changed notification Inbox receipt. A stored reset hash cannot reconstruct the raw token.
+- **Evidence:** Original 12 October audit: emailService.js used Resend, tests mocked fetch, and .env.example documented Resend sandbox restrictions. Current 13 October evidence: emailTransport.js uses Gmail and EMAIL_USER/EMAIL_APP_PASSWORD, tests mock Nodemailer; four bilingual templates and safe diagnostics are covered by EP-001 through EP-003. No live SMTP/inbox test occurred.
+- **Root cause:** Previously no approved isolated live-mail resources/recipient. Dedicated loopback database, one regular USER and recipient/send/password authorization supplied for this live verification; Resend configuration no longer needed.
+- **Relevant files/functions:** backend/src/services/emailService.js, emailTransport.js, emailTemplates.js, passwordResetService.js, moderationNotificationService.js; EMAIL_SETUP.md.
+- **Planned solution:** Completed user-authorized reset/password-changed sends and recipient confirmation, actual browser reset/new-old login and used-link rejection on isolated stack. Historical rejection-email live test was outside this authorization and remains untested; no other real user contacted.
+- **Files changed:** Provider/template/security changes tracked under EP-001 through EP-003; this entry records the current live-verification boundary and preserves original audit evidence.
+- **Tests added or modified:** See EP entries for mocked verification.
+- **Verification:** Live combined 33 checks plus recipient reset/latest changed Inbox confirmations; final display-only and metadata-finalization commands exit 0. Main core checks passed before extra-display harness failure; earlier harness exit-1 interruptions/extra emails documented above and in milestone progress. Phase 1 backend npm test exit 0 / 534 in 42 files; frontend npm test exit 0 / 170 in 27 files, lint/typecheck/build exit 0 (existing warnings). No source changed; no rerun needed. Mock suites distinct from real browser/Gmail/database evidence.
+- **Blockers/limitations:** No blocker remains for authorized recovery scope. Native-speaker Hebrew review, actual elapsed expiry/concurrency/TTL/index verification, mail-client rendering/link click and approval/rejection live delivery remain outside this run. No production access or merge/push/deploy authorized. Test account/token records retained; cleanup requires separate authorization.
 
 ---
 
@@ -737,6 +767,43 @@ Priority: High before launch
 
 ## Audit session record
 
+### EP-003 — Localized V2 recovery and token privacy
+
+- **Milestone:** Email/password recovery, 13 October 2026.
+- **Priority:** High.
+- **Status:** VERIFIED.
+- **Evidence/root cause:** Forgot page displayed English API success text in Hebrew mode; reset page retained query token in URL, used generic English server failures and did not clear the existing local login. Recovery panels did not match the accepted login panel. No component tests covered these forms.
+- **Relevant files/solution:** Recovery pages, auth API/error helpers, locale/reset-token utilities and index.html; fragment links prevent new tokens reaching frontend HTTP logs; same-origin validated legacy query links retained. Remove token from URL into component memory, no referrers, localized success/errors, explicit expired-link/retry paths, busy feedback, password validation/show-hide, clear current login after successful reset, accepted V2 form styling. No redesign of other pages.
+- **Files changed:** Those frontend files; PasswordRecovery.test.tsx/resetToken.test.ts; backend reset-link builder/template validation and corresponding tests; README.md, EMAIL_SETUP.md, scripts/reviewPasswordRecovery.mjs and tracking docs.
+- **Tests:** 11 component scenarios (parameterized to 11 executions) plus 3 reset-token tests cover EN/HE, pending requests, errors, retries, successful/failed reset, mismatch/byte bound, URL cleanup, current-login clear, expired/malformed links and language switching. Template tests accept new fragment/legacy links. Existing security tests preserved.
+- **Verification:** `cd frontend; npm test -- src/pages/PasswordRecovery.test.tsx src/utils/resetToken.test.ts` exit 0 / 2 files / 14 tests. Full frontend `npm test` exit 0 / 27 files / 170 tests. `npm run lint`, `npm run typecheck`, `npm run build` all exit 0; production JS 769.34 kB, existing >500 kB warning. Full backend `npm test` exit 0 / 42 files / 534 tests. Backend has no build/lint/typecheck scripts. `git -c core.whitespace=cr-at-eol diff --check` exit 0.
+- **Browser:** `node scripts/reviewPasswordRecovery.mjs` exit 0, production build plus intercepted API fixtures, installed Chrome; English/Hebrew at 375/768/1024/1280, 88 renders across 8 journeys. Loading, neutral confirmation, repeat request, rate/offline feedback, show/hide, mismatch, invalid/expired links, fragment/legacy cleanup, reset success and navigation to login passed; zero app exceptions, horizontal overflow or outgoing referrer headers. Screenshots visually inspected. Local ignored evidence: design-screenshots/email-password/results.json and PNGs. First sandbox attempt timed out before Page.enable; expanded process permissions resolved it. Explicit viewport clipping corrected Chrome's full-page RTL screenshot offset; application unchanged.
+- **Limitations:** Live Gmail and real database behavior not tested. No real login with a newly saved password in browser; API responses are fixtures. Hebrew needs native review M8-004. Token is intentionally lost on refresh of cleaned URL; reopen email. Legacy query URLs can still enter host access logs on their initial request; newly generated fragments cannot. No analytics exist today; future scripts must exclude recovery tokens. EP-002 crash/queue/concurrency limitations remain. Native devices/email-client rendering not tested.
+
+### EP-002 — Recovery privacy and saved-decision notifications
+
+- **Milestone:** Email/password recovery, 13 October 2026.
+- **Priority:** High.
+- **Status:** VERIFIED.
+- **Evidence/root cause:** forgotPasswordController awaited account lookup/token writes and said mail was sent; no confirmation/approval notifications. resetPasswordService threw if cleanup failed after password save. Shared new-password validation limited characters, not bcrypt's UTF-8 byte length.
+- **Relevant files/solution:** Auth controller/routes/schemas, reset service, moderation notification service, restaurant/certificate approval services. Return neutral response without awaiting account processing; sanitize detached failures, no-store recovery responses, enforce 72 UTF-8 bytes, keep existing 60-minute hashed random tokens, atomic consume/release and tokenVersion invalidation. Best-effort password-changed email and cleanup. Approval mail only for winning PENDING transition, skip admins and retries; public rejection data only. Points/authority rules unchanged.
+- **Files changed:** Those backend files; emailTemplates.js (Hebrew report grammar); passwordResetService/RoutesHttp, adminRestaurant/Teuda test files; new passwordResetRepository.test.js and moderationNotificationService.test.js; tracking notes.
+- **Tests:** Route response parity for known/unknown/processing failure; response while lookup pending; actual five-per-IP limiter; bcrypt multibyte bound; atomic expiration/unused filter; modeled concurrent winner; confirmation and saved-approval delivery failures; no repeated approval mail. Existing JWT/session tests retained. Updated cleanup-failure expectation because saved passwords now correctly report success; retained failed-write release assertions.
+- **Verification:** targeted eight-file run exit 0 / 94 tests; expanded routes exit 0 / 10 tests; full `cd backend; npm test` exit 0 / 42 files / 534 tests. Gmail/database mocked, local HTTP used. Backend has no build/lint/typecheck scripts. Frontend/browser pending EP-003.
+- **Limitations:** In-process background recovery can be lost on process termination (no durable queue). IP limiter is single-process memory; distributed/email-wide throttling is not implemented. MongoDB atomic filter is inspected/mocked, not verified on a live database. Crash between token consumption and save can still burn a link; release failure also can. Concurrent issuance of distinct links is not serialized. Delivery has no durable retry/outbox, intentionally avoids duplicate retries. No migrations/backfills or auth-storage change.
+
+### EP-001 — Gmail transport and branded bilingual email
+
+- **Milestone:** Email/password recovery, explicitly authorized 13 October 2026.
+- **Priority:** High.
+- **Status:** VERIFIED.
+- **Evidence/root cause:** Verified main dc5dc24 uses Resend REST, has no Nodemailer, and renders English plain text only; request explicitly requires Gmail/Nodemailer and bilingual HTML/text. Existing transport logs provider response text that could expose sensitive content.
+- **Relevant files/planned solution:** emailService.js/env.js; separate Gmail transport, safe templates and caller-compatible services.
+- **Files changed:** backend/src/services/emailTransport.js, emailTemplates.js, emailService.js, config/env.js, backend/.env.example, backend/package.json/package-lock.json, backend/tests/emailService.test.js, EMAIL_SETUP.md and tracking documents.
+- **Tests:** Replaced outdated Resend-specific assertions because the explicitly requested provider is now Gmail. Preserved original missing config, successful/failed delivery, public reason, kind and reset content scenarios; expanded escaping, Hebrew, trusted links, recipient acceptance and secret-free diagnostics.
+- **Verification:** `cd backend; npm test -- tests/emailService.test.js` exit 0, 1 file / 22 tests passed. Gmail fully mocked; no real mail/database. No backend build/lint/typecheck scripts; frontend unchanged in this fix. Full milestone checks/browser pending EP-003.
+- **Limitations:** SMTP acceptance is not inbox delivery; Gmail credentials/live test not used. Hebrew copy needs native-speaker review M8-004. No migration/backfill; provider request overrides historical Resend requirements without modifying PROJECT_SPEC.md. Historical M9-004 evidence remains Resend-specific; live Gmail is equally unverified.
+
 ### V2-I001 — Remove a redundant status inside claim-only evidence
 
 - **Milestone:** Visual v2 integration and release review (explicit user request).
@@ -780,3 +847,326 @@ User accepted V2 and authorized local-main promotion. No new identified issue or
 Actual post-merge main commands: frontend `npm run lint`, `npm run typecheck`, `npm test` (26 files / 158 passed), `npm run build`; backend `npm test` (40 files / 505 passed); `git -c core.whitespace=cr-at-eol diff 5393037 HEAD --check`: all exit 0. Backend has no lint/typecheck/build scripts. Existing bundle warning persists (JS 766.92 kB). Tests mocked; no live database/services, production data, email or upload. No browser rerun; prior accepted browser evidence remains in integration worktree. Public trust terminology, moderation and administrator authority/zero-point rules unchanged. Native-speaker Hebrew review and live-service/production-readiness issues remain as tracked.
 
 Only post-merge documentation files updated: this file, PROGRESS.md, REDESIGN_INTEGRATION_PROGRESS.md. Main's untracked PRE_PUSH_REVIEW.md preserved unchanged and excluded from commit. No source branch/worktree edit, push, deploy, branch/worktree deletion, reset or clean. Exact next step: stop; accepted local merge complete.
+## Agent 1 admin authority and data integrity — 13 October 2026
+
+Explicit request authorizes this assigned batch, including the listed historical LATER integrity risks.
+
+### A1-001 / SEC-002 — Administrator public submissions
+- **Milestone:** Agent 1 admin authority and data integrity.
+- **Priority:** P1.
+- **Status:** VERIFIED.
+- **Evidence/root cause:** Both public endpoints accept ADMIN; services hardcode PENDING. Existing restaurant test explicitly expects that obsolete behavior.
+- **Relevant files/solution:** Public routes and services reject ADMIN before upload/persistence; navigation and bookmarked forms redirect to existing full-validation admin forms. USER moderation preserved.
+- **Files changed:** userSubmissionMiddleware, public submission services/routes, Navbar, RestaurantActions, App, UserSubmissionRoute and regression tests; isolated runner/authority integration test.
+- **Tests:** Replace obsolete ADMIN-PENDING expectation because the explicit business requirements prohibit it; retain ordinary-user/admin validation/zero-point cases.
+- **Verification:** Backend targeted npm test (4 files / 88 tests), HTTP npm test (1 file / 2 tests), frontend npm test -- src/components/UserSubmissionRoute.test.tsx (4 tests), npm run lint/typecheck/build, disposable database node integration/runAgent1Isolated.mjs --run-isolated (1 real MongoDB test): all exit 0. Existing ~767 kB build warning. Backend has no build/lint/typecheck scripts. Browser not run; external services not called. First isolated test failed because assertion used contributionPoints instead of actual points; corrected test field and rerun passed. Sandbox cache/listener restrictions required approved escalated check runs.
+- **Blockers/limitations:** No browser/live-service verification. No Hebrew strings changed.
+
+### A1-002 / SEC-001 — Premature correction awards
+- **Milestone:** Agent 1 admin authority and data integrity.
+- **Priority:** P1.
+- **Status:** VERIFIED.
+- **Evidence/root cause:** RESOLVED/correctionApplied is written before proposal application; concurrent retry/process interruption can award prematurely.
+- **Relevant files/solution:** Investigate adminReportService, adminReportRepository, pointsService and existing database/test infrastructure for atomic completion/recovery.
+- **Files changed/tests/verification:** Transaction helper/report service; unit abort expectation updated; real MongoDB concurrency/rollback tests added. Baseline exit 1: 1 pass / 2 fail, reproducing premature +1 and partial state. npm test -- tests/adminReportService.test.js tests/pointsService.test.js tests/transaction.test.js: exit 0, 3 files / 34 tests. node integration/runAgent1Isolated.mjs --run-isolated agent1Corrections.integration.mjs: exit 0, 4 real MongoDB tests including concurrent failure, concurrent success/idempotency/ADMIN zero points, award rollback/retry and abrupt worker termination/recovery. Browser/frontend not rerun for this backend-only fix; backend has no build/lint/typecheck scripts. No external services.
+- **Blockers/limitations:** Requires a replica-set/sharded deployment; explicit 503 on standalone. No migration/backfill. Historical inconsistencies need separately approved data review; no live Atlas tested.
+
+Only post-merge documentation files updated: this file, PROGRESS.md, REDESIGN_INTEGRATION_PROGRESS.md. Main's untracked PRE_PUSH_REVIEW.md preserved unchanged and excluded from commit. No source branch/worktree edit, push, deploy, branch/worktree deletion, reset or clean. Exact next step: stop; accepted local merge complete.
+
+### A1-R1 / SEC-010 — Partial database deletion and creation compensation
+- **Milestone:** Agent 1 admin authority and data integrity.
+- **Priority:** P1.
+- **Status:** VERIFIED.
+- **Evidence/root cause:** Separate database writes and best-effort compensation (M5-001/M5-002).
+- **Relevant files/solution:** Investigate adminRestaurantService, adminTeudaService, restaurantSubmissionService; separate database atomicity from external cleanup.
+- **Files changed/tests/verification:** Atomic creation/cascade services, internal parent serialization counter/repository, durable ImageCleanup outbox/repository/service, retry operator script and real failure-injection regressions. Baseline exit 1, 0 pass / 3 fail. Targeted npm test: exit 0, 7 files / 117 tests. Full backend npm test with services disabled: exit 0, 42 files / 510 tests. node integration/runAgent1Isolated.mjs --run-isolated agent1Integrity.integration.mjs: exit 0, 7 real MongoDB tests covering cascade/unlink/final-delete rollback, cleanup outbox rollback, mocked external failure/acknowledgement loss/retry, concurrent parent/child and certificate/report races, USER/ADMIN creation failures. Diff check exit 0. Frontend/browser not rerun (backend-only); backend has no build/lint/typecheck scripts. Cloudinary SDK mocked; no live services.
+- **Blockers/limitations:** Replica set/sharded MongoDB required. Additive internal counter/outbox collection, no record migration/backfill. Cloudinary live behavior unverified; upload-to-durable-record interruption window requires provider/operator reconciliation. Unknown commit retains image; unreachable DB compensation logs id. No existing application data touched.
+
+### A1-R2 — Pending certificates after rejection
+- **Milestone:** Agent 1 admin authority and data integrity.
+- **Priority:** P1.
+- **Status:** VERIFIED.
+- **Evidence/root cause:** Restaurant rejection precedes best-effort certificate rejection.
+- **Relevant files/solution:** Investigate adminRestaurantService/repositories for atomic or retryable behavior.
+- **Files changed/tests/verification:** adminRestaurantService rejection transaction; unit failure expectation updated; isolated rejection/race regression. Baseline exit 1, 1 pass / 1 fail. npm test -- tests/adminRestaurantService.test.js: exit 0, 23 tests. node integration/runAgent1Isolated.mjs --run-isolated agent1Rejection.integration.mjs: exit 0, 2 real MongoDB failure/retry and concurrent approve/reject regressions. Diff check exit 0. No build/lint/typecheck scripts in backend; frontend/browser not rerun; email unconfigured, no real email sent.
+- **Blockers/limitations:** Replica-set/sharded MongoDB required; old inconsistent rejected records need separately authorized review/backfill. Notifications run only after commit; live delivery unverified.
+
+### A1-R4 — Unique-index enforcement
+- **Milestone:** Agent 1 admin authority and data integrity.
+- **Priority:** P1.
+- **Status:** VERIFIED.
+- **Evidence/root cause:** connectDb previously accepted requests before index builds completed and did not check actual enforcement. Mongoose autoIndex default was relied on.
+- **Relevant files/solution:** Review models, database initialization, isolated harnesses; no application-data index migration.
+- **Files changed/tests/verification:** db startup, indexIntegrityRepository, verification/provisioning operator scripts and isolated index tests. node integration/runAgent1Isolated.mjs --run-isolated agent1Indexes.integration.mjs: exit 0, 3 real MongoDB tests (missing indexes/no startup writes, actual duplicate enforcement across all models, incompatible nonunique index). Final backend npm test: exit 0, 42 files / 510 tests. Frontend npm test: exit 0, 27 files / 162 tests; lint/typecheck/build exit 0. Combined isolated database run: exit 0, 18 tests. Final index script rerun: exit 0, 4 tests including explicit provision/verify/no-flag paths, geospatial/TTL declarations and wrong partial filter. Diff check exit 0. Browser not run; external SDK mocked.
+- **Blockers/limitations:** Existing application database untouched; missing indexes/new cleanup collection require operator-approved provisioning before deployment. Legacy report rows without fingerprint stay outside partial index; no backfill.
+
+Only post-merge documentation files updated: this file, PROGRESS.md, REDESIGN_INTEGRATION_PROGRESS.md. Main's untracked PRE_PUSH_REVIEW.md preserved unchanged and excluded from commit. No source branch/worktree edit, push, deploy, branch/worktree deletion, reset or clean. Exact next step: stop; accepted local merge complete.
+## Search and location reliability ? Agent 2, 13 October 2026
+
+Explicit user assignment supersedes historical stop instructions for this worktree. Original audit statuses unchanged; nine assigned SEARCH issues added. All nine code fixes verified with mocks, subject to documented live rollout limits.
+
+Final batch: frontend npm test exit 0 (30 files / 174 passed); npm run lint, npm run typecheck, npm run build exit 0. Production JS 768.71 kB, existing >500 kB warning. Backend npm test exit 0 (42 files / 534 passed); no backend lint/typecheck/build scripts. Final completeness follow-up: backend npm test -- tests/restaurantSearchService.test.js tests/restaurantSearchRepository.test.js tests/mapSearchService.test.js exit 0 (57 passed). Git CRLF-aware diff check exit 0. Tests mocked/jsdom; browser and live services not tested.
+
+### SEARCH-001 ? Out-of-order location lookups
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P1.
+- **Status:** VERIFIED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** Typed lookup has no generation guard or rejection catch.
+- **Relevant files/functions:** Assigned search/location files in pasted request.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** LocationField.tsx; LocationField.test.tsx.
+- **Tests added or modified:** LocationField.test.tsx: stale success/failure, current rejection and clear invalidation (4 passing).
+- **Verification:** frontend npm test -- src/components/LocationField.test.tsx exit 0, 4/4 passed. npm run typecheck and npm run lint exit 0. Build pending batch verification. jsdom component tests; browser and live services not tested.
+- **Blockers/limitations:** No live service/data testing authorized.
+
+### SEARCH-002 ? Failed URL location removes geography
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P1.
+- **Status:** VERIFIED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** failedNear ends loading but search enablement only checks locationPending.
+- **Relevant files/functions:** useSearchCriteria.ts, HomePage.tsx, their tests.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** useSearchCriteria.ts, HomePage.tsx, useSearchCriteria.test.tsx, HomePage.test.tsx.
+- **Tests added or modified:** unavailable, ambiguous, not-found, rejection/retry/privacy hook cases; list/map gating UI cases.
+- **Verification:** npm test -- src/hooks/useSearchCriteria.test.tsx exit 0 (11 passed); npm test -- src/pages/HomePage.test.tsx exit 0 (2 passed); npm run typecheck and npm run lint exit 0. Previous frontend build exit 0, existing bundle warning. jsdom/mocks; browser and live services not tested.
+- **Blockers/limitations:** No live service/data testing authorized.
+
+### SEARCH-004 ? Candidate caps omit eligible and nearest results
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P1.
+- **Status:** VERIFIED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** alphabetical limit/slice before shared kashrut filtering and distance/relevance ranking.
+- **Relevant files/functions:** restaurantSearchRepository.load candidates; restaurantSearchService.loadMatches, list/map; Restaurant indexes.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** restaurantSearchRepository.js, restaurantSearchService.js, constants.js, Restaurant.js, search repository/service/map tests.
+- **Tests added or modified:** late eligible/nearest candidates beyond 2000, stable pages, map filtering beyond 500, keyset/deadline, Atlas overflow with zero eligible results. Old cap expectation intentionally changed because preliminary truncation is the confirmed defect; map output cap remains.
+- **Verification:** backend npm test -- tests/restaurantSearchService.test.js tests/restaurantSearchRepository.test.js tests/mapSearchService.test.js exit 0, 3 files/57 passed. node --check service exit 0. Backend has no build/lint/typecheck. Mocks only; no live DB/Atlas/browser.
+- **Blockers/limitations:** All candidates read in 2000-row keyset batches, certificates fetched per batch, best K retained; memory O(batch + page*20), total cost O(matching candidates), each DB query maxTimeMS 10000. Added nonunique status/_id index: compatible with existing records, no migration/backfill; not applied live; rollback removes this new index declaration/index. Atlas fuzzy hits remain bounded at 100 with overflow detection and truthful capped/completeness reasons; totals then lower bounds. Atlas fallback also marks completeness false with atlas_unavailable. Map caps only final ranked markers. Pagination deterministic for unchanged data; concurrent edits are not snapshot-isolated. Production performance/index compatibility unverified.
+
+### SEARCH-005 ? Missing zero-result completeness warning
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P2.
+- **Status:** VERIFIED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** capped warning was nested inside nonempty list rendering.
+- **Relevant files/functions:** HomePage.tsx result warning.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** HomePage.tsx; HomePage.test.tsx.
+- **Tests added or modified:** Zero-match partial results in intro and searched directory.
+- **Verification:** frontend npm test -- src/pages/HomePage.test.tsx exit 0 (4 passed); npm run typecheck/lint exit 0. No browser/live integrations.
+- **Blockers/limitations:** No live service/data testing authorized.
+
+### SEARCH-006 ? Admin address/location identity consistency
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P2.
+- **Status:** VERIFIED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** admin full-field mapping omitted provider ID and never geocoded missing/obsolete coordinates; selecting a suggestion without city retained old city; city edits allowed stale suggestions.
+- **Relevant files/functions:** adminRestaurantService.toRestaurantChanges/updateRestaurantByAdminService; new adminRestaurantLocationService; AddressSearch; AdminRestaurantPage; adminApi.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** adminRestaurantService.js, adminRestaurantLocationService.js, their tests; AddressSearch.tsx/test; AdminRestaurantPage.tsx; adminApi.ts.
+- **Tests added or modified:** typed match/failure, stale carried pin, selected replacement, explicit manual coordinates, unchanged identity; missing-city pick and stale city lookup. Old never-touch-provider-ID assertion updated because that behavior caused stale identity.
+- **Verification:** backend npm test -- tests/adminRestaurantService.test.js tests/adminRestaurantLocationService.test.js exit 0, 29 passed. Frontend npm test -- src/components/AddressSearch.test.tsx exit 0, 2 passed; npm run typecheck/lint exit 0. Mocks/jsdom only; no browser/live geocoding.
+- **Blockers/limitations:** Shared adminRestaurantService changes limited to import, location-field mapping and update function; report/delete/points workflows untouched. Placement failure saves address text with no invented pin and displays existing bilingual warning. Explicit new admin coordinates retain authority; unchanged location identity preserved. No added Hebrew strings. Integration may conflict with Agent 1 imports/function context.
+
+### SEARCH-007 ? Pending duplicate identity omits city
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P2.
+- **Status:** VERIFIED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** pending lookup and unique index identify submitter/name/address without locality.
+- **Relevant files/functions:** Restaurant prevalidate/index; restaurantRepository.findPendingRestaurantBySubmitterRepo; restaurantSubmissionService.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** Restaurant.js; restaurantRepository.js; restaurantSubmissionService.js; models/submission/pending-identity tests; SEARCH_LOCATION_INDEX_ROLLOUT.md.
+- **Tests added or modified:** normalized city derived, city-aware index, preflight city argument, distinct-city legacy rows allowed and same-city legacy rows detected.
+- **Verification:** backend npm test -- tests/restaurantPendingIdentity.test.js tests/restaurantSubmissionService.test.js tests/models.test.js exit 0, 3 files/34 passed. Backend has no lint/typecheck/build. Mocked queries and in-memory model validation only; live uniqueness/index replacement not tested.
+- **Blockers/limitations:** Existing DB requires approved replacement of pending_submitter_name_address with pending_submitter_name_address_city. No database/index operations performed; old index will still block cross-city branches until replaced. Read-time legacy normalization avoids a required record backfill. Partial new index excludes missing legacy cityNormalized; use coordinated single-version rollout. Rollback old broader index may fail after legitimate cross-city submissions; never delete records to resolve that. Review SEARCH_LOCATION_INDEX_ROLLOUT.md before deployment.
+
+### SEARCH-008 ? City search versus precise address geocoding
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P2.
+- **Status:** VERIFIED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** public geocode shared building-only selector while address autocomplete trusted coarse city results; full_match alone did not exclude city result types.
+- **Relevant files/functions:** placesService city/coarse classification, public geocode and separate suggestion/address autocomplete; placesController.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** placesService.js, placesController.js, placesService.test.js.
+- **Tests added or modified:** public match_by_city/full_match city acceptance versus precise address refusal, autocomplete separation, competing cities ambiguity.
+- **Verification:** backend npm test -- tests/placesService.test.js exit 0, 13 passed. Backend has no build/lint/typecheck. Fetch mocked; no live provider accuracy/browser verification.
+- **Blockers/limitations:** No live service/data testing authorized.
+
+### SEARCH-009 ? Confidence boundary and competing candidates
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P2.
+- **Status:** VERIFIED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** binary subtraction makes 1 - 0.8 less than 0.2; filtering competitors before comparing confidence allowed near-tied weaker or coarse matches to disappear.
+- **Relevant files/functions:** placesService.selectUnambiguousPlace.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** placesService.js; placesService.test.js.
+- **Tests added or modified:** exact gap boundary versus just below; low-confidence/coarse competitors; invalid/unknown confidence.
+- **Verification:** backend npm test -- tests/placesService.test.js exit 0, 20 passed. Mocks only; no live accuracy/browser testing. Backend has no build/lint/typecheck.
+- **Blockers/limitations:** No live service/data testing authorized.
+
+### SEARCH-010 ? Geoapify request deadlines
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P1.
+- **Status:** VERIFIED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** server fetch/body parsing had no deadline and public client location calls inherited Axios timeout 0.
+- **Relevant files/functions:** placesService.requestGeoapify; axiosInstance location request interceptor.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** placesService.js/test; axiosInstance.ts; locationDeadline.test.ts.
+- **Tests added or modified:** stalled headers/body, aborted signal, deadline cleanup, fake stalled XHR Axios timeout, unchanged upload and explicit longer timeout settings.
+- **Verification:** backend npm test -- tests/placesService.test.js exit 0, 23 passed. Frontend npm test -- src/api/locationDeadline.test.ts src/api/axiosInstance.test.ts exit 0, 13 passed; npm run typecheck/lint exit 0. Provider/XHR mocked with controlled timers; no live integration/browser.
+- **Blockers/limitations:** Five-second server deadline covers fetch and JSON body, abort plus Promise.race bounds even noncompliant transport. Ten-second client timeout scoped to /places/; uploads unchanged. Live infrastructure timeout behavior unverified.
+
+## Agent 3 assigned reliability fixes (13 October 2026)
+
+### SEARCH-003 - Certificate-photo validation race
+
+- **Milestone:** User-assigned Submission & Application Reliability.
+- **Priority:** P1.
+- **Status:** VERIFIED.
+- **Evidence/root cause:** Five failing baseline hook regressions; photo cleared before signature read and stale results accepted; consumers did not coordinate validation.
+- **Solution/files changed:** Versioned pending state, synchronous submit guard, catch read errors, preserve latest valid evidence and block failed replacements; usePhotoField.ts, five photo-consuming submission pages, TeudaFields.tsx, en.ts/he.ts. imageCheck protections unchanged.
+- **Tests added:** usePhotoField.test.tsx (7); photoSubmission.test.tsx (5 forms).
+- **Actual verification:** focused frontend tests exit 0, 19 passed including existing imageCheck tests. Full suite before final test cleanup exit 0, 28 files/170 passed. Frontend lint/typecheck/build exit 0; existing chunk warning. Backend unchanged.
+- **Limitations:** Mocked APIs, no browser/live upload; Hebrew strings need native-speaker review. Details and next task: AGENT_3_FIX_PROGRESS.md.
+
+### A1-003 - Contribution outcome independent of points
+
+- **Milestone:** User-assigned Submission & Application Reliability.
+- **Priority:** P2.
+- **Status:** VERIFIED.
+- **Evidence/root cause:** 3 backend and 2 frontend failing baseline regressions; report projection omitted correctionApplied and UI inferred outcome from awards.
+- **Solution/files changed:** Read and expose stored outcome with legacy false default; render independently of awards. userSubmissionsRepository.js, userSubmissionsService.js, MySubmissionsPage.tsx, mySubmissions.ts and locale notice for the existing 50-record limit. Photo Hebrew encoding correction included. No admin correction/points writes or authorization changes.
+- **Tests:** qaSubmissionHistory.test.js expanded; userSubmissionsRepository.test.js, userSubmissionsRoutesHttp.test.js, MySubmissionsPage.test.tsx added. Covers applied/admin/failed award, legacy/no-change, authenticated scoping, projection/limit and UI points independence.
+- **Verification:** backend focused history command (four files, exact command in AGENT_3_FIX_PROGRESS.md) exit 0, 13 passed. Frontend history/locales/photo form tests exit 0, 11 passed; lint/typecheck/build exit 0, existing chunk warning. Backend has no build/lint/typecheck scripts.
+- **Limitations:** Mocked dependencies, loopback HTTP only; no live DB, award write integration or browser. No schema/backfill required. Hebrew notice needs native review.
+
+### SEC-011 - Health endpoint database readiness
+
+- **Milestone:** User-assigned Submission & Application Reliability.
+- **Priority:** P2.
+- **Status:** VERIFIED.
+- **Evidence/root cause:** Legacy handler always returned 200 even for readyState 0; baseline HTTP regression exit 1, 6 failed after behavior-preserving extraction.
+- **Solution/files changed:** server.js mounts healthRoutes.js; /api/health and /ready return 503 unless readyState 1; /live provides independent liveness. Safe generic payload, no-store caching; connected legacy shape preserved. README documents semantics.
+- **Tests:** healthRoutesHttp.test.js added, 6 cases with loopback HTTP and mocked Mongoose states 0/1/2/3/unknown/recovery.
+- **Verification:** focused health tests exit 0, 6 passed; full backend npm test exit 0, 43 files/517 passed. Backend has no build/lint/typecheck scripts. Frontend unchanged for this fix.
+- **Limitations:** Readiness checks connection state, not an active query. Startup continues to wait for initial connection. No real database/external integrations.
+
+### APP3-001 - Browser detail-page certificate expiry rollover
+
+- **Milestone:** User-assigned secondary Submission & Application Reliability.
+- **Priority:** P2.
+- **Status:** VERIFIED.
+- **Evidence/root cause:** Loaded details never refreshed merely because Israel calendar date changed. Baseline page tests exit 1, 3 failed/14 passed.
+- **Solution/files:** useIsraelDay.ts; RestaurantDetailsPage.tsx and test. Detect day changes every minute/on foreground return and refetch server-derived details; hide stale previous-day evidence and use existing error/retry flow. No public terminology/rules changes.
+- **Tests/verification:** Four new page regressions; full frontend npm test exit 0, 29 files/178 passed; lint/typecheck/build exit 0, existing chunk warning. Backend unchanged; no browser/live services tested.
+- **Limitations:** Normal timers can delay refresh up to one minute; suspended tabs refresh upon foreground return. Browser clock is only a refresh trigger.
+
+### APP3-002 - Explicit photo clearing and error recovery
+
+- **Milestone:** User-assigned secondary Submission & Application Reliability.
+- **Priority:** P2.
+- **Status:** VERIFIED.
+- **Evidence/root cause:** Invalid/read-failed selection blocked sending but native file inputs offered no consistent explicit clear action. Pending clear also must invalidate asynchronous validation.
+- **Solution/files:** Shared PhotoFieldRecovery.tsx and hook clearPhoto; reset file input and invalidate validation without clearing text fields; wired into all five consuming forms. Localized Clear photo selection, disabled only during submission. Submission guard also holds until rendered pending state clears.
+- **Tests:** usePhotoField.test.tsx clear case; five additional real form clear-during-validation regressions in photoSubmission.test.tsx.
+- **Verification:** final frontend npm test exit 0, 29 files/183 passed; lint/typecheck/build exit 0, existing chunk warning. Backend unchanged since npm test exit 0, 43 files/517 passed. CRLF-aware diff check exit 0.
+- **Limitations:** jsdom/mocked APIs; browser and live uploads not tested; Hebrew labels require native review.
+
+Agent 3 final result: all three assigned IDs and two scoped follow-up IDs verified; full commands/results, changed files, checkpoints and integration dependencies in AGENT_3_FIX_PROGRESS.md. No points/classification/auth write changes, schema migrations, dependencies, live services, merges, pushes or deployments.
+
+## Completed-agent integration ? 13 October 2026
+
+### INT-001 - Legacy index bypasses the integrated startup compatibility gate
+
+- **Milestone:** Completed-agent local integration.
+- **Priority:** High deployment compatibility.
+- **Status:** VERIFIED.
+- **Description/evidence:** After merging A1-R4 and SEARCH-007, startup accepts both city-aware and older broader pending indexes; the old constraint still rejects valid cross-city branches. Corrected disposable baseline: index suite exit 1, 6 passed / 1 failed (Missing expected rejection). Initial fixture order failed at building old index after cross-city inserts; moved fixture before those inserts, without deleting records or weakening assertions.
+- **Root cause:** Startup checks required schema indexes but not the obsolete constraint; new declarations cannot remove old indexes automatically.
+- **Relevant files/functions:** indexIntegrityRepository.assertUniqueIndexesRepo; agent1Indexes.integration.mjs; SEARCH_LOCATION_INDEX_ROLLOUT.md.
+- **Planned solution:** Read-only startup rejection of old broader pending unique constraint, identified by keys as well as name; never automatically drop/repair. Update outdated Agent 1 real regressions to the new city-aware definition and add cross-city/concurrent/legacy tests.
+- **Files changed:** backend/src/repositories/indexIntegrityRepository.js; backend/integration/agent1Indexes.integration.mjs; tracking/docs.
+- **Tests added or modified:** New real MongoDB legacy-index startup gate, normalized same-city concurrency, cross-city acceptance and legacy read/save compatibility; existing weakened-uniqueness/wrong-filter regressions retained against current definition.
+- **Verification:** node integration/runAgent1Isolated.mjs --run-isolated agent1Authority.integration.mjs agent1Corrections.integration.mjs agent1Integrity.integration.mjs agent1Rejection.integration.mjs agent1Indexes.integration.mjs: exit 0, 21 real MongoDB tests passed; includes actual rollback/concurrency/crash recovery, zero ADMIN points and all seven index checks. Fresh disposable replica set and validated cleanup only; no live external services. Backend has no build/lint/typecheck scripts. Browser not tested.
+- **Blockers/limitations:** Existing database index replacement still requires target/operator approval; none performed.
+
+### SEC-006 / EMAILAUD-001 - Account-level recovery races permit password overwrite
+
+- **Milestone:** Completed-agent integration security assessment (explicit user request).
+- **Priority:** P1; CONFIRMED production release blocker.
+- **Status:** DEFERRED.
+- **Description/evidence:** Concurrent issuance leaves two unused, unexpired hashes (independently reproduced on disposable real MongoDB). The user reports Agent 4's independent in-memory harness confirms five paths: concurrent issuance, competing distinct-token password resets that overwrite completed recovery, issuance finishing after recovery, cleanup failure, and failed-write compensation restoring an obsolete token. The latter four were not independently executed here; integrated code review supports their account-level root cause. Same-token single-use remains atomic and was independently verified. Passing existing tests do not make recovery production-ready.
+- **Root cause:** Issuance delete/create and redemption consume/password-update/cleanup/release are separate operations. Password update is unconditional per user; cleanup/release do not guard an account generation. Hash uniqueness and per-hash consumption do not serialize different tokens for the same account.
+- **Relevant files/functions:** passwordResetService.requestPasswordResetService/resetPasswordService; passwordResetRepository; userRepository.setUserPasswordHashRepo; PasswordResetToken; User; existing repositories/transaction.js; passwordReset service/repository/HTTP tests; backend/integration/passwordResetAudit.integration.mjs.
+- **Planned solution:** Separately reviewed shared conditional User write and token-bound recovery generation for issuance/redemption using existing transactions; guard the captured credential epoch for delayed issuance; atomically consume/save password/invalidate generations and JWTs; transaction abort replaces unconditional compensation. Cleanup cannot determine validity. Mail only after commit. Compatibility/legacy token rollout review required; no implementation or migration here. Detailed eight-part resolution test plan in INTEGRATION_PROGRESS.md covers all five audit paths, cross-process crashes/retries and existing security/UI contracts.
+- **Files changed:** Diagnostic integration test and tracking/deployment documents only; authentication implementation unchanged.
+- **Tests added or modified:** Actual four-way same-hash consumption has one winner; actual synchronized issuance leaves two different valid hashes, both consumed. The latter is explicitly a known-vulnerability diagnostic, not a passing fix regression.
+- **Verification:** node integration/runAgent1Isolated.mjs --run-isolated passwordResetAudit.integration.mjs: exit 0, 2 diagnostic checks passed on fresh disposable replica set; emails explicitly disabled. No raw token/password output, real user or existing application database.
+- **Blockers/limitations:** Unresolved pre-existing security defect; do not approve public production release until fixed/reviewed. Not introduced by merges. Deferred from this integration's implementation scope as requested, never counted as verified.
+
+## Final integrated verification (13 October 2026)
+
+All five source histories incorporated locally in integration/agent-fixes; source tips/main untouched. Full backend npm test exit 0, 49 files/580 passed; frontend npm test exit 0, 35 files/215 passed; frontend npm run lint (oxlint), npm run typecheck and npm run build exit 0. Backend has no build/lint/typecheck scripts. Actual disposable MongoDB regression set exit 0, 21 passed; final strengthened authoritative admin restaurant/certificate success assertions exit 0, 1 passed with required photo bytes and SDK upload mocked. First added fixture omitted required photo and failed 0/1; corrected fixture only, validation retained. Reset diagnostic exit 0, 2 checks confirms SEC-006 unresolved; not a security fix. Browser node scripts/reviewPasswordRecovery.mjs exit 0, 88 fixture renders/8 EN/HE recovery journeys, no exceptions/referrer headers. Other browser workflows/live services not rerun; historical source evidence remains attributed. CRLF-aware full integration whitespace exit 0. Details, source hashes and rollout/rollback in INTEGRATION_PROGRESS.md and INTEGRATION_DEPLOYMENT_CHECKLIST.md. No main merge/push/deploy/existing database or user files touched.
+
+Independent-audit follow-up verification (13 October 2026): targeted npm test -- tests/passwordResetService.test.js tests/passwordResetRepository.test.js tests/passwordResetRoutesHttp.test.js exit 0, 3 files/27 passed with mocks/local HTTP; disposable node integration/runAgent1Isolated.mjs --run-isolated passwordResetAudit.integration.mjs exit 0, 2 diagnostic checks reconfirm SEC-006. All five Agent 4 paths are attributed to the user-supplied independent in-memory audit report; only concurrent issuance and same-token consumption were executed here. Application/schema/tests unchanged. Prior full suites/build/browser evidence retained, not rerun for documentation. SEC-006 remains CONFIRMED P1 and DEFERRED from integration implementation, blocking production. No issue status/count changes.
+
+### UIAUD-001 - Stale admin edit form can mutate a different restaurant
+
+- **Milestone:** Completed-agent integration independent UI/UX audit follow-up.
+- **Priority:** P1; CONFIRMED pre-production blocker alongside SEC-006.
+- **Status:** DEFERRED.
+- **Description/evidence:** User reports Agent 3's independent browser-interception reproduction: A's form stays visible after route changes to B; Save sends A's values to B's update endpoint. No real database changed in that audit. Integrated source inspection confirms retained page state and a route-ID Save target. No new browser reproduction executed here.
+- **Root cause:** AdminRestaurantPage retains details/values/extras/hasDetails across route parameter changes; load effect lacks stale-response exclusion; render/Save checks presence rather than record identity. Failed/new delayed loads can leave old form actionable.
+- **Relevant files/functions:** AdminRestaurantPage load effect/render/handleSave; RestaurantFields; admin/RestaurantExtrasFields; App parameterized edit route; adminApi.getRestaurantDetails/updateRestaurant; adminForms mappings. Review stale AdminTeudaCard display/callbacks within same parent scope; no additional mutation defect claimed.
+- **Planned solution:** Separately scoped narrow route/loaded/form owner identity guard, immediate non-actionable mismatched record state, request generation guards and immutable mutation ID/payload snapshots. No unrelated UI work. Guard old mutation completions from updating the newly selected record.
+- **Files changed:** INTEGRATION_PROGRESS.md, FIX_TRACKER.md, PROGRESS.md, INTEGRATION_DEPLOYMENT_CHECKLIST.md only. No application/test/schema changes.
+- **Tests added or modified:** None. Required tests detailed in INTEGRATION_PROGRESS.md: A-to-B pending save, delayed/out-of-order success/failure, failed-load recovery, complete PUT target/payload consistency, in-flight mutation navigation, rapid/back-forward/language/unmount transitions and adjacent parent mutation guards. Use existing Vitest/jsdom router/deferred mocks plus fully intercepted browser mutations, with no real data writes.
+- **Verification:** Integrated source inspected; prior full frontend 215 tests/lint/typecheck/build remain actual unchanged-code integration evidence. No AdminRestaurantPage test covers this scenario; no fresh application test/browser pass claimed. git -c core.whitespace=cr-at-eol diff --check exit 0; tracker count validation confirms 65 issues / 3 DEFERRED / 40 VERIFIED. Source/main tips unchanged.
+- **Blockers/limitations:** Not fixed; DEFERRED describes this documentation follow-up's implementation scope, not reduced severity. Pre-production approval and unconditional main promotion remain blocked until both UIAUD-001 and SEC-006 are resolved/reviewed.
+
+## Main promotion outstanding issue reports - 13 October 2026
+
+### ADMINCERT-001 - Reported administrator certificate hechsherOther validation failure
+
+- **Milestone:** Authorized final integration promotion/handoff.
+- **Priority:** High; outstanding pre-production workflow issue.
+- **Status:** NOT STARTED.
+- **Description/evidence:** User reports administrator certificate creation may fail with teuda.hechsherOther validation error. Not reproduced in this promotion; passing synthetic LOCAL_RABBANUT admin checks do not prove the affected payload works.
+- **Root cause:** Undetermined; inspect optional hechsherOther form/payload and schema handling before changing validation.
+- **Relevant files/functions:** AdminAddTeudaPage, AdminCreateRestaurantPage, TeudaFields, adminApi certificate payload builders, backend adminSchemas/Teuda model/adminTeudaService. Exact failing payload path requires focused reproduction.
+- **Planned solution:** Separate mocked/intercepted reproduction and minimal validated fix; preserve admin authority and required OTHER labels. No application fix in merge/push scope.
+- **Files changed:** Tracking notes only.
+- **Tests added or modified:** None; recommend omitted/empty/named hechsherOther cases for ordinary and OTHER hechshers on direct/combined administrator creation.
+- **Verification:** User-supplied report only; no live upload or database operation.
+- **Blockers/limitations:** Outstanding; never represented as fixed by existing admin test success.
+
+### MAPTILE-001 - Observed OpenStreetMap tile HTTP 403
+
+- **Milestone:** Authorized final integration promotion/handoff.
+- **Priority:** High; observed map availability limitation.
+- **Status:** NOT STARTED.
+- **Description/evidence:** User reports OpenStreetMap tiles return HTTP 403 in the observed environment. No live tile request in promotion; fixture/mocked map tests do not verify real tile availability.
+- **Root cause:** Undetermined; distinguish provider/environment response from application integration regression before changing provider/configuration.
+- **Relevant files/functions:** Public map tile layer/configuration and map UI; inspect request origin/headers/provider requirements without credentials or production data.
+- **Planned solution:** Separately authorized investigation; no provider/hosting change during merge/push.
+- **Files changed:** Tracking notes only.
+- **Tests added or modified:** None; recommend tile-error feedback regression and approved environment browser verification of successful tile loads.
+- **Verification:** User-supplied observed HTTP 403, not a new live reproduction.
+- **Blockers/limitations:** Outstanding map rendering limitation; do not count fixture tiles as real service verification.

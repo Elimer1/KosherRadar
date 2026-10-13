@@ -64,7 +64,9 @@ const makeTeuda = (restaurant, expiration, overrides = {}) => ({
 const query = (overrides = {}) => searchQuerySchema.parse(overrides);
 
 const setData = (restaurants, teudot = []) => {
-  findSearchCandidatesRepo.mockResolvedValue(restaurants);
+  findSearchCandidatesRepo.mockImplementation(async ({ afterId, limit }) =>
+    [...restaurants].sort((a, b) => String(a._id).localeCompare(String(b._id)))
+      .filter(row => !afterId || String(row._id) > String(afterId)).slice(0, limit));
   findPublicTeudotForRestaurantsRepo.mockResolvedValue(teudot);
 };
 
@@ -334,7 +336,7 @@ describe('searchRestaurantsService: pagination', () => {
     expect(result.hasMore).toBe(false);
   });
 
-  it('reports capped when the database returned more restaurants than the cap, and examines only the cap', async () => {
+  it('evaluates all batches rather than truncating before filtering', async () => {
     const many = Array.from({ length: 2001 }, (_, index) =>
       makeRestaurant({ name: `R ${String(index).padStart(4, '0')}` })
     );
@@ -342,9 +344,11 @@ describe('searchRestaurantsService: pagination', () => {
 
     const result = await searchRestaurantsService(query({ includeUnknown: 'true' }));
 
-    expect(result.capped).toBe(true);
-    expect(result.total).toBe(2000);
+    expect(result.capped).toBe(false);
+    expect(result.total).toBe(2001);
+    expect(findSearchCandidatesRepo).toHaveBeenCalledTimes(2);
     expect(findPublicTeudotForRestaurantsRepo.mock.calls[0][0]).toHaveLength(2000);
+    expect(findPublicTeudotForRestaurantsRepo.mock.calls[1][0]).toHaveLength(1);
   });
 
   it('does not report capped for a normal search', async () => {
@@ -355,6 +359,34 @@ describe('searchRestaurantsService: pagination', () => {
 });
 
 describe('searchRestaurantsService: no empty-answer surprises', () => {
+  it('finds the only eligible restaurant beyond the previous 2000-candidate limit', async () => {
+    const many = Array.from({ length: 2001 }, (_, index) => makeRestaurant({ _id: `r${String(index).padStart(5, '0')}`, name: `Place ${index}` }));
+    const eligible = many.at(-1);
+    setData(many, [makeTeuda(eligible, '2027-01-01')]);
+    const result = await searchRestaurantsService(query());
+    expect(idsOf(result)).toEqual([eligible._id]);
+    expect(result.total).toBe(1);
+    expect(result.capped).toBe(false);
+  });
+
+  it('ranks the nearest candidate in a later batch first with stable pagination', async () => {
+    const many = Array.from({ length: 2001 }, (_, index) => makeRestaurant({ _id: `r${String(index).padStart(5, '0')}`, name: `Place ${index}`, latitude: 32.5, longitude: 35.2 }));
+    const nearest = many.at(-1); nearest.latitude = 31.7;
+    setData(many);
+    const first = await searchRestaurantsService(query({ includeUnknown: 'true', lat: '31.7', lng: '35.2' }));
+    const second = await searchRestaurantsService(query({ includeUnknown: 'true', lat: '31.7', lng: '35.2', page: '2' }));
+    expect(first.items[0].id).toBe(nearest._id);
+    expect(first.total).toBe(2001);
+    expect(new Set([...idsOf(first), ...idsOf(second)]).size).toBe(40);
+  });
+
+  it('reports Atlas truncation even when no fuzzy candidate passes kashrut filters', async () => {
+    env.atlasSearchEnabled = true;
+    findAtlasNameHitsRepo.mockResolvedValue(Array.from({ length: 101 }, (_, i) => ({ id: `fuzzy-${i}`, score: 101 - i })));
+    setData([]);
+    const result = await searchRestaurantsService(query({ q: 'pizza' }));
+    expect(result).toMatchObject({ items: [], capped: true, completeness: { complete: false, reasons: ['atlas_candidate_limit'] } });
+  });
   it('answers an empty result for no matches', async () => {
     setData([]);
 
@@ -434,6 +466,7 @@ describe('Atlas Search and the fallback', () => {
 
     expect(idsOf(result)).toEqual([match._id]);
     expect(result.search).toEqual({ mode: 'BASIC', atlasUnavailable: true });
+    expect(result.completeness).toEqual({ complete: false, reasons: ['atlas_unavailable'] });
     expect(findSearchCandidatesRepo.mock.calls[0][0].extraIds).toEqual([]);
   });
 });

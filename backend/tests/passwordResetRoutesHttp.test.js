@@ -28,16 +28,20 @@ vi.mock('../src/services/passwordResetService.js', () => ({
 import { requestPasswordResetService, resetPasswordService } from '../src/services/passwordResetService.js';
 import { appError } from '../src/utils/appError.js';
 import authRoutes from '../src/routes/authRoutes.js';
+import { passwordResetRateLimiter } from '../src/middleware/rateLimiters.js';
+import { ipKeyGenerator } from 'express-rate-limit';
 import { errorMiddleware, notFoundMiddleware } from '../src/middleware/errorMiddleware.js';
 
 const VALID_TOKEN = 'b'.repeat(64);
 
 let server;
 let baseUrl;
+let requestIp;
 
 beforeAll(async () => {
   const app = express();
   app.use(express.json());
+  app.use((req, res, next) => { requestIp = req.ip; next(); });
   app.use('/api/auth', authRoutes);
   app.use(notFoundMiddleware);
   app.use(errorMiddleware);
@@ -60,6 +64,7 @@ const post = (path, body) =>
 describe('POST /forgot-password', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    if (requestIp) passwordResetRateLimiter.resetKey(ipKeyGenerator(requestIp));
     requestPasswordResetService.mockResolvedValue(undefined);
   });
 
@@ -78,6 +83,43 @@ describe('POST /forgot-password', () => {
     expect(body.message).toMatch(/If an account exists/);
     expect(requestPasswordResetService).toHaveBeenCalledWith({ email: 'someone@example.com' });
   });
+
+  it('returns identical neutral responses for known, unknown and processing failures', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    requestPasswordResetService.mockResolvedValueOnce(undefined).mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error('secret reset token'));
+    const bodies = [];
+    for (const email of ['known@example.com', 'unknown@example.com', 'failure@example.com']) {
+      const response = await post('/forgot-password', { email, language: 'he' });
+      expect(response.status).toBe(200);
+      expect(response.headers.get('cache-control')).toBe('no-store');
+      bodies.push(await response.json());
+    }
+    expect(bodies[0]).toEqual(bodies[1]);
+    expect(bodies[1]).toEqual(bodies[2]);
+    expect(bodies[0].message).not.toMatch(/we sent/i);
+    expect(JSON.stringify(log.mock.calls)).not.toContain('secret reset token');
+    log.mockRestore();
+  });
+
+  it('responds without waiting for account lookup/token persistence', async () => {
+    let finish;
+    requestPasswordResetService.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+    try {
+      expect((await post('/forgot-password', { email: 'known@example.com' })).status).toBe(200);
+    } finally {
+      finish();
+    }
+  });
+
+  it('limits forgot-password to five attempts per IP regardless of account existence', async () => {
+    for (let index = 0; index < 5; index += 1) {
+      expect((await post('/forgot-password', { email: `unknown${index}@example.com` })).status).toBe(200);
+    }
+    const response = await post('/forgot-password', { email: 'known@example.com' });
+    expect(response.status).toBe(429);
+    expect(requestPasswordResetService).toHaveBeenCalledTimes(5);
+  });
 });
 
 describe('POST /reset-password', () => {
@@ -95,6 +137,12 @@ describe('POST /reset-password', () => {
   it('answers 400 for a password that is too short', async () => {
     const response = await post('/reset-password', { token: VALID_TOKEN, password: 'short' });
 
+    expect(response.status).toBe(400);
+    expect(resetPasswordService).not.toHaveBeenCalled();
+  });
+
+  it('rejects multibyte passwords beyond bcrypt 72-byte limit', async () => {
+    const response = await post('/reset-password', { token: VALID_TOKEN, password: 'א'.repeat(40) });
     expect(response.status).toBe(400);
     expect(resetPasswordService).not.toHaveBeenCalled();
   });

@@ -97,8 +97,11 @@ function AdminRestaurantPage() {
     setNotices([]);
 
     try {
-      await updateRestaurant(restaurantId, values, extras);
-      setNotices([{ kind: 'success', message: t('desk.saved') }]);
+      const saved = await updateRestaurant(restaurantId, values, extras);
+      setNotices([
+        { kind: 'success', message: t('desk.saved') },
+        ...(saved.latitude === null || saved.longitude === null ? [{ kind: 'warning' as const, message: t(saved.locationStatus === 'unavailable' ? 'forms.lookupUnavailableSaved' : 'forms.notPlaced') }] : []),
+      ]);
       load();
     } catch (err) {
       setNotices([{ kind: 'error', message: getErrorMessage(err, t('desk.saveFailed')) }]);

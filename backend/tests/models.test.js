@@ -59,17 +59,18 @@ describe('Restaurant model', () => {
     expect(restaurant.toObject().location).toBeUndefined();
   });
 
-  it('keeps one pending submission per user, normalized name, and address', () => {
-    const pendingIdentity = Restaurant.schema.indexes().find(([, options]) => options.name === 'pending_submitter_name_address');
+  it('keeps one pending submission per user, normalized name, address and city', () => {
+    const pendingIdentity = Restaurant.schema.indexes().find(([, options]) => options.name === 'pending_submitter_name_address_city');
 
     expect(pendingIdentity[0]).toEqual({
       submittedBy: 1,
       nameNormalized: 1,
       addressNormalized: 1,
+      cityNormalized: 1,
     });
     expect(pendingIdentity[1]).toMatchObject({
       unique: true,
-      partialFilterExpression: { status: 'PENDING' },
+      partialFilterExpression: { status: 'PENDING', cityNormalized: { $type: 'string' } },
     });
   });
 
@@ -77,6 +78,7 @@ describe('Restaurant model', () => {
     const restaurant = new Restaurant({
       ...validData(),
       name: "  Joe's CAFE ",
+      city: '  Tel-Aviv!  ',
       phone: '+972-50-123-4567',
     });
     await restaurant.validate();
@@ -84,6 +86,7 @@ describe('Restaurant model', () => {
     expect(restaurant.nameNormalized).toBe('joes cafe');
     expect(restaurant.addressNormalized).toBe('1 main st jerusalem');
     expect(restaurant.phoneNormalized).toBe('0501234567');
+    expect(restaurant.cityNormalized).toBe('telaviv');
   });
 
   it('only accepts known hechsher values as a claim', async () => {

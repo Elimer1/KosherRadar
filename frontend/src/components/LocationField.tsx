@@ -1,7 +1,7 @@
 // The search location, separate from the restaurant-name and food box.
 // A suggestion or Enter looks the place up. A miss does not invent coordinates.
 // Geolocation runs only after the visitor presses the current-location control.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { geocodePlace, suggestPlaces } from '../api/placesApi';
@@ -48,6 +48,13 @@ function LocationField({
   const [activeIndex, setActiveIndex] = useState(-1);
   const [note, setNote] = useState('');
   const [locating, setLocating] = useState(false);
+  const lookupVersion = useRef(0);
+  const invalidateLookup = () => {
+    lookupVersion.current += 1;
+    setLocating(false);
+  };
+
+  useEffect(() => () => { lookupVersion.current += 1; }, []);
 
   useEffect(() => {
     const query = text.trim();
@@ -86,6 +93,7 @@ function LocationField({
   }, [text, placeLanguage, selectedLabel, t]);
 
   const applyPlace = (place: AddressSuggestion) => {
+    invalidateLookup();
     setText(place.label);
     setSelectedLabel(place.label);
     setSuggestions([]);
@@ -96,6 +104,7 @@ function LocationField({
   };
 
   const handleClear = () => {
+    invalidateLookup();
     setText('');
     setSelectedLabel('');
     setSuggestions([]);
@@ -113,7 +122,16 @@ function LocationField({
 
     setSuggestions([]);
     setOpen(false);
-    const result = await geocodePlace(query, placeLanguage);
+    invalidateLookup();
+    const version = lookupVersion.current;
+    let result;
+    try {
+      result = await geocodePlace(query, placeLanguage);
+    } catch {
+      if (version === lookupVersion.current) setNote(t('location.unavailable'));
+      return;
+    }
+    if (version !== lookupVersion.current) return;
 
     if (!result.available) {
       setNote(t('location.unavailable'));
@@ -131,6 +149,8 @@ function LocationField({
   };
 
   const handleUseMyLocation = () => {
+    invalidateLookup();
+    const version = lookupVersion.current;
     if (!navigator.geolocation) {
       setNote(t('location.noGeo'));
       return;
@@ -141,6 +161,7 @@ function LocationField({
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        if (version !== lookupVersion.current) return;
         setLocating(false);
         setText('');
         setSelectedLabel('');
@@ -154,6 +175,7 @@ function LocationField({
         });
       },
       (error) => {
+        if (version !== lookupVersion.current) return;
         setLocating(false);
         setNote(error.code === error.PERMISSION_DENIED ? t('location.denied') : t('location.failed'));
       },
@@ -203,6 +225,7 @@ function LocationField({
           id="search-location"
           value={text}
           onChange={(event) => {
+            invalidateLookup();
             setText(event.target.value);
             setNote('');
             setOpen(true);

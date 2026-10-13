@@ -1,3 +1,10 @@
+vi.mock('../src/repositories/transaction.js', () => ({ withTransaction: vi.fn(async (work) => work()) }));
+vi.mock('../src/repositories/restaurantIntegrityRepository.js', () => ({ lockRestaurantForWriteRepo: vi.fn() }));
+vi.mock('../src/repositories/imageCleanupRepository.js', () => ({
+  enqueueImageCleanupRepo: vi.fn(),
+  findImageCleanupRepo: vi.fn(async (ids) => (ids || []).map((publicId) => ({ publicId }))),
+  completeImageCleanupRepo: vi.fn(), failImageCleanupRepo: vi.fn(),
+}));
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('../src/repositories/restaurantRepository.js', () => ({
@@ -59,6 +66,14 @@ describe('submitTeudaService', () => {
   });
 
   afterEach(() => vi.useRealTimers());
+
+  it('rejects administrator submissions before database access or upload', async () => {
+    await expect(submitTeudaService({ restaurantId: 'rest-1', teudaData: teudaData(), file,
+      user: { _id: 'admin-1', role: 'ADMIN' } })).rejects.toMatchObject({ statusCode: 403 });
+    expect(findRestaurantByIdRepo).not.toHaveBeenCalled();
+    expect(createTeudaRepo).not.toHaveBeenCalled();
+    expect(uploadTeudaImageService).not.toHaveBeenCalled();
+  });
 
   it('saves a PENDING teuda owned by the logged-in user', async () => {
     const result = await submitTeudaService({

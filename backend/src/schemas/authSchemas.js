@@ -5,7 +5,8 @@ const emailField = z.string().trim().toLowerCase().email('Enter a valid email ad
 const newPasswordField = z
   .string()
   .min(8, 'Password must be at least 8 characters')
-  .max(72, 'Password must be at most 72 characters');
+  .max(72, 'Password must be at most 72 characters')
+  .refine((password) => Buffer.byteLength(password, 'utf8') <= 72, 'Password must be at most 72 UTF-8 bytes');
 
 export const registerSchema = z.object({
   email: emailField,
@@ -21,9 +22,11 @@ export const loginSchema = z.object({
 // חדש (אבן דרך 3): גופי הבקשות לאיפוס סיסמה. הטוקן הוא מחרוזת hex של 64 תווים מהקישור שנשלח במייל.
 export const forgotPasswordSchema = z.object({
   email: emailField,
+  language: z.enum(['en', 'he']).optional(),
 });
 
 export const resetPasswordSchema = z.object({
   token: z.string().trim().regex(/^[a-f0-9]{64}$/i, 'This reset link is not valid'),
   password: newPasswordField,
+  language: z.enum(['en', 'he']).optional(),
 });

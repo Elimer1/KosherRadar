@@ -5,6 +5,8 @@ import {
   geocodeAddressService,
   geocodePlaceService,
   selectUnambiguousPlace,
+  suggestPlacesService,
+  GEOAPIFY_TIMEOUT_MS,
 } from '../src/services/placesService.js';
 import { addressQuerySchema, publicPlaceQuerySchema } from '../src/schemas/placesSchemas.js';
 
@@ -19,6 +21,21 @@ const jerusalem = {
 };
 
 describe('placesService', () => {
+  it.each(['match_by_city', 'full_match'])('accepts a reliable city %s for public search but never as a restaurant pin', async (match_type) => {
+    const city = { ...jerusalem, address_line1: 'Jerusalem', result_type: 'city', rank: { confidence: 1, match_type } };
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ results: [city] }) }));
+    expect((await geocodePlaceService('Jerusalem')).place?.city).toBe('Jerusalem');
+    expect(await geocodeAddressService({ address: 'Jerusalem', city: 'Jerusalem' })).toEqual({ status: 'ambiguous' });
+    expect((await autocompleteAddressesService('Jerusalem')).suggestions).toEqual([]);
+    expect((await suggestPlacesService('Jerusalem')).suggestions).toHaveLength(1);
+  });
+
+  it('rejects near-tied competing public city matches', async () => {
+    const city = { ...jerusalem, result_type: 'city', rank: { confidence: 1, match_type: 'match_by_city' } };
+    const other = { ...city, place_id: 'city-2', city: 'Other city', rank: { confidence: 0.95, match_type: 'match_by_city' } };
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ results: [city, other] }) }));
+    expect(await geocodePlaceService('city')).toEqual({ available: true, place: null, reason: 'ambiguous' });
+  });
   beforeEach(() => {
     env.geoapifyApiKey = 'test-key';
   });
@@ -26,6 +43,26 @@ describe('placesService', () => {
   afterEach(() => {
     env.geoapifyApiKey = '';
     vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  it.each(['headers', 'body'])('bounds stalled provider %s and aborts the request', async (stage) => {
+    vi.useFakeTimers();
+    const stalled = new Promise(() => {});
+    const fetchMock = vi.fn().mockReturnValue(stage === 'headers' ? stalled : Promise.resolve({ ok: true, json: () => stalled }));
+    vi.stubGlobal('fetch', fetchMock);
+    const lookup = geocodePlaceService('Jerusalem');
+    await vi.advanceTimersByTimeAsync(GEOAPIFY_TIMEOUT_MS);
+    expect(await lookup).toEqual({ available: false, place: null, reason: 'unavailable' });
+    expect(fetchMock.mock.calls[0][1].signal.aborted).toBe(true);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('clears the provider deadline after a successful request', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ results: [jerusalem] }) }));
+    expect((await geocodePlaceService('Jerusalem')).available).toBe(true);
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it('does not call Geoapify when the key is missing', async () => {
@@ -171,6 +208,20 @@ describe('selectUnambiguousPlace', () => {
     expect(selectUnambiguousPlace([place(1, 'full_match', 'a'), place(0.95, 'full_match', 'b')])).toBeNull();
     expect(selectUnambiguousPlace([place(1, 'match_by_city')])).toBeNull();
     expect(selectUnambiguousPlace([place(null, 'full_match')])).toBeNull();
+  });
+
+  it('accepts the exact confidence-gap boundary despite floating-point subtraction', () => {
+    expect(selectUnambiguousPlace([place(1, 'full_match'), place(0.8, 'full_match', 'b')])?.placeId).toBe('a');
+    expect(selectUnambiguousPlace([place(1, 'full_match'), place(0.8000000001, 'full_match', 'b')])).toBeNull();
+  });
+  it('compares lower-confidence and imprecise competitors before accepting a building', () => {
+    expect(selectUnambiguousPlace([place(0.8, 'full_match'), place(0.79, 'full_match', 'b')])).toBeNull();
+    expect(selectUnambiguousPlace([place(1, 'full_match'), place(0.99, 'match_by_city', 'b')])).toBeNull();
+    expect(selectUnambiguousPlace([place(1, 'full_match'), place(0.7, 'match_by_city', 'b')])?.placeId).toBe('a');
+    expect(selectUnambiguousPlace([place(0.9, 'full_match'), place(1, 'match_by_city', 'b')])).toBeNull();
+  });
+  it.each([NaN, Infinity, -0.1, 1.1, null])('refuses an invalid or unknown competing confidence %s', (confidence) => {
+    expect(selectUnambiguousPlace([place(1, 'full_match'), place(confidence, 'full_match', 'b')])).toBeNull();
   });
 });
 

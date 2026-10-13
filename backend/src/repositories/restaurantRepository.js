@@ -1,4 +1,5 @@
 import { Restaurant } from '../models/Restaurant.js';
+import { normalizeText } from '../utils/normalizeText.js';
 
 // Pending and approved restaurants count when looking for duplicates. Rejected ones do not.
 const ACTIVE_STATUSES = ['PENDING', 'APPROVED'];
@@ -20,8 +21,14 @@ export const findPendingRestaurantBySubmitterRepo = async ({
   submittedBy,
   nameNormalized,
   addressNormalized,
+  cityNormalized,
 }) => {
-  return Restaurant.findOne({ submittedBy, nameNormalized, addressNormalized, status: 'PENDING' });
+  const candidates = await Restaurant.find({
+    submittedBy, nameNormalized, addressNormalized, status: 'PENDING',
+    $or: [{ cityNormalized }, { cityNormalized: { $exists: false } }],
+  }).select('_id city cityNormalized').lean();
+  // Old documents need no backfill: normalize their original city at read time.
+  return candidates.find(row => (row.cityNormalized ?? normalizeText(row.city)) === cityNormalized) || null;
 };
 
 const DUPLICATE_FIELDS =

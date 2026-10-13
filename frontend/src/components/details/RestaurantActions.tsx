@@ -4,6 +4,7 @@
 // Waze and Google Maps stay separate destinations when both can be built.
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { useAuthStore } from '../../stores/authStore';
 import ShareButton from '../ShareButton';
 import type { RestaurantDetails } from '../../types/restaurantDetails';
 import { buildGoogleMapsUrl, buildTelUrl, buildWazeUrl, restaurantPageUrl } from '../../utils/navigationLinks';
@@ -116,6 +117,7 @@ export function QuickActions({ restaurant, primaryName }: ActionProps) {
 
 export function ContactDock({ restaurant, primaryName }: ActionProps) {
   const { t } = useTranslation();
+  const user = useAuthStore((state) => state.user);
   const links = linksFor(restaurant, primaryName);
   const hasContact = Boolean(links.phone || links.website || links.place || links.mapsUrl || links.wazeUrl);
 
@@ -177,7 +179,7 @@ export function ContactDock({ restaurant, primaryName }: ActionProps) {
         </h2>
         <p className="kr-v2-details-help-note">{t('details.needAccount')}</p>
         <div className="kr-v2-details-help-actions">
-          <Link className="kr-v2-details-add" to={`/restaurants/${restaurant.id}/add-teuda`}>
+          <Link className="kr-v2-details-add" to={user?.role === 'ADMIN' ? `/admin/restaurants/${restaurant.id}/add-teuda` : `/restaurants/${restaurant.id}/add-teuda`}>
             {t('details.addCertificate')}
           </Link>
           <Link className="kr-v2-details-report" to={`/restaurants/${restaurant.id}/report`}>

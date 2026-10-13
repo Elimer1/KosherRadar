@@ -1,3 +1,10 @@
+vi.mock('../src/repositories/transaction.js', () => ({ withTransaction: vi.fn(async (work) => work()) }));
+vi.mock('../src/repositories/restaurantIntegrityRepository.js', () => ({ lockRestaurantForWriteRepo: vi.fn() }));
+vi.mock('../src/repositories/imageCleanupRepository.js', () => ({
+  enqueueImageCleanupRepo: vi.fn(),
+  findImageCleanupRepo: vi.fn(async (ids) => (ids || []).map((publicId) => ({ publicId }))),
+  completeImageCleanupRepo: vi.fn(), failImageCleanupRepo: vi.fn(),
+}));
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('../src/repositories/restaurantRepository.js', () => ({

@@ -178,13 +178,15 @@ function TeudaFields({
           required={fieldsRequired}
           accept="image/jpeg,image/png,image/webp"
           disabled={disabled}
+          aria-invalid={Boolean(photoError)}
+          aria-describedby={`${idPrefix}-photo-hint${photoError ? ` ${idPrefix}-photo-error` : ''}`}
           onChange={onPhotoChange}
           className="mt-1 block w-full cursor-pointer rounded-xl border border-dashed border-grove bg-mist px-3 py-4 text-sm text-ink file:me-3 file:min-h-11 file:cursor-pointer file:rounded-lg file:border-0 file:bg-forest file:px-3 file:py-2 file:font-medium file:text-white hover:file:bg-forest-deep"
         />
-        <p className="mt-1 text-xs text-muted">{t('forms.photoHint', { max: maxMegabytes })}</p>
+        <p id={`${idPrefix}-photo-hint`} className="mt-1 text-xs text-muted">{t('forms.photoHint', { max: maxMegabytes })}</p>
         {photo && !photoError && <p className="mt-1 text-xs text-muted">{t('forms.selected', { name: photo.name })}</p>}
         {photoError && (
-          <p role="alert" className="mt-1 text-sm text-red-700">
+          <p id={`${idPrefix}-photo-error`} role="alert" className="mt-1 text-sm text-red-700">
             {photoError}
           </p>
         )}

@@ -23,7 +23,7 @@ export const listMyTeudotRepo = async (userId) => {
 
 export const listMyReportsRepo = async (userId) => {
   return Report.find({ submittedBy: userId })
-    .select('description status rejectionReason createdAt restaurant')
+    .select('description status correctionApplied rejectionReason createdAt restaurant')
     .populate('restaurant', 'name')
     .sort({ createdAt: -1 })
     .limit(LIMIT)

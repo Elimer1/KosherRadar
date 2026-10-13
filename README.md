@@ -4,7 +4,7 @@ A crowdsourced, factual kashrut-information directory for restaurants in Israel.
 
 Current state: **Milestones 1 to 7.** Anyone can search approved restaurants on the home page (by name or food, in Hebrew or English, with filters, autocomplete and 20 results per page) or switch to a map of the same results. A separate location field looks up a place in Israel when Geoapify is configured. The restaurant page shows kashrut evidence: certificates, EXPIRED certificates and unverified claims, kept apart, and can be shared. The interface is English or Hebrew, and Hebrew is right-to-left. Logged-in users can submit a restaurant (name, address and hechsher; the hechsher is saved as an unverified claim, and a photo on that form is not stored because the form does not ask for a kashrut level), add a certificate to an approved restaurant, and report a problem. Everything they send is saved as `PENDING`; admins review it in the admin dashboard (approve, reject with a reason, edit, delete, resolve reports), and users can reset a forgotten password by email.
 
-Search, the map bounds query, submissions without a photo, admin approve/reject, and the Hebrew interface were run against a **local MongoDB** on this computer. They were **not** run against MongoDB Atlas. A real Cloudinary upload, a Resend email, a Geoapify lookup and Atlas Search have not been run. See `PROGRESS.md`.
+Search, the map bounds query, submissions without a photo, admin approve/reject, and the Hebrew interface were run against a **local MongoDB** on this computer. They were **not** run against MongoDB Atlas. A real Cloudinary upload, live email delivery, a Geoapify lookup and Atlas Search have not been run. See `PROGRESS.md`.
 
 ## Structure
 
@@ -34,7 +34,7 @@ Fill in `backend/.env`:
 - `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` - used only by the seed script.
 - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` - from your Cloudinary free account (Dashboard, Settings, API Keys). They stay on the server. Without them everything else works, but uploading a certificate photo answers `503 Image upload is not available`.
 
-- `RESEND_API_KEY` and `EMAIL_FROM` - from your Resend free account (see "Email (Resend)" below). Without them everything else works: moderation decisions are still saved and the admin sees that the email was not sent, but password reset emails are not delivered.
+- `EMAIL_USER` and `EMAIL_APP_PASSWORD` - Gmail/Workspace address and Google app password (see `EMAIL_SETUP.md`). Without valid configuration moderation decisions stay saved, but recovery emails cannot be sent.
 
 - `ATLAS_SEARCH_ENABLED` (default `false`) and `ATLAS_SEARCH_INDEX` (default `restaurant_search`) - optional typo-tolerant search. Search works without it (it then uses a plain MongoDB query). To switch it on, create the Atlas Search index described in `ATLAS_SEARCH_SETUP.md`. **That guide was written but never run against a real Atlas cluster.** A local MongoDB cannot provide Atlas Search.
 
@@ -42,15 +42,15 @@ Fill in `backend/.env`:
 
 `.env` is git-ignored. Never commit it.
 
-### Email (Resend)
+### Email (Gmail)
 
-Rejection reasons (restaurants, certificates, reports) and password reset links are sent through [Resend](https://resend.com) using its REST API.
+Transactional emails use Gmail through Nodemailer: password reset, password-changed confirmation, submission rejection with its public reason, and restaurant/certificate approval updates. English/Hebrew HTML and plain text share the KosherRadar branding and non-certification footer.
 
-1. Create a Resend account and an API key (https://resend.com/api-keys), and put it in `RESEND_API_KEY`.
-2. `EMAIL_FROM` must be a sender on a domain you verified in Resend, for example `KosherRadar <noreply@your-domain.com>`.
-3. **Sandbox limit:** without a verified domain, Resend only lets you send from `onboarding@resend.dev` and only to the email address of your own Resend account. Emails to other users will fail until a domain is verified.
-4. A failed or missing email never undoes a moderation decision. The admin screen says whether the email was `sent`, `failed` or `not configured`. Password reset never reveals whether an email has an account, so a failed reset email is only visible in the server log.
-5. Emails are plain text. The reset link points to `CLIENT_URL` + `/reset-password?token=...`, so `CLIENT_URL` must be the real address of the frontend.
+1. Enable Google 2-Step Verification and create a 16-character app password. Set server-only `EMAIL_USER` and `EMAIL_APP_PASSWORD`; no custom domain or DNS setup is required.
+2. Use HTTPS `CLIENT_URL` for hosted sites (HTTP allowed only on localhost/loopback). New reset links use `/reset-password#token=...`; legacy query links still work. The page removes the token from the URL and holds it only in memory. Reloading the cleaned page requires reopening the email.
+3. Delivery returns SENT, FAILED or NOT_CONFIGURED. SENT means SMTP acceptance, not inbox placement. Failure cannot reverse saved moderation or password changes; guarded approval retries do not resend mail. No private admin notes enter templates.
+4. Recovery requests return a neutral response independent of account lookup and mail processing. Background processing is best effort, not a durable queue. Five requests/hour/IP and the existing auth limiter protect the endpoints; limits are per process.
+5. Setup, account restrictions, practical Gmail quotas and diagnostic guidance are in [EMAIL_SETUP.md](EMAIL_SETUP.md). Automated tests mock Nodemailer. Agent 4's historical isolated live Gmail/recovery evidence is in `EMAIL_PASSWORD_MILESTONE_PROGRESS.md`; this integration sent no mail and did not verify live moderation delivery. Hebrew copy needs native-speaker review.
 
 ### Backend commands
 
@@ -64,7 +64,7 @@ npm run search:rebuild  # fill the search fields of restaurants that already exi
 
 **After updating to Milestone 4, run `npm run search:rebuild` once.** Search uses three fields (`nameTokens`, `foodTokens`, `foodGroups`) that are built every time a restaurant is saved. Restaurants saved before Milestone 4 do not have them yet, so they will not be found until the script has run. It is safe to run again.
 
-The API listens on `http://localhost:5000`. Health check: `GET /api/health`.
+The API listens on `http://localhost:5000`. Readiness: `GET /api/health` (also `/api/health/ready`) returns 200 with the existing connected response when Mongoose is connected, and 503 when disconnected, connecting or disconnecting. `GET /api/health/live` returns 200 while the application can answer requests, independently of database readiness. These checks expose no connection configuration and are not cached. Readiness reflects connection state rather than an active database query; startup still waits for the initial database connection.
 
 ## Frontend setup
 
@@ -100,6 +100,8 @@ npm run preview      # serve the production build locally
 | Method | Path | Access |
 | --- | --- | --- |
 | GET | `/api/health` | public |
+| GET | `/api/health/ready` | public readiness |
+| GET | `/api/health/live` | public liveness |
 | POST | `/api/auth/register` | public, rate-limited; always creates a `USER` |
 | POST | `/api/auth/login` | public, rate-limited |
 | POST | `/api/auth/forgot-password` | public, limited to 5 per hour per IP; same answer for every email |
@@ -148,7 +150,7 @@ Submission pages in the frontend (all need login):
 
 Other pages added in Milestone 3:
 
-- `/forgot-password` and `/reset-password?token=...` - password reset (no login needed; linked from the login page).
+- `/forgot-password` and `/reset-password#token=...` - password reset (no login needed; linked from the login page; legacy query links supported).
 - `/admin` - admin dashboard with five tabs (pending restaurants, pending certificates, pending reports, expiring soon, manage restaurants). Admin-only: the navbar shows an "Admin" link only to admins, and the server rejects non-admin calls anyway.
 - `/admin/restaurants/new`, `/admin/restaurants/:restaurantId` and `/admin/restaurants/:restaurantId/add-teuda` - create, review/edit and add a certificate.
 
@@ -182,4 +184,30 @@ To try the admin area: run `npm run seed:admin`, log in with that account, and o
 
 ## External services
 
-Cloudinary is used for certificate photos and Resend for emails (see setup above). Atlas Search is optional (see `ATLAS_SEARCH_SETUP.md`). Geoapify is used for address and place lookup when `GEOAPIFY_API_KEY` is set. The key stays on the server. Without it, a typed address can still be submitted, and the search location field explains that lookup is unavailable. No coordinates are invented. A missing Geoapify key was checked and returned no coordinates. Geoapify itself has not been called with a real key. A missing Cloudinary account was checked: the upload answered 503 and no certificate was saved. A real Cloudinary upload has not been done.
+Cloudinary is used for certificate photos and Gmail/Nodemailer for emails (see setup above). Atlas Search is optional (see `ATLAS_SEARCH_SETUP.md`). Geoapify is used for address and place lookup when `GEOAPIFY_API_KEY` is set. The key stays on the server. Without it, a typed address can still be submitted, and the search location field explains that lookup is unavailable. No coordinates are invented. A missing Geoapify key was checked and returned no coordinates. Geoapify itself has not been called with a real key. A missing Cloudinary account was checked: the upload answered 503 and no certificate was saved. A real Cloudinary upload has not been done.
+
+### Transactional administrator workflows
+
+Report resolution now commits the proposed correction, report outcome and guarded contribution award in one MongoDB transaction. It requires a replica set or sharded MongoDB deployment (including compatible Atlas deployments). A standalone server returns HTTP 503 / TRANSACTIONS_REQUIRED rather than writing partial state. This branch has been tested against a fresh local replica set, not Atlas; verify the target topology before deployment. No package addition, record migration or backfill is required. Historical partial writes/incorrect awards require a separately authorized data review; this change does not repair existing data automatically. Roll back application code only after assessing the integrity protections being removed.
+
+Run isolated database regressions from backend with:
+
+`node integration/runAgent1Isolated.mjs --run-isolated agent1Authority.integration.mjs agent1Corrections.integration.mjs`
+
+The runner starts installed mongod on a new loopback port with a fresh temporary database and removes only its own temporary files. It does not accept an application connection string or load application .env files. Set AGENT1_MONGOD_BINARY to an installed mongod path when needed. The test replica set uses a five-second transaction lifetime to verify recovery after a killed worker; application deployments retain their configured transaction lifetime. No external services are called.
+
+Restaurant/certificate deletion and restaurant-plus-certificate creation also require transactions. Concurrent new certificates/reports serialize against cascades through an internal restaurant integrityVersion counter. It is additive and increments missing legacy values from zero; no backfill. Deletion queues Cloudinary public ids in the same database transaction, then attempts external cleanup after commit. API deletion results include imageCleanup completed/pending counts. Pending jobs persist in the new ImageCleanup collection. An operator can retry at most 100 queued jobs with `node scripts/retryImageCleanup.js` from backend; this uses the configured database and Cloudinary, so run only with explicit authorization for the target resources. The agent did not run this command against real services. On rollback, retain queued jobs and the internal counter for recovery.
+
+Uploads precede database transactions because Cloudinary cannot participate. Aborted creates queue cleanup where the database is available; if MongoDB is unreachable the id is logged and best-effort cleanup runs. An uncertain transaction commit retains the upload for reference reconciliation. Process termination between external upload and durable recording can still leave an unreferenced Cloudinary asset requiring provider-side/operator reconciliation. No mock test proves live Cloudinary behavior.
+
+Restaurant rejection also commits related pending certificate rejections in one transaction. A failure aborts both and can be retried. Rejection email runs only after commit; delivery failure preserves the saved moderation decision.
+
+### Required unique indexes at startup
+
+Application database connections now disable implicit collection/index creation and verify actual unique indexes before the HTTP listener starts. Missing or incompatible uniqueness fails startup without changing records/indexes. Checks include User email, Restaurant pending submitter/name/address/city, Teuda dated/undated pending identities, Report pending fingerprint, PasswordResetToken hash and ImageCleanup publicId. The obsolete broader restaurant constraint also fails startup; replacement requires operator approval. Existing report rows without a fingerprint remain outside their partial index; no record backfill is performed.
+
+From backend, `node scripts/verifyIntegrityIndexes.js` performs read-only verification. A fresh database or one missing indexes (including the new cleanup collection) needs provisioning before starting or seeding. After explicitly approving the configured target, an operator can run `node scripts/provisionIntegrityIndexes.js --allow-index-creation`. This creates declared indexes and missing collections, including geospatial/query indexes and the existing reset-token TTL declaration; it never drops indexes or repairs duplicate records. Approval for an existing target must cover TTL expiry of old reset tokens. If conflicting index definitions or old duplicates block a build, stop and arrange an approved compatibility review. The agent did not run either operator command against existing application databases. The disposable integration harness provisions only its own fresh data.
+
+Rollback requires keeping provisioned indexes and cleanup jobs; avoid dropping uniqueness protections. No existing-record schema migration/backfill or package addition is required. Before integration/deployment, verify replica-set support and obtain approval for any required application-database index creation.
+
+Integrated release preparation, exact unique definitions, city-index replacement, legacy-data limits and rollback are in [INTEGRATION_DEPLOYMENT_CHECKLIST.md](INTEGRATION_DEPLOYMENT_CHECKLIST.md). Local integration checks are in [INTEGRATION_PROGRESS.md](INTEGRATION_PROGRESS.md). SEC-006 (concurrent reset issuance allowing distinct valid links) is confirmed and remains a production release blocker; passing diagnostic checks are not a security fix.

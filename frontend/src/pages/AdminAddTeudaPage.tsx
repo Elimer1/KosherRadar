@@ -8,6 +8,7 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import { createTeudaAsAdmin, getRestaurantDetails } from '../api/adminApi';
 import { getErrorMessage } from '../api/errors';
 import FormAlert from '../components/FormAlert';
+import PhotoFieldRecovery from '../components/PhotoFieldRecovery';
 import TeudaFields from '../components/TeudaFields';
 import { inputClassName, labelClassName, primaryButtonClassName } from '../components/formStyles';
 import { useFormOptions } from '../hooks/useFormOptions';
@@ -31,7 +32,7 @@ function AdminAddTeudaPage() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
-  const { photo, photoError, handlePhotoChange } = usePhotoField(options?.maxImageBytes || 5 * 1024 * 1024);
+  const { photo, photoError, photoValidating, getPhotoSubmissionError, handlePhotoChange, clearPhoto } = usePhotoField(options?.maxImageBytes || 5 * 1024 * 1024);
 
   useEffect(() => {
     const loadRestaurant = async () => {
@@ -49,6 +50,14 @@ function AdminAddTeudaPage() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError('');
+
+    // NEW (Agent 3): guard keyboard submission as well as the button.
+    // חדש (סוכן 3): חסימת שליחה גם באמצעות מקלדת.
+    const photoProblem = getPhotoSubmissionError();
+    if (photoProblem) {
+      setError(photoProblem);
+      return;
+    }
 
     if (!photo) {
       setError(t('forms.needPhoto'));
@@ -136,7 +145,8 @@ function AdminAddTeudaPage() {
           </div>
         )}
 
-        <button type="submit" disabled={loading || Boolean(photoError)} className={primaryButtonClassName}>
+        <PhotoFieldRecovery photo={photo} photoError={photoError} photoValidating={photoValidating} disabled={loading} onClear={clearPhoto} />
+        <button type="submit" disabled={loading || photoValidating || Boolean(photoError)} className={primaryButtonClassName}>
           {loading ? t('auth.saving') : t('desk.addApproved')}
         </button>
       </form>

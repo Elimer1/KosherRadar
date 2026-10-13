@@ -1,3 +1,10 @@
+vi.mock('../src/repositories/transaction.js', () => ({ withTransaction: vi.fn(async (work) => work()) }));
+vi.mock('../src/repositories/restaurantIntegrityRepository.js', () => ({ lockRestaurantForWriteRepo: vi.fn() }));
+vi.mock('../src/repositories/imageCleanupRepository.js', () => ({
+  enqueueImageCleanupRepo: vi.fn(),
+  findImageCleanupRepo: vi.fn(async (ids) => (ids || []).map((publicId) => ({ publicId }))),
+  completeImageCleanupRepo: vi.fn(), failImageCleanupRepo: vi.fn(),
+}));
 // NEW (Milestone 3): tests for admin restaurant moderation (create, edit, approve, reject, delete, lists).
 // חדש (אבן דרך 3): בדיקות לניהול מסעדות על ידי מנהל (יצירה, עריכה, אישור, דחייה, מחיקה, רשימות).
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -41,6 +48,7 @@ vi.mock('../src/repositories/userRepository.js', () => ({
 vi.mock('../src/services/emailService.js', () => ({
   EMAIL_FAILED: 'FAILED',
   sendRejectionEmailService: vi.fn(),
+  sendApprovalEmailService: vi.fn().mockResolvedValue('SENT'),
 }));
 
 vi.mock('../src/services/duplicateService.js', () => ({
@@ -78,7 +86,7 @@ import {
   findReportsOfRestaurantRepo,
 } from '../src/repositories/adminReportRepository.js';
 import { awardPointsOnceRepo, findUserByIdRepo } from '../src/repositories/userRepository.js';
-import { sendRejectionEmailService } from '../src/services/emailService.js';
+import { sendApprovalEmailService, sendRejectionEmailService } from '../src/services/emailService.js';
 import { findPossibleDuplicatesService } from '../src/services/duplicateService.js';
 import { deleteImageService, uploadTeudaImageService } from '../src/services/imageUploadService.js';
 import {
@@ -92,6 +100,8 @@ import {
   updateRestaurantByAdminService,
 } from '../src/services/adminRestaurantService.js';
 import { dateOnlyToDate } from '../src/utils/israelDate.js';
+import { geocodeAddressService } from '../src/services/placesService.js';
+vi.mock('../src/services/placesService.js', () => ({ geocodeAddressService: vi.fn().mockResolvedValue({ status: 'unavailable' }) }));
 
 const admin = { _id: 'admin-1', role: 'ADMIN' };
 
@@ -193,14 +203,14 @@ describe('createRestaurantByAdminService', () => {
     expect(result.restaurant.status).toBe('APPROVED');
   });
 
-  it('removes the restaurant and the photo when the certificate cannot be saved', async () => {
+  it('aborts creation and cleans the photo when the certificate cannot be saved', async () => {
     createTeudaRepo.mockRejectedValue(new Error('database down'));
 
     await expect(
       createRestaurantByAdminService({ restaurantData: restaurantFields(), extras: {}, teudaData, file, admin })
     ).rejects.toThrow('database down');
 
-    expect(deleteRestaurantByIdRepo).toHaveBeenCalledWith('rest-new');
+    expect(deleteRestaurantByIdRepo).not.toHaveBeenCalled();
     expect(deleteImageService).toHaveBeenCalledWith('new-id');
   });
 
@@ -213,20 +223,21 @@ describe('createRestaurantByAdminService', () => {
 });
 
 describe('updateRestaurantByAdminService', () => {
-  it('replaces the editable fields, keeps the status and never touches the Geoapify place id', async () => {
-    const existing = restaurant({ status: 'APPROVED', geoapifyPlaceId: 'place-1' });
+  it('replaces editable fields and preserves unchanged location identity and status', async () => {
+    const existing = restaurant({ status: 'APPROVED', latitude: 31.7, longitude: 35.2, geoapifyPlaceId: 'place-1' });
     findRestaurantByIdRepo.mockResolvedValue(existing);
     saveRestaurantChangesRepo.mockImplementation(async (doc, changes) => ({ ...doc, ...changes }));
 
     const result = await updateRestaurantByAdminService({
       restaurantId: 'rest-1',
-      restaurantData: restaurantFields({ name: 'Pizza Hut Jerusalem' }),
+      restaurantData: restaurantFields({ name: 'Pizza Hut Jerusalem', latitude: 31.7, longitude: 35.2, geoapifyPlaceId: 'place-1' }),
       extras: { adminNote: 'Name fixed' },
     });
 
     const changes = saveRestaurantChangesRepo.mock.calls[0][1];
     expect(changes).not.toHaveProperty('status');
-    expect(changes).not.toHaveProperty('geoapifyPlaceId');
+    expect(changes.geoapifyPlaceId).toBe('place-1');
+    expect(geocodeAddressService).not.toHaveBeenCalled();
     expect(changes).not.toHaveProperty('submittedBy');
     expect(result.name).toBe('Pizza Hut Jerusalem');
     expect(result.status).toBe('APPROVED');
@@ -261,6 +272,7 @@ describe('approveRestaurantService', () => {
     expect(result.restaurant.status).toBe('APPROVED');
     expect(result.alreadyApproved).toBe(false);
     expect(awardPointsOnceRepo).not.toHaveBeenCalled();
+    expect(sendApprovalEmailService).toHaveBeenCalledTimes(1);
   });
 
   it('changes nothing when the restaurant is already approved', async () => {
@@ -270,6 +282,7 @@ describe('approveRestaurantService', () => {
 
     expect(result.alreadyApproved).toBe(true);
     expect(approvePendingRestaurantRepo).not.toHaveBeenCalled();
+    expect(sendApprovalEmailService).not.toHaveBeenCalled();
   });
 
   it('refuses to approve a rejected restaurant', async () => {
@@ -287,6 +300,19 @@ describe('approveRestaurantService', () => {
     const result = await approveRestaurantService({ restaurantId: 'rest-1' });
 
     expect(result.alreadyApproved).toBe(true);
+    expect(sendApprovalEmailService).not.toHaveBeenCalled();
+  });
+
+  it('keeps the saved approval when notification throws and sends nothing on retry', async () => {
+    findRestaurantByIdRepo.mockResolvedValue(restaurant());
+    approvePendingRestaurantRepo.mockResolvedValue(restaurant({ status: 'APPROVED' }));
+    sendApprovalEmailService.mockRejectedValueOnce(new Error('SMTP down'));
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect((await approveRestaurantService({ restaurantId: 'rest-1' })).restaurant.status).toBe('APPROVED');
+    findRestaurantByIdRepo.mockResolvedValue(restaurant({ status: 'APPROVED' }));
+    await approveRestaurantService({ restaurantId: 'rest-1' });
+    expect(sendApprovalEmailService).toHaveBeenCalledTimes(1);
+    log.mockRestore();
   });
 });
 
@@ -317,14 +343,13 @@ describe('rejectRestaurantService', () => {
     expect(result.emailStatus).toBe('NOT_CONFIGURED');
   });
 
-  it('keeps the rejection when closing the certificates fails', async () => {
+  it('fails the transaction and sends no notification when certificate rejection fails', async () => {
     findRestaurantByIdRepo.mockResolvedValue(restaurant());
     rejectPendingRestaurantRepo.mockResolvedValue(restaurant({ status: 'REJECTED', rejectionReason: 'Duplicate' }));
     rejectPendingTeudotOfRestaurantRepo.mockRejectedValue(new Error('database hiccup'));
 
-    const result = await rejectRestaurantService({ restaurantId: 'rest-1', reason: 'Duplicate' });
-
-    expect(result.restaurant.status).toBe('REJECTED');
+    await expect(rejectRestaurantService({ restaurantId: 'rest-1', reason: 'Duplicate' })).rejects.toThrow('database hiccup');
+    expect(sendRejectionEmailService).not.toHaveBeenCalled();
   });
 
   it('only rejects a restaurant that is waiting for review', async () => {
@@ -348,7 +373,7 @@ describe('deleteRestaurantService', () => {
 
     const result = await deleteRestaurantService({ restaurantId: 'rest-1' });
 
-    expect(result).toEqual({ deleted: true, deletedCertificates: 2 });
+    expect(result).toMatchObject({ deleted: true, deletedCertificates: 2, imageCleanup: expect.any(Object) });
     expect(deleteTeudotOfRestaurantRepo).toHaveBeenCalledWith('rest-1');
     expect(deleteReportsOfRestaurantRepo).toHaveBeenCalledWith('rest-1');
     expect(deleteRestaurantByIdRepo).toHaveBeenCalledWith('rest-1');

@@ -56,15 +56,22 @@ export const uploadTeudaImageService = (file) => uploadImageService(file, TEUDA_
 export const uploadReportImageService = (file) => uploadImageService(file, REPORT_FOLDER);
 
 // Used to clean up an uploaded photo when saving to the database fails afterwards.
-// A failure here is only logged: the original error is the one the user needs to see.
+// Return an explicit outcome so the durable cleanup queue can retain failures for retry.
 export const deleteImageService = async (cloudinaryPublicId) => {
-  if (!cloudinaryPublicId || !isCloudinaryConfigured()) {
-    return;
+  if (!cloudinaryPublicId) {
+    return { deleted: true };
+  }
+  if (!isCloudinaryConfigured()) {
+    return { deleted: false, reason: 'NOT_CONFIGURED' };
   }
 
   try {
-    await getCloudinary().uploader.destroy(cloudinaryPublicId, { resource_type: 'image' });
+    const result = await getCloudinary().uploader.destroy(cloudinaryPublicId, { resource_type: 'image' });
+    return result?.result === 'ok' || result?.result === 'not found'
+      ? { deleted: true }
+      : { deleted: false, reason: 'UNEXPECTED_RESPONSE' };
   } catch (error) {
     console.error('Could not delete orphaned Cloudinary image:', cloudinaryPublicId, error.message);
+    return { deleted: false, reason: 'CLEANUP_FAILED' };
   }
 };

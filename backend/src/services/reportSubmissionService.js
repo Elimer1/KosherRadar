@@ -1,9 +1,12 @@
+import { withTransaction } from '../repositories/transaction.js';
+import { lockRestaurantForWriteRepo } from '../repositories/restaurantIntegrityRepository.js';
+import { cleanupFailedUploadService } from './imageCleanupService.js';
 import { appError } from '../utils/appError.js';
 import { findRestaurantByIdRepo } from '../repositories/restaurantRepository.js';
 import { createReportRepo, findSimilarPendingReportRepo } from '../repositories/reportRepository.js';
 import { findTeudaByIdRepo } from '../repositories/teudaRepository.js';
 import { isTeudaPublic } from './teudaRulesService.js';
-import { deleteImageService, uploadReportImageService } from './imageUploadService.js';
+import { uploadReportImageService } from './imageUploadService.js';
 
 // NEW (Backend QA): the pending-report fingerprint index reports a lost race as a duplicate key.
 // חדש (בדיקת שרת): אינדקס טביעת הדיווח הממתין מדווח על מרוץ שהפסיד כמפתח כפול.
@@ -58,26 +61,33 @@ export const submitReportService = async ({ reportData, file, user }) => {
   const image = file ? await uploadReportImageService(file) : null;
 
   try {
-    const report = await createReportRepo({
-      restaurant: restaurant._id,
-      teuda: reportData.teudaId,
-      submittedBy: user._id,
-      type: reportData.type || 'GENERAL',
-      description: reportData.description,
-      proposedHechsher: reportData.proposedHechsher,
-      proposedHechsherOther: reportData.proposedHechsherOther,
-      proposedKashrutLevel: reportData.proposedKashrutLevel,
-      photoUrl: image?.photoUrl,
-      cloudinaryPublicId: image?.cloudinaryPublicId,
-      status: 'PENDING',
-      correctionApplied: false,
+    const report = await withTransaction(async () => {
+      await lockRestaurantForWriteRepo(restaurant._id, 'APPROVED');
+      if (reportData.teudaId) {
+        const current = await findTeudaByIdRepo(reportData.teudaId);
+        if (!current || String(current.restaurant) !== String(restaurant._id) || !isTeudaPublic(current)) {
+          throw appError('Certificate not found', 404);
+        }
+      }
+      return createReportRepo({
+        restaurant: restaurant._id,
+        teuda: reportData.teudaId,
+        submittedBy: user._id,
+        type: reportData.type || 'GENERAL',
+        description: reportData.description,
+        proposedHechsher: reportData.proposedHechsher,
+        proposedHechsherOther: reportData.proposedHechsherOther,
+        proposedKashrutLevel: reportData.proposedKashrutLevel,
+        photoUrl: image?.photoUrl,
+        cloudinaryPublicId: image?.cloudinaryPublicId,
+        status: 'PENDING',
+        correctionApplied: false,
+      });
     });
 
     return { id: String(report._id), status: report.status };
   } catch (error) {
-    if (image) {
-      await deleteImageService(image.cloudinaryPublicId);
-    }
+    await cleanupFailedUploadService(image?.cloudinaryPublicId, error);
 
     if (isPendingReportDuplicate(error)) {
       throw pendingReportConflict();

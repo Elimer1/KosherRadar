@@ -57,7 +57,7 @@ function Navbar() {
 
   const actions = (
     <>
-      <Link to="/submit-restaurant" onClick={closeMenu} className={textActionClassName}>
+      <Link to={user?.role === 'ADMIN' ? '/admin/restaurants/new' : '/submit-restaurant'} onClick={closeMenu} className={textActionClassName}>
         <PlusIcon />
         {t('nav.addRestaurant')}
       </Link>

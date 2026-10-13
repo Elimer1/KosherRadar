@@ -1,0 +1,93 @@
+# Agent 1 implementation progress
+
+13 October 2026. Branch fix/admin-data-integrity; clean baseline dc5dc24. Assigned batch A1-001, A1-002, A1-R1, A1-R2, A1-R4. FIX_TRACKER.md authoritative.
+
+A1-001 confirmed public ADMIN submission enters PENDING. Reject before uploads/persistence; navigation and bookmarked routes use existing fully validated authoritative forms. Existing ADMIN-PENDING test is obsolete under explicit business requirements and replaced with rejection/no-side-effect assertions; USER moderation unchanged. No Hebrew edits. Verification pending.
+
+Infrastructure inspection: installed Mongoose 9 implements transactionAsyncLocalStorage for queries, creates and document saves. README expects Atlas but historical local tests used standalone MongoDB. Installed mongod 7 is available. A dedicated temporary local replica set can verify transactions; never use port 27017/application databases. A transaction solution must document replica-set requirement and fail closed on standalone; no package addition.
+
+A1-001 VERIFIED: Backend targeted npm test (4 files / 88 tests), HTTP npm test (1 file / 2 tests), frontend npm test -- src/components/UserSubmissionRoute.test.tsx (4 tests), npm run lint/typecheck/build, disposable database node integration/runAgent1Isolated.mjs --run-isolated (1 real MongoDB test): all exit 0. Existing ~767 kB build warning. Backend has no build/lint/typecheck scripts. Browser not run; external services not called. First isolated test failed because assertion used contributionPoints instead of actual points; corrected test field and rerun passed. Sandbox cache/listener restrictions required approved escalated check runs.
+Files: public middleware/services/routes, Navbar, RestaurantActions, App, UserSubmissionRoute, service/HTTP/route regressions, isolated MongoDB runner and authority integration, tracking files. No migration/deployment dependency for this fix.
+
+A1-002 reproduced against isolated real MongoDB: retry awards 1 point before correction failure (expected 0); award failure leaves RESOLVED (expected PENDING). Baseline 1 pass / 2 fail, exit 1. Fix: transaction for claim/correction/guarded award, session propagation via installed transactionAsyncLocalStorage. No external calls in retryable callback. Reopen compensation expectation is obsolete because abort restores writes; actual failure assertion retained with real rollback tests. Replica-set deployment required; standalone gets explicit 503. Historical inconsistent reports/awards need separately approved data review; no backfill here.
+
+A1-002 VERIFIED: npm test -- tests/adminReportService.test.js tests/pointsService.test.js tests/transaction.test.js: exit 0, 3 files / 34 tests. node integration/runAgent1Isolated.mjs --run-isolated agent1Corrections.integration.mjs: exit 0, 4 real MongoDB tests including concurrent failure, concurrent success/idempotency/ADMIN zero points, award rollback/retry and abrupt worker termination/recovery. Browser/frontend not rerun for this backend-only fix; backend has no build/lint/typecheck scripts. No external services. Deployment: MongoDB replica set/sharded topology required; standalone fails closed with explicit 503. No schema/record migration or new dependencies. Abrupt death verified with killed child worker, short transaction expiry only in disposable test server; retry succeeds after abort. A source-edit line-ending mistake and module-initialization mock assertion were corrected before final passing checks.
+
+A1-R1 baseline reproduced in real isolated MongoDB: 3/3 regressions fail, exit 1 (cascade loses certificate before report-delete failure; certificate unlink failure leaves dangling report; creation compensation failure leaves restaurant). Implement one transaction for cascades and restaurant-plus-certificate creation. Durable image-cleanup outbox records ids in the deletion transaction; retry after commit, independent of database atomicity. Parent integrityVersion write serializes new children against deletion/rejection, preventing orphan inserts from racing a snapshot cascade. Additive internal counter + cleanup collection: old documents increment missing counter from zero; no record migration/backfill. Rollback: stop retry worker, retain queue/counter, restore application code only after topology/data assessment. Cloudinary outcome-only test is outdated: returned failure outcome now retains retry job; keep failure assertion. Creation compensation tests should assert no compensating delete because transaction abort removes both records; preserve original failure assertions and add real persistence regressions.
+
+A1-R1 / SEC-010 VERIFIED: Targeted npm test: exit 0, 7 files / 117 tests. Full backend npm test with services disabled: exit 0, 42 files / 510 tests. node integration/runAgent1Isolated.mjs --run-isolated agent1Integrity.integration.mjs: exit 0, 7 real MongoDB tests covering cascade/unlink/final-delete rollback, cleanup outbox rollback, mocked external failure/acknowledgement loss/retry, concurrent parent/child and certificate/report races, USER/ADMIN creation failures. Diff check exit 0. Frontend/browser not rerun (backend-only); backend has no build/lint/typecheck scripts. Cloudinary SDK mocked; no live services.
+Files: admin restaurant/teuda and public restaurant/teuda/report services; Restaurant internal counter and integrity repository; ImageCleanup model/repository/service; explicit image-delete outcomes and operator retry script; related unit tests and isolated integrity regression; README/tracking. API deletion responses add imageCleanup counts. Existing USER points/ADMIN zero eligibility unchanged; previously awarded points retained. No new dependencies/backfill/tombstones/public status changes. Remaining external limitation: abrupt death after upload before DB/outbox recording can leave provider assets; unknown commit retains upload for reconciliation, and database-unavailable compensation logs its id. These are separate from verified database rollback.
+
+A1-R2 reproduced: real database baseline 1 pass / 1 fail, exit 1; failed certificate rejection is swallowed and parent rejection succeeds. Existing unit expectation that rejection stays saved despite certificate failure is obsolete under required atomic consistency. Replace with failure/no-email assertion; retain email-failure-does-not-rollback test. Chosen transaction for both moderation writes; notification stays outside commit/retry callback. Historical previously rejected parents with pending certificates are not bulk repaired; separate data review approval required.
+
+A1-R2 VERIFIED: npm test -- tests/adminRestaurantService.test.js: exit 0, 23 tests. node integration/runAgent1Isolated.mjs --run-isolated agent1Rejection.integration.mjs: exit 0, 2 real MongoDB failure/retry and concurrent approve/reject regressions. Diff check exit 0. No build/lint/typecheck scripts in backend; frontend/browser not rerun; email unconfigured, no real email sent. Files: adminRestaurantService, adminRestaurantService unit regression, agent1Rejection integration tests and tracking. Both rejection writes commit together; failures return error and keep request retryable. Notification after commit. No migration/new dependencies.
+
+A1-R4 root cause verified by source: connectDb resolved without awaiting/checking unique index construction; Mongoose autoIndex default true can build after requests are accepted, and no startup guard checks failures/missing indexes. Implement read-only startup gate comparing key order, unique, sparse, partial filter and collation against schema declarations. Disable implicit autoCreate/autoIndex on application connections; disconnect/fail startup on missing/incompatible enforcement. Operator verification/provisioning scripts supplied but NOT run against application resources. New ImageCleanup collection/index must be provisioned before deployment. Legacy report rows without fingerprint intentionally remain outside their partial index; no backfill. Isolated MongoDB verification passes (3 tests): missing-index startup writes nothing, actual duplicates receive E11000 for all six model identities, same-name nonunique index is rejected without repair.
+
+Provisioning review: explicit operator command builds all existing declared query/geospatial indexes as well as unique indexes, preserving fresh-database behavior when autoIndex is disabled. It also builds the declared reset-token TTL index; approval for an existing target must include expiry of old reset tokens. No production/application command was run. Disposable tests verify provisioning/no-flag rejection, read-only validation, conflicting-index failure with unchanged fixture records, geospatial and TTL declarations.
+
+A1-R4 VERIFIED: final operator/index regression exit 0, 4 tests. node integration/runAgent1Isolated.mjs --run-isolated agent1Authority.integration.mjs agent1Corrections.integration.mjs agent1Integrity.integration.mjs agent1Rejection.integration.mjs agent1Indexes.integration.mjs: exit 0, 18 tests. Final full backend npm test: exit 0, 42 files / 510 tests. Final full frontend npm test: exit 0, 27 files / 162 tests; lint/typecheck/build already passed on the unchanged final frontend source (existing ~767 kB warning). Backend has no build/lint/typecheck scripts. Browser not run. All database tests used a fresh disposable local replica set, external SDKs mocked; no real services/email/user files or existing application database used.
+
+A1-R4 files: config/db.js, indexIntegrityRepository.js, verifyIntegrityIndexes.js, provisionIntegrityIndexes.js, agent1Indexes.integration.mjs, README and tracking. Startup now checks actual unique constraints before listening and disconnects on missing/incompatible indexes. Explicit operator provisioning was verified ONLY on disposable resources and requires target approval, including the declared reset-token TTL expiry. No production provisioning, package changes or record backfill.
+
+Historical M5-001/M5-003/M5-004 statuses reconciled to VERIFIED with current A1 evidence; old audit descriptions retained as historical. M2-002/M5-002 old compensation notes explicitly superseded. Tracker counts derived from 45 detailed statuses: 21 VERIFIED, 8 ALREADY WORKING, 10 NOT STARTED, 5 BLOCKED, 1 DEFERRED. These include the five new assigned A1 entries; no unrelated issues started.
+
+Integration considerations: public restaurant/teuda endpoints now reject ADMIN (403); route bookmarked forms to existing admin pages. Public USER moderation and certificate-validation requirements remain. Changed shared submission/image cleanup services may overlap Agent 3 backend work; preserve transaction/parent-write guards and response behavior when integrating. Agent 2 search/geocoding and Agent 4 password/auth/email code were not modified. config/db startup now requires approved indexes for all models, including password-reset hash and the new cleanup collection. Deletion responses add imageCleanup counts; frontend callers can continue ignoring the additive field. MongoDB replica-set/sharded support is required for transaction-dependent paths. No merge, push or deploy.
+
+Remaining limitations: live Atlas/Cloudinary/Resend/Geoapify and browser journeys unverified; native-speaker review and existing bundle warning remain tracked. Historical inconsistent reports/awards/rejections need separately approved data inspection/repair. Upload-before-durable-record crash window remains; uncertain commit retains uploads for reconciliation. Standalone MongoDB fails closed with explicit 503 on transactional paths. Application startup rejects missing unique indexes; obtain approval before target provisioning. Stop after final checkpoint/handoff; all assigned code issues verified.
+
+## Final checkpoints and changed files
+
+- 37725fc fix(a1-r4): verify unique-index enforcement before accepting requests
+- 6faa1a2 fix(a1-r2): reject restaurants and pending certificates atomically
+- 351f9d6 fix(a1-r1): preserve database integrity across cascades and creation failures
+- b106482 fix(a1-002): commit report corrections and awards atomically
+- af86d50 fix(a1-001): separate authoritative admin creation from public submissions
+
+- `AGENT_1_FIX_PROGRESS.md`
+- `FIX_TRACKER.md`
+- `PROGRESS.md`
+- `README.md`
+- `backend/integration/agent1Authority.integration.mjs`
+- `backend/integration/agent1Corrections.integration.mjs`
+- `backend/integration/agent1Indexes.integration.mjs`
+- `backend/integration/agent1Integrity.integration.mjs`
+- `backend/integration/agent1Rejection.integration.mjs`
+- `backend/integration/runAgent1Isolated.mjs`
+- `backend/scripts/provisionIntegrityIndexes.js`
+- `backend/scripts/retryImageCleanup.js`
+- `backend/scripts/verifyIntegrityIndexes.js`
+- `backend/src/config/db.js`
+- `backend/src/middleware/userSubmissionMiddleware.js`
+- `backend/src/models/ImageCleanup.js`
+- `backend/src/models/Restaurant.js`
+- `backend/src/repositories/imageCleanupRepository.js`
+- `backend/src/repositories/indexIntegrityRepository.js`
+- `backend/src/repositories/restaurantIntegrityRepository.js`
+- `backend/src/repositories/transaction.js`
+- `backend/src/routes/restaurantRoutes.js`
+- `backend/src/services/adminReportService.js`
+- `backend/src/services/adminRestaurantService.js`
+- `backend/src/services/adminTeudaService.js`
+- `backend/src/services/imageCleanupService.js`
+- `backend/src/services/imageUploadService.js`
+- `backend/src/services/reportSubmissionService.js`
+- `backend/src/services/restaurantSubmissionService.js`
+- `backend/src/services/teudaSubmissionService.js`
+- `backend/tests/adminReportService.test.js`
+- `backend/tests/adminRestaurantService.test.js`
+- `backend/tests/adminTeudaService.test.js`
+- `backend/tests/imageUpload.test.js`
+- `backend/tests/qaPendingCertificateIdentity.test.js`
+- `backend/tests/reportSubmissionService.test.js`
+- `backend/tests/restaurantSubmissionService.test.js`
+- `backend/tests/teudaSubmissionService.test.js`
+- `backend/tests/transaction.test.js`
+- `backend/tests/userSubmissionRoutesHttp.test.js`
+- `frontend/src/App.tsx`
+- `frontend/src/components/Navbar.tsx`
+- `frontend/src/components/UserSubmissionRoute.test.tsx`
+- `frontend/src/components/UserSubmissionRoute.tsx`
+- `frontend/src/components/details/RestaurantActions.tsx`
+
+Final code HEAD 37725fc; the subsequent documentation checkpoint records hashes/file inventory only. Assigned batch complete; stop. Worktree was clean after code checkpoints. No merge, push or deployment.

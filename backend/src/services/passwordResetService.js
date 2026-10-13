@@ -14,7 +14,7 @@ import {
   releaseResetTokenRepo,
 } from '../repositories/passwordResetRepository.js';
 import { findUserByEmailRepo, setUserPasswordHashRepo } from '../repositories/userRepository.js';
-import { sendPasswordResetEmailService } from './emailService.js';
+import { sendPasswordChangedEmailService, sendPasswordResetEmailService } from './emailService.js';
 
 const SALT_ROUNDS = 10;
 
@@ -25,12 +25,13 @@ export const hashResetToken = (token) => crypto.createHash('sha256').update(toke
 
 export const buildResetLink = (token) => {
   const baseUrl = env.clientUrl.replace(/\/+$/, '');
-  return `${baseUrl}/reset-password?token=${token}`;
+  // Fragments are never sent to the frontend host or included in HTTP access logs.
+  return `${baseUrl}/reset-password#token=${token}`;
 };
 
 // Always resolves with nothing. The caller shows the same message in every case.
 // תמיד מסתיים בלי ערך. הקורא מציג אותה הודעה בכל מקרה.
-export const requestPasswordResetService = async ({ email }) => {
+export const requestPasswordResetService = async ({ email, language }) => {
   const user = await findUserByEmailRepo(email);
 
   if (!user) {
@@ -52,14 +53,15 @@ export const requestPasswordResetService = async ({ email }) => {
     to: user.email,
     resetLink: buildResetLink(token),
     validMinutes: RESET_TOKEN_VALID_MINUTES,
+    language: user.preferredLanguage || language,
   }).then((status) => {
     if (status !== 'SENT') {
       console.error(`Password reset email for user ${user._id} was not sent (${status})`);
     }
-  });
+  }).catch(() => console.error('Password reset email failed'));
 };
 
-export const resetPasswordService = async ({ token, password }) => {
+export const resetPasswordService = async ({ token, password, language }) => {
   // One atomic step both checks the token (known, not used, not expired) and marks it used.
   const consumed = await consumeResetTokenRepo(hashResetToken(token), new Date());
 
@@ -82,13 +84,20 @@ export const resetPasswordService = async ({ token, password }) => {
 
     passwordSaved = true;
     // Any other link that was still waiting is cancelled too.
-    await deleteUnusedResetTokensRepo(user._id);
+    try {
+      await deleteUnusedResetTokensRepo(user._id);
+    } catch {
+      // The password is saved and sessions invalidated. Do not tell the user the reset failed.
+      console.error('Could not cancel other reset links after password change');
+    }
+    void sendPasswordChangedEmailService({ to: user.email, language: user.preferredLanguage || language })
+      .catch(() => console.error('Password-change notification failed'));
   } catch (error) {
     if (!passwordSaved) {
       try {
         await releaseResetTokenRepo(consumed._id);
-      } catch (releaseError) {
-        console.error('Could not release reset token after a failed password update:', consumed._id, releaseError.message);
+      } catch {
+        console.error('Could not release reset token after a failed password update');
       }
     }
 
