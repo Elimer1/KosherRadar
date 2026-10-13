@@ -1,30 +1,28 @@
-// NEW (Milestone 4): the filters of the search (spec section 8): kashrut level, specific hechsher (multi-select),
-// food type (multi-select), category (multi-select), Hide Expired, Include Unknown, and the distance radius
-// (1 / 5 / 10 / 25 / 50 km), which only exists once a search location was chosen.
-// The filters only collect choices; the server filters and sorts.
-// חדש (אבן דרך 4): מסנני החיפוש. הרדיוס קיים רק אחרי שנבחר מיקום. המסננים רק אוספים בחירות; השרת מסנן וממיין.
+// Filters collect choices and report them immediately. The server filters and sorts.
+// Radius exists only after a search location was chosen.
 import { useTranslation } from 'react-i18next';
 import type { FormOptions } from '../types/submissions';
 import { RADIUS_OPTIONS_KM } from '../types/search';
 import type { SearchFilters } from '../types/search';
 import { getCategoryLabel, getFoodTypeLabel, getHechsherOptionLabel, getKashrutLevelLabel } from '../utils/labels';
 import { toggleValue } from '../utils/searchResults';
-import { choiceClassName, inputClassName, labelClassName, panelClassName, quietActionClassName } from './formStyles';
+import { choiceClassName, inputClassName, labelClassName, quietActionClassName } from './formStyles';
 
 interface SearchFiltersPanelProps {
   filters: SearchFilters;
   options: FormOptions | null;
   onChange: (next: SearchFilters) => void;
+  showHeading?: boolean;
 }
 
 const checkboxLabelClassName = choiceClassName;
 
-function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelProps) {
+function SearchFiltersPanel({ filters, options, onChange, showHeading = true }: SearchFiltersPanelProps) {
   const { t } = useTranslation();
 
   return (
-    <div className={`${panelClassName} space-y-5 p-4 sm:p-5`}>
-      <h2 className="text-base font-semibold text-ink">{t('home.filters')}</h2>
+    <div className="space-y-6">
+      {showHeading && <h2 className="text-base font-semibold text-ink">{t('home.filters')}</h2>}
       <div>
         <div className="flex items-center justify-between gap-2">
           <label htmlFor="filter-level" className={labelClassName}>
@@ -52,7 +50,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
       </div>
 
       <fieldset>
-        <legend className="flex items-center justify-between gap-2">
+        <legend className="flex w-full items-center justify-between gap-2">
           <span className={labelClassName}>{t('filters.hechsher')}</span>
           {filters.hechsher.length > 0 && (
             <button type="button" onClick={() => onChange({ ...filters, hechsher: [] })} className={quietActionClassName}>
@@ -60,7 +58,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
             </button>
           )}
         </legend>
-        <div className="mt-1 grid max-h-44 gap-1.5 overflow-y-auto">
+        <div className="mt-1 grid max-h-44 gap-1 overflow-y-auto pe-1">
           {(options?.hechsherOptions || []).map((option) => (
             <label key={option.value} className={checkboxLabelClassName}>
               <input
@@ -89,7 +87,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
       </fieldset>
 
       <fieldset>
-        <legend className="flex items-center justify-between gap-2">
+        <legend className="flex w-full items-center justify-between gap-2">
           <span className={labelClassName}>{t('filters.foodType')}</span>
           {filters.foodType.length > 0 && (
             <button type="button" onClick={() => onChange({ ...filters, foodType: [] })} className={quietActionClassName}>
@@ -97,7 +95,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
             </button>
           )}
         </legend>
-        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1.5">
+        <div className="mt-1 flex flex-col gap-1">
           {(options?.foodTypes || []).map((foodType) => (
             <label key={foodType} className={checkboxLabelClassName}>
               <input
@@ -113,7 +111,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
       </fieldset>
 
       <fieldset>
-        <legend className="flex items-center justify-between gap-2">
+        <legend className="flex w-full items-center justify-between gap-2">
           <span className={labelClassName}>{t('filters.category')}</span>
           {filters.category.length > 0 && (
             <button type="button" onClick={() => onChange({ ...filters, category: [] })} className={quietActionClassName}>
@@ -121,7 +119,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
             </button>
           )}
         </legend>
-        <div className="mt-1 grid grid-cols-1 gap-1 sm:grid-cols-2">
+        <div className="mt-1 grid grid-cols-1 gap-1">
           {(options?.categories || []).map((category) => (
             <label key={category} className={checkboxLabelClassName}>
               <input
@@ -136,7 +134,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
         </div>
       </fieldset>
 
-      <div className="space-y-2">
+      <div className="space-y-1">
         <label className={checkboxLabelClassName}>
           <input
             type="checkbox"
@@ -189,7 +187,7 @@ function SearchFiltersPanel({ filters, options, onChange }: SearchFiltersPanelPr
             ))}
           </select>
         ) : (
-          <p id="filter-radius" className="mt-1 text-sm text-muted">
+          <p id="filter-radius" className="mt-1 text-sm leading-relaxed text-muted">
             {t('filters.needLocation')}
           </p>
         )}

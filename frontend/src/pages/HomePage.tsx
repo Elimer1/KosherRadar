@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import DiscoveryFilterDialog from '../components/DiscoveryFilterDialog';
 import LocationField from '../components/LocationField';
 import RestaurantCard from '../components/RestaurantCard';
 import RestaurantMap from '../components/RestaurantMap';
 import SearchBar from '../components/SearchBar';
 import SearchFiltersPanel from '../components/SearchFiltersPanel';
 import { useFormOptions } from '../hooks/useFormOptions';
+import { useMinWidth } from '../hooks/useMinWidth';
 import { useRestaurantSearch } from '../hooks/useRestaurantSearch';
 import { useSearchCriteria } from '../hooks/useSearchCriteria';
 import { forgetSearchScroll, readSearchScroll } from '../search/searchReturn';
@@ -15,18 +17,13 @@ import { readSavedView, saveView } from '../utils/mapView';
 import type { DiscoveryView } from '../utils/mapView';
 import {
   errorNoticeClassName,
-  pageTitleClassName,
   primaryButtonCompactClassName,
   quietActionClassName,
   secondaryButtonClassName,
   warningNoticeClassName,
 } from '../components/formStyles';
 
-// NEW (Milestone 4): the home page is the public search: one search box (restaurant name or food), filters,
-// and the list of results, 20 at a time. Anyone can use it without an account.
-// חדש (אבן דרך 4): דף הבית הוא החיפוש הציבורי: תיבת חיפוש אחת, מסננים ורשימת תוצאות, 20 בכל פעם. בלי חשבון.
-
-// How many choices are active, shown on the "Filters" button (the text search is not a filter).
+// How many choices are active, shown on the Filters button (the text search is not a filter).
 const countActiveFilters = (filters: SearchFilters) => {
   return (
     (filters.level ? 1 : 0) +
@@ -43,19 +40,20 @@ function HomePage() {
   const { t } = useTranslation();
   const { options } = useFormOptions();
 
-  // NEW (UX WP1A/1B): the address holds the applied search. Typed text is committed after a short pause, or immediately on Enter, Search, or a filter.
-  // חדש (חבילת UX 1A/1B): הכתובת מחזיקה את החיפוש שהוחל. טקסט מוקלד נשמר אחרי הפסקה קצרה, או מיד ב-Enter, בחיפוש, או במסנן.
+  // The address holds the applied search. Typed text is committed after a short pause, or immediately on Enter, Search, or a filter.
   const criteria = useSearchCriteria();
   const filters = criteria.filters;
   const [showFilters, setShowFilters] = useState(false);
-  // NEW (Milestone 5): list and map are never shown together. The choice is remembered on this browser.
-  // חדש (אבן דרך 5): רשימה ומפה לא מוצגות יחד. הבחירה נשמרת בדפדפן הזה.
+  const desktopFilters = useMinWidth(1024);
+  // List and map are never shown together. The choice is remembered on this browser.
   const [view, setView] = useState<DiscoveryView>(() => readSavedView());
 
   const search = useRestaurantSearch(filters, view === 'list' && !criteria.locationPending);
   const activeFilterCount = countActiveFilters(filters);
   const hechsherOptions = options?.hechsherOptions || [];
   const hasAnySearchChoice = filters.q.trim() !== '' || activeFilterCount > 0;
+  const closeFilters = useCallback(() => setShowFilters(false), []);
+  const filtersOpen = showFilters && !desktopFilters;
 
   const handleFiltersChange = (next: SearchFilters) => {
     criteria.updateFilters({
@@ -68,6 +66,22 @@ function HomePage() {
       radiusKm: next.radiusKm,
     });
   };
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') {
+      return;
+    }
+
+    const media = window.matchMedia('(min-width: 1024px)');
+    const onChange = () => {
+      if (media.matches) {
+        setShowFilters(false);
+      }
+    };
+
+    media.addEventListener('change', onChange);
+    return () => media.removeEventListener('change', onChange);
+  }, []);
 
   useEffect(() => {
     if (view !== 'list' || criteria.locationPending || search.loading) {
@@ -122,18 +136,35 @@ function HomePage() {
   })();
 
   const viewButtonClass = (selected: boolean) =>
-    `min-h-11 flex-1 rounded-lg px-4 py-2 text-sm font-medium sm:flex-none ${
-      selected ? 'bg-forest text-white shadow-sm' : 'text-ink hover:bg-mist'
+    `min-h-11 flex-1 border-b-2 px-4 text-sm font-semibold transition-colors sm:flex-none ${
+      selected ? 'border-forest text-ink' : 'border-transparent text-muted hover:text-ink'
     }`;
+
+  const filtersPanel = (
+    <SearchFiltersPanel
+      filters={filters}
+      options={options}
+      onChange={handleFiltersChange}
+      showHeading={desktopFilters}
+    />
+  );
+
+  const resultCount =
+    search.total === 1 ? t('home.foundOne', { count: search.total }) : t('home.foundMany', { count: search.total });
 
   return (
     <div>
-      <section className="pb-2 pt-1 text-center sm:pb-4 sm:pt-2">
-        <h1 className={pageTitleClassName}>{t('home.heading')}</h1>
-        <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-muted">{t('home.intro')}</p>
+      <section className="bg-forest-deep px-4 pb-16 pt-8 text-white sm:px-6 sm:pt-10 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <h1 className="discovery-title max-w-3xl text-3xl font-semibold leading-[1.12] text-white sm:text-5xl">
+            {t('home.heading')}
+          </h1>
+          <p className="mt-3 max-w-2xl text-base leading-relaxed text-mist">{t('home.intro')}</p>
+        </div>
       </section>
 
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 -mt-10 rounded-[1.75rem] bg-white p-3 shadow-[0_24px_60px_rgba(15,61,45,0.16)] ring-1 ring-black/5 sm:p-5">
         <SearchBar
           text={criteria.draftQuery}
           onTextChange={criteria.setDraftQuery}
@@ -152,23 +183,12 @@ function HomePage() {
         />
       </div>
 
-      <div className="mt-6 lg:grid lg:grid-cols-[18rem_1fr] lg:gap-6">
-        <aside className="mb-4 lg:mb-0">
-          <button
-            type="button"
-            onClick={() => setShowFilters((current) => !current)}
-            aria-expanded={showFilters}
-            aria-controls="search-filters"
-            className={`${secondaryButtonClassName} w-full lg:hidden`}
-          >
-            {showFilters ? t('home.hideFilters') : t('home.filters')}
-            {activeFilterCount > 0 && ` (${activeFilterCount})`}
-          </button>
-
-          <div id="search-filters" className={`mt-3 lg:mt-0 lg:block ${showFilters ? 'block' : 'hidden'}`}>
-            <SearchFiltersPanel filters={filters} options={options} onChange={handleFiltersChange} />
-          </div>
-        </aside>
+      <div className="mt-10 lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start lg:gap-10">
+        {desktopFilters && (
+          <aside className="sticky top-20 max-h-[calc(100dvh-6rem)] overflow-y-auto border-soft lg:border-e lg:pe-6">
+            <div id="search-filters">{filtersPanel}</div>
+          </aside>
+        )}
 
         <section
           aria-label={t('home.results')}
@@ -177,34 +197,60 @@ function HomePage() {
           <p className="sr-only" role="status" aria-live="polite">
             {listStatus}
           </p>
-          <div
-            role="group"
-            aria-label={t('home.view')}
-            className="kr-view-toggle mb-4 flex w-full gap-1 rounded-xl border border-soft bg-white p-1 shadow-sm sm:inline-flex sm:w-auto"
-          >
-            <button
-              type="button"
-              aria-pressed={view === 'list'}
-              onClick={() => handleViewChange('list')}
-              className={viewButtonClass(view === 'list')}
-            >
-              {t('home.list')}
-            </button>
-            <button
-              type="button"
-              aria-pressed={view === 'map'}
-              onClick={() => handleViewChange('map')}
-              className={viewButtonClass(view === 'map')}
-            >
-              {t('home.map')}
-            </button>
-          </div>
 
-          {view === 'map' && hasAnySearchChoice && (
-            <button type="button" onClick={criteria.clearAll} className={`${quietActionClassName} mb-3`}>
-              {t('home.clear')}
-            </button>
-          )}
+          <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-ink">{t('home.results')}</h2>
+              {view === 'list' && search.items.length > 0 && <p className="mt-0.5 text-sm text-muted">{resultCount}</p>}
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            {!desktopFilters && (
+              <button
+                type="button"
+                onClick={() => setShowFilters(true)}
+                aria-expanded={filtersOpen}
+                aria-controls="search-filters"
+                aria-haspopup="dialog"
+                className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl bg-white px-4 text-sm font-semibold text-ink ring-1 ring-soft sm:w-auto"
+              >
+                <span>
+                  {t('home.filters')}
+                  {activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+                </span>
+              </button>
+            )}
+
+            <div
+                role="group"
+                aria-label={t('home.view')}
+                className="kr-view-toggle flex w-full border-b border-soft sm:w-auto"
+              >
+                <button
+                  type="button"
+                  aria-pressed={view === 'list'}
+                  onClick={() => handleViewChange('list')}
+                  className={viewButtonClass(view === 'list')}
+                >
+                  {t('home.list')}
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={view === 'map'}
+                  onClick={() => handleViewChange('map')}
+                  className={viewButtonClass(view === 'map')}
+                >
+                  {t('home.map')}
+                </button>
+              </div>
+
+              {hasAnySearchChoice && (
+                <button type="button" onClick={criteria.clearAll} className={quietActionClassName}>
+                  {t('home.clear')}
+                </button>
+              )}
+            </div>
+          </div>
 
           {view === 'map' && !criteria.locationPending && (
             <RestaurantMap
@@ -222,7 +268,7 @@ function HomePage() {
           )}
 
           {(criteria.locationPending || (view === 'list' && search.loading)) && (
-            <p className="flex items-center justify-center gap-2 py-12 text-muted">
+            <p className="flex items-center justify-center gap-2 py-16 text-muted">
               <span className="kr-spinner" aria-hidden="true" />
               {t('home.searching')}
             </p>
@@ -234,7 +280,7 @@ function HomePage() {
               <button
                 type="button"
                 onClick={search.retry}
-                className="mt-3 inline-flex min-h-11 items-center rounded-lg border border-red-800 bg-white px-3.5 text-sm font-medium text-red-900 hover:bg-red-50"
+                className="mt-3 inline-flex min-h-11 items-center rounded-xl border border-red-800 bg-white px-3.5 text-sm font-medium text-red-900 hover:bg-red-50"
               >
                 {t('common.tryAgain')}
               </button>
@@ -242,23 +288,19 @@ function HomePage() {
           )}
 
           {view === 'list' && !search.loading && !search.error && search.items.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-soft bg-white px-6 py-12 text-center text-ink shadow-sm">
+            <div className="rounded-3xl bg-white px-6 py-14 text-center text-ink ring-1 ring-soft">
               {hasAnySearchChoice ? (
                 <>
                   <p className="font-medium">{t('home.noMatchTitle')}</p>
-                  <p className="mt-1 text-sm text-muted">{t('home.noMatchBody')}</p>
-                  <button
-                    type="button"
-                    onClick={criteria.clearAll}
-                    className={`${secondaryButtonClassName} mt-4`}
-                  >
+                  <p className="mx-auto mt-1 max-w-md text-sm leading-relaxed text-muted">{t('home.noMatchBody')}</p>
+                  <button type="button" onClick={criteria.clearAll} className={`${secondaryButtonClassName} mt-4`}>
                     {t('home.clear')}
                   </button>
                 </>
               ) : (
                 <>
                   <p className="font-medium">{t('home.emptyTitle')}</p>
-                  <p className="mt-1 text-sm text-muted">
+                  <p className="mx-auto mt-1 max-w-md text-sm leading-relaxed text-muted">
                     {t('home.emptyBody')}{' '}
                     <Link to="/submit-restaurant" className="font-medium text-forest underline-offset-2 hover:underline">
                       {t('home.addRestaurant')}
@@ -271,16 +313,6 @@ function HomePage() {
 
           {view === 'list' && search.items.length > 0 && (
             <>
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-medium text-muted">
-                  {search.total === 1 ? t('home.foundOne', { count: search.total }) : t('home.foundMany', { count: search.total })}
-                </p>
-                {hasAnySearchChoice && (
-                  <button type="button" onClick={criteria.clearAll} className={quietActionClassName}>
-                    {t('home.clear')}
-                  </button>
-                )}
-              </div>
               {!filters.includeUnknown && <p className="mb-3 text-sm text-muted">{t('home.unknownHidden')}</p>}
 
               {search.capped && (
@@ -289,7 +321,7 @@ function HomePage() {
                 </p>
               )}
 
-              <ul className="space-y-3">
+              <ul className="overflow-hidden rounded-[1.5rem] bg-white ring-1 ring-soft">
                 {search.items.map((restaurant) => (
                   <RestaurantCard
                     key={restaurant.id}
@@ -322,6 +354,13 @@ function HomePage() {
             </>
           )}
         </section>
+      </div>
+
+      {!desktopFilters && (
+        <DiscoveryFilterDialog open={filtersOpen} onClose={closeFilters}>
+          {filtersPanel}
+        </DiscoveryFilterDialog>
+      )}
       </div>
     </div>
   );

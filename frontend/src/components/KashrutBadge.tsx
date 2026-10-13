@@ -1,7 +1,6 @@
-// NEW (Milestone 4): shows the kashrut status of a restaurant on a card or a detail page.
-// The status is always written in words (and a symbol), never only a color, so it is clear for everyone.
+// Shows the kashrut status of a restaurant on a card, a detail page, or a map popup.
+// The status is written in words and a symbol, never only a color.
 // A claim is never styled like a certificate, and KosherRadar never presents itself as the certifier.
-// חדש (אבן דרך 4): מציג את סטטוס הכשרות. הסטטוס תמיד כתוב במילים (וסמל), לא רק בצבע. טענה לעולם לא נראית כתעודה.
 import { useTranslation } from 'react-i18next';
 import type { KashrutPreview, KashrutStatus } from '../types/search';
 import type { HechsherOption } from '../types/submissions';
@@ -17,23 +16,23 @@ interface KashrutBadgeProps {
   hechsherOptions: HechsherOption[];
 }
 
-// Verified uses the forest surface. A claim stays on white with a dashed amber border so it cannot be read as approved.
+// Verified uses the pale green surface. A claim stays on white with a dashed amber border.
 const STYLES: Record<KashrutStatus, { symbol: string; box: string }> = {
-  VERIFIED: { symbol: '✓', box: 'border-forest bg-mist text-forest-deep' },
-  UNVERIFIED: { symbol: '!', box: 'border-dashed border-amber-ink bg-white text-amber-ink' },
-  EXPIRED: { symbol: '✕', box: 'border-red-800 bg-red-50 text-red-900' },
-  UNKNOWN: { symbol: '?', box: 'border-soft bg-canvas text-muted' },
+  VERIFIED: { symbol: '✓', box: 'border-s-4 border-forest bg-grove-soft text-forest-deep' },
+  UNVERIFIED: { symbol: '!', box: 'border border-dashed border-amber-ink bg-[#fffaf3] text-amber-ink' },
+  EXPIRED: { symbol: '✕', box: 'border-s-4 border-red-800 bg-red-50 text-red-900' },
+  UNKNOWN: { symbol: '?', box: 'border-s-4 border-soft bg-canvas text-muted' },
 };
 
 function KashrutBadge({ kashrut, hechsherOptions }: KashrutBadgeProps) {
   const { t } = useTranslation();
   const style = STYLES[kashrut.status];
   const moreText = formatMoreCount(kashrut.moreCount);
-  // An expired certificate hidden behind a better item must not disappear from the preview (spec 5.6).
+  // An expired certificate hidden behind a better item must not disappear from the preview.
   const mentionsHiddenExpired = kashrut.hasRecentExpired && kashrut.status !== 'EXPIRED';
 
   return (
-    <div className={`rounded-xl border px-3 py-2.5 text-sm leading-snug ${style.box}`}>
+    <div className={`rounded-2xl px-3 py-2.5 text-sm leading-snug ${style.box}`}>
       <p className="font-semibold">
         <span aria-hidden="true" className="me-1">
           {style.symbol}

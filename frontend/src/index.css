@@ -1,17 +1,18 @@
 @import "tailwindcss";
 
-/* Design tokens. Deep green carries actions; amber is only an accent. White text on forest
-   clears WCAG AA. System fonts already include Hebrew (Segoe UI / Noto Sans Hebrew). */
+/* Warm paper and a refined green. Token names stay so existing utilities follow the new palette.
+   White text on forest clears WCAG AA. The stack already includes Hebrew. */
 @theme {
-  --color-ink: #24342f;
-  --color-muted: #4e5e58;
-  --color-canvas: #f7f8f4;
-  --color-soft: #dceae4;
-  --color-mist: #eef4f1;
-  --color-forest: #174b3a;
-  --color-forest-deep: #103528;
-  --color-grove: #2c6b56;
-  --color-amber-ink: #6b4a1f;
+  --color-ink: #1c2420;
+  --color-muted: #5c564e;
+  --color-canvas: #f4f0e8;
+  --color-soft: #e3dbd0;
+  --color-mist: #efe8dc;
+  --color-forest: #1a5c43;
+  --color-forest-deep: #0f3d2d;
+  --color-grove: #2a7a5a;
+  --color-grove-soft: #e6f3ec;
+  --color-amber-ink: #6a4518;
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Hebrew", "Arial Hebrew", Arial, sans-serif;
 }
 
@@ -23,14 +24,24 @@ body {
 }
 
 ::selection {
-  background-color: #dceae4;
-  color: #103528;
+  background-color: #e6f3ec;
+  color: #0f3d2d;
 }
 
 a:focus-visible,
 button:focus-visible {
-  outline: 2px solid #174b3a;
+  outline: 2px solid #1a5c43;
   outline-offset: 2px;
+}
+
+/* Cream ring on the dark header. Forest on forest-deep would disappear. */
+.kr-header a:focus-visible,
+.kr-header button:focus-visible {
+  outline-color: #f4f0e8;
+}
+
+html[dir='ltr'] .discovery-title {
+  letter-spacing: -0.03em;
 }
 
 input:focus-visible,
@@ -40,7 +51,7 @@ textarea:focus-visible {
 }
 
 input[type='checkbox'] {
-  accent-color: #174b3a;
+  accent-color: #1a5c43;
 }
 
 .kr-spinner {
@@ -48,8 +59,8 @@ input[type='checkbox'] {
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
-  border: 2px solid #dceae4;
-  border-top-color: #174b3a;
+  border: 2px solid #e3dbd0;
+  border-top-color: #1a5c43;
   border-radius: 9999px;
   animation: kr-spin 0.7s linear infinite;
 }
@@ -72,8 +83,8 @@ input[type='checkbox'] {
   }
 }
 
-/* NEW (Milestone 5): branded map pin and cluster bubble. Drawn here so Leaflet's image files are not needed. */
-/* חדש (אבן דרך 5): סיכת מפה ובועת מקבץ. מצוירים כאן כדי שלא יהיה צורך בקובצי התמונה של Leaflet. */
+/* Shared with the map. Keep these selectors. Pin geometry stays; the green follows the palette.
+   Agent 2 may replace the pin drawing. Do not delete the classes. */
 .kr-marker-wrap,
 .kr-cluster-wrap {
   background: transparent;
@@ -87,9 +98,9 @@ input[type='checkbox'] {
   margin-left: 5px;
   margin-top: 6px;
   border-radius: 50% 50% 50% 0;
-  background: #174b3a;
+  background: #1a5c43;
   border: 2px solid #ffffff;
-  box-shadow: 0 1px 3px rgba(23, 75, 58, 0.35);
+  box-shadow: 0 1px 3px rgba(28, 36, 32, 0.28);
   transform: rotate(-45deg);
 }
 
@@ -100,16 +111,15 @@ input[type='checkbox'] {
   width: 40px;
   height: 40px;
   border-radius: 9999px;
-  background: #174b3a;
+  background: #1a5c43;
   color: #ffffff;
   font-weight: 700;
   border: 2px solid #ffffff;
-  box-shadow: 0 1px 3px rgba(23, 75, 58, 0.35);
+  box-shadow: 0 1px 3px rgba(28, 36, 32, 0.28);
 }
 
-/* NEW (Milestone 6): Leaflet places tiles in left-to-right space. A Hebrew page would otherwise shift the map.
-   The words inside a popup still follow the page language. */
-/* חדש (אבן דרך 6): Leaflet ממקם אריחים משמאל לימין. דף בעברית היה מזיז את המפה. המילים בחלון הקופץ נשארות לפי שפת הדף. */
+/* Leaflet places tiles in left-to-right space. A Hebrew page would otherwise shift the map.
+   The words inside a popup still follow the page language. Do not remove this rule. */
 .leaflet-container {
   direction: ltr;
 }
@@ -121,10 +131,10 @@ html[dir='rtl'] .leaflet-popup-content {
 
 /* Popup chrome follows the page. Tiles and pins stay left-to-right above. */
 .leaflet-popup-content-wrapper {
-  border: 1px solid #dceae4;
+  border: 1px solid #e3dbd0;
   border-radius: 1rem;
-  box-shadow: 0 8px 24px rgba(23, 75, 58, 0.12);
-  color: #24342f;
+  box-shadow: 0 8px 24px rgba(28, 36, 32, 0.12);
+  color: #1c2420;
 }
 
 .leaflet-popup-content {
@@ -137,7 +147,7 @@ html[dir='rtl'] .leaflet-popup-content {
 }
 
 .leaflet-popup-content a {
-  color: #174b3a;
+  color: #1a5c43;
 }
 
 .leaflet-popup-close-button {
@@ -145,17 +155,17 @@ html[dir='rtl'] .leaflet-popup-content {
   height: 2.75rem !important;
   font-size: 1.35rem !important;
   line-height: 2.5rem !important;
-  color: #174b3a !important;
+  color: #1a5c43 !important;
 }
 
 /* Selected filter rows. The words stay; the fill only marks the current choice. */
 .kr-choice:has(input:checked) {
-  background-color: #eef4f1;
+  background-color: #efe8dc;
   font-weight: 600;
 }
 
 .kr-choice:has(input:focus-visible) {
-  outline: 2px solid #174b3a;
+  outline: 2px solid #1a5c43;
   outline-offset: 2px;
 }
 

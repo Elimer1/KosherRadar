@@ -1,6 +1,5 @@
-// NEW (Milestone 4): one search result: name, place, food type, categories, kashrut status, distance, Call and Waze.
-// There are no ratings or reviews: KosherRadar is a factual directory.
-// חדש (אבן דרך 4): תוצאת חיפוש אחת: שם, מקום, סוג אוכל, קטגוריות, כשרות, מרחק, התקשר ו-Waze. אין דירוגים או ביקורות.
+// One search result: name, place, food type, categories, kashrut status, distance, Call and Waze.
+// There are no ratings, reviews, photos, or opening hours. KosherRadar is a factual directory.
 import type { MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -51,10 +50,10 @@ function RestaurantCard({ restaurant, hechsherOptions, returnState, onOpenRestau
   };
 
   return (
-    <li className="kr-card rounded-2xl border border-soft bg-white p-4 shadow-[0_1px_2px_rgba(23,75,58,0.05)] transition-shadow hover:shadow-[0_8px_24px_rgba(23,75,58,0.08)] focus-within:border-forest sm:p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <h2 className="break-words text-lg font-semibold leading-snug text-ink">
+    <li className="kr-card border-b border-soft px-4 py-5 transition-colors last:border-b-0 hover:bg-canvas/60 sm:px-6">
+      <div className="grid items-start gap-4 md:grid-cols-[minmax(0,1fr)_17rem]">
+        <div className="min-w-0">
+          <h3 className="break-words text-xl font-semibold leading-snug tracking-tight text-ink sm:text-2xl">
             <Link
               to={`/restaurants/${restaurant.id}`}
               state={returnState}
@@ -64,37 +63,36 @@ function RestaurantCard({ restaurant, hechsherOptions, returnState, onOpenRestau
             >
               {names.primary}
             </Link>
-          </h2>
+          </h3>
           {names.secondary.length > 0 && (
-            <p className="break-words text-sm text-muted" dir="auto">
+            <p className="mt-0.5 break-words text-sm text-muted" dir="auto">
               {names.secondary.join(' · ')}
             </p>
           )}
           {place !== '' && (
             <p className="mt-1 break-words text-sm leading-relaxed text-muted" dir="auto">
               {place}
+              {distanceText && <span className="ms-2 font-medium text-ink">{distanceText}</span>}
             </p>
           )}
+          {place === '' && distanceText && <p className="mt-1 text-sm font-medium text-ink">{distanceText}</p>}
+
+          {hasMeta && (
+            <ul className="mt-3 flex flex-wrap gap-1.5">
+              {restaurant.foodType && <li className={metaChipClassName}>{getFoodTypeLabel(restaurant.foodType)}</li>}
+              {restaurant.categories.map((category) => (
+                <li key={category} className={quietChipClassName}>
+                  {getCategoryLabel(category)}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-        {distanceText && <p className={`${metaChipClassName} shrink-0`}>{distanceText}</p>}
-      </div>
 
-      {hasMeta && (
-        <ul className="mt-3 flex flex-wrap gap-1.5">
-          {restaurant.foodType && <li className={metaChipClassName}>{getFoodTypeLabel(restaurant.foodType)}</li>}
-          {restaurant.categories.map((category) => (
-            <li key={category} className={quietChipClassName}>
-              {getCategoryLabel(category)}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <div className="mt-3">
         <KashrutBadge kashrut={restaurant.kashrut} hechsherOptions={hechsherOptions} />
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap gap-2 md:ps-0">
         <Link to={`/restaurants/${restaurant.id}`} state={returnState} onClick={handleOpen} className={primaryButtonCompactClassName}>
           {t('card.viewDetails')}
         </Link>

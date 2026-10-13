@@ -1,8 +1,6 @@
-// NEW (Milestone 4): the main search box (restaurant name or food only, spec section 8) with autocomplete.
+// The main search box (restaurant name or food only) with autocomplete.
 // Suggestions start at 2 characters, wait 300 ms after the last keystroke, and old requests are cancelled.
 // Clicking a suggestion opens that restaurant; Enter or the Search button without a choice runs the search.
-// חדש (אבן דרך 4): תיבת החיפוש הראשית (שם מסעדה או אוכל בלבד) עם השלמה אוטומטית. הצעות מ-2 תווים, אחרי 300
-// מילישניות, ובקשות ישנות מבוטלות. לחיצה על הצעה פותחת את המסעדה; Enter בלי בחירה מריץ חיפוש.
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -110,10 +108,10 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
 
   return (
     <form onSubmit={handleSubmit} role="search" className="relative" aria-label={t('search.form')}>
-      <label htmlFor="restaurant-search" className="sr-only">
+      <label htmlFor="restaurant-search" className="mb-1.5 block text-sm font-medium text-ink">
         {t('search.label')}
       </label>
-      <div className="flex items-stretch overflow-hidden rounded-2xl border border-soft bg-white shadow-[0_8px_24px_rgba(23,75,58,0.06)] focus-within:border-forest focus-within:ring-2 focus-within:ring-forest/25">
+      <div className="flex items-stretch overflow-hidden rounded-2xl bg-canvas ring-1 ring-soft focus-within:ring-2 focus-within:ring-forest">
         <input
           id="restaurant-search"
           type="search"
@@ -122,7 +120,7 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
           autoComplete="off"
           placeholder={t('search.placeholder')}
           dir="auto"
-          className="min-h-12 min-w-0 flex-1 bg-transparent px-4 text-ink outline-none placeholder:text-muted"
+          className="min-h-14 min-w-0 flex-1 bg-transparent px-4 text-base text-ink outline-none placeholder:text-muted"
           role="combobox"
           aria-expanded={showList}
           aria-controls={LIST_ID}
@@ -148,7 +146,7 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
         <ul
           id={LIST_ID}
           role="listbox"
-          className="absolute inset-x-0 z-20 mt-2 max-h-96 overflow-y-auto rounded-2xl border border-soft bg-white py-1 shadow-[0_8px_24px_rgba(23,75,58,0.12)]"
+          className="absolute inset-x-0 z-20 mt-2 max-h-80 overflow-y-auto rounded-2xl bg-white py-1 shadow-[0_16px_40px_rgba(28,36,32,0.12)] ring-1 ring-soft"
         >
           {suggestions.map((suggestion, index) => {
             const names = restaurantDisplayNames(suggestion);
