@@ -27,7 +27,7 @@ function SubmitReportPage() {
   const [invalidNote, setInvalidNote] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const { photo, photoError, handlePhotoChange } = usePhotoField(options?.maxImageBytes || 5 * 1024 * 1024);
+  const { photo, photoError, photoValidating, getPhotoSubmissionError, handlePhotoChange } = usePhotoField(options?.maxImageBytes || 5 * 1024 * 1024);
 
   useEffect(() => {
     const loadContext = async () => {
@@ -44,6 +44,14 @@ function SubmitReportPage() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError('');
+
+    // NEW (Agent 3): guard keyboard submission as well as the button.
+    // ??? (???? 3): ????? ????? ?? ??????? ?????.
+    const photoProblem = getPhotoSubmissionError();
+    if (photoProblem) {
+      setError(photoProblem);
+      return;
+    }
 
     if (description.trim() === '') {
       setInvalidNote(true);
@@ -127,15 +135,18 @@ function SubmitReportPage() {
             type="file"
             accept="image/jpeg,image/png,image/webp"
             disabled={loading}
+            aria-invalid={Boolean(photoError)}
+            aria-describedby={photoError ? "report-photo-error" : undefined}
             onChange={handlePhotoChange}
             className="mt-1 block w-full cursor-pointer rounded-xl border border-dashed border-grove bg-mist px-3 py-4 text-sm text-ink file:me-3 file:min-h-11 file:cursor-pointer file:rounded-lg file:border-0 file:bg-forest file:px-3 file:py-2 file:font-medium file:text-white hover:file:bg-forest-deep"
           />
           <p className="mt-1 text-sm text-muted">{t('forms.photoHint', { max: maxMegabytes })}</p>
-          {photo && <p className="mt-1 text-sm text-ink">{t('forms.selected', { name: photo.name })}</p>}
-          {photoError && <p className="mt-1 text-sm text-red-700">{photoError}</p>}
+          {photo && !photoError && <p className="mt-1 text-sm text-ink">{t('forms.selected', { name: photo.name })}</p>}
+          {photoError && <p id="report-photo-error" role="alert" className="mt-1 text-sm text-red-700">{photoError}</p>}
         </div>
 
-        <button type="submit" disabled={loading} className={primaryButtonClassName}>
+        {photoValidating && <p role="status" className="text-sm text-muted">{t('forms.photoValidating')}</p>}
+        <button type="submit" disabled={loading || photoValidating || Boolean(photoError)} className={primaryButtonClassName}>
           {loading ? t('auth.sending') : t('forms.sendReport')}
         </button>
       </form>

@@ -780,3 +780,13 @@ User accepted V2 and authorized local-main promotion. No new identified issue or
 Actual post-merge main commands: frontend `npm run lint`, `npm run typecheck`, `npm test` (26 files / 158 passed), `npm run build`; backend `npm test` (40 files / 505 passed); `git -c core.whitespace=cr-at-eol diff 5393037 HEAD --check`: all exit 0. Backend has no lint/typecheck/build scripts. Existing bundle warning persists (JS 766.92 kB). Tests mocked; no live database/services, production data, email or upload. No browser rerun; prior accepted browser evidence remains in integration worktree. Public trust terminology, moderation and administrator authority/zero-point rules unchanged. Native-speaker Hebrew review and live-service/production-readiness issues remain as tracked.
 
 Only post-merge documentation files updated: this file, PROGRESS.md, REDESIGN_INTEGRATION_PROGRESS.md. Main's untracked PRE_PUSH_REVIEW.md preserved unchanged and excluded from commit. No source branch/worktree edit, push, deploy, branch/worktree deletion, reset or clean. Exact next step: stop; accepted local merge complete.
+## Agent 3 assigned reliability fixes (13 October 2026)
+
+### SEARCH-003 ? Certificate-photo validation race
+
+- **Milestone:** User-assigned Submission & Application Reliability; **Priority:** P1; **Status:** VERIFIED.
+- **Evidence/root cause:** Five failing baseline hook regressions; photo cleared before signature read and stale results accepted; consumers did not coordinate validation.
+- **Solution/files changed:** Versioned pending state, synchronous submit guard, catch read errors, preserve latest valid evidence and block failed replacements; usePhotoField.ts, five photo-consuming submission pages, TeudaFields.tsx, en.ts/he.ts. imageCheck protections unchanged.
+- **Tests added:** usePhotoField.test.tsx (7); photoSubmission.test.tsx (5 forms).
+- **Actual verification:** focused frontend tests exit 0, 19 passed including existing imageCheck tests. Full suite before final test cleanup exit 0, 28 files/170 passed. Frontend lint/typecheck/build exit 0; existing chunk warning. Backend unchanged.
+- **Limitations:** Mocked APIs, no browser/live upload; Hebrew strings need native-speaker review. Details and next task: AGENT_3_FIX_PROGRESS.md.

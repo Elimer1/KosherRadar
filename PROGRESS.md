@@ -619,6 +619,10 @@ Screenshot notes (not committed): `C:\Users\elime\AppData\Local\Temp\cursor\scre
 Deferred: native-speaker review of Hebrew copy, including design strings and the added `home.unknownExcluded` / `home.appliedFilters` keys. Geocoding was not exercised; the mock reports place search unavailable. Map tiles loaded from OpenStreetMap. A map popup was not opened because the visible map bounds did not contain the fixture markers in this session. Live Atlas, Cloudinary, Geoapify, and database-gated concurrency tests were not run.
 
 ## NEXT AGENT ONBOARDING
+
+**Agent 3 current handoff ? 13 October 2026, fix/submissions-app (supersedes older stop instruction for this assigned scope).**
+SEARCH-003 verified: shared photo hook and all five consumers guard pending validation, ignore obsolete results, show read errors; photo accessibility and localized messages added. See AGENT_3_FIX_PROGRESS.md for files, tests and decisions. Focused tests 19 passed; full frontend 170 passed before final test cleanup; lint/typecheck/build exit 0. No browser or external integrations; Hebrew requires native review. Next: A1-003 history outcome (do not edit correction/award logic), then SEC-011 readiness. Final full suites still pending. No partially implemented source changes outside SEARCH-003. Read Git state plus this branch's progress before continuing.
+
 **Accepted V2 merge into local main — 13 October 2026 (current handoff; supersedes historical worktree instructions below)**
 
 The user accepted the integrated V2 redesign and explicitly authorized its local merge into main. Worktree `C:/FS/projects/KosherRadar`, branch `main`; pre-merge main `539303733b887f499dbbeaf49db3e3dff55b2eeb`. Integration was clean and exactly at accepted commit `548743ec9c0084c5dda6db30603eb4b43a6ebed3`. Main had no tracked edits and only untracked `PRE_PUSH_REVIEW.md`. Its SHA256 before/after merge and validation: `D987D0DD2FBA7D1D2E9F94F3B1C70BEF6552594C6A99134DAA5A7D03ACA69E24`; preserved and excluded from commits.

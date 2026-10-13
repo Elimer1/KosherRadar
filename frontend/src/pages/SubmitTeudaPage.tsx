@@ -27,7 +27,7 @@ function SubmitTeudaPage() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const { photo, photoError, handlePhotoChange } = usePhotoField(options?.maxImageBytes || 5 * 1024 * 1024);
+  const { photo, photoError, photoValidating, getPhotoSubmissionError, handlePhotoChange } = usePhotoField(options?.maxImageBytes || 5 * 1024 * 1024);
 
   useEffect(() => {
     const loadContext = async () => {
@@ -48,6 +48,14 @@ function SubmitTeudaPage() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError('');
+
+    // NEW (Agent 3): guard keyboard submission as well as the button.
+    // ??? (???? 3): ????? ????? ?? ??????? ?????.
+    const photoProblem = getPhotoSubmissionError();
+    if (photoProblem) {
+      setError(photoProblem);
+      return;
+    }
 
     const otherMissing = values.hechsher === options?.hechsherOtherValue && !values.hechsherOther.trim();
 
@@ -136,7 +144,8 @@ function SubmitTeudaPage() {
           </div>
         )}
 
-        <button type="submit" disabled={loading || Boolean(photoError)} className={primaryButtonClassName}>
+        {photoValidating && <p role="status" className="text-sm text-muted">{t('forms.photoValidating')}</p>}
+        <button type="submit" disabled={loading || photoValidating || Boolean(photoError)} className={primaryButtonClassName}>
           {loading ? t('auth.sending') : t('forms.sendCertificate')}
         </button>
       </form>

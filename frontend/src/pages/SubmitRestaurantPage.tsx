@@ -28,7 +28,7 @@ function SubmitRestaurantPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<RestaurantSubmitResult | null>(null);
 
-  const { photo, photoError, handlePhotoChange } = usePhotoField(options?.maxImageBytes || 5 * 1024 * 1024);
+  const { photo, photoError, photoValidating, getPhotoSubmissionError, handlePhotoChange } = usePhotoField(options?.maxImageBytes || 5 * 1024 * 1024);
 
   const handleRestaurantChange = (field: keyof RestaurantFormValues, value: string) => {
     setRestaurant((current) => ({ ...current, [field]: value }));
@@ -51,6 +51,14 @@ function SubmitRestaurantPage() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError('');
+
+    // NEW (Agent 3): guard keyboard submission as well as the button.
+    // ??? (???? 3): ????? ????? ?? ??????? ?????.
+    const photoProblem = getPhotoSubmissionError();
+    if (photoProblem) {
+      setError(photoProblem);
+      return;
+    }
 
     const otherMissing = teuda.hechsher === options?.hechsherOtherValue && !teuda.hechsherOther.trim();
     const missing = {
@@ -205,7 +213,8 @@ function SubmitRestaurantPage() {
           </div>
         )}
 
-        <button type="submit" disabled={loading} className={primaryButtonClassName}>
+        {photoValidating && <p role="status" className="text-sm text-muted">{t('forms.photoValidating')}</p>}
+        <button type="submit" disabled={loading || photoValidating || Boolean(photoError)} className={primaryButtonClassName}>
           {loading ? t('auth.sending') : t('forms.sendRestaurant')}
         </button>
       </form>

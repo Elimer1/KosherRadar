@@ -342,6 +342,8 @@ export const en = {
     photoHint: 'JPG, PNG or WebP, up to {{max}} MB.',
     selected: 'Selected: {{name}}',
     photoTooLarge: 'The photo is larger than {{max}} MB.',
+    photoValidating: 'Checking the photo. Please wait before sending.',
+    photoReadFailed: 'The photo could not be read. Choose it again, choose another photo, or clear the selection.',
     photoType: 'The photo must be a JPG, PNG or WebP image.',
     street: 'Street address',
     city: 'City',

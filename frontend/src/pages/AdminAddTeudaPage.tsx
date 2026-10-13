@@ -31,7 +31,7 @@ function AdminAddTeudaPage() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
-  const { photo, photoError, handlePhotoChange } = usePhotoField(options?.maxImageBytes || 5 * 1024 * 1024);
+  const { photo, photoError, photoValidating, getPhotoSubmissionError, handlePhotoChange } = usePhotoField(options?.maxImageBytes || 5 * 1024 * 1024);
 
   useEffect(() => {
     const loadRestaurant = async () => {
@@ -49,6 +49,14 @@ function AdminAddTeudaPage() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError('');
+
+    // NEW (Agent 3): guard keyboard submission as well as the button.
+    // ??? (???? 3): ????? ????? ?? ??????? ?????.
+    const photoProblem = getPhotoSubmissionError();
+    if (photoProblem) {
+      setError(photoProblem);
+      return;
+    }
 
     if (!photo) {
       setError(t('forms.needPhoto'));
@@ -136,7 +144,8 @@ function AdminAddTeudaPage() {
           </div>
         )}
 
-        <button type="submit" disabled={loading || Boolean(photoError)} className={primaryButtonClassName}>
+        {photoValidating && <p role="status" className="text-sm text-muted">{t('forms.photoValidating')}</p>}
+        <button type="submit" disabled={loading || photoValidating || Boolean(photoError)} className={primaryButtonClassName}>
           {loading ? t('auth.saving') : t('desk.addApproved')}
         </button>
       </form>
