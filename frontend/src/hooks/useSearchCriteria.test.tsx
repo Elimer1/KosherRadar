@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { createMemoryRouter, RouterProvider, useLocation, useNavigate } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DRAFT_COMMIT_DELAY_MS, useSearchCriteria } from './useSearchCriteria';
+import { geocodePlace } from '../api/placesApi';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -53,17 +54,22 @@ function Probe() {
       <p data-testid="food">{criteria.applied.foodType.join(',')}</p>
       <p data-testid="source">{criteria.locationSource ?? ''}</p>
       <p data-testid="lat">{remembered?.searchLocation?.lat ?? ''}</p>
+      <p data-testid="blocked">{String(criteria.locationBlocked)}</p>
+      <p data-testid="error">{criteria.locationError}</p>
+      <p data-testid="pending">{String(criteria.locationPending)}</p>
+      <button onClick={criteria.retryLocation}>retry-location</button>
+      <button onClick={criteria.clearLocation}>clear-location</button>
     </div>
   );
 }
 
 const mounted: Array<{ root: Root; container: HTMLDivElement }> = [];
 
-const renderProbe = () => {
+const renderProbe = (entry = '/') => {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
-  const router = createMemoryRouter([{ path: '*', element: <Probe /> }], { initialEntries: ['/'] });
+  const router = createMemoryRouter([{ path: '*', element: <Probe /> }], { initialEntries: [entry] });
 
   act(() => {
     root.render(<RouterProvider router={router} />);
@@ -94,6 +100,30 @@ afterEach(() => {
 });
 
 describe('useSearchCriteria', () => {
+  it.each(['unavailable', 'ambiguous', 'not_found'] as const)('blocks unresolved URL geography on %s and permits an explicit clear', async (reason) => {
+    vi.mocked(geocodePlace).mockResolvedValueOnce({ available: reason !== 'unavailable', place: null, reason });
+    let container!: HTMLDivElement;
+    await act(async () => { container = renderProbe('/?near=Jerusalem&radius=5'); });
+    expect(text(container, '[data-testid="blocked"]')).toBe('true');
+    expect(text(container, '[data-testid="error"]')).toBe(reason);
+    expect(text(container, '[data-testid="pending"]')).toBe('false');
+    expect(text(container, '[data-testid="url"]')).toContain('near=Jerusalem');
+    click(container, 'clear-location');
+    expect(text(container, '[data-testid="blocked"]')).toBe('false');
+    expect(text(container, '[data-testid="url"]')).toBe('/');
+  });
+
+  it('retries a rejected URL restoration without leaking coordinates into the URL', async () => {
+    vi.mocked(geocodePlace).mockRejectedValueOnce(new Error('timeout'));
+    let container!: HTMLDivElement;
+    await act(async () => { container = renderProbe('/?near=Jerusalem&radius=5'); });
+    expect(text(container, '[data-testid="error"]')).toBe('unavailable');
+    vi.mocked(geocodePlace).mockResolvedValueOnce({ available: true, place: { label: 'Jerusalem', address: '', city: 'Jerusalem', latitude: 31.7, longitude: 35.2, placeId: 'city' } });
+    await act(async () => click(container, 'retry-location'));
+    expect(text(container, '[data-testid="blocked"]')).toBe('false');
+    expect(text(container, '[data-testid="source"]')).toBe('named');
+    expect(text(container, '[data-testid="url"]')).toBe('/?near=Jerusalem&radius=5');
+  });
   it('clears the field when a whitespace-only query is committed', () => {
     const container = renderProbe();
     click(container, 'type-space');

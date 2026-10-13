@@ -53,10 +53,10 @@ function HomePage() {
   const desktopFilters = useMinWidth(1024);
   const [view, setView] = useState<DiscoveryView>(() => readSavedView());
 
-  const search = useRestaurantSearch(filters, view === 'list' && !criteria.locationPending);
+  const search = useRestaurantSearch(filters, view === 'list' && !criteria.locationBlocked);
   const activeFilterCount = countActiveFilters(filters);
   const hechsherOptions = options?.hechsherOptions || [];
-  const hasAnySearchChoice = filters.q.trim() !== '' || activeFilterCount > 0;
+  const hasAnySearchChoice = filters.q.trim() !== '' || activeFilterCount > 0 || criteria.applied.near !== '';
   const showDirectory = view === 'map' || hasAnySearchChoice || directoryOpen;
   const closeFilters = useCallback(() => setShowFilters(false), []);
   const filtersOpen = showFilters && !desktopFilters;
@@ -135,6 +135,8 @@ function HomePage() {
       return t('home.searching');
     }
 
+    if (criteria.locationError) return t('location.' + (criteria.locationError === 'not_found' ? 'noMatch' : criteria.locationError));
+
     if (search.error && search.items.length === 0) {
       return search.error;
     }
@@ -164,13 +166,13 @@ function HomePage() {
     />
   );
 
-  const showCount = view === 'list' && !search.loading && !search.error && search.items.length > 0;
+  const showCount = view === 'list' && !criteria.locationBlocked && !search.loading && !search.error && search.items.length > 0;
   const resultCount =
     search.total === 1 ? t('home.foundOne', { count: search.total }) : t('home.foundMany', { count: search.total });
   const placeContext =
     criteria.locationSource === 'device'
       ? t('location.using', { place: t('location.current') })
-      : criteria.applied.near.trim()
+      : criteria.locationSource === 'named' && criteria.applied.near.trim()
         ? t('location.using', { place: criteria.applied.near.trim() })
         : '';
 
@@ -217,6 +219,18 @@ function HomePage() {
       )}
 
       {composer}
+
+      {view === 'list' && !criteria.locationBlocked && !search.loading && search.capped && (
+        <p role="status" className={`mt-4 ${warningNoticeClassName}`}>{t('home.capped')}</p>
+      )}
+
+      {criteria.locationError && (
+        <div role="alert" className={`mt-4 ${errorNoticeClassName}`}>
+          <p>{t('location.' + (criteria.locationError === 'not_found' ? 'noMatch' : criteria.locationError))}</p>
+          <button type="button" onClick={criteria.retryLocation} className={dangerButtonClassName}>{t('common.tryAgain')}</button>
+          <button type="button" onClick={criteria.clearLocation} className={quietActionClassName}>{t('location.clear')}</button>
+        </div>
+      )}
 
       {!showDirectory && (
         <DiscoveryMethods
@@ -300,7 +314,7 @@ function HomePage() {
             )}
 
             <div aria-label={t('home.results')} aria-busy={view === 'list' && (criteria.locationPending || search.loading)}>
-              {view === 'map' && !criteria.locationPending && (
+              {view === 'map' && !criteria.locationBlocked && (
                 <RestaurantMap
                   filters={filters}
                   hechsherOptions={hechsherOptions}
@@ -322,7 +336,7 @@ function HomePage() {
                 </p>
               )}
 
-              {view === 'list' && !search.loading && search.error && search.items.length === 0 && (
+              {view === 'list' && !criteria.locationBlocked && !search.loading && search.error && search.items.length === 0 && (
                 <div role="alert" className={errorNoticeClassName}>
                   <p>{search.error}</p>
                   <button type="button" onClick={search.retry} className={`${dangerButtonClassName} mt-3`}>
@@ -331,7 +345,7 @@ function HomePage() {
                 </div>
               )}
 
-              {view === 'list' && !search.loading && !search.error && search.items.length === 0 && (
+              {view === 'list' && !criteria.locationBlocked && !search.loading && !search.error && search.items.length === 0 && (
                 <div className="v2-empty">
                   {hasAnySearchChoice ? (
                     <>
@@ -355,15 +369,9 @@ function HomePage() {
                 </div>
               )}
 
-              {view === 'list' && search.items.length > 0 && (
+              {view === 'list' && !criteria.locationBlocked && search.items.length > 0 && (
                 <>
                   {!filters.includeUnknown && <p className="mb-3 text-sm text-muted">{t('home.unknownHidden')}</p>}
-
-                  {search.capped && (
-                    <p role="status" className={`mb-3 ${warningNoticeClassName}`}>
-                      {t('home.capped')}
-                    </p>
-                  )}
 
                   <ul className="v2-directory">
                     {search.items.map((restaurant) => (

@@ -11,7 +11,7 @@ With `ATLAS_SEARCH_ENABLED` unset or `false` (the default), the backend uses Mon
 - **Name search:** every typed word must be the **beginning of a word** in the restaurant's name (or its Hebrew / English name). `piz` finds `Pizza Hut`; `hut` finds `Pizza Hut`; `izza` does not.
 - **Food search:** the typed words are matched against the restaurant's food keywords and against the food synonym groups in `backend/src/config/foodSynonyms.js` (`pizza` also finds `פיצרייה`, `פיצה` also finds a restaurant tagged `pizza`).
 - **Not available in the fallback:** typo tolerance. `pitza` does **not** find `Pizza`.
-- The queries are anchored prefix matches on indexed arrays (`nameTokens`, `foodTokens`, `foodGroups`), and each search examines at most 2000 restaurants (the answer says `capped: true` when that limit is reached).
+- The queries use anchored prefix matches on indexed arrays (`nameTokens`, `foodTokens`, `foodGroups`). Search evaluates all matching candidates in batches of 2000 before kashrut filtering and ranking; see `SEARCH_LOCATION_INDEX_ROLLOUT.md` for the added keyset index. Per-query database deadlines bound individual operations; total cost still scales with matching candidates.
 
 ## What Atlas Search adds
 
@@ -24,6 +24,8 @@ When enabled and working, the name search also uses Atlas Search with:
 The results of the fallback matching are **always** added as well, so turning Atlas Search on can never remove a result the fallback would have found. Atlas results are ranked by their relevance score; exact and "starts with" name matches still rank first.
 
 The food search, the kashrut filters, the food type / category filters, the location radius and the sorting are the same with or without Atlas Search.
+
+Fuzzy candidates remain limited to 100, with an extra overflow probe. Overflow sets `capped: true` and `completeness.complete: false`, with reason `atlas_candidate_limit`; totals are then lower bounds. Atlas failure reports `search.atlasUnavailable: true` and incomplete metadata with reason `atlas_unavailable`. The map applies its 500-marker limit after shared filtering and global ranking, reporting `map_marker_limit` when additional eligible matches exist. Basic list search has no preliminary candidate cap.
 
 ## Free tier notes
 

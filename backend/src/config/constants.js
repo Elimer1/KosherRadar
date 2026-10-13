@@ -60,7 +60,7 @@ export const PUBLIC_EXPIRED_MONTHS = 6;
 export const SEARCH_PAGE_SIZE = 20;
 export const SUGGESTION_LIMIT = 8;
 export const SEARCH_RADIUS_OPTIONS_KM = [1, 5, 10, 25, 50];
-// At most this many restaurants are examined per search. The answer says when the limit was reached.
+// Maximum candidate batch size. Every batch is evaluated before final pagination/ranking.
 // עד כמות זו של מסעדות נבדקות בכל חיפוש. התשובה מציינת כשהגענו למגבלה.
 export const MAX_SEARCH_CANDIDATES = 2000;
 export const ATLAS_SEARCH_HIT_LIMIT = 100;

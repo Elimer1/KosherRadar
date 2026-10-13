@@ -38,6 +38,7 @@ import { buildKashrutSummary, findConflictingTeudot } from './kashrutStatusServi
 import { notifyApprovalService, notifyRejectionService } from './moderationNotificationService.js';
 import { checkExpirationForAdmin } from './teudaRulesService.js';
 import { buildTeudaRecord } from './teudaSubmissionService.js';
+import { resolveAdminRestaurantLocation } from './adminRestaurantLocationService.js';
 
 const AUTO_REJECT_REASON = 'The restaurant was not approved.';
 
@@ -90,7 +91,6 @@ export const getRestaurantForAdminService = async (restaurantId) => {
 
 const toRestaurantChanges = (restaurantData, extras) => {
   // Full replace of the admin-editable fields. A field left empty in the form is cleared.
-  // geoapifyPlaceId is not editable here, so it is never touched.
   // החלפה מלאה של השדות הניתנים לעריכה. שדה ריק בטופס מתנקה. geoapifyPlaceId אינו נערך כאן ולכן לא נוגעים בו.
   return {
     name: restaurantData.name,
@@ -98,6 +98,7 @@ const toRestaurantChanges = (restaurantData, extras) => {
     city: restaurantData.city,
     latitude: restaurantData.latitude,
     longitude: restaurantData.longitude,
+    geoapifyPlaceId: restaurantData.geoapifyPlaceId,
     phone: restaurantData.phone,
     website: restaurantData.website,
     foodType: restaurantData.foodType,
@@ -152,8 +153,9 @@ export const createRestaurantByAdminService = async ({ restaurantData, extras, t
 // עריכת מסעדה. הסטטוס לא משתנה דרך עריכה.
 export const updateRestaurantByAdminService = async ({ restaurantId, restaurantData, extras }) => {
   const restaurant = await loadRestaurantOr404(restaurantId);
-  const saved = await saveRestaurantChangesRepo(restaurant, toRestaurantChanges(restaurantData, extras));
-  return toAdminRestaurant(saved);
+  const located = await resolveAdminRestaurantLocation(restaurantData, restaurant);
+  const saved = await saveRestaurantChangesRepo(restaurant, toRestaurantChanges(located.data, extras));
+  return { ...toAdminRestaurant(saved), locationStatus: located.locationStatus };
 };
 
 // Approving only changes the restaurant. Contribution points are decided when its certificate is

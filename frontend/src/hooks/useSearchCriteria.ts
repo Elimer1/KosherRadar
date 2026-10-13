@@ -115,6 +115,8 @@ export const useSearchCriteria = () => {
   const remembered = useMemo(() => readRememberedLocation(location.state), [location.state]);
   const [draftQuery, setDraftQueryState] = useState(applied.q);
   const [failedNear, setFailedNear] = useState<string | null>(null);
+  const [failureReason, setFailureReason] = useState<'unavailable' | 'ambiguous' | 'not_found'>('unavailable');
+  const [locationAttempt, setLocationAttempt] = useState(0);
   const seenAppliedQ = useRef(applied.q);
   const draftRef = useRef(draftQuery);
   const appliedRef = useRef(applied);
@@ -143,6 +145,8 @@ export const useSearchCriteria = () => {
   const deviceReady = applied.near === '' && remembered?.source === 'device' ? remembered : null;
   const activeLocation = deviceReady ?? namedReady;
   const locationPending = applied.near.length >= 2 && !namedReady && failedNear !== applied.near;
+  const locationBlocked = applied.near.length >= 2 && !namedReady;
+  const locationError = locationBlocked && failedNear === applied.near ? failureReason : null;
 
   useEffect(() => {
     const nextDraft = draftAfterAppliedChange(draftRef.current, seenAppliedQ.current, applied.q);
@@ -191,6 +195,7 @@ export const useSearchCriteria = () => {
         const place = result.place;
 
         if (!result.available || !place || !isLatLng(place.latitude, place.longitude)) {
+          setFailureReason(result.available && !place && result.reason === 'ambiguous' ? 'ambiguous' : result.available && !place ? 'not_found' : 'unavailable');
           setFailedNear(near);
           return;
         }
@@ -211,6 +216,7 @@ export const useSearchCriteria = () => {
       })
       .catch(() => {
         if (!cancelled) {
+          setFailureReason('unavailable');
           setFailedNear(near);
         }
       });
@@ -218,7 +224,7 @@ export const useSearchCriteria = () => {
     return () => {
       cancelled = true;
     };
-  }, [applied.near, namedReady]);
+  }, [applied.near, namedReady, locationAttempt]);
 
   const go = (
     criteria: AppliedSearchCriteria,
@@ -440,6 +446,12 @@ export const useSearchCriteria = () => {
     clearAll,
     filters,
     locationPending,
+    locationBlocked,
+    locationError,
+    retryLocation: () => {
+      setFailedNear(null);
+      setLocationAttempt((attempt) => attempt + 1);
+    },
     locationSource: (deviceReady ? 'device' : namedReady ? 'named' : null) as 'device' | 'named' | null,
     returnPath,
     restaurantState,

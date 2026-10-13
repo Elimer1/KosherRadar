@@ -93,7 +93,7 @@ export const updateRestaurant = async (
   values: RestaurantFormValues,
   extras: RestaurantExtrasValues
 ) => {
-  const response = await api.put<{ restaurant: AdminRestaurant }>(`/admin/restaurants/${restaurantId}`, {
+  const response = await api.put<{ restaurant: AdminRestaurant & { locationStatus?: string } }>(`/admin/restaurants/${restaurantId}`, {
     restaurant: buildRestaurantPayload(values),
     extras: buildExtrasPayload(extras),
   });

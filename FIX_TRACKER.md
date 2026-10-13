@@ -10,9 +10,9 @@ Counts below are derived from the issue statuses in this file.
 | ALREADY WORKING | 8 |
 | BLOCKED | 4 |
 | DEFERRED | 1 |
-| VERIFIED | 22 |
+| VERIFIED | 31 |
 | Other | 0 |
-| **Total** | **45** |
+| **Total** | **54** |
 
 ## Priority bands (12 October 2026)
 
@@ -896,3 +896,136 @@ Only post-merge documentation files updated: this file, PROGRESS.md, REDESIGN_IN
 - **Relevant files/solution:** Review models, database initialization, isolated harnesses; no application-data index migration.
 - **Files changed/tests/verification:** db startup, indexIntegrityRepository, verification/provisioning operator scripts and isolated index tests. node integration/runAgent1Isolated.mjs --run-isolated agent1Indexes.integration.mjs: exit 0, 3 real MongoDB tests (missing indexes/no startup writes, actual duplicate enforcement across all models, incompatible nonunique index). Final backend npm test: exit 0, 42 files / 510 tests. Frontend npm test: exit 0, 27 files / 162 tests; lint/typecheck/build exit 0. Combined isolated database run: exit 0, 18 tests. Final index script rerun: exit 0, 4 tests including explicit provision/verify/no-flag paths, geospatial/TTL declarations and wrong partial filter. Diff check exit 0. Browser not run; external SDK mocked.
 - **Blockers/limitations:** Existing application database untouched; missing indexes/new cleanup collection require operator-approved provisioning before deployment. Legacy report rows without fingerprint stay outside partial index; no backfill.
+
+Only post-merge documentation files updated: this file, PROGRESS.md, REDESIGN_INTEGRATION_PROGRESS.md. Main's untracked PRE_PUSH_REVIEW.md preserved unchanged and excluded from commit. No source branch/worktree edit, push, deploy, branch/worktree deletion, reset or clean. Exact next step: stop; accepted local merge complete.
+## Search and location reliability ? Agent 2, 13 October 2026
+
+Explicit user assignment supersedes historical stop instructions for this worktree. Original audit statuses unchanged; nine assigned SEARCH issues added. All nine code fixes verified with mocks, subject to documented live rollout limits.
+
+Final batch: frontend npm test exit 0 (30 files / 174 passed); npm run lint, npm run typecheck, npm run build exit 0. Production JS 768.71 kB, existing >500 kB warning. Backend npm test exit 0 (42 files / 534 passed); no backend lint/typecheck/build scripts. Final completeness follow-up: backend npm test -- tests/restaurantSearchService.test.js tests/restaurantSearchRepository.test.js tests/mapSearchService.test.js exit 0 (57 passed). Git CRLF-aware diff check exit 0. Tests mocked/jsdom; browser and live services not tested.
+
+### SEARCH-001 ? Out-of-order location lookups
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P1.
+- **Status:** VERIFIED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** Typed lookup has no generation guard or rejection catch.
+- **Relevant files/functions:** Assigned search/location files in pasted request.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** LocationField.tsx; LocationField.test.tsx.
+- **Tests added or modified:** LocationField.test.tsx: stale success/failure, current rejection and clear invalidation (4 passing).
+- **Verification:** frontend npm test -- src/components/LocationField.test.tsx exit 0, 4/4 passed. npm run typecheck and npm run lint exit 0. Build pending batch verification. jsdom component tests; browser and live services not tested.
+- **Blockers/limitations:** No live service/data testing authorized.
+
+### SEARCH-002 ? Failed URL location removes geography
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P1.
+- **Status:** VERIFIED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** failedNear ends loading but search enablement only checks locationPending.
+- **Relevant files/functions:** useSearchCriteria.ts, HomePage.tsx, their tests.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** useSearchCriteria.ts, HomePage.tsx, useSearchCriteria.test.tsx, HomePage.test.tsx.
+- **Tests added or modified:** unavailable, ambiguous, not-found, rejection/retry/privacy hook cases; list/map gating UI cases.
+- **Verification:** npm test -- src/hooks/useSearchCriteria.test.tsx exit 0 (11 passed); npm test -- src/pages/HomePage.test.tsx exit 0 (2 passed); npm run typecheck and npm run lint exit 0. Previous frontend build exit 0, existing bundle warning. jsdom/mocks; browser and live services not tested.
+- **Blockers/limitations:** No live service/data testing authorized.
+
+### SEARCH-004 ? Candidate caps omit eligible and nearest results
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P1.
+- **Status:** VERIFIED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** alphabetical limit/slice before shared kashrut filtering and distance/relevance ranking.
+- **Relevant files/functions:** restaurantSearchRepository.load candidates; restaurantSearchService.loadMatches, list/map; Restaurant indexes.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** restaurantSearchRepository.js, restaurantSearchService.js, constants.js, Restaurant.js, search repository/service/map tests.
+- **Tests added or modified:** late eligible/nearest candidates beyond 2000, stable pages, map filtering beyond 500, keyset/deadline, Atlas overflow with zero eligible results. Old cap expectation intentionally changed because preliminary truncation is the confirmed defect; map output cap remains.
+- **Verification:** backend npm test -- tests/restaurantSearchService.test.js tests/restaurantSearchRepository.test.js tests/mapSearchService.test.js exit 0, 3 files/57 passed. node --check service exit 0. Backend has no build/lint/typecheck. Mocks only; no live DB/Atlas/browser.
+- **Blockers/limitations:** All candidates read in 2000-row keyset batches, certificates fetched per batch, best K retained; memory O(batch + page*20), total cost O(matching candidates), each DB query maxTimeMS 10000. Added nonunique status/_id index: compatible with existing records, no migration/backfill; not applied live; rollback removes this new index declaration/index. Atlas fuzzy hits remain bounded at 100 with overflow detection and truthful capped/completeness reasons; totals then lower bounds. Atlas fallback also marks completeness false with atlas_unavailable. Map caps only final ranked markers. Pagination deterministic for unchanged data; concurrent edits are not snapshot-isolated. Production performance/index compatibility unverified.
+
+### SEARCH-005 ? Missing zero-result completeness warning
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P2.
+- **Status:** VERIFIED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** capped warning was nested inside nonempty list rendering.
+- **Relevant files/functions:** HomePage.tsx result warning.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** HomePage.tsx; HomePage.test.tsx.
+- **Tests added or modified:** Zero-match partial results in intro and searched directory.
+- **Verification:** frontend npm test -- src/pages/HomePage.test.tsx exit 0 (4 passed); npm run typecheck/lint exit 0. No browser/live integrations.
+- **Blockers/limitations:** No live service/data testing authorized.
+
+### SEARCH-006 ? Admin address/location identity consistency
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P2.
+- **Status:** VERIFIED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** admin full-field mapping omitted provider ID and never geocoded missing/obsolete coordinates; selecting a suggestion without city retained old city; city edits allowed stale suggestions.
+- **Relevant files/functions:** adminRestaurantService.toRestaurantChanges/updateRestaurantByAdminService; new adminRestaurantLocationService; AddressSearch; AdminRestaurantPage; adminApi.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** adminRestaurantService.js, adminRestaurantLocationService.js, their tests; AddressSearch.tsx/test; AdminRestaurantPage.tsx; adminApi.ts.
+- **Tests added or modified:** typed match/failure, stale carried pin, selected replacement, explicit manual coordinates, unchanged identity; missing-city pick and stale city lookup. Old never-touch-provider-ID assertion updated because that behavior caused stale identity.
+- **Verification:** backend npm test -- tests/adminRestaurantService.test.js tests/adminRestaurantLocationService.test.js exit 0, 29 passed. Frontend npm test -- src/components/AddressSearch.test.tsx exit 0, 2 passed; npm run typecheck/lint exit 0. Mocks/jsdom only; no browser/live geocoding.
+- **Blockers/limitations:** Shared adminRestaurantService changes limited to import, location-field mapping and update function; report/delete/points workflows untouched. Placement failure saves address text with no invented pin and displays existing bilingual warning. Explicit new admin coordinates retain authority; unchanged location identity preserved. No added Hebrew strings. Integration may conflict with Agent 1 imports/function context.
+
+### SEARCH-007 ? Pending duplicate identity omits city
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P2.
+- **Status:** VERIFIED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** pending lookup and unique index identify submitter/name/address without locality.
+- **Relevant files/functions:** Restaurant prevalidate/index; restaurantRepository.findPendingRestaurantBySubmitterRepo; restaurantSubmissionService.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** Restaurant.js; restaurantRepository.js; restaurantSubmissionService.js; models/submission/pending-identity tests; SEARCH_LOCATION_INDEX_ROLLOUT.md.
+- **Tests added or modified:** normalized city derived, city-aware index, preflight city argument, distinct-city legacy rows allowed and same-city legacy rows detected.
+- **Verification:** backend npm test -- tests/restaurantPendingIdentity.test.js tests/restaurantSubmissionService.test.js tests/models.test.js exit 0, 3 files/34 passed. Backend has no lint/typecheck/build. Mocked queries and in-memory model validation only; live uniqueness/index replacement not tested.
+- **Blockers/limitations:** Existing DB requires approved replacement of pending_submitter_name_address with pending_submitter_name_address_city. No database/index operations performed; old index will still block cross-city branches until replaced. Read-time legacy normalization avoids a required record backfill. Partial new index excludes missing legacy cityNormalized; use coordinated single-version rollout. Rollback old broader index may fail after legitimate cross-city submissions; never delete records to resolve that. Review SEARCH_LOCATION_INDEX_ROLLOUT.md before deployment.
+
+### SEARCH-008 ? City search versus precise address geocoding
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P2.
+- **Status:** VERIFIED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** public geocode shared building-only selector while address autocomplete trusted coarse city results; full_match alone did not exclude city result types.
+- **Relevant files/functions:** placesService city/coarse classification, public geocode and separate suggestion/address autocomplete; placesController.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** placesService.js, placesController.js, placesService.test.js.
+- **Tests added or modified:** public match_by_city/full_match city acceptance versus precise address refusal, autocomplete separation, competing cities ambiguity.
+- **Verification:** backend npm test -- tests/placesService.test.js exit 0, 13 passed. Backend has no build/lint/typecheck. Fetch mocked; no live provider accuracy/browser verification.
+- **Blockers/limitations:** No live service/data testing authorized.
+
+### SEARCH-009 ? Confidence boundary and competing candidates
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P2.
+- **Status:** VERIFIED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** binary subtraction makes 1 - 0.8 less than 0.2; filtering competitors before comparing confidence allowed near-tied weaker or coarse matches to disappear.
+- **Relevant files/functions:** placesService.selectUnambiguousPlace.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** placesService.js; placesService.test.js.
+- **Tests added or modified:** exact gap boundary versus just below; low-confidence/coarse competitors; invalid/unknown confidence.
+- **Verification:** backend npm test -- tests/placesService.test.js exit 0, 20 passed. Mocks only; no live accuracy/browser testing. Backend has no build/lint/typecheck.
+- **Blockers/limitations:** No live service/data testing authorized.
+
+### SEARCH-010 ? Geoapify request deadlines
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P1.
+- **Status:** VERIFIED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** server fetch/body parsing had no deadline and public client location calls inherited Axios timeout 0.
+- **Relevant files/functions:** placesService.requestGeoapify; axiosInstance location request interceptor.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** placesService.js/test; axiosInstance.ts; locationDeadline.test.ts.
+- **Tests added or modified:** stalled headers/body, aborted signal, deadline cleanup, fake stalled XHR Axios timeout, unchanged upload and explicit longer timeout settings.
+- **Verification:** backend npm test -- tests/placesService.test.js exit 0, 23 passed. Frontend npm test -- src/api/locationDeadline.test.ts src/api/axiosInstance.test.ts exit 0, 13 passed; npm run typecheck/lint exit 0. Provider/XHR mocked with controlled timers; no live integration/browser.
+- **Blockers/limitations:** Five-second server deadline covers fetch and JSON body, abort plus Promise.race bounds even noncompliant transport. Ten-second client timeout scoped to /places/; uploads unchanged. Live infrastructure timeout behavior unverified.
