@@ -6,6 +6,7 @@ const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // The one Axios instance used by every API function.
 export const api = axios.create({ baseURL });
+export const LOCATION_REQUEST_TIMEOUT_MS = 10000;
 
 // Login/register 401s mean "wrong password", not "expired token", so they never log the user out.
 const AUTH_FORM_URLS = ['/auth/login', '/auth/register'];
@@ -34,6 +35,9 @@ export const isExpiredSessionError = (error: unknown) => {
 };
 
 api.interceptors.request.use((config) => {
+  // Location lookups have a 5-second provider deadline; allow network overhead.
+  // Keep uploads and other long-running operations on their existing settings.
+  if (config.url?.startsWith('/places/') && !config.timeout) config.timeout = LOCATION_REQUEST_TIMEOUT_MS;
   return attachToken(config, useAuthStore.getState().token);
 });
 

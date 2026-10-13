@@ -21,6 +21,7 @@ const CITY_PLACE_TYPES = new Set(['city', 'town', 'village', 'municipality']);
 const COARSE_PLACE_TYPES = new Set([...CITY_PLACE_TYPES, 'street', 'suburb', 'district', 'county', 'state', 'country', 'postcode']);
 const MIN_CONFIDENCE = 0.8;
 const CLEAR_CONFIDENCE_GAP = 0.2;
+export const GEOAPIFY_TIMEOUT_MS = 5000;
 
 const toPlace = (result) => {
   const latitude = result.lat;
@@ -106,14 +107,28 @@ const requestGeoapify = async (kind, text, lang = 'en') => {
   url.searchParams.set('lang', lang === 'he' ? 'he' : 'en');
   url.searchParams.set('apiKey', env.geoapifyApiKey);
 
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error(`Geoapify answered ${response.status}`);
+  const controller = new AbortController();
+  let timer;
+  const deadline = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      reject(new Error('Geoapify request timed out'));
+    }, GEOAPIFY_TIMEOUT_MS);
+  });
+  try {
+    // Bound both headers and body, even when a transport ignores cancellation.
+    return await Promise.race([
+      (async () => {
+        const response = await fetch(url, { signal: controller.signal });
+        if (!response.ok) throw new Error(`Geoapify answered ${response.status}`);
+        const data = await response.json();
+        return (data.results || []).map(toPlace).filter(Boolean);
+      })(),
+      deadline,
+    ]);
+  } finally {
+    clearTimeout(timer);
   }
-
-  const data = await response.json();
-  return (data.results || []).map(toPlace).filter(Boolean);
 };
 
 const autocompleteService = async (text, lang, allowArea) => {

@@ -17,3 +17,5 @@ SEARCH-007 code verified: normalized city in model/query/unique index; legacy ci
 SEARCH-008 verified: city-level public search supported; city/street/coarse results cannot become precise typed restaurant pins or address suggestions. Public place suggestions use separate service. 13 mocked provider tests pass, no live accuracy claims. SEARCH-007 checkpoint 8923a3a. Next SEARCH-009.
 
 SEARCH-009 verified: exact 0.2 gap tolerates only floating-point machine rounding; near-tied candidates below eligibility threshold or coarse matches still compete. Invalid/missing confidence conservatively refuses selection. 20 mocked provider tests pass. SEARCH-008 checkpoint 7883208. Next SEARCH-010.
+
+SEARCH-010 verified: server fetch/body bounded at 5 seconds with abort plus Promise.race; client /places requests bounded at 10 seconds, existing uploads and explicit overrides preserved. Controlled stalled headers/body and fake XHR tests pass: 23 backend/13 frontend tests, lint/typecheck pass. SEARCH-009 checkpoint 166e551. Next full suites/build/final review.

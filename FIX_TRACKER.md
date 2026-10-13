@@ -900,12 +900,12 @@ Explicit user assignment supersedes historical stop instructions for this worktr
 
 - **Milestone:** Agent 2 search/location reliability.
 - **Priority:** P1/P2 per assignment.
-- **Status:** NOT STARTED
+- **Status:** VERIFIED
 - **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
-- **Root cause:** Pending investigation.
-- **Relevant files/functions:** Assigned search/location files in pasted request.
+- **Root cause:** server fetch/body parsing had no deadline and public client location calls inherited Axios timeout 0.
+- **Relevant files/functions:** placesService.requestGeoapify; axiosInstance location request interceptor.
 - **Planned solution:** Focused compatible fix with mocked regressions.
-- **Files changed:** None yet.
-- **Tests added or modified:** Pending verification.
-- **Verification:** Not run yet.
-- **Blockers/limitations:** No live service/data testing authorized.
+- **Files changed:** placesService.js/test; axiosInstance.ts; locationDeadline.test.ts.
+- **Tests added or modified:** stalled headers/body, aborted signal, deadline cleanup, fake stalled XHR Axios timeout, unchanged upload and explicit longer timeout settings.
+- **Verification:** backend npm test -- tests/placesService.test.js exit 0, 23 passed. Frontend npm test -- src/api/locationDeadline.test.ts src/api/axiosInstance.test.ts exit 0, 13 passed; npm run typecheck/lint exit 0. Provider/XHR mocked with controlled timers; no live integration/browser.
+- **Blockers/limitations:** Five-second server deadline covers fetch and JSON body, abort plus Promise.race bounds even noncompliant transport. Ten-second client timeout scoped to /places/; uploads unchanged. Live infrastructure timeout behavior unverified.

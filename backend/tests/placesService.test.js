@@ -6,6 +6,7 @@ import {
   geocodePlaceService,
   selectUnambiguousPlace,
   suggestPlacesService,
+  GEOAPIFY_TIMEOUT_MS,
 } from '../src/services/placesService.js';
 import { addressQuerySchema, publicPlaceQuerySchema } from '../src/schemas/placesSchemas.js';
 
@@ -42,6 +43,26 @@ describe('placesService', () => {
   afterEach(() => {
     env.geoapifyApiKey = '';
     vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  it.each(['headers', 'body'])('bounds stalled provider %s and aborts the request', async (stage) => {
+    vi.useFakeTimers();
+    const stalled = new Promise(() => {});
+    const fetchMock = vi.fn().mockReturnValue(stage === 'headers' ? stalled : Promise.resolve({ ok: true, json: () => stalled }));
+    vi.stubGlobal('fetch', fetchMock);
+    const lookup = geocodePlaceService('Jerusalem');
+    await vi.advanceTimersByTimeAsync(GEOAPIFY_TIMEOUT_MS);
+    expect(await lookup).toEqual({ available: false, place: null, reason: 'unavailable' });
+    expect(fetchMock.mock.calls[0][1].signal.aborted).toBe(true);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('clears the provider deadline after a successful request', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ results: [jerusalem] }) }));
+    expect((await geocodePlaceService('Jerusalem')).available).toBe(true);
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it('does not call Geoapify when the key is missing', async () => {
