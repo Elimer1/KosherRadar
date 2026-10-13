@@ -6,11 +6,11 @@ Counts below are derived from the issue statuses in this file.
 
 | Status | Count |
 | --- | ---: |
-| NOT STARTED | 11 |
+| NOT STARTED | 10 |
 | ALREADY WORKING | 8 |
 | BLOCKED | 4 |
 | DEFERRED | 3 |
-| VERIFIED | 41 |
+| VERIFIED | 42 |
 | Other | 1 |
 | **Total** | **68** |
 
@@ -1160,17 +1160,17 @@ Independent-audit follow-up verification (13 October 2026): targeted npm test --
 
 ### ADMINCERT-001 - Reported administrator certificate hechsherOther validation failure
 
-- **Milestone:** Authorized final integration promotion/handoff.
+- **Milestone:** User-assigned dedicated admin certificate validation fix.
 - **Priority:** High; outstanding pre-production workflow issue.
-- **Status:** NOT STARTED.
-- **Description/evidence:** User reports administrator certificate creation may fail with teuda.hechsherOther validation error. Not reproduced in this promotion; passing synthetic LOCAL_RABBANUT admin checks do not prove the affected payload works.
-- **Root cause:** Undetermined; inspect optional hechsherOther form/payload and schema handling before changing validation.
+- **Status:** VERIFIED.
+- **Description/evidence:** User-reported teuda.hechsherOther 400 independently reproduced: baseline schema/HTTP regressions exit 1, 38 failed/60 passed; valid admin add/initial/edit return 400 for blank optional custom name. Frontend baseline serialization tests exit 1, 4 failed.
+- **Root cause:** Admin payload builder spreads form values, including blank hechsherOther. Admin and pending-evidence schemas reject blank strings before conditional OTHER validation and standard-name removal. Shared admin add/initial/edit paths affected; public builders already omit blank names.
 - **Relevant files/functions:** AdminAddTeudaPage, AdminCreateRestaurantPage, TeudaFields, adminApi certificate payload builders, backend adminSchemas/Teuda model/adminTeudaService. Exact failing payload path requires focused reproduction.
-- **Planned solution:** Separate mocked/intercepted reproduction and minimal validated fix; preserve admin authority and required OTHER labels. No application fix in merge/push scope.
-- **Files changed:** Tracking notes only.
-- **Tests added or modified:** None; recommend omitted/empty/named hechsherOther cases for ordinary and OTHER hechshers on direct/combined administrator creation.
-- **Verification:** User-supplied report only; no live upload or database operation.
-- **Blockers/limitations:** Outstanding; never represented as fixed by existing admin test success.
+- **Planned solution:** Normalize only blank custom-name strings in shared certificate schemas and omit them in shared admin serialization; keep conditional OTHER requirement, type/length checks, required certificate/photo validation and authority/zero points unchanged.
+- **Files changed:** backend/src/schemas/commonSchemas.js, adminSchemas.js, teudaSchemas.js; frontend/src/api/adminApi.ts; three new test files and tracking/report docs. Models/repositories/services unchanged.
+- **Tests added or modified:** certificateHechsherSchemas.test.js (80 across five request workflows/all standard options); adminCertificateValidationHttp.test.js (18 through real admin validation/controller/services with mocked persistence/uploads); adminApi.test.ts (4 serialization tests). Covers authority/public VERIFIED/zero points, required OTHER, malformed names/data/photos, authorization and edit clearing.
+- **Verification:** Focused backend exit 0, 7 files/203 passed; focused frontend exit 0, 3 files/19 passed. Full backend npm test exit 0, 51 files/678 passed; frontend npm test exit 0, 36 files/219 passed; frontend npm run lint/typecheck/build exit 0. Backend has no build/lint/typecheck scripts. CRLF-aware whitespace check exit 0. Exact commands/evidence in ADMIN_CERTIFICATE_FIX_PROGRESS.md.
+- **Blockers/limitations:** No live browser/database/external-service verification. Real local HTTP, mocks and jsdom only; existing bundle warning remains. No schema/backfill/dependency/UI text/rule changes. Ready for separately authorized integration; no merge/push/deployment here.
 
 ### MAPTILE-001 - Observed OpenStreetMap tile HTTP 403
 

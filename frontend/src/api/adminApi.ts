@@ -33,8 +33,10 @@ export const buildExtrasPayload = (extras: RestaurantExtrasValues) => {
 };
 
 // The admin certificate form has one more field than the user form: a private note.
+// NEW (ADMINCERT-001): omit blank custom names just like the public certificate builder.
+// חדש (ADMINCERT-001): שם הכשר מותאם ריק לא נשלח, כמו בטופס הציבורי.
 export const buildAdminTeudaPayload = (values: TeudaFormValues, adminNote: string) => {
-  return { ...values, adminNote };
+  return { ...values, hechsherOther: values.hechsherOther.trim() || undefined, adminNote };
 };
 
 // ---------- Lists ----------

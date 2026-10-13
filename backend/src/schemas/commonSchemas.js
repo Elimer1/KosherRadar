@@ -12,6 +12,14 @@ export const dateOnlyField = z
   .trim()
   .refine(isValidDateOnly, 'Enter a valid date in the format YYYY-MM-DD');
 
+// NEW (ADMINCERT-001): blank form text is absent; OTHER still requires a name.
+// חדש (ADMINCERT-001): טקסט ריק נחשב חסר; בבחירת אחר עדיין נדרש שם הכשר.
+// Preserve type and length validation before dropping unused standard-hechsher text.
+export const optionalHechsherOtherField = z.preprocess(
+  (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+  z.string().trim().min(1).max(100).optional()
+);
+
 // Only http and https links are allowed, so values like "javascript:..." can never be saved.
 export const httpUrlField = z
   .string()

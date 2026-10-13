@@ -11,6 +11,7 @@ import {
   dateOnlyField,
   dropOtherTextUnlessOther,
   httpUrlField,
+  optionalHechsherOtherField,
   phoneField,
   requireOtherTextWhenOther,
 } from './commonSchemas.js';
@@ -51,7 +52,7 @@ const adminTeudaShape = (mashgiachRequired) =>
   z
     .object({
       hechsher: z.enum(HECHSHER_VALUES, 'Choose a hechsher'),
-      hechsherOther: z.string().trim().min(1).max(100).optional(),
+      hechsherOther: optionalHechsherOtherField,
       kashrutLevel: z.enum(KASHRUT_LEVELS, 'Choose a kashrut level'),
       expirationDate: dateOnlyField,
       mashgiachName: mashgiachRequired
