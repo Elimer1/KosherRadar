@@ -18,9 +18,12 @@ export const getCurrentUserController = async (req, res) => {
 // NEW (Milestone 3): password reset. The answer to "forgot password" is the same for every email.
 // חדש (אבן דרך 3): איפוס סיסמה. התשובה ל"שכחתי סיסמה" זהה לכל מייל.
 export const forgotPasswordController = async (req, res) => {
-  await requestPasswordResetService(req.body);
+  // Account lookup, token writes and SMTP must not affect response timing or disclose account existence.
+  void requestPasswordResetService(req.body).catch(() => {
+    console.error('Password reset request could not be processed');
+  });
   res.status(200).json({
-    message: 'If an account exists for this email, we sent a link to reset the password.',
+    message: 'If an account exists for this email, a password reset link will be requested. Please check your inbox and spam folder.',
   });
 };
 

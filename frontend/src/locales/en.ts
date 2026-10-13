@@ -212,6 +212,11 @@ export const en = {
     body: 'The page you are looking for does not exist.',
   },
   auth: {
+    forgotConfirmation: 'If an account exists for this email, a reset link will be requested. Check your inbox and spam folder.',
+    resetExpiredBody: 'This link has expired or was already used. Request a new reset link.',
+    rateLimited: 'Too many attempts. Please wait before trying again.',
+    recoveryValidation: 'Check the email address or password requirements and try again.',
+    passwordLimits: 'Use at least 8 characters and at most 72 UTF-8 bytes (some letters use more than one byte).',
     loginTitle: 'Log in',
     loggingIn: 'Logging in...',
     loginFailed: 'Could not log in. Please try again.',

@@ -9,6 +9,12 @@ describe('readResetToken', () => {
     expect(readResetToken(`?token=${token}`)).toBe(token);
   });
 
+  it('accepts new fragment links and refuses ambiguous duplicate/mixed tokens', () => {
+    expect(readResetToken('', `#token=${token}`)).toBe(token);
+    expect(readResetToken(`?token=${token}&token=${token}`)).toBe('');
+    expect(readResetToken(`?token=${token}`, `#token=${token}`)).toBe('');
+  });
+
   it('returns an empty string when the token is missing or malformed', () => {
     expect(readResetToken('')).toBe('');
     expect(readResetToken('?token=short')).toBe('');

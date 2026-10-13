@@ -14,10 +14,8 @@ export const env = {
   cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
   cloudinaryApiKey: process.env.CLOUDINARY_API_KEY || '',
   cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || '',
-  // NEW (Milestone 3): Resend email settings (rejection emails and password reset)
-  // חדש (אבן דרך 3): הגדרות שליחת מייל ב-Resend (מיילי דחייה ואיפוס סיסמה)
-  resendApiKey: process.env.RESEND_API_KEY || '',
-  emailFrom: process.env.EMAIL_FROM || '',
+  emailUser: (process.env.EMAIL_USER || '').trim(),
+  emailAppPassword: process.env.EMAIL_APP_PASSWORD || '',
   // NEW (Milestone 4): Atlas Search is OFF until the index from ATLAS_SEARCH_SETUP.md exists and was checked.
   // חדש (אבן דרך 4): Atlas Search כבוי עד שהאינדקס מ-ATLAS_SEARCH_SETUP.md קיים ונבדק.
   atlasSearchEnabled: process.env.ATLAS_SEARCH_ENABLED === 'true',

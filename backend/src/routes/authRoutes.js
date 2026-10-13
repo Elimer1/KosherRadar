@@ -18,6 +18,12 @@ import {
 
 const router = Router();
 
+const privateRecoveryResponse = (req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  res.set('Referrer-Policy', 'no-referrer');
+  next();
+};
+
 router.post('/register', authRateLimiter, validateBody(registerSchema), registerController);
 router.post('/login', authRateLimiter, validateBody(loginSchema), loginController);
 router.get('/me', authMiddleware, getCurrentUserController);
@@ -26,10 +32,11 @@ router.get('/me', authMiddleware, getCurrentUserController);
 // חדש (אבן דרך 3): איפוס סיסמה. לא נדרשת התחברות (המשתמש שכח את הסיסמה).
 router.post(
   '/forgot-password',
+  privateRecoveryResponse,
   passwordResetRateLimiter,
   validateBody(forgotPasswordSchema),
   forgotPasswordController
 );
-router.post('/reset-password', authRateLimiter, validateBody(resetPasswordSchema), resetPasswordController);
+router.post('/reset-password', privateRecoveryResponse, authRateLimiter, validateBody(resetPasswordSchema), resetPasswordController);
 
 export default router;

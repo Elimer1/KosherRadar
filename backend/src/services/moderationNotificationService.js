@@ -5,7 +5,7 @@
 // FAILED or NOT_CONFIGURED in the response and the rejection stays saved (spec 6 and 12).
 // הפונקציה לעולם לא זורקת שגיאה. אם המייל לא נשלח, המנהל מקבל FAILED או NOT_CONFIGURED וההחלטה נשארת שמורה.
 import { findUserByIdRepo } from '../repositories/userRepository.js';
-import { EMAIL_FAILED, sendRejectionEmailService } from './emailService.js';
+import { EMAIL_FAILED, sendApprovalEmailService, sendRejectionEmailService } from './emailService.js';
 
 export const notifyRejectionService = async ({ submitterId, kind, subjectName, reason }) => {
   try {
@@ -16,9 +16,23 @@ export const notifyRejectionService = async ({ submitterId, kind, subjectName, r
       kind,
       subjectName,
       reason,
+      language: submitter?.preferredLanguage,
     });
-  } catch (error) {
-    console.error('Rejection notification failed:', error.message);
+  } catch {
+    console.error('Rejection notification failed');
+    return EMAIL_FAILED;
+  }
+};
+
+// Called only by the winner of a PENDING -> APPROVED transition, never on retries or admin creation.
+export const notifyApprovalService = async ({ submitterId, kind, subjectName }) => {
+  try {
+    const submitter = await findUserByIdRepo(submitterId);
+    if (submitter?.role === 'ADMIN') return;
+    return await sendApprovalEmailService({ to: submitter?.email, kind, subjectName,
+      language: submitter?.preferredLanguage });
+  } catch {
+    console.error('Approval notification failed');
     return EMAIL_FAILED;
   }
 };

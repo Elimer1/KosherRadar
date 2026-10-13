@@ -24,6 +24,7 @@ vi.mock('../src/repositories/passwordResetRepository.js', () => ({
 
 vi.mock('../src/services/emailService.js', () => ({
   sendPasswordResetEmailService: vi.fn(),
+  sendPasswordChangedEmailService: vi.fn(),
 }));
 
 import { findUserByEmailRepo, setUserPasswordHashRepo } from '../src/repositories/userRepository.js';
@@ -33,7 +34,7 @@ import {
   deleteUnusedResetTokensRepo,
   releaseResetTokenRepo,
 } from '../src/repositories/passwordResetRepository.js';
-import { sendPasswordResetEmailService } from '../src/services/emailService.js';
+import { sendPasswordChangedEmailService, sendPasswordResetEmailService } from '../src/services/emailService.js';
 import {
   RESET_TOKEN_VALID_MINUTES,
   buildResetLink,
@@ -48,6 +49,7 @@ describe('requestPasswordResetService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sendPasswordResetEmailService.mockResolvedValue('SENT');
+    sendPasswordChangedEmailService.mockResolvedValue('SENT');
     createResetTokenRepo.mockResolvedValue({});
     deleteUnusedResetTokensRepo.mockResolvedValue({});
   });
@@ -69,7 +71,7 @@ describe('requestPasswordResetService', () => {
 
     const stored = createResetTokenRepo.mock.calls[0][0];
     const email = sendPasswordResetEmailService.mock.calls[0][0];
-    const rawToken = new URL(email.resetLink).searchParams.get('token');
+    const rawToken = new URLSearchParams(new URL(email.resetLink).hash.slice(1)).get('token');
 
     expect(rawToken).toMatch(/^[a-f0-9]{64}$/);
     expect(stored.tokenHash).toBe(hashResetToken(rawToken));
@@ -78,7 +80,7 @@ describe('requestPasswordResetService', () => {
     expect(stored.expiresAt.getTime()).toBeGreaterThanOrEqual(before + RESET_TOKEN_VALID_MINUTES * 60 * 1000 - 1000);
     expect(stored.expiresAt.getTime()).toBeLessThanOrEqual(Date.now() + RESET_TOKEN_VALID_MINUTES * 60 * 1000);
     expect(email.to).toBe('a@b.com');
-    expect(email.resetLink.startsWith('http://localhost:5173/reset-password?token=')).toBe(true);
+    expect(email.resetLink.startsWith('http://localhost:5173/reset-password#token=')).toBe(true);
   });
 
   it('cancels older unused links before creating the new one', async () => {
@@ -118,13 +120,14 @@ describe('requestPasswordResetService', () => {
 
 describe('buildResetLink', () => {
   it('joins the client URL and the token without a double slash', () => {
-    expect(buildResetLink(TOKEN)).toBe(`http://localhost:5173/reset-password?token=${TOKEN}`);
+    expect(buildResetLink(TOKEN)).toBe(`http://localhost:5173/reset-password#token=${TOKEN}`);
   });
 });
 
 describe('resetPasswordService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sendPasswordChangedEmailService.mockResolvedValue('SENT');
     deleteUnusedResetTokensRepo.mockResolvedValue({});
   });
 
@@ -176,7 +179,10 @@ describe('resetPasswordService', () => {
     setUserPasswordHashRepo.mockResolvedValue({ _id: 'user-1' });
     deleteUnusedResetTokensRepo.mockRejectedValue(new Error('cleanup failed'));
 
-    await expect(resetPasswordService({ token: TOKEN, password: 'brand-new-pass' })).rejects.toThrow('cleanup failed');
+    // A saved password must report success even when cancellation of other links fails.
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await expect(resetPasswordService({ token: TOKEN, password: 'brand-new-pass' })).resolves.toBeUndefined();
+    consoleError.mockRestore();
     expect(releaseResetTokenRepo).not.toHaveBeenCalled();
   });
 
@@ -190,5 +196,34 @@ describe('resetPasswordService', () => {
     });
 
     expect(setUserPasswordHashRepo).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows only one concurrent consumer and sends one confirmation', async () => {
+    let used = false;
+    consumeResetTokenRepo.mockImplementation(async () => {
+      if (used) return null;
+      used = true;
+      return { _id: 'token-1', user: 'user-1' };
+    });
+    setUserPasswordHashRepo.mockResolvedValue({ _id: 'user-1', email: 'user@example.com' });
+    const results = await Promise.allSettled([
+      resetPasswordService({ token: TOKEN, password: 'brand-new-pass', language: 'he' }),
+      resetPasswordService({ token: TOKEN, password: 'another-pass-1', language: 'he' }),
+    ]);
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    expect(results.find((result) => result.status === 'rejected').reason.code).toBe('INVALID_RESET_TOKEN');
+    expect(setUserPasswordHashRepo).toHaveBeenCalledTimes(1);
+    expect(sendPasswordChangedEmailService).toHaveBeenCalledExactlyOnceWith({ to: 'user@example.com', language: 'he' });
+  });
+
+  it('confirmation failure cannot reverse a saved password and does not leak error details', async () => {
+    consumeResetTokenRepo.mockResolvedValue({ _id: 'token-1', user: 'user-1' });
+    setUserPasswordHashRepo.mockResolvedValue({ _id: 'user-1', email: 'user@example.com' });
+    sendPasswordChangedEmailService.mockRejectedValue(new Error(TOKEN));
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await expect(resetPasswordService({ token: TOKEN, password: 'brand-new-pass' })).resolves.toBeUndefined();
+    expect(releaseResetTokenRepo).not.toHaveBeenCalled();
+    expect(JSON.stringify(consoleError.mock.calls)).not.toContain(TOKEN);
+    consoleError.mockRestore();
   });
 });

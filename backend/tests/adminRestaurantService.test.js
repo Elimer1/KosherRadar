@@ -41,6 +41,7 @@ vi.mock('../src/repositories/userRepository.js', () => ({
 vi.mock('../src/services/emailService.js', () => ({
   EMAIL_FAILED: 'FAILED',
   sendRejectionEmailService: vi.fn(),
+  sendApprovalEmailService: vi.fn().mockResolvedValue('SENT'),
 }));
 
 vi.mock('../src/services/duplicateService.js', () => ({
@@ -78,7 +79,7 @@ import {
   findReportsOfRestaurantRepo,
 } from '../src/repositories/adminReportRepository.js';
 import { awardPointsOnceRepo, findUserByIdRepo } from '../src/repositories/userRepository.js';
-import { sendRejectionEmailService } from '../src/services/emailService.js';
+import { sendApprovalEmailService, sendRejectionEmailService } from '../src/services/emailService.js';
 import { findPossibleDuplicatesService } from '../src/services/duplicateService.js';
 import { deleteImageService, uploadTeudaImageService } from '../src/services/imageUploadService.js';
 import {
@@ -261,6 +262,7 @@ describe('approveRestaurantService', () => {
     expect(result.restaurant.status).toBe('APPROVED');
     expect(result.alreadyApproved).toBe(false);
     expect(awardPointsOnceRepo).not.toHaveBeenCalled();
+    expect(sendApprovalEmailService).toHaveBeenCalledTimes(1);
   });
 
   it('changes nothing when the restaurant is already approved', async () => {
@@ -270,6 +272,7 @@ describe('approveRestaurantService', () => {
 
     expect(result.alreadyApproved).toBe(true);
     expect(approvePendingRestaurantRepo).not.toHaveBeenCalled();
+    expect(sendApprovalEmailService).not.toHaveBeenCalled();
   });
 
   it('refuses to approve a rejected restaurant', async () => {
@@ -287,6 +290,19 @@ describe('approveRestaurantService', () => {
     const result = await approveRestaurantService({ restaurantId: 'rest-1' });
 
     expect(result.alreadyApproved).toBe(true);
+    expect(sendApprovalEmailService).not.toHaveBeenCalled();
+  });
+
+  it('keeps the saved approval when notification throws and sends nothing on retry', async () => {
+    findRestaurantByIdRepo.mockResolvedValue(restaurant());
+    approvePendingRestaurantRepo.mockResolvedValue(restaurant({ status: 'APPROVED' }));
+    sendApprovalEmailService.mockRejectedValueOnce(new Error('SMTP down'));
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect((await approveRestaurantService({ restaurantId: 'rest-1' })).restaurant.status).toBe('APPROVED');
+    findRestaurantByIdRepo.mockResolvedValue(restaurant({ status: 'APPROVED' }));
+    await approveRestaurantService({ restaurantId: 'rest-1' });
+    expect(sendApprovalEmailService).toHaveBeenCalledTimes(1);
+    log.mockRestore();
   });
 });
 

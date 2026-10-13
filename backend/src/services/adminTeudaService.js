@@ -23,7 +23,7 @@ import { removeTeudaFromReportsRepo } from '../repositories/adminReportRepositor
 import { toAdminTeuda } from './adminSerializerService.js';
 import { checkImageFile, deleteImageService, uploadTeudaImageService } from './imageUploadService.js';
 import { findConflictingTeudot } from './kashrutStatusService.js';
-import { notifyRejectionService } from './moderationNotificationService.js';
+import { notifyApprovalService, notifyRejectionService } from './moderationNotificationService.js';
 import { awardPointsForApprovedTeudaService } from './pointsService.js';
 import { checkExpirationForAdmin } from './teudaRulesService.js';
 import { buildTeudaRecord } from './teudaSubmissionService.js';
@@ -212,6 +212,10 @@ export const approveTeudaService = async ({ teudaId }) => {
 
   // Runs on repeated approvals too: the award is guarded, so this also repairs a failed first attempt.
   // רץ גם באישור חוזר: הניקוד מוגן מכפילות, ולכן זה גם מתקן ניסיון ראשון שנכשל.
+  // Send once for the winning approval even if a later points operation fails; its retry must not resend.
+  if (!alreadyApproved) {
+    await notifyApprovalService({ submitterId: approved.submittedBy, kind: 'certificate', subjectName: restaurant.name });
+  }
   const points = await awardPointsForApprovedTeudaService({ teuda: approved, restaurant });
 
   return { teuda: toAdminTeuda(approved), alreadyApproved, conflictWarning, points };
