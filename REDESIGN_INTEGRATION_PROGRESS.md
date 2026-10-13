@@ -135,13 +135,71 @@ The previous Wave 1 visual target and completion notes above are historical. V2 
 
 ## NEXT AGENT ONBOARDING
 
-- Current milestone: V2 integration and release review, explicitly requested by user.
-- Current issue: combined browser/functional review in progress; merges completed cleanly.
-- Starting HEAD: `0140d19`; source tips and preserved untracked source file listed above.
-- Completed: read standing instructions/tracking/source handoffs; audited clean integration, local ancestry, separate paths, and installed browser.
-- Merge commits: discovery `bca213b`, map `ab71efa`, details `6d13d2d`, all `--no-ff`, no textual conflicts. Current committed HEAD `6d13d2d`. Source histories preserved. The details branch brings historical worktree-specific onboarding; the integration handoff supersedes it for this checkout.
-- Tests: combined frontend `npm run lint`, `npm run typecheck`, `npm test`, `npm run build` exit 0; 26 files / 158 tests, no failures. Build JS 766.86 kB, CSS 70.70 kB; pre-existing >500 kB warning remains. jsdom navigation notice is nonfatal. Backend tests running with existing installed dependencies copied into this worktree (no install, dependency or lockfile change).
-- Browser review: `node design-screenshots/v2-integration/review.mjs` running against this checkout's production build using Chrome DevTools. Every API, tile, and certificate response is intercepted; external requests blocked. Screenshots/results local ignored under `design-screenshots/v2-integration/`.
-- Backend `cd backend; npm test`: exit 0, 40 files / 505 tests passed, mocks only. Existing dependencies copied from local main's installed node_modules into this worktree; no install, dependency addition or lockfile modification. Backend has no lint/typecheck/build scripts. No database or live integration run.
-- Integration fix `V2-I001`: browser-confirmed repeated claim label, minimal conditional record-label suppression while retaining mixed-evidence labels and warning/attribution. Details suite exit 0, 14 tests; final full frontend suite exit 0, 158 tests in 26 files; lint/typecheck/build exit 0. Final JS 766.92 kB (224.38 kB gzip), CSS 70.70 kB. Post-fix combined browser capture in progress.
-- Next: finish browser matrix/interactions, inspect screenshots, resolve demonstrated regressions sequentially, record final checks and accurate handoff, commit locally. Do not modify source worktrees or main; do not push.
+- Current milestone: V2 integration and release review COMPLETE within the requested local/fixture scope; ready for final human visual review.
+- Branch: `redesign/wave-1-integration`; verified application checkpoint `a34130d`. The documentation commit containing this final handoff is the final integration HEAD; obtain its exact hash with `git rev-parse HEAD` (a commit cannot contain its own hash).
+- Starting HEAD `0140d19`; merged discovery `bca213b`, map `ab71efa`, details `6d13d2d`, all `--no-ff`, no textual conflicts. All three expected source commits and discovery's documentation tip are incorporated.
+- Last verified fix: `V2-I001`, redundant claim-only record label. No partial application changes or failing checks remain. Source histories and worktrees preserved; details still has its original untracked preview config. Main remains `5393037`; nothing pushed.
+- Completed files: merged source files listed in the three V2 progress documents; integration fix changes `UnverifiedClaims.tsx`, `RestaurantDetailsPage.tsx`, its test. Tracking updated in `FIX_TRACKER.md`, `PROGRESS.md`, and this document.
+- Verification: final frontend lint/typecheck/build exit 0; 158 tests in 26 files exit 0; details subset 14 tests exit 0; backend 505 tests in 40 files exit 0. CRLF-aware diff check exit 0. See final review below for browser results and limitations.
+- Exact next step: stop automated milestone work; human reviews the actual combined desktop/mobile screenshots. Do not remerge branches, redo the redesign, start LATER work, modify source worktrees, merge into main or push. Read this document and reconcile Git state before any later authorized action.
+- Known outstanding work: native-speaker Hebrew review (M8-004), pre-existing bundle warning, and live integration/production-readiness items in FIX_TRACKER. These are not represented as verified by this review.
+
+## V2 final verification and visual review
+
+### Merge outcome and semantic review
+
+No file conflict resolution was needed. Discovery's shared tokens and form exports align with map/details' scoped `--v2-*` selectors. Actual browser review confirms light header/identity, restrained green accents, warm canvas, hairline directory rows, consistent buttons, mirrored Hebrew panels/columns, and four distinct trust states. Map panel placement follows the available container: mobile sheet, tablet/narrow-desktop dock, full desktop side panel. Short-map content scrolls and actions remain contained. No large dark-green hero, invented restaurant photo/rating/hours, or generic dashboard card grid was introduced.
+
+One integration fix, `V2-I001`, removes the redundant status inside a claim-only evidence record. It retains existing public words, section heading, single summary, restaurant attribution and warning; mixed certificate/claim sections retain record status labels. Checkpoint `a34130d`. No other application repair was needed.
+
+`git diff 0140d19 HEAD -- backend frontend/package.json frontend/package-lock.json` is empty. Backend/API/auth/authorization/storage/point amounts remain unchanged. Existing backend tests cover immediate APPROVED admin-created restaurants and certificates and zero administrator contribution points. Ordinary submissions retain moderation. No extra administrator approval step was added. No schema/migration/dependency change.
+
+### Actual automated results (13 October 2026)
+
+| Command | Final result |
+| --- | --- |
+| `cd frontend; npm run lint` | exit 0 |
+| `cd frontend; npm run typecheck` | exit 0 |
+| `cd frontend; npm test` | exit 0; 26 files, 158 passed, 0 failed |
+| `cd frontend; npm test -- src/pages/RestaurantDetailsPage.test.tsx` | exit 0; 14 passed |
+| `cd frontend; npm run build` | exit 0; JS 766.92 kB / 224.38 kB gzip, CSS 70.70 kB |
+| `cd backend; npm test` | exit 0; 40 files, 505 passed, 0 failed |
+| `git -c core.whitespace=cr-at-eol diff 0140d19 HEAD --check` | exit 0 |
+
+Backend dependencies were initially absent. Already-installed matching dependencies were copied from the local primary checkout into this worktree; no installation, package or lockfile edit. Tests use mocks and do not certify a live backend/database. Backend has no lint/typecheck/build scripts. Frontend jsdom navigation notice is nonfatal. Existing Vite chunk warning above 500 kB remains.
+
+### Actual combined browser review
+
+Installed headless Chrome, dedicated local disposable profile, production `frontend/dist` served at `http://127.0.0.1:5217`. DevTools intercepts every API, certificate and map-tile response; external requests blocked. Fixtures exist only in an ignored review harness, never in shipping UI or a database. Review tooling required sandbox escalation for Chrome renderer and shared Git metadata; it did not grant access to live services.
+
+- `node design-screenshots/v2-integration/review.mjs`: exit 0, 89 records (81 page renders and 8 panel-geometry records), 26 interaction/journey checks, no application exceptions. English/Hebrew at 375, 768, 1024, 1280px. No horizontal overflow; no automatic geolocation invocation.
+- `node design-screenshots/v2-integration/review.mjs --fixture-refresh`: exit 0, 47 records, 20 checks, no application exceptions. Refreshes desktop/mobile evidence with hechsher/food enum values matching the backend. It rechecks the final claim-label fix and all supplemental interactions. Earlier harness initialization/selectors/fixture IDs/transient-state mistakes were corrected; final passes did not weaken application validation or tests. Canceled intercepted requests are ignored only when Chrome reports an already-invalid request ID.
+- Verified homepage search/results/details return, homepage empty search/directory/map, clustered map selection/details/return/list, filter URL application and persistence across list/map/list, actual language switch, responsive menu navigation, current/expired/unverified/unknown evidence, directions Enter/Escape/focus and destination links, certificate preview failure retaining its link through language change, logged-out contribution redirects, search/details/map error retry, loading/empty/capped notices, short-map actions, map bounds requests, explicit geolocation invocation with mocked denial.
+- Visually inspected representative desktop/mobile home, results, all four status details, English/Hebrew map selections, RTL evidence/contact columns, mobile filters, image fallback, directions chooser, and short-map/error states. Final screenshots show readable mixed-direction names/addresses/telephone data and usable focus outlines. This is not a formal exhaustive WCAG audit.
+
+### Screenshot and results paths
+
+Absolute evidence directory: `C:\FS\projects\KosherRadar-redesign-integration\design-screenshots\v2-integration\` (Git-ignored; 91 local PNGs). The following files are actual combined-app captures. `{lang}` is `en` or `he`; `{width}` is 375, 768, 1024 or 1280.
+
+| Coverage | Filenames relative to evidence directory |
+| --- | --- |
+| Homepage | `{lang}-{width}-home.png` |
+| Search results and all trust states | `{lang}-{width}-results.png`, `{lang}-{width}-statuses.png` |
+| Mobile/tablet filters | `{lang}-375-filters.png`, `{lang}-768-filters.png` |
+| Selected map and navigation to details | `{lang}-{width}-map-selected.png`, `{lang}-{width}-map-to-details.png` |
+| Four details states | `{lang}-{width}-details-{verified,expired,unverified,unknown}.png` |
+| Navigation, destinations, fallback | `mobile-navigation.png`, `directions-open.png`, `certificate-fallback.png` |
+| Search states | `search-loading.png`, `search-empty.png`, `search-error.png` |
+| Details states | `details-loading.png`, `details-missing.png`, `details-error.png` |
+| Map states and short screen | `map-loading.png`, `map-empty.png`, `map-error.png`, `map-capped.png`, `map-short.png` |
+| Explicit-location denial | `geolocation-denied.png` |
+| Successful full matrix evidence | `full-matrix-results.json` |
+| Successful final desktop/mobile refresh | `results.json` |
+
+Local `review.mjs` is the repeatable browser harness; uses Node/installed Chrome, fixed local ports 5217/9347, and no package addition. Old `partial-results.json`/`matrix-results.json` are troubleshooting records, not final completion evidence. Local servers and Chrome owned by each harness are stopped on exit.
+
+### Limitations and readiness
+
+Ready for final human visual review, with the remaining limitations disclosed. Live Atlas/MongoDB, Geoapify, Cloudinary, Resend and real OSM delivery were not tested. No real email, upload, user file, credentials, production data or database operation was used. Telephone dialing, external Google Maps/Waze navigation, native share sheet and real device geolocation permission dialog remain untested; links/guardrails use component tests and fixture browser checks. Full authenticated submission/moderation browser flows were not rerun; backend contract/rule suites pass and those implementations are unchanged.
+
+Hebrew additions in `components/discovery/discoveryCopy.ts` and `components/details/labels.ts` (`ניווט`, `תעודות וראיות`) were checked for obvious omissions/consistency and rendered in RTL, but native-speaker sign-off remains required under M8-004. Existing hechsher/locale copy still needs that review. No Hebrew/public verification terminology was changed by integration. Existing bundle warning remains. These limitations prevent treating this review as production-release approval.
