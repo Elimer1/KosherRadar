@@ -5,6 +5,7 @@
 - Worktree: `C:\FS\projects\KosherRadar-redesign-integration`
 - Branch: `redesign/wave-1-integration`
 - Started from Agent 1: `effec1fe94ba99b08cf74e194789d06a31eade65`
+- Integration commit: `14b140712cdd5f9023318a1899a72fb08845a7c6`
 - Not merged into `main`. Not pushed.
 
 ## 2. Baseline commit
