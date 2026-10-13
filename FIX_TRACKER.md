@@ -816,15 +816,15 @@ Explicit user assignment supersedes historical stop instructions for this worktr
 
 - **Milestone:** Agent 2 search/location reliability.
 - **Priority:** P1/P2 per assignment.
-- **Status:** NOT STARTED
+- **Status:** VERIFIED
 - **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
-- **Root cause:** Pending investigation.
-- **Relevant files/functions:** Assigned search/location files in pasted request.
+- **Root cause:** alphabetical limit/slice before shared kashrut filtering and distance/relevance ranking.
+- **Relevant files/functions:** restaurantSearchRepository.load candidates; restaurantSearchService.loadMatches, list/map; Restaurant indexes.
 - **Planned solution:** Focused compatible fix with mocked regressions.
-- **Files changed:** None yet.
-- **Tests added or modified:** Pending verification.
-- **Verification:** Not run yet.
-- **Blockers/limitations:** No live service/data testing authorized.
+- **Files changed:** restaurantSearchRepository.js, restaurantSearchService.js, constants.js, Restaurant.js, search repository/service/map tests.
+- **Tests added or modified:** late eligible/nearest candidates beyond 2000, stable pages, map filtering beyond 500, keyset/deadline, Atlas overflow with zero eligible results. Old cap expectation intentionally changed because preliminary truncation is the confirmed defect; map output cap remains.
+- **Verification:** backend npm test -- tests/restaurantSearchService.test.js tests/restaurantSearchRepository.test.js tests/mapSearchService.test.js exit 0, 3 files/57 passed. node --check service exit 0. Backend has no build/lint/typecheck. Mocks only; no live DB/Atlas/browser.
+- **Blockers/limitations:** All candidates read in 2000-row keyset batches, certificates fetched per batch, best K retained; memory O(batch + page*20), total cost O(matching candidates), each DB query maxTimeMS 10000. Added nonunique status/_id index: compatible with existing records, no migration/backfill; not applied live; rollback removes this new index declaration/index. Atlas fuzzy hits remain bounded at 100 with overflow detection and truthful capped/completeness reasons; totals then lower bounds. Map caps only final ranked markers. Pagination deterministic for unchanged data; concurrent edits are not snapshot-isolated. Production performance/index compatibility unverified.
 
 ### SEARCH-005 ? Missing zero-result completeness warning
 

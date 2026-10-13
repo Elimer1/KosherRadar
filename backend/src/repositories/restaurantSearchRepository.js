@@ -47,8 +47,10 @@ export const findSearchCandidatesRepo = async ({
   radiusKm,
   bounds,
   limit,
+  afterId,
 }) => {
   const filter = { status: 'APPROVED' };
+  if (afterId) filter._id = { $gt: afterId };
 
   if (foodTypes.length > 0) {
     filter.foodType = { $in: foodTypes };
@@ -88,8 +90,8 @@ export const findSearchCandidatesRepo = async ({
     }
   }
 
-  // `limit` is one more than the cap, so the service can tell that the cap was reached.
-  return Restaurant.find(filter).select(SEARCH_FIELDS).sort({ name: 1, _id: 1 }).limit(limit).lean();
+  // Keyset batches bound each query without excluding later eligible candidates.
+  return Restaurant.find(filter).select(SEARCH_FIELDS).sort({ _id: 1 }).limit(limit).maxTimeMS(10000).lean();
 };
 
 // Atlas Search by name: typo tolerant (fuzzy) and partial (autocomplete). Returns ids with relevance scores.
@@ -119,7 +121,7 @@ export const findAtlasNameHitsRepo = async ({ text, indexName }) => {
         },
       },
     },
-    { $limit: ATLAS_SEARCH_HIT_LIMIT },
+    { $limit: ATLAS_SEARCH_HIT_LIMIT + 1 },
     { $project: { _id: 1, score: { $meta: 'searchScore' } } },
   ]);
 
@@ -153,5 +155,6 @@ export const findPublicTeudotForRestaurantsRepo = async (restaurantIds, oldestPu
     expirationDate: { $gte: oldestPublicExpiration },
   })
     .select('restaurant status hechsher hechsherOther kashrutLevel expirationDate')
+    .maxTimeMS(10000)
     .lean();
 };

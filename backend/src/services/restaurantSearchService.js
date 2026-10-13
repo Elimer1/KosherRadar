@@ -6,12 +6,10 @@
 //   2. The public certificates of those restaurants are loaded in one query.
 //   3. kashrutStatusService decides each restaurant's status and the kashrut filters (the same code the detail page uses).
 //   4. Results are sorted (nearest first with a location, else relevance, else A-Z) and cut into pages of 20.
-// Kashrut status depends on dates and on another collection, so steps 3-4 run in the service. At most
-// MAX_SEARCH_CANDIDATES restaurants are examined; the answer says `capped: true` when that limit was reached.
-// סטטוס הכשרות תלוי בתאריכים ובאוסף אחר, לכן שלבים 3-4 רצים בשירות. נבדקות לכל היותר MAX_SEARCH_CANDIDATES
-// מסעדות; התשובה מציינת capped: true כשהגענו למגבלה.
+// Kashrut rules stay shared; candidates are evaluated in bounded batches before output limits.
 import { env } from '../config/env.js';
 import {
+  ATLAS_SEARCH_HIT_LIMIT,
   MAP_MARKER_LIMIT,
   MAX_SEARCH_CANDIDATES,
   PUBLIC_EXPIRED_MONTHS,
@@ -93,12 +91,12 @@ const normalizeAtlasScores = (hits) => {
 // Atlas Search אופציונלי. כשהוא כבוי או נכשל החיפוש ממשיך לעבוד עם "מילה מתחילה ב", והתשובה מדווחת על כך.
 const findAtlasHits = async (parsed) => {
   if (!env.atlasSearchEnabled || parsed.words.length === 0) {
-    return { hits: [], atlasUnavailable: false };
+    return { hits: [], atlasUnavailable: false, atlasCapped: false };
   }
 
   try {
     const hits = await findAtlasNameHitsRepo({ text: parsed.normalized, indexName: env.atlasSearchIndex });
-    return { hits, atlasUnavailable: false };
+    return { hits: hits.slice(0, ATLAS_SEARCH_HIT_LIMIT), atlasUnavailable: false, atlasCapped: hits.length > ATLAS_SEARCH_HIT_LIMIT };
   } catch (error) {
     console.error('Atlas Search failed, using the basic search instead:', error.message);
     return { hits: [], atlasUnavailable: true };
@@ -150,112 +148,82 @@ const compareResults = (hasCenter, hasText) => (a, b) => {
 
 // Shared by the list and the map. `bounds` is only set for the map. The kashrut rules stay in this one place.
 // משותף לרשימה ולמפה. bounds נשלח רק עבור המפה. חוקי הכשרות נשארים במקום אחד.
-const loadMatches = async ({ query, candidateLimit, bounds }) => {
+const loadMatches = async ({ query, keepCount, bounds }) => {
   const today = todayInIsrael();
   const parsed = parseSearchText(query.q || '');
   const center = query.lat !== undefined && query.lng !== undefined ? { lat: query.lat, lng: query.lng } : null;
-
-  const { hits, atlasUnavailable } = await findAtlasHits(parsed);
+  const { hits, atlasUnavailable, atlasCapped } = await findAtlasHits(parsed);
   const atlasScores = normalizeAtlasScores(hits);
-
-  const candidates = await findSearchCandidatesRepo({
-    words: parsed.words,
-    groupsByWord: parsed.groupsByWord,
-    extraIds: hits.map((hit) => hit.id),
-    foodTypes: query.foodType,
-    categories: query.category,
-    center,
-    radiusKm: query.radiusKm,
-    bounds,
-    limit: candidateLimit + 1,
-  });
-
-  const capped = candidates.length > candidateLimit;
-  const examined = capped ? candidates.slice(0, candidateLimit) : candidates;
-
   const oldestPublicExpiration = dateOnlyToDate(addMonthsToDateOnly(today, -PUBLIC_EXPIRED_MONTHS));
-  const teudot = await findPublicTeudotForRestaurantsRepo(
-    examined.map((restaurant) => restaurant._id),
-    oldestPublicExpiration
-  );
-  const teudotByRestaurant = groupTeudotByRestaurant(teudot);
-
+  const compare = compareResults(Boolean(center), parsed.words.length > 0);
   const matches = [];
+  let total = 0;
+  let afterId;
 
-  for (const restaurant of examined) {
-    const id = String(restaurant._id);
-    const summary = buildKashrutSummary(restaurant, teudotByRestaurant.get(id) || [], today);
-    const view = applyKashrutFilters(summary, {
-      hideExpired: query.hideExpired,
-      includeUnknown: query.includeUnknown,
-      level: query.level,
-      hechsherValues: query.hechsher,
+  // All candidates are evaluated in bounded keyset batches. Only the best K eligible
+  // results survive each batch, bounding memory while preserving the global ranking.
+  while (true) {
+    const candidates = await findSearchCandidatesRepo({
+      words: parsed.words, groupsByWord: parsed.groupsByWord, extraIds: hits.map(hit => hit.id),
+      foodTypes: query.foodType, categories: query.category, center, radiusKm: query.radiusKm,
+      bounds, limit: MAX_SEARCH_CANDIDATES + 1, afterId,
     });
-
-    if (!view) {
-      continue;
+    const hasNextBatch = candidates.length > MAX_SEARCH_CANDIDATES;
+    const examined = candidates.slice(0, MAX_SEARCH_CANDIDATES);
+    const teudot = await findPublicTeudotForRestaurantsRepo(examined.map(row => row._id), oldestPublicExpiration);
+    const teudotByRestaurant = groupTeudotByRestaurant(teudot);
+    for (const restaurant of examined) {
+      const id = String(restaurant._id);
+      const summary = buildKashrutSummary(restaurant, teudotByRestaurant.get(id) || [], today);
+      const view = applyKashrutFilters(summary, {
+        hideExpired: query.hideExpired, includeUnknown: query.includeUnknown,
+        level: query.level, hechsherValues: query.hechsher,
+      });
+      if (!view) continue;
+      const hasCoordinates = typeof restaurant.latitude === 'number' && typeof restaurant.longitude === 'number';
+      const distanceKm = center && hasCoordinates
+        ? distanceInKm(center.lat, center.lng, restaurant.latitude, restaurant.longitude) : null;
+      total += 1;
+      matches.push({ restaurant, summary: view, distanceKm,
+        relevance: calculateRelevance(restaurant, parsed, atlasScores.get(id) || 0) });
     }
-
-    const hasCoordinates = typeof restaurant.latitude === 'number' && typeof restaurant.longitude === 'number';
-    const distanceKm =
-      center && hasCoordinates
-        ? distanceInKm(center.lat, center.lng, restaurant.latitude, restaurant.longitude)
-        : null;
-
-    matches.push({
-      restaurant,
-      summary: view,
-      distanceKm,
-      relevance: calculateRelevance(restaurant, parsed, atlasScores.get(id) || 0),
-    });
+    matches.sort(compare);
+    matches.length = Math.min(matches.length, keepCount);
+    if (!hasNextBatch) break;
+    afterId = examined.at(-1)._id;
   }
-
-  matches.sort(compareResults(Boolean(center), parsed.words.length > 0));
-
-  return { matches, capped, atlasUnavailable };
+  return { matches, total, capped: Boolean(atlasCapped), atlasUnavailable };
 };
 
 const searchMode = (atlasUnavailable) => ({
-  mode: env.atlasSearchEnabled && !atlasUnavailable ? 'ATLAS' : 'BASIC',
-  atlasUnavailable,
+  mode: env.atlasSearchEnabled && !atlasUnavailable ? 'ATLAS' : 'BASIC', atlasUnavailable,
 });
 
 export const searchRestaurantsService = async (query, pageSize = SEARCH_PAGE_SIZE) => {
-  const { matches, capped, atlasUnavailable } = await loadMatches({
-    query,
-    candidateLimit: MAX_SEARCH_CANDIDATES,
-  });
-
+  const { matches, total, capped, atlasUnavailable } = await loadMatches({ query, keepCount: query.page * pageSize });
   const start = (query.page - 1) * pageSize;
-  const items = matches
-    .slice(start, start + pageSize)
-    .map((match) => toPublicRestaurantCard(match.restaurant, match.summary, match.distanceKm));
-
+  const items = matches.slice(start, start + pageSize)
+    .map(match => toPublicRestaurantCard(match.restaurant, match.summary, match.distanceKm));
   return {
-    items,
-    page: query.page,
-    pageSize,
-    total: matches.length,
-    hasMore: start + pageSize < matches.length,
-    capped,
+    items, page: query.page, pageSize, total, hasMore: start + pageSize < total, capped,
+    completeness: { complete: !capped, reasons: capped ? ['atlas_candidate_limit'] : [] },
     search: searchMode(atlasUnavailable),
   };
 };
 
-// NEW (Milestone 5): restaurants inside the visible map, with the same filters as the list.
-// Not paged by 20: the map needs every match in view, up to MAP_MARKER_LIMIT.
-// חדש (אבן דרך 5): מסעדות בתוך המפה הנראית, עם אותם מסננים כמו הרשימה. לא עמודים של 20.
+// Map output is limited only after shared filtering and global ranking.
 export const findMapRestaurantsService = async (query) => {
-  const { matches, capped, atlasUnavailable } = await loadMatches({
-    query,
-    candidateLimit: MAP_MARKER_LIMIT,
+  const { matches, total, capped: atlasCapped, atlasUnavailable } = await loadMatches({
+    query, keepCount: MAP_MARKER_LIMIT,
     bounds: { north: query.north, south: query.south, east: query.east, west: query.west },
   });
-
+  const capped = atlasCapped || total > MAP_MARKER_LIMIT;
   return {
-    items: matches.map((match) => toPublicRestaurantCard(match.restaurant, match.summary, match.distanceKm)),
-    total: matches.length,
-    capped,
+    items: matches.map(match => toPublicRestaurantCard(match.restaurant, match.summary, match.distanceKm)),
+    total, capped,
+    completeness: { complete: !capped, reasons: [
+      ...(atlasCapped ? ['atlas_candidate_limit'] : []), ...(total > MAP_MARKER_LIMIT ? ['map_marker_limit'] : []),
+    ] },
     search: searchMode(atlasUnavailable),
   };
 };

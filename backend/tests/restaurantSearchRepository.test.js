@@ -3,7 +3,7 @@
 // חדש (אבן דרך 4): בדיקות לשאילתות שהמאגר בונה (Mongoose מדומה). בודקות מה נשאל, לא מה MongoDB עונה.
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const queryChain = { select: vi.fn(), sort: vi.fn(), limit: vi.fn(), lean: vi.fn() };
+const queryChain = { select: vi.fn(), sort: vi.fn(), limit: vi.fn(), maxTimeMS: vi.fn(), lean: vi.fn() };
 
 vi.mock('../src/models/Restaurant.js', () => ({
   Restaurant: { find: vi.fn(), aggregate: vi.fn() },
@@ -39,11 +39,16 @@ beforeEach(() => {
   queryChain.select.mockReturnValue(queryChain);
   queryChain.sort.mockReturnValue(queryChain);
   queryChain.limit.mockReturnValue(queryChain);
+  queryChain.maxTimeMS.mockReturnValue(queryChain);
   queryChain.lean.mockResolvedValue([]);
   Restaurant.find.mockReturnValue(queryChain);
 });
 
 describe('findSearchCandidatesRepo', () => {
+  it('continues from the last candidate ID using a bounded keyset query', async () => {
+    await findSearchCandidatesRepo({ ...NO_FILTERS, afterId: 'last-id' });
+    expect(filterSentToDatabase()).toMatchObject({ _id: { $gt: 'last-id' }, status: 'APPROVED' });
+  });
   it('always asks only for APPROVED restaurants', async () => {
     await findSearchCandidatesRepo(NO_FILTERS);
 
@@ -63,7 +68,8 @@ describe('findSearchCandidatesRepo', () => {
   it('sorts by name and id with the limit it was given, and uses plain objects', async () => {
     await findSearchCandidatesRepo(NO_FILTERS);
 
-    expect(queryChain.sort).toHaveBeenCalledWith({ name: 1, _id: 1 });
+    expect(queryChain.sort).toHaveBeenCalledWith({ _id: 1 });
+    expect(queryChain.maxTimeMS).toHaveBeenCalledWith(10000);
     expect(queryChain.limit).toHaveBeenCalledWith(2001);
     expect(queryChain.lean).toHaveBeenCalled();
   });
@@ -173,7 +179,7 @@ describe('findAtlasNameHitsRepo', () => {
     expect(JSON.stringify(search)).toContain('"fuzzy"');
     expect(JSON.stringify(search)).toContain('"autocomplete"');
     expect(search.compound.must[0].compound.should[0].text.path).toEqual(['name', 'nameHe', 'nameEn']);
-    expect(pipeline[1]).toEqual({ $limit: 100 });
+    expect(pipeline[1]).toEqual({ $limit: 101 });
     expect(hits).toEqual([{ id: 'id-1', score: 3.5 }]);
   });
 
@@ -192,10 +198,12 @@ describe('findPublicTeudotForRestaurantsRepo', () => {
 
   it('asks only for APPROVED certificates that are not older than the given date', async () => {
     const lean = vi.fn().mockResolvedValue([]);
-    Teuda.find.mockReturnValue({ select: vi.fn().mockReturnValue({ lean }) });
+    const maxTimeMS = vi.fn().mockReturnValue({ lean });
+    Teuda.find.mockReturnValue({ select: vi.fn().mockReturnValue({ maxTimeMS }) });
     const oldest = new Date('2026-04-11T00:00:00.000Z');
 
     await findPublicTeudotForRestaurantsRepo(['r1', 'r2'], oldest);
+    expect(maxTimeMS).toHaveBeenCalledWith(10000);
 
     expect(Teuda.find).toHaveBeenCalledWith({
       restaurant: { $in: ['r1', 'r2'] },

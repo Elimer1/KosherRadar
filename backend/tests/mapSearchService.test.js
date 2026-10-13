@@ -109,7 +109,7 @@ describe('findMapRestaurantsService', () => {
       east: 35.5,
       west: 34.7,
     });
-    expect(findSearchCandidatesRepo.mock.calls[0][0].limit).toBe(MAP_MARKER_LIMIT + 1);
+    expect(findSearchCandidatesRepo.mock.calls[0][0].limit).toBe(2001);
     expect(result.items.map((item) => item.name)).toEqual(['Known Place']);
     expect(result.capped).toBe(false);
     expect(result.items[0].latitude).toBe(31.78);
@@ -128,6 +128,17 @@ describe('findMapRestaurantsService', () => {
 
     expect(result.capped).toBe(true);
     expect(result.items).toHaveLength(MAP_MARKER_LIMIT);
+  });
+
+  it('filters before applying the marker limit and includes a late eligible restaurant', async () => {
+    const restaurants = Array.from({ length: MAP_MARKER_LIMIT + 1 }, (_, i) => makeRestaurant({ name: `Place ${i}` }));
+    const eligible = restaurants.at(-1);
+    findSearchCandidatesRepo.mockResolvedValue(restaurants);
+    findPublicTeudotForRestaurantsRepo.mockResolvedValue([makeTeuda(eligible, '2027-01-01')]);
+    const result = await findMapRestaurantsService(mapQuerySchema.parse(box));
+    expect(result.items.map(row => row.id)).toEqual([eligible._id]);
+    expect(result.capped).toBe(false);
+    expect(result.total).toBe(1);
   });
 
   it('still applies the chosen radius together with the box', async () => {

@@ -110,6 +110,8 @@ restaurantSchema.pre('validate', function syncDerivedFields() {
 
 restaurantSchema.index({ location: '2dsphere' });
 restaurantSchema.index({ status: 1, name: 1 });
+// Bounded keyset scans for complete public search evaluation.
+restaurantSchema.index({ status: 1, _id: 1 });
 restaurantSchema.index({ status: 1, city: 1 });
 restaurantSchema.index({ status: 1, foodType: 1 });
 restaurantSchema.index({ geoapifyPlaceId: 1 }, { sparse: true });
