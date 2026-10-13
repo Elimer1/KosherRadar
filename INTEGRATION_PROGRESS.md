@@ -6,7 +6,7 @@ Local integration only in `C:/FS/projects/KosherRadar-integration`, branch `inte
 
 ## Final result
 
-All five sources are integrated with preserved histories. Full available automated checks pass. One confirmed integration defect (INT-001) is fixed and verified. **SEC-006 / EMAILAUD-001 is CONFIRMED, P1, and an unresolved production release blocker.** Competing resets with different tokens can both succeed and overwrite a completed recovery. Passing existing recovery tests do not establish production readiness. Local integration is complete, but this is not approval for production or an unconditional recommendation to merge main.
+All five sources are integrated with preserved histories. Full available automated checks pass. One confirmed integration defect (INT-001) is fixed and verified. **Two unresolved confirmed P1 pre-production blockers remain: SEC-006 / EMAILAUD-001 and UIAUD-001.** Competing resets with different tokens can overwrite a completed recovery. Admin navigation can submit the previous restaurant's form to the newly selected restaurant's update endpoint. Passing existing tests does not establish safety for either workflow. Local integration is complete, but this is not approval for production or an unconditional recommendation to merge main.
 
 Final application fix: `7cdc1fb`. Final handoff HEAD is the commit containing this document; retrieve its exact hash with `git rev-parse integration/agent-fixes`. The user-facing final report records that exact hash after committing. No source history was squashed or rewritten.
 
@@ -99,17 +99,18 @@ Browser recovery fixture results and screenshots are local ignored artifacts in 
 | `86124f7` | Agent 2 `2ca7b50`, including expected `64457fc` and final Atlas fallback completeness change |
 | `0adf745` | Agent 3 `8fcede8` |
 
-Only application/test conflict: `restaurantSubmissionService.test.js`, retaining normalized-city detection and ADMIN rejection/no-side-effect assertions. Shared admin/model/service changes auto-merged and were reviewed/tested together: transactions/parent guards, city identity, stale-location clearing and post-decision notifications retained. Tracking conflicts preserve all source issues and historical records; repeated source onboarding headings are labelled historical and current onboarding supersedes them. Status fields standardized so counts include the source's inline statuses; 64 issues derive to 40 VERIFIED, 8 ALREADY WORKING, 10 NOT STARTED, 4 BLOCKED and 2 DEFERRED. SEC-006 is deferred, never counted as verified.
+Only application/test conflict: `restaurantSubmissionService.test.js`, retaining normalized-city detection and ADMIN rejection/no-side-effect assertions. Shared admin/model/service changes auto-merged and were reviewed/tested together: transactions/parent guards, city identity, stale-location clearing and post-decision notifications retained. Tracking conflicts preserve all source issues and historical records; repeated source onboarding headings are labelled historical and current onboarding supersedes them. Status fields standardized so counts include the source's inline statuses; at the initial integration completion, 64 issues derived to 40 VERIFIED, 8 ALREADY WORKING, 10 NOT STARTED, 4 BLOCKED and 2 DEFERRED. SEC-006 is deferred, never counted as verified.
 
 README corrected stale Resend/current-index references and distinguishes historical Gmail evidence from this session. New detailed rollout/rollback checklist: `INTEGRATION_DEPLOYMENT_CHECKLIST.md`, alongside preserved `SEARCH_LOCATION_INDEX_ROLLOUT.md`. Unique startup enforcement never auto-migrates indexes. Transactions require replica-set/sharded topology. All test mongod instances and validated newly created data directories were cleaned up by their runner; no existing database or source-worktree resource was cleaned up.
 
 ## Remaining risks and exact next step
 
 - **CONFIRMED P1 production blocker SEC-006 / EMAILAUD-001:** separately fix/review all five independently reproduced account-level failure paths before public release. Same-token single-use and each password-write/JWT-version increment remain atomic, but they do not prevent competing distinct-token recoveries. No speculative redesign here.
+- **CONFIRMED P1 pre-production blocker UIAUD-001:** admin edit navigation can mismatch retained form data and the current route's update target. Agent 3's reported intercepted-browser reproduction changed no real database. The affected integrated page/API/route and required stale-navigation regression plan are recorded below; no unrelated UI changes or blocker implementation in this documentation follow-up.
 - **Required deployment preparation:** approve a target/topology and city-aware index replacement, provision all unique/query/geospatial/TTL indexes plus cleanup collection, verify catalog and legacy compatibility. Do not run existing-target operator commands under the disposable-test approval.
 - Native Hebrew review, live service/Atlas compatibility/performance, moderation email delivery, real browser workflows, backups/operations remain outstanding. Existing large bundle, localStorage risk and upload-before-durable-record crash window remain documented.
 
-Recommendation: suitable for local review as the consolidated integration candidate. Hold production release and unconditional main promotion until SEC-006 and deployment gates are addressed. No merge into main, push or deploy occurred. Exact next step: STOP and provide final report. Future work must reconcile this document/FIX_TRACKER/PROGRESS against Git, preserve all frozen source worktrees, and obtain separate scope/resource authorization where required.
+Recommendation: suitable for local review as the consolidated integration candidate. Hold production release and unconditional main promotion until SEC-006, UIAUD-001 and deployment gates are addressed. No merge into main, push or deploy occurred. Exact next step: STOP and provide final report. Future work must reconcile this document/FIX_TRACKER/PROGRESS against Git, preserve all frozen source worktrees, and obtain separate scope/resource authorization where required.
 
 ## Independent email security audit follow-up — 13 October 2026
 
@@ -164,3 +165,38 @@ Follow-up targeted verification:
 - `git -c core.whitespace=cr-at-eol diff --check`: exit 0. Final documentation checkpoint contains these results; exact final HEAD is reported after committing. Source branch tips and main remain unchanged. Working tree clean after the checkpoint.
 
 No claim that five-path security remediation has passed. SEC-006 remains DEFERRED only as an implementation-scope status, never as evidence of lower severity or readiness. Exact next step: STOP/report completed local integration with a confirmed P1 production blocker; no automatic main merge/push/deploy or existing-database operations.
+
+## Independent UI/UX audit follow-up — 13 October 2026
+
+Continued clean completed integration from `b555dfdd9c6744b574c5a67c0c7b48f84a4bbff9`. No restart, discarded work, new merges or application edits. **UIAUD-001 is CONFIRMED P1, an unresolved pre-production blocker alongside SEC-006.** The user reports Agent 3 reproduced the wrong-target update with browser interception and no real database mutation. That reproduction is independent audit evidence, not a browser run performed in this follow-up.
+
+Integrated source inspection confirms the mechanism. React's existing `/admin/restaurants/:restaurantId` route reuses AdminRestaurantPage state across parameter changes. Its load effect fetches the new ID without clearing/binding `details`, `values`, `extras` or `hasDetails`, and has no cancellation/generation cleanup to exclude obsolete responses. The loaded-form rendering guard checks only that state exists. Save calls `updateRestaurant(restaurantId, values, extras)`: route B can therefore receive A's retained form values while B is loading. A failed B request can also leave the old record actionable because `hasDetails` still reports previously loaded data. The backend sees an authorized valid PUT payload and cannot infer the administrator's intended restaurant.
+
+Affected integrated components and boundaries:
+
+- `frontend/src/pages/AdminRestaurantPage.tsx`: retained state, unguarded load effect, form rendering/Save handler and asynchronous mutation completion notices/reloads. This is the primary defect location.
+- `frontend/src/components/RestaurantFields.tsx` and `frontend/src/components/admin/RestaurantExtrasFields.tsx`: controlled form values owned by the parent page; they render retained values with only `busy` disabling input. Their presence does not bind those values to a restaurant ID.
+- `frontend/src/App.tsx`: parameterized admin edit route; no record-specific remount is supplied at this boundary.
+- `frontend/src/api/adminApi.ts`: getRestaurantDetails loads the selected ID; updateRestaurant uses its ID argument for PUT `/admin/restaurants/:id` and builds payload from supplied values/extras. API behavior is consistent with its arguments; the caller mismatches their identities.
+- `frontend/src/utils/adminForms.ts`: maps loaded restaurant data into the editable values/extras. Include these mappings in full payload assertions.
+- `frontend/src/components/admin/AdminTeudaCard.tsx` remains visible under retained parent details; review stale child display and callback handling in the same navigation regression. No separate certificate mutation bug was reproduced here.
+
+### Narrow remediation recommendation (not implemented)
+
+Bind loaded details and editable values/extras to one explicit loaded restaurant ID. If it differs from the current route, immediately hide or disable the record and every parent mutation action, including before effects run. Route changes must invalidate old record state and notices. Guard all load success/failure and mutation completion callbacks with the active route/request generation; abort when supported, but do not rely on cancellation alone. Preserve safe same-record refresh behavior separately from switching records.
+
+Before dispatching Save, require `routeId === loadedRecordId === formOwnerId`, and capture an immutable snapshot of that target and its payload. Do not repair the problem solely by submitting to the previous record ID while the URL shows a different restaurant. If navigation occurs during a valid dispatched mutation, its request remains bound to the original snapshot, and its completion must not update, enable, announce success on or reload a different record. Apply the same parent identity guard to approve/reject/delete and review child callbacks without expanding into unrelated UI work.
+
+### Required regression tests
+
+1. Load restaurant A, navigate through an actual router link to B with B's GET held pending, then try Save. A's form must not be actionable under B's URL and no PUT may be issued with A's data to B.
+2. Resolve requests out of order (A after B, A after C, older same-record reload after a newer one). Obsolete success or failure must not replace active form/details, notices, busy state or error state.
+3. Fail B's fetch after A was loaded: show a safe unavailable/retry state, no retained actionable A form. Retry can enable B only after matching B data arrives.
+4. Assert mutation-target consistency across displayed identity, route, form owner, PUT path, complete restaurant payload and extras. A forced ID mismatch blocks dispatch; a successful matched B save uses B's edited fields only.
+5. Start a valid A save, navigate to B before it settles, and complete A with success and failure in separate tests. No B mutation/replay, stale success notice, stale form overwrite, busy-state release or refresh of B from A's completion. Verify original request path/payload stay A.
+6. Cover rapid A/B/A navigation, browser back/forward, duplicate-record links, unmount, and language-triggered reloads. Retain English/Hebrew/RTL behavior and unsaved-edit handling without transferring edits between records.
+7. Verify approve/reject/delete and stale certificate-card callbacks obey the active parent identity guard; valid same-record edits and refresh still work. These are recommended adjacent safety checks, not separately confirmed findings.
+
+Use existing Vitest/jsdom with MemoryRouter and controlled deferred API promises for deterministic component checks. Add intercepted-browser coverage matching Agent 3's scenario against the integrated production build; intercept every mutation, record endpoint and synthetic payload, and assert zero live database/service requests. Browser timing regressions are required before declaring UIAUD-001 resolved. Do not introduce a new test dependency without approval.
+
+This follow-up changes only tracking/handoff/deployment documents. There is no AdminRestaurantPage regression test covering this scenario in the current suite; no new test or browser reproduction was run here, and existing passing frontend tests do not close UIAUD-001. Prior full integration verification remains unchanged-code evidence. git -c core.whitespace=cr-at-eol diff --check exit 0; tracker count validation confirms 65 issues (40 VERIFIED, 8 ALREADY WORKING, 10 NOT STARTED, 4 BLOCKED, 3 DEFERRED). Source branch/main tips verified unchanged. Final local documentation HEAD is the commit containing this follow-up, reported after committing; working tree clean after checkpoint. UIAUD-001 is DEFERRED from this follow-up's implementation scope, not verified or downgraded. Exact next step: STOP/report both confirmed P1 blockers; do not merge main, push, deploy or access existing application data.

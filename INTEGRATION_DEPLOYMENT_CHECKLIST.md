@@ -4,6 +4,7 @@ Prepared 13 October 2026. This is a review checklist, not authorization to run c
 
 ## Release gates
 
+- Resolve **UIAUD-001, CONFIRMED P1**, before pre-production approval: admin edit navigation can send the previous restaurant's retained values to the newly selected restaurant's PUT endpoint. Agent 3's user-reported browser interception reproduced this without real database writes. Require route/form-owner/mutation-target consistency, stale-response exclusion and intercepted-browser regression coverage; see FIX_TRACKER.md and INTEGRATION_PROGRESS.md. Existing passing frontend checks do not close this blocker.
 - Resolve **SEC-006 / EMAILAUD-001, CONFIRMED P1**, before public production release. Agent 4's independent audit, as reported by the user, confirms concurrent issuance, competing distinct-token resets overwriting completed recovery, delayed issuance after recovery, cleanup failure and compensation restoring obsolete tokens. This integration's disposable diagnostic independently confirms multiple consumable links; it does not fix the vulnerability. Single-use consumption of the same token remains atomic. Passing existing tests do not prove account-level recovery safety. See FIX_TRACKER.md, the affected-file/atomicity/test plan in INTEGRATION_PROGRESS.md and `backend/integration/passwordResetAudit.integration.mjs`.
 - Identify the deployment and approve its database/index operations separately. Do not infer readiness from local test success or a loopback URI.
 - Review new Hebrew email, photo and history copy with a native speaker (M8-004).

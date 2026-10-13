@@ -9,10 +9,10 @@ Counts below are derived from the issue statuses in this file.
 | NOT STARTED | 10 |
 | ALREADY WORKING | 8 |
 | BLOCKED | 4 |
-| DEFERRED | 2 |
+| DEFERRED | 3 |
 | VERIFIED | 40 |
 | Other | 0 |
-| **Total** | **64** |
+| **Total** | **65** |
 
 ## Priority bands (12 October 2026)
 
@@ -1126,3 +1126,17 @@ Agent 3 final result: all three assigned IDs and two scoped follow-up IDs verifi
 All five source histories incorporated locally in integration/agent-fixes; source tips/main untouched. Full backend npm test exit 0, 49 files/580 passed; frontend npm test exit 0, 35 files/215 passed; frontend npm run lint (oxlint), npm run typecheck and npm run build exit 0. Backend has no build/lint/typecheck scripts. Actual disposable MongoDB regression set exit 0, 21 passed; final strengthened authoritative admin restaurant/certificate success assertions exit 0, 1 passed with required photo bytes and SDK upload mocked. First added fixture omitted required photo and failed 0/1; corrected fixture only, validation retained. Reset diagnostic exit 0, 2 checks confirms SEC-006 unresolved; not a security fix. Browser node scripts/reviewPasswordRecovery.mjs exit 0, 88 fixture renders/8 EN/HE recovery journeys, no exceptions/referrer headers. Other browser workflows/live services not rerun; historical source evidence remains attributed. CRLF-aware full integration whitespace exit 0. Details, source hashes and rollout/rollback in INTEGRATION_PROGRESS.md and INTEGRATION_DEPLOYMENT_CHECKLIST.md. No main merge/push/deploy/existing database or user files touched.
 
 Independent-audit follow-up verification (13 October 2026): targeted npm test -- tests/passwordResetService.test.js tests/passwordResetRepository.test.js tests/passwordResetRoutesHttp.test.js exit 0, 3 files/27 passed with mocks/local HTTP; disposable node integration/runAgent1Isolated.mjs --run-isolated passwordResetAudit.integration.mjs exit 0, 2 diagnostic checks reconfirm SEC-006. All five Agent 4 paths are attributed to the user-supplied independent in-memory audit report; only concurrent issuance and same-token consumption were executed here. Application/schema/tests unchanged. Prior full suites/build/browser evidence retained, not rerun for documentation. SEC-006 remains CONFIRMED P1 and DEFERRED from integration implementation, blocking production. No issue status/count changes.
+
+### UIAUD-001 - Stale admin edit form can mutate a different restaurant
+
+- **Milestone:** Completed-agent integration independent UI/UX audit follow-up.
+- **Priority:** P1; CONFIRMED pre-production blocker alongside SEC-006.
+- **Status:** DEFERRED.
+- **Description/evidence:** User reports Agent 3's independent browser-interception reproduction: A's form stays visible after route changes to B; Save sends A's values to B's update endpoint. No real database changed in that audit. Integrated source inspection confirms retained page state and a route-ID Save target. No new browser reproduction executed here.
+- **Root cause:** AdminRestaurantPage retains details/values/extras/hasDetails across route parameter changes; load effect lacks stale-response exclusion; render/Save checks presence rather than record identity. Failed/new delayed loads can leave old form actionable.
+- **Relevant files/functions:** AdminRestaurantPage load effect/render/handleSave; RestaurantFields; admin/RestaurantExtrasFields; App parameterized edit route; adminApi.getRestaurantDetails/updateRestaurant; adminForms mappings. Review stale AdminTeudaCard display/callbacks within same parent scope; no additional mutation defect claimed.
+- **Planned solution:** Separately scoped narrow route/loaded/form owner identity guard, immediate non-actionable mismatched record state, request generation guards and immutable mutation ID/payload snapshots. No unrelated UI work. Guard old mutation completions from updating the newly selected record.
+- **Files changed:** INTEGRATION_PROGRESS.md, FIX_TRACKER.md, PROGRESS.md, INTEGRATION_DEPLOYMENT_CHECKLIST.md only. No application/test/schema changes.
+- **Tests added or modified:** None. Required tests detailed in INTEGRATION_PROGRESS.md: A-to-B pending save, delayed/out-of-order success/failure, failed-load recovery, complete PUT target/payload consistency, in-flight mutation navigation, rapid/back-forward/language/unmount transitions and adjacent parent mutation guards. Use existing Vitest/jsdom router/deferred mocks plus fully intercepted browser mutations, with no real data writes.
+- **Verification:** Integrated source inspected; prior full frontend 215 tests/lint/typecheck/build remain actual unchanged-code integration evidence. No AdminRestaurantPage test covers this scenario; no fresh application test/browser pass claimed. git -c core.whitespace=cr-at-eol diff --check exit 0; tracker count validation confirms 65 issues / 3 DEFERRED / 40 VERIFIED. Source/main tips unchanged.
+- **Blockers/limitations:** Not fixed; DEFERRED describes this documentation follow-up's implementation scope, not reduced severity. Pre-production approval and unconditional main promotion remain blocked until both UIAUD-001 and SEC-006 are resolved/reviewed.
