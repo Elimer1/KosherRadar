@@ -6,6 +6,7 @@ import { hasCertificateEvidence, submitRestaurant } from '../api/restaurantApi';
 import { activeLanguage } from '../i18n';
 import { getErrorMessage } from '../api/errors';
 import FormAlert from '../components/FormAlert';
+import PhotoFieldRecovery from '../components/PhotoFieldRecovery';
 import RestaurantFields from '../components/RestaurantFields';
 import TeudaFields from '../components/TeudaFields';
 import { primaryButtonClassName } from '../components/formStyles';
@@ -28,7 +29,7 @@ function SubmitRestaurantPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<RestaurantSubmitResult | null>(null);
 
-  const { photo, photoError, photoValidating, getPhotoSubmissionError, handlePhotoChange } = usePhotoField(options?.maxImageBytes || 5 * 1024 * 1024);
+  const { photo, photoError, photoValidating, getPhotoSubmissionError, handlePhotoChange, clearPhoto } = usePhotoField(options?.maxImageBytes || 5 * 1024 * 1024);
 
   const handleRestaurantChange = (field: keyof RestaurantFormValues, value: string) => {
     setRestaurant((current) => ({ ...current, [field]: value }));
@@ -213,7 +214,7 @@ function SubmitRestaurantPage() {
           </div>
         )}
 
-        {photoValidating && <p role="status" className="text-sm text-muted">{t('forms.photoValidating')}</p>}
+        <PhotoFieldRecovery photo={photo} photoError={photoError} photoValidating={photoValidating} disabled={loading} onClear={clearPhoto} />
         <button type="submit" disabled={loading || photoValidating || Boolean(photoError)} className={primaryButtonClassName}>
           {loading ? t('auth.sending') : t('forms.sendRestaurant')}
         </button>

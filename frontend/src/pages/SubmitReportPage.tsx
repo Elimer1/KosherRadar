@@ -6,6 +6,7 @@ import { getSubmissionContext } from '../api/restaurantApi';
 import { submitReport } from '../api/reportApi';
 import { getErrorMessage } from '../api/errors';
 import FormAlert from '../components/FormAlert';
+import PhotoFieldRecovery from '../components/PhotoFieldRecovery';
 import { inputClassName, labelClassName, primaryButtonClassName } from '../components/formStyles';
 import { useFormOptions } from '../hooks/useFormOptions';
 import { usePageMeta } from '../hooks/usePageMeta';
@@ -27,7 +28,7 @@ function SubmitReportPage() {
   const [invalidNote, setInvalidNote] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const { photo, photoError, photoValidating, getPhotoSubmissionError, handlePhotoChange } = usePhotoField(options?.maxImageBytes || 5 * 1024 * 1024);
+  const { photo, photoError, photoValidating, getPhotoSubmissionError, handlePhotoChange, clearPhoto } = usePhotoField(options?.maxImageBytes || 5 * 1024 * 1024);
 
   useEffect(() => {
     const loadContext = async () => {
@@ -145,7 +146,7 @@ function SubmitReportPage() {
           {photoError && <p id="report-photo-error" role="alert" className="mt-1 text-sm text-red-700">{photoError}</p>}
         </div>
 
-        {photoValidating && <p role="status" className="text-sm text-muted">{t('forms.photoValidating')}</p>}
+        <PhotoFieldRecovery photo={photo} photoError={photoError} photoValidating={photoValidating} disabled={loading} onClear={clearPhoto} />
         <button type="submit" disabled={loading || photoValidating || Boolean(photoError)} className={primaryButtonClassName}>
           {loading ? t('auth.sending') : t('forms.sendReport')}
         </button>

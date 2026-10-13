@@ -340,6 +340,7 @@ export const he: Messages = {
     selected: 'נבחר: {{name}}',
     photoTooLarge: 'התמונה גדולה מ-{{max}} מ״ב.',
     photoValidating: 'התמונה נבדקת. יש להמתין לפני השליחה.',
+    clearPhoto: 'ניקוי בחירת התמונה',
     photoReadFailed: 'לא ניתן לקרוא את התמונה. יש לבחור אותה שוב, לבחור תמונה אחרת או לנקות את הבחירה.',
     photoType: 'התמונה חייבת להיות JPG, PNG או WebP.',
     street: 'רחוב וכתובת',

@@ -620,19 +620,26 @@ Deferred: native-speaker review of Hebrew copy, including design strings and the
 
 ## NEXT AGENT ONBOARDING
 
-**Agent 3 latest position ? expiry refresh verified (13 October 2026).**
+**Agent 3 FINAL handoff - 13 October 2026, fix/submissions-app, baseline dc5dc24.**
+All assigned issues complete: SEARCH-003 (f00109b), A1-003 (494ac7e), SEC-011 (e50ce79). Additional APP3-001 (4a1d5c4) refreshes date-sensitive server details; APP3-002 in the final checkpoint adds explicit photo clear/recovery. No unfinished changes, failing tests, next outstanding assigned issue or approval blockers. Current checkpoint: git log -1; full files/decisions/commands in AGENT_3_FIX_PROGRESS.md, authoritative statuses in FIX_TRACKER.md.
+Final frontend npm test exit 0, 29 files/183 passed; lint/typecheck/build exit 0, existing ~770 kB chunk warning. Backend npm test exit 0, 43 files/517 passed after last backend change; no backend build/lint/typecheck scripts. CRLF-aware diff check exit 0. jsdom and loopback HTTP with mocks only; browser/live integrations NOT tested.
+Integrate history API/UI together; no schema/backfill needed, no admin correction/point writes changed, zero administrator points preserved. Probes: /api/health and /ready are readiness (503 unless connected); /live is liveness. Rollover uses server classifications with one-minute checks plus foreground return. Hebrew strings require native review. No dependency on other agents' write fixes.
+Exact next task: STOP and hand off for integration review. Do not merge/push/deploy or touch other worktrees. Do not repeat fixes or start unrelated tracker items. Original untracked files/user changes preserved; initial worktree was clean.
+
+
+**Agent 3 latest position - expiry refresh verified (13 October 2026).**
 All three assigned issues verified/committed (SEARCH-003 f00109b, A1-003 494ac7e, SEC-011 e50ce79). APP3-001 additionally refreshes server-derived restaurant evidence on Israel-day rollover with loading/error recovery. Full frontend 178 tests, lint/typecheck/build exit 0; backend 517 tests exit 0. Files and limitations in AGENT_3_FIX_PROGRESS.md. Next: provide explicit photo clear/recovery control, verify final frontend and stop. No unrelated changes, browser or live-service checks.
 
 
-**Agent 3 latest position ? SEC-011 verified (13 October 2026).**
+**Agent 3 latest position - SEC-011 verified (13 October 2026).**
 SEARCH-003 f00109b and A1-003 494ac7e committed. Health/readiness now returns 503 unless database connected; /live is independent liveness. New router and HTTP tests, README updated. Full backend npm test exit 0, 43 files/517 passed with mocks. No partial backend changes. Next: implement scoped detail-day rollover by refetching server details without changing kashrut rules, then final frontend test/lint/typecheck/build and clean handoff. All commands/files/limitations in AGENT_3_FIX_PROGRESS.md. No browser or real service checks.
 
 
-**Agent 3 latest position ? A1-003 verified; next SEC-011 (13 October 2026).**
+**Agent 3 latest position - A1-003 verified; next SEC-011 (13 October 2026).**
 SEARCH-003 checkpoint f00109b. A1-003 returns stored correctionApplied and displays it independently of awards; authentication/privacy/zero-admin points preserved. Existing newest-50-per-category limit is now stated. Backend history checks: 13 passed; frontend history/locales/photo consumers: 11 passed; lint/typecheck/build exit 0. New Hebrew copy awaits native review; shell-encoding damage found in new photo strings/comments has been corrected. Files/decisions/commands in AGENT_3_FIX_PROGRESS.md and FIX_TRACKER.md. No partial changes beyond this fix. Next: readiness must fail when MongoDB is unavailable; add separate liveness and tests for states. Then full suites and final handoff. No browser/live-service testing.
 
 
-**Agent 3 current handoff ? 13 October 2026, fix/submissions-app (supersedes older stop instruction for this assigned scope).**
+**Agent 3 current handoff - 13 October 2026, fix/submissions-app (supersedes older stop instruction for this assigned scope).**
 SEARCH-003 verified: shared photo hook and all five consumers guard pending validation, ignore obsolete results, show read errors; photo accessibility and localized messages added. See AGENT_3_FIX_PROGRESS.md for files, tests and decisions. Focused tests 19 passed; full frontend 170 passed before final test cleanup; lint/typecheck/build exit 0. No browser or external integrations; Hebrew requires native review. Next: A1-003 history outcome (do not edit correction/award logic), then SEC-011 readiness. Final full suites still pending. No partially implemented source changes outside SEARCH-003. Read Git state plus this branch's progress before continuing.
 
 **Accepted V2 merge into local main — 13 October 2026 (current handoff; supersedes historical worktree instructions below)**

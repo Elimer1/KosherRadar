@@ -12,8 +12,17 @@ export const usePhotoField = (maxBytes: number) => {
   const [photoValidating, setPhotoValidating] = useState(false);
   const validation = useRef({ version: 0, pending: false, error: '' });
   useEffect(() => () => { validation.current.version += 1; }, []);
-  const getPhotoSubmissionError = () => validation.current.pending
+  const getPhotoSubmissionError = () => (validation.current.pending || photoValidating)
     ? i18n.t('forms.photoValidating') : validation.current.error;
+
+  // NEW (Agent 3): explicit recovery also invalidates an in-flight selection.
+  // חדש (סוכן 3): ניקוי הבחירה מבטל גם אימות שעדיין לא הסתיים.
+  const clearPhoto = () => {
+    validation.current = { version: validation.current.version + 1, pending: false, error: '' };
+    setPhoto(null);
+    setPhotoError('');
+    setPhotoValidating(false);
+  };
 
   const handlePhotoChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] || null;
@@ -48,5 +57,5 @@ export const usePhotoField = (maxBytes: number) => {
     if (!problem) setPhoto(file);
   };
 
-  return { photo, photoError, photoValidating, getPhotoSubmissionError, handlePhotoChange };
+  return { photo, photoError, photoValidating, getPhotoSubmissionError, handlePhotoChange, clearPhoto };
 };

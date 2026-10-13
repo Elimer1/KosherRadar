@@ -69,3 +69,22 @@ it.each(cases)('%s prevents pending submission and resumes with the validated fi
   expect(send).toHaveBeenCalledOnce();
   expect(vi.mocked(send).mock.calls[0]).toContain(file);
 });
+
+it.each(cases)('%s can explicitly clear a pending photo without stale restoration', async (Page) => {
+  let resolve!: (value: '') => void;
+  vi.mocked(checkPhotoFile).mockReturnValue(new Promise<''>((yes) => { resolve = yes; }));
+  container = document.createElement('div'); root = createRoot(container);
+  await act(async () => { root.render(<MemoryRouter initialEntries={['/r']}><Routes><Route path="/:restaurantId" element={<Page />} /></Routes></MemoryRouter>); });
+  act(() => { container.querySelector<HTMLInputElement>('input[type="checkbox"]')?.click(); });
+  const input = container.querySelector<HTMLInputElement>('input[type="file"]')!;
+  Object.defineProperty(input, 'files', { configurable: true, value: [new File(['photo'], 'certificate.jpg')] });
+  act(() => { input.dispatchEvent(new Event('change', { bubbles: true })); });
+  const clear = [...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === 'Clear photo selection')!;
+  expect(clear.disabled).toBe(false);
+  act(() => { clear.click(); });
+  expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(false);
+  await act(async () => { resolve(''); });
+  expect(container.textContent).not.toContain('certificate.jpg');
+  expect(container.textContent).not.toContain('Checking the photo');
+  expect(container.textContent).not.toContain('Clear photo selection');
+});

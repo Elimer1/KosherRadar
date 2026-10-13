@@ -782,7 +782,7 @@ Actual post-merge main commands: frontend `npm run lint`, `npm run typecheck`, `
 Only post-merge documentation files updated: this file, PROGRESS.md, REDESIGN_INTEGRATION_PROGRESS.md. Main's untracked PRE_PUSH_REVIEW.md preserved unchanged and excluded from commit. No source branch/worktree edit, push, deploy, branch/worktree deletion, reset or clean. Exact next step: stop; accepted local merge complete.
 ## Agent 3 assigned reliability fixes (13 October 2026)
 
-### SEARCH-003 ? Certificate-photo validation race
+### SEARCH-003 - Certificate-photo validation race
 
 - **Milestone:** User-assigned Submission & Application Reliability; **Priority:** P1; **Status:** VERIFIED.
 - **Evidence/root cause:** Five failing baseline hook regressions; photo cleared before signature read and stale results accepted; consumers did not coordinate validation.
@@ -791,7 +791,7 @@ Only post-merge documentation files updated: this file, PROGRESS.md, REDESIGN_IN
 - **Actual verification:** focused frontend tests exit 0, 19 passed including existing imageCheck tests. Full suite before final test cleanup exit 0, 28 files/170 passed. Frontend lint/typecheck/build exit 0; existing chunk warning. Backend unchanged.
 - **Limitations:** Mocked APIs, no browser/live upload; Hebrew strings need native-speaker review. Details and next task: AGENT_3_FIX_PROGRESS.md.
 
-### A1-003 ? Contribution outcome independent of points
+### A1-003 - Contribution outcome independent of points
 
 - **Milestone:** User-assigned Submission & Application Reliability; **Priority:** P2; **Status:** VERIFIED.
 - **Evidence/root cause:** 3 backend and 2 frontend failing baseline regressions; report projection omitted correctionApplied and UI inferred outcome from awards.
@@ -800,7 +800,7 @@ Only post-merge documentation files updated: this file, PROGRESS.md, REDESIGN_IN
 - **Verification:** backend focused history command (four files, exact command in AGENT_3_FIX_PROGRESS.md) exit 0, 13 passed. Frontend history/locales/photo form tests exit 0, 11 passed; lint/typecheck/build exit 0, existing chunk warning. Backend has no build/lint/typecheck scripts.
 - **Limitations:** Mocked dependencies, loopback HTTP only; no live DB, award write integration or browser. No schema/backfill required. Hebrew notice needs native review.
 
-### SEC-011 ? Health endpoint database readiness
+### SEC-011 - Health endpoint database readiness
 
 - **Milestone:** User-assigned Submission & Application Reliability; **Priority:** P2; **Status:** VERIFIED.
 - **Evidence/root cause:** Legacy handler always returned 200 even for readyState 0; baseline HTTP regression exit 1, 6 failed after behavior-preserving extraction.
@@ -809,10 +809,21 @@ Only post-merge documentation files updated: this file, PROGRESS.md, REDESIGN_IN
 - **Verification:** focused health tests exit 0, 6 passed; full backend npm test exit 0, 43 files/517 passed. Backend has no build/lint/typecheck scripts. Frontend unchanged for this fix.
 - **Limitations:** Readiness checks connection state, not an active query. Startup continues to wait for initial connection. No real database/external integrations.
 
-### APP3-001 ? Browser detail-page certificate expiry rollover
+### APP3-001 - Browser detail-page certificate expiry rollover
 
 - **Milestone:** User-assigned secondary Submission & Application Reliability; **Priority:** P2; **Status:** VERIFIED.
 - **Evidence/root cause:** Loaded details never refreshed merely because Israel calendar date changed. Baseline page tests exit 1, 3 failed/14 passed.
 - **Solution/files:** useIsraelDay.ts; RestaurantDetailsPage.tsx and test. Detect day changes every minute/on foreground return and refetch server-derived details; hide stale previous-day evidence and use existing error/retry flow. No public terminology/rules changes.
 - **Tests/verification:** Four new page regressions; full frontend npm test exit 0, 29 files/178 passed; lint/typecheck/build exit 0, existing chunk warning. Backend unchanged; no browser/live services tested.
 - **Limitations:** Normal timers can delay refresh up to one minute; suspended tabs refresh upon foreground return. Browser clock is only a refresh trigger.
+
+### APP3-002 - Explicit photo clearing and error recovery
+
+- **Milestone:** User-assigned secondary Submission & Application Reliability; **Priority:** P2; **Status:** VERIFIED.
+- **Evidence/root cause:** Invalid/read-failed selection blocked sending but native file inputs offered no consistent explicit clear action. Pending clear also must invalidate asynchronous validation.
+- **Solution/files:** Shared PhotoFieldRecovery.tsx and hook clearPhoto; reset file input and invalidate validation without clearing text fields; wired into all five consuming forms. Localized Clear photo selection, disabled only during submission. Submission guard also holds until rendered pending state clears.
+- **Tests:** usePhotoField.test.tsx clear case; five additional real form clear-during-validation regressions in photoSubmission.test.tsx.
+- **Verification:** final frontend npm test exit 0, 29 files/183 passed; lint/typecheck/build exit 0, existing chunk warning. Backend unchanged since npm test exit 0, 43 files/517 passed. CRLF-aware diff check exit 0.
+- **Limitations:** jsdom/mocked APIs; browser and live uploads not tested; Hebrew labels require native review.
+
+Agent 3 final result: all three assigned IDs and two scoped follow-up IDs verified; full commands/results, changed files, checkpoints and integration dependencies in AGENT_3_FIX_PROGRESS.md. No points/classification/auth write changes, schema migrations, dependencies, live services, merges, pushes or deployments.

@@ -343,6 +343,7 @@ export const en = {
     selected: 'Selected: {{name}}',
     photoTooLarge: 'The photo is larger than {{max}} MB.',
     photoValidating: 'Checking the photo. Please wait before sending.',
+    clearPhoto: 'Clear photo selection',
     photoReadFailed: 'The photo could not be read. Choose it again, choose another photo, or clear the selection.',
     photoType: 'The photo must be a JPG, PNG or WebP image.',
     street: 'Street address',

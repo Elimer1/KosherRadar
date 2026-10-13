@@ -9,6 +9,7 @@ import { createRestaurantAsAdmin } from '../api/adminApi';
 import { getErrorMessage } from '../api/errors';
 import RestaurantExtrasFields from '../components/admin/RestaurantExtrasFields';
 import FormAlert from '../components/FormAlert';
+import PhotoFieldRecovery from '../components/PhotoFieldRecovery';
 import RestaurantFields from '../components/RestaurantFields';
 import TeudaFields from '../components/TeudaFields';
 import { inputClassName, labelClassName, primaryButtonClassName } from '../components/formStyles';
@@ -35,7 +36,7 @@ function AdminCreateRestaurantPage() {
     null
   );
 
-  const { photo, photoError, photoValidating, getPhotoSubmissionError, handlePhotoChange } = usePhotoField(options?.maxImageBytes || 5 * 1024 * 1024);
+  const { photo, photoError, photoValidating, getPhotoSubmissionError, handlePhotoChange, clearPhoto } = usePhotoField(options?.maxImageBytes || 5 * 1024 * 1024);
 
   const handleToggleCategory = (category: string) => {
     setRestaurant((current) => {
@@ -203,7 +204,7 @@ function AdminCreateRestaurantPage() {
           </div>
         )}
 
-        {photoValidating && <p role="status" className="text-sm text-muted">{t('forms.photoValidating')}</p>}
+        <PhotoFieldRecovery photo={photo} photoError={photoError} photoValidating={photoValidating} disabled={loading} onClear={clearPhoto} />
         <button type="submit" disabled={loading || photoValidating || Boolean(photoError)} className={primaryButtonClassName}>
           {loading ? t('desk.creating') : t('desk.createRestaurant')}
         </button>

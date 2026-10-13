@@ -78,7 +78,7 @@ it('clearing during validation prevents the result from restoring the photo', as
   vi.mocked(checkPhotoFile).mockReturnValue(validation.promise as ReturnType<typeof checkPhotoFile>);
   mount();
   const pending = choose(new File(['a'], 'a.jpg'));
-  await act(async () => { await choose(null); });
+  act(() => { field.clearPhoto(); });
   await act(async () => { validation.resolve(''); await pending; });
   expect(field.photo).toBeNull();
   expect(field.photoValidating).toBe(false);
