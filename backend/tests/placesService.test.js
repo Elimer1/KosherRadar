@@ -5,6 +5,7 @@ import {
   geocodeAddressService,
   geocodePlaceService,
   selectUnambiguousPlace,
+  suggestPlacesService,
 } from '../src/services/placesService.js';
 import { addressQuerySchema, publicPlaceQuerySchema } from '../src/schemas/placesSchemas.js';
 
@@ -19,6 +20,21 @@ const jerusalem = {
 };
 
 describe('placesService', () => {
+  it.each(['match_by_city', 'full_match'])('accepts a reliable city %s for public search but never as a restaurant pin', async (match_type) => {
+    const city = { ...jerusalem, address_line1: 'Jerusalem', result_type: 'city', rank: { confidence: 1, match_type } };
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ results: [city] }) }));
+    expect((await geocodePlaceService('Jerusalem')).place?.city).toBe('Jerusalem');
+    expect(await geocodeAddressService({ address: 'Jerusalem', city: 'Jerusalem' })).toEqual({ status: 'ambiguous' });
+    expect((await autocompleteAddressesService('Jerusalem')).suggestions).toEqual([]);
+    expect((await suggestPlacesService('Jerusalem')).suggestions).toHaveLength(1);
+  });
+
+  it('rejects near-tied competing public city matches', async () => {
+    const city = { ...jerusalem, result_type: 'city', rank: { confidence: 1, match_type: 'match_by_city' } };
+    const other = { ...city, place_id: 'city-2', city: 'Other city', rank: { confidence: 0.95, match_type: 'match_by_city' } };
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ results: [city, other] }) }));
+    expect(await geocodePlaceService('city')).toEqual({ available: true, place: null, reason: 'ambiguous' });
+  });
   beforeEach(() => {
     env.geoapifyApiKey = 'test-key';
   });

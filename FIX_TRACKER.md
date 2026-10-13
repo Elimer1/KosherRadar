@@ -872,14 +872,14 @@ Explicit user assignment supersedes historical stop instructions for this worktr
 
 - **Milestone:** Agent 2 search/location reliability.
 - **Priority:** P1/P2 per assignment.
-- **Status:** NOT STARTED
+- **Status:** VERIFIED
 - **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
-- **Root cause:** Pending investigation.
-- **Relevant files/functions:** Assigned search/location files in pasted request.
+- **Root cause:** public geocode shared building-only selector while address autocomplete trusted coarse city results; full_match alone did not exclude city result types.
+- **Relevant files/functions:** placesService city/coarse classification, public geocode and separate suggestion/address autocomplete; placesController.
 - **Planned solution:** Focused compatible fix with mocked regressions.
-- **Files changed:** None yet.
-- **Tests added or modified:** Pending verification.
-- **Verification:** Not run yet.
+- **Files changed:** placesService.js, placesController.js, placesService.test.js.
+- **Tests added or modified:** public match_by_city/full_match city acceptance versus precise address refusal, autocomplete separation, competing cities ambiguity.
+- **Verification:** backend npm test -- tests/placesService.test.js exit 0, 13 passed. Backend has no build/lint/typecheck. Fetch mocked; no live provider accuracy/browser verification.
 - **Blockers/limitations:** No live service/data testing authorized.
 
 ### SEARCH-009 ? Confidence boundary and competing candidates

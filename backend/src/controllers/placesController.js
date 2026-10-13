@@ -1,4 +1,4 @@
-import { autocompleteAddressesService, geocodePlaceService } from '../services/placesService.js';
+import { autocompleteAddressesService, geocodePlaceService, suggestPlacesService } from '../services/placesService.js';
 
 export const autocompleteAddressesController = async (req, res) => {
   const { text, lang } = req.validatedQuery;
@@ -11,7 +11,7 @@ export const autocompleteAddressesController = async (req, res) => {
 // חדש (אבן דרך 5): הצעות מקום וגיאוקודינג בודד לשדה המיקום בחיפוש. בלי התחברות. המפתח נשאר בשרת.
 export const suggestPlacesController = async (req, res) => {
   const { text, lang } = req.validatedQuery;
-  res.status(200).json(await autocompleteAddressesService(text, lang));
+  res.status(200).json(await suggestPlacesService(text, lang));
 };
 
 export const geocodePlaceController = async (req, res) => {
