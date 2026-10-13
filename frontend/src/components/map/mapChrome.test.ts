@@ -1,10 +1,8 @@
-// Checks panel breakpoints, circular marker markup, and the OpenStreetMap tile contract.
+// Checks panel breakpoints and circular marker markup. Tile configuration is tested in mapTiles.test.ts.
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '../../i18n';
 import type { KashrutPreview } from '../../types/search';
 import {
-  OSM_ATTRIBUTION,
-  OSM_TILE_URL,
   clusterBubbleHtml,
   clusterMetrics,
   evidenceSummaryLine,
@@ -106,12 +104,5 @@ describe('evidence summary', () => {
     expect(line).not.toContain('Verified certificate');
     expect(line.indexOf('Local Rabbinate')).toBe(line.lastIndexOf('Local Rabbinate'));
     expect(line.indexOf('Mehadrin')).toBe(line.lastIndexOf('Mehadrin'));
-  });
-});
-
-describe('map tiles', () => {
-  it('keeps the OpenStreetMap tile layer and its copyright link', () => {
-    expect(OSM_ATTRIBUTION).toContain('https://www.openstreetmap.org/copyright');
-    expect(OSM_TILE_URL).toBe('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
   });
 });

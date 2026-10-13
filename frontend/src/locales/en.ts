@@ -131,6 +131,7 @@ export const en = {
     wazeName: 'Navigate to {{name}} with Waze',
   },
   map: {
+    tilesUnavailable: 'The background map is unavailable. Restaurant markers are still shown.',
     loading: 'Loading map...',
     loadError: 'Could not load the map.',
     zoomIn: 'Zoom in to see restaurants. A view this wide is not searched.',

@@ -76,6 +76,10 @@ cp .env.example .env     # on Windows PowerShell: Copy-Item .env.example .env
 
 `VITE_API_URL` defaults to `http://localhost:5000/api`. Only put non-secret values in this file.
 
+The map background requires `VITE_GEOAPIFY_MAPS_API_KEY` in `frontend/.env`. Create a **separate public browser key** in Geoapify and restrict it to your allowed website origins (include `http://localhost:5173` for local development and your actual hosted origin). Vite embeds every `VITE_` value in the browser bundle and tile requests: this key is public. Do not copy the private backend `GEOAPIFY_API_KEY`; that key continues to serve address/location lookup on the server. Never commit keys or log tile URLs containing them. Restart the dev server after setting the map key; rebuild the frontend for production.
+
+Tiles use Geoapify's `osm-carto` raster style with visible Geoapify and OpenStreetMap contributor attribution. Normal browser caching applies; there is no tile proxy, prefetch or automatic fallback to OSM volunteer servers. Without a map key, the background stays blank with a localized notice; restaurant markers and map controls remain available. Invalid keys, origin restrictions, quota limits and provider outages can still prevent tiles from loading. See [Geoapify's tile documentation](https://apidocs.geoapify.com/docs/maps/map-tiles/) and [MAP_TILES_FIX_PROGRESS.md](MAP_TILES_FIX_PROGRESS.md) for verification limits. Live Geoapify tiles have not been verified in this fix.
+
 The language (English or Hebrew) and the list/map choice are saved in this browser. Hebrew sets the page direction to right-to-left. The HTML file has a generic title and description; once JavaScript runs, the open page can set its own. A crawler that does not run JavaScript only sees the generic title.
 
 ### Frontend commands

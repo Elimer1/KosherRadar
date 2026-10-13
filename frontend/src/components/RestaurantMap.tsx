@@ -19,7 +19,7 @@ import type { HechsherOption } from '../types/submissions';
 import type { MapBounds, RestaurantCardData, SearchFilters } from '../types/search';
 import { ISRAEL_MAP_BOUNDS, boundsCrossDateLine, zoomForRadius } from '../utils/mapView';
 import { restaurantDisplayNames } from '../utils/restaurantName';
-import { OSM_ATTRIBUTION, OSM_TILE_URL } from './map/mapChrome';
+import { geoapifyTileOptions } from './map/mapTiles';
 import { clusterIcon, markerIcon, selectedMarkerIcon } from './map/mapIcons';
 import { MapFootnotes, MapOverlayNotices } from './map/MapNotices';
 import MapPopupCard from './map/MapPopupCard';
@@ -115,6 +115,9 @@ function SelectionClear({ onClear }: { onClear: () => void }) {
 
 function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant }: RestaurantMapProps) {
   const { t } = useTranslation();
+  // NEW (Map tiles fix): Vite exposes only the separate public, origin-restricted map key.
+  // חדש (תיקון אריחי מפה): Vite חושף רק מפתח מפה ציבורי נפרד המוגבל למקור האתר.
+  const tiles = geoapifyTileOptions(import.meta.env.VITE_GEOAPIFY_MAPS_API_KEY);
   const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [items, setItems] = useState<RestaurantCardData[]>([]);
   const [capped, setCapped] = useState(false);
@@ -196,6 +199,7 @@ function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant
 
   return (
     <div className="kr-v2-map-shell">
+      {!tiles && <p role="alert" className="kr-v2-map-footnote">{t('map.tilesUnavailable')}</p>}
       <div className={`kr-v2-map-frame${selected ? ' kr-v2-map-has-panel' : ''}`}>
         <MapContainer
           {...(located
@@ -207,12 +211,10 @@ function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant
                 ] as L.LatLngBoundsExpression,
               })}
           scrollWheelZoom
+          maxZoom={18}
           className="kr-v2-map-canvas"
         >
-          <TileLayer
-            attribution={OSM_ATTRIBUTION}
-            url={OSM_TILE_URL}
-          />
+          {tiles && <TileLayer {...tiles} />}
           <BoundsReporter onBounds={setBounds} />
           <SelectionClear
             onClear={() => {
