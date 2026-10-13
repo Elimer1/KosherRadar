@@ -23,3 +23,10 @@ Implement A1-003, then SEC-011; run both full suites and frontend lint/typecheck
 - Files: userSubmissionsRepository.js, userSubmissionsService.js, qaSubmissionHistory.test.js, new userSubmissionsRepository.test.js and userSubmissionsRoutesHttp.test.js; MySubmissionsPage.tsx and test, mySubmissions.ts, en.ts/he.ts, five photo form comment corrections.
 - Verification: backend npm test -- tests/qaSubmissionHistory.test.js tests/userSubmissionsService.test.js tests/userSubmissionsRepository.test.js tests/userSubmissionsRoutesHttp.test.js exit 0, 4 files / 13 passed. Frontend npm test -- src/pages/MySubmissionsPage.test.tsx src/locales/locales.test.ts src/pages/photoSubmission.test.tsx exit 0, 11 passed; npm run lint, npm run typecheck, npm run build exit 0 (existing large-chunk warning). HTTP uses loopback and mocked auth/service; no real DB, browser or external service.
 - Next: SEC-011 health readiness/liveness; final full verification.
+
+### SEC-011 ? VERIFIED
+- Extracted the exact legacy handler into healthRoutes for safe HTTP reproduction; baseline test exit 1, 6 failed, including original /api/health returning 200 with state 0. No server/database startup in tests.
+- /api/health and /api/health/ready return 200 only for Mongoose readyState 1, otherwise 503 and status unavailable. Connected legacy payload unchanged; non-connected database label remains disconnected for compatibility. /api/health/live always returns 200 when Express responds. Cache-Control no-store; allowlisted generic body contains no configuration. Initial startup connection behavior unchanged.
+- Files: server.js, new routes/healthRoutes.js, tests/healthRoutesHttp.test.js, README.md. Tests cover connected/disconnected/connecting/disconnecting/unknown, recovery to connected, aliases and liveness.
+- Verification: backend npm test -- tests/healthRoutesHttp.test.js exit 0, 6 passed; full npm test exit 0, 43 files / 517 passed. No backend build/lint/typecheck scripts. Mongoose state mocked; no real DB or production/service resources. Readiness does not actively ping MongoDB.
+- Next: scoped detail-page Israel-date rollover refresh; final frontend checks and handoff.

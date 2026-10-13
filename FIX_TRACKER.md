@@ -799,3 +799,12 @@ Only post-merge documentation files updated: this file, PROGRESS.md, REDESIGN_IN
 - **Tests:** qaSubmissionHistory.test.js expanded; userSubmissionsRepository.test.js, userSubmissionsRoutesHttp.test.js, MySubmissionsPage.test.tsx added. Covers applied/admin/failed award, legacy/no-change, authenticated scoping, projection/limit and UI points independence.
 - **Verification:** backend focused history command (four files, exact command in AGENT_3_FIX_PROGRESS.md) exit 0, 13 passed. Frontend history/locales/photo form tests exit 0, 11 passed; lint/typecheck/build exit 0, existing chunk warning. Backend has no build/lint/typecheck scripts.
 - **Limitations:** Mocked dependencies, loopback HTTP only; no live DB, award write integration or browser. No schema/backfill required. Hebrew notice needs native review.
+
+### SEC-011 ? Health endpoint database readiness
+
+- **Milestone:** User-assigned Submission & Application Reliability; **Priority:** P2; **Status:** VERIFIED.
+- **Evidence/root cause:** Legacy handler always returned 200 even for readyState 0; baseline HTTP regression exit 1, 6 failed after behavior-preserving extraction.
+- **Solution/files changed:** server.js mounts healthRoutes.js; /api/health and /ready return 503 unless readyState 1; /live provides independent liveness. Safe generic payload, no-store caching; connected legacy shape preserved. README documents semantics.
+- **Tests:** healthRoutesHttp.test.js added, 6 cases with loopback HTTP and mocked Mongoose states 0/1/2/3/unknown/recovery.
+- **Verification:** focused health tests exit 0, 6 passed; full backend npm test exit 0, 43 files/517 passed. Backend has no build/lint/typecheck scripts. Frontend unchanged for this fix.
+- **Limitations:** Readiness checks connection state, not an active query. Startup continues to wait for initial connection. No real database/external integrations.

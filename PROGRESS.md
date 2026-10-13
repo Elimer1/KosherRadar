@@ -620,6 +620,10 @@ Deferred: native-speaker review of Hebrew copy, including design strings and the
 
 ## NEXT AGENT ONBOARDING
 
+**Agent 3 latest position ? SEC-011 verified (13 October 2026).**
+SEARCH-003 f00109b and A1-003 494ac7e committed. Health/readiness now returns 503 unless database connected; /live is independent liveness. New router and HTTP tests, README updated. Full backend npm test exit 0, 43 files/517 passed with mocks. No partial backend changes. Next: implement scoped detail-day rollover by refetching server details without changing kashrut rules, then final frontend test/lint/typecheck/build and clean handoff. All commands/files/limitations in AGENT_3_FIX_PROGRESS.md. No browser or real service checks.
+
+
 **Agent 3 latest position ? A1-003 verified; next SEC-011 (13 October 2026).**
 SEARCH-003 checkpoint f00109b. A1-003 returns stored correctionApplied and displays it independently of awards; authentication/privacy/zero-admin points preserved. Existing newest-50-per-category limit is now stated. Backend history checks: 13 passed; frontend history/locales/photo consumers: 11 passed; lint/typecheck/build exit 0. New Hebrew copy awaits native review; shell-encoding damage found in new photo strings/comments has been corrected. Files/decisions/commands in AGENT_3_FIX_PROGRESS.md and FIX_TRACKER.md. No partial changes beyond this fix. Next: readiness must fail when MongoDB is unavailable; add separate liveness and tests for states. Then full suites and final handoff. No browser/live-service testing.
 
