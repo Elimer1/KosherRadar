@@ -21,6 +21,17 @@ export const assertUniqueIndexesRepo = async (models = integrityModels) => {
     let actual;
     try { actual = await model.collection.listIndexes().toArray(); }
     catch (error) { if (error.code !== 26) throw error; actual = []; }
+    if (model === Restaurant) {
+      // A valid city-aware index does not neutralize the older, broader constraint.
+      // Detect it by keys too, because operators may have used a different name.
+      const legacyKey = { submittedBy: 1, nameNormalized: 1, addressNormalized: 1 };
+      for (const index of actual) {
+        if (index.unique === true && same(index.key, legacyKey) &&
+            (!index.partialFilterExpression || index.partialFilterExpression.status === 'PENDING')) {
+          missing.push(`obsolete restaurants:${index.name} (replace the broader pending identity with operator approval)`);
+        }
+      }
+    }
     for (const [key, options] of model.schema.indexes().filter(([, options]) => options.unique)) {
       const matching = actual.some((index) => index.unique === true &&
         // Key order matters for compound index declarations.

@@ -1077,3 +1077,19 @@ Final batch: frontend npm test exit 0 (30 files / 174 passed); npm run lint, npm
 - **Limitations:** jsdom/mocked APIs; browser and live uploads not tested; Hebrew labels require native review.
 
 Agent 3 final result: all three assigned IDs and two scoped follow-up IDs verified; full commands/results, changed files, checkpoints and integration dependencies in AGENT_3_FIX_PROGRESS.md. No points/classification/auth write changes, schema migrations, dependencies, live services, merges, pushes or deployments.
+
+## Completed-agent integration ? 13 October 2026
+
+### INT-001 ? Legacy index bypasses the integrated startup compatibility gate
+
+- **Milestone:** Completed-agent local integration.
+- **Priority:** High deployment compatibility.
+- **Status:** VERIFIED.
+- **Description/evidence:** After merging A1-R4 and SEARCH-007, startup accepts both city-aware and older broader pending indexes; the old constraint still rejects valid cross-city branches. Corrected disposable baseline: index suite exit 1, 6 passed / 1 failed (Missing expected rejection). Initial fixture order failed at building old index after cross-city inserts; moved fixture before those inserts, without deleting records or weakening assertions.
+- **Root cause:** Startup checks required schema indexes but not the obsolete constraint; new declarations cannot remove old indexes automatically.
+- **Relevant files/functions:** indexIntegrityRepository.assertUniqueIndexesRepo; agent1Indexes.integration.mjs; SEARCH_LOCATION_INDEX_ROLLOUT.md.
+- **Planned solution:** Read-only startup rejection of old broader pending unique constraint, identified by keys as well as name; never automatically drop/repair. Update outdated Agent 1 real regressions to the new city-aware definition and add cross-city/concurrent/legacy tests.
+- **Files changed:** backend/src/repositories/indexIntegrityRepository.js; backend/integration/agent1Indexes.integration.mjs; tracking/docs.
+- **Tests added or modified:** New real MongoDB legacy-index startup gate, normalized same-city concurrency, cross-city acceptance and legacy read/save compatibility; existing weakened-uniqueness/wrong-filter regressions retained against current definition.
+- **Verification:** node integration/runAgent1Isolated.mjs --run-isolated agent1Authority.integration.mjs agent1Corrections.integration.mjs agent1Integrity.integration.mjs agent1Rejection.integration.mjs agent1Indexes.integration.mjs: exit 0, 21 real MongoDB tests passed; includes actual rollback/concurrency/crash recovery, zero ADMIN points and all seven index checks. Fresh disposable replica set and validated cleanup only; no live external services. Backend has no build/lint/typecheck scripts. Browser not tested.
+- **Blockers/limitations:** Existing database index replacement still requires target/operator approval; none performed.

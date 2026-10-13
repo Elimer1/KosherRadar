@@ -70,21 +70,63 @@ test('MongoDB enforces user/token/cleanup uniqueness and all pending identities'
   await Restaurant.updateOne({ _id: restaurant._id }, { $set: { status: 'APPROVED' } });
   await Restaurant.create(restaurantInput);
 });
-test('startup rejects a same-name index with weakened uniqueness and never repairs it implicitly', async () => {
-  await Restaurant.collection.dropIndex('pending_submitter_name_address');
+test('startup rejects a leftover broader pending identity without changing its catalog or records', async () => {
   await Restaurant.collection.createIndex({ submittedBy: 1, nameNormalized: 1, addressNormalized: 1 }, {
-    name: 'pending_submitter_name_address', partialFilterExpression: { status: 'PENDING' },
+    name: 'pending_submitter_name_address', unique: true, partialFilterExpression: { status: 'PENDING' },
   });
-  await assert.rejects(assertUniqueIndexesRepo(), /restaurants:pending_submitter_name_address/);
-  const index = (await Restaurant.collection.listIndexes().toArray()).find((index) => index.name === 'pending_submitter_name_address');
+  try {
+    const before = await Restaurant.collection.listIndexes().toArray();
+    const count = await Restaurant.countDocuments();
+    await assert.rejects(assertUniqueIndexesRepo(), /obsolete.*pending_submitter_name_address/i);
+    assert.deepEqual(await Restaurant.collection.listIndexes().toArray(), before);
+    assert.equal(await Restaurant.countDocuments(), count);
+  } finally {
+    // This database belongs only to the disposable test runner.
+    await Restaurant.collection.dropIndex('pending_submitter_name_address');
+  }
+});
+test('city-aware identity admits cross-city branches and serializes normalized same-city inserts', async () => {
+  const user = await User.create({ email: 'city-index@example.invalid', passwordHash: 'fixture' });
+  const input = { name: 'City branch', address: 'Main 1', city: 'Jerusalem', submittedBy: user._id };
+  const first = await Restaurant.create(input);
+  await Restaurant.create({ ...input, city: 'Haifa' });
+  const concurrent = await Promise.allSettled([
+    Restaurant.create({ ...input, city: ' Tel Aviv! ' }),
+    Restaurant.create({ ...input, city: 'TEL AVIV' }),
+  ]);
+  assert.equal(concurrent.filter((r) => r.status === 'fulfilled').length, 1);
+  assert.equal(concurrent.find((r) => r.status === 'rejected').reason.code, 11000);
+  assert.equal((await Restaurant.findById(first._id)).cityNormalized, 'jerusalem');
+});
+test('legacy pending locality is detected without a backfill and gains identity on save', async () => {
+  const { findPendingRestaurantBySubmitterRepo } = await import('../src/repositories/restaurantRepository.js');
+  const user = await User.create({ email: 'legacy-city@example.invalid', passwordHash: 'fixture' });
+  const input = { name: 'Legacy branch', address: 'Main 1', city: '  JERUSALEM!  ', submittedBy: user._id,
+    nameNormalized: 'legacy branch', addressNormalized: 'main 1', status: 'PENDING' };
+  const { insertedId } = await Restaurant.collection.insertOne(input);
+  const lookup = { submittedBy: user._id, nameNormalized: input.nameNormalized, addressNormalized: input.addressNormalized };
+  assert.equal(String((await findPendingRestaurantBySubmitterRepo({ ...lookup, cityNormalized: 'jerusalem' }))._id), String(insertedId));
+  assert.equal(await findPendingRestaurantBySubmitterRepo({ ...lookup, cityNormalized: 'haifa' }), null);
+  assert.equal((await Restaurant.collection.findOne({ _id: insertedId })).cityNormalized, undefined);
+  const legacy = await Restaurant.findById(insertedId); await legacy.save();
+  assert.equal((await Restaurant.collection.findOne({ _id: insertedId })).cityNormalized, 'jerusalem');
+  await assert.rejects(Restaurant.create(input), { code: 11000 });
+});
+test('startup rejects a same-name index with weakened uniqueness and never repairs it implicitly', async () => {
+  await Restaurant.collection.dropIndex('pending_submitter_name_address_city');
+  await Restaurant.collection.createIndex({ submittedBy: 1, nameNormalized: 1, addressNormalized: 1, cityNormalized: 1 }, {
+    name: 'pending_submitter_name_address_city', partialFilterExpression: { status: 'PENDING', cityNormalized: { $type: 'string' } },
+  });
+  await assert.rejects(assertUniqueIndexesRepo(), /restaurants:pending_submitter_name_address_city/);
+  const index = (await Restaurant.collection.listIndexes().toArray()).find((index) => index.name === 'pending_submitter_name_address_city');
   assert.equal(index.unique, undefined);
 });
 test('a unique index with the wrong moderation filter is insufficient enforcement', async () => {
-  await Restaurant.collection.dropIndex('pending_submitter_name_address');
-  await Restaurant.collection.createIndex({ submittedBy: 1, nameNormalized: 1, addressNormalized: 1 }, {
-    name: 'pending_submitter_name_address', unique: true, partialFilterExpression: { status: 'APPROVED' },
+  await Restaurant.collection.dropIndex('pending_submitter_name_address_city');
+  await Restaurant.collection.createIndex({ submittedBy: 1, nameNormalized: 1, addressNormalized: 1, cityNormalized: 1 }, {
+    name: 'pending_submitter_name_address_city', unique: true, partialFilterExpression: { status: 'APPROVED' },
   });
-  await assert.rejects(assertUniqueIndexesRepo(), /restaurants:pending_submitter_name_address/);
+  await assert.rejects(assertUniqueIndexesRepo(), /restaurants:pending_submitter_name_address_city/);
   const count = await Restaurant.countDocuments();
   assert.equal(await operatorScript('provisionIntegrityIndexes.js', ['--allow-index-creation']), 1);
   assert.equal(await Restaurant.countDocuments(), count);
