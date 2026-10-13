@@ -622,7 +622,7 @@ Deferred: native-speaker review of Hebrew copy, including design strings and the
 
 **Agent 2 assignment ? current for this worktree, 13 October 2026**
 
-Branch fix/search-location, clean baseline dc5dc24 confirmed. Explicit scope SEARCH-001/002/004/005/006/007/008/009/010; one search/location milestone, sequential fixes. SEARCH-001 verified: 4 jsdom regressions, typecheck/lint exit 0; LocationField.tsx and its test. Next SEARCH-002: expose URL resolution failure and block list/map until retry or clear. No browser/live verification. Details in FIX_TRACKER.md and AGENT_2_FIX_PROGRESS.md. Existing dependencies copied locally without installation. No other worktree changes, merges, push or live services.
+Branch fix/search-location, clean baseline dc5dc24 confirmed. Explicit scope SEARCH-001/002/004/005/006/007/008/009/010; one search/location milestone, sequential fixes. SEARCH-001 verified: 4 jsdom regressions, typecheck/lint exit 0; LocationField.tsx and its test. SEARCH-002 verified: URL failure is visible, list/map blocked until retry/clear; 11 hook and 2 page tests pass, lint/typecheck pass. Next SEARCH-004: replace preliminary truncation with bounded batch evaluation. No browser/live verification. Details in FIX_TRACKER.md and AGENT_2_FIX_PROGRESS.md. Existing dependencies copied locally without installation. No other worktree changes, merges, push or live services.
 
 **Accepted V2 merge into local main — 13 October 2026 (current handoff; supersedes historical worktree instructions below)**
 

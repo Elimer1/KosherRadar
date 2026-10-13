@@ -802,14 +802,14 @@ Explicit user assignment supersedes historical stop instructions for this worktr
 
 - **Milestone:** Agent 2 search/location reliability.
 - **Priority:** P1/P2 per assignment.
-- **Status:** NOT STARTED
+- **Status:** VERIFIED
 - **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
-- **Root cause:** Pending investigation.
-- **Relevant files/functions:** Assigned search/location files in pasted request.
+- **Root cause:** failedNear ends loading but search enablement only checks locationPending.
+- **Relevant files/functions:** useSearchCriteria.ts, HomePage.tsx, their tests.
 - **Planned solution:** Focused compatible fix with mocked regressions.
-- **Files changed:** None yet.
-- **Tests added or modified:** Pending verification.
-- **Verification:** Not run yet.
+- **Files changed:** useSearchCriteria.ts, HomePage.tsx, useSearchCriteria.test.tsx, HomePage.test.tsx.
+- **Tests added or modified:** unavailable, ambiguous, not-found, rejection/retry/privacy hook cases; list/map gating UI cases.
+- **Verification:** npm test -- src/hooks/useSearchCriteria.test.tsx exit 0 (11 passed); npm test -- src/pages/HomePage.test.tsx exit 0 (2 passed); npm run typecheck and npm run lint exit 0. Previous frontend build exit 0, existing bundle warning. jsdom/mocks; browser and live services not tested.
 - **Blockers/limitations:** No live service/data testing authorized.
 
 ### SEARCH-004 ? Candidate caps omit eligible and nearest results
