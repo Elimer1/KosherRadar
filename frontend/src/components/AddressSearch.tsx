@@ -99,9 +99,7 @@ function AddressSearch({
     setSuggestions([]);
     setLookupNote('');
     onAddressChange(suggestion.address);
-    if (suggestion.city) {
-      onCityChange(suggestion.city);
-    }
+    onCityChange(suggestion.city);
     onLocationChange({
       latitude: String(suggestion.latitude),
       longitude: String(suggestion.longitude),
@@ -157,6 +155,9 @@ function AddressSearch({
             aria-invalid={invalidCity}
             value={city}
             onChange={(event) => {
+              setSearching(false);
+              setSuggestions([]);
+              setLookupNote('');
               onCityChange(event.target.value);
               onLocationChange(emptyLocation);
             }}

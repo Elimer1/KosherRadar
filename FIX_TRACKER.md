@@ -844,15 +844,15 @@ Explicit user assignment supersedes historical stop instructions for this worktr
 
 - **Milestone:** Agent 2 search/location reliability.
 - **Priority:** P1/P2 per assignment.
-- **Status:** NOT STARTED
+- **Status:** VERIFIED
 - **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
-- **Root cause:** Pending investigation.
-- **Relevant files/functions:** Assigned search/location files in pasted request.
+- **Root cause:** admin full-field mapping omitted provider ID and never geocoded missing/obsolete coordinates; selecting a suggestion without city retained old city; city edits allowed stale suggestions.
+- **Relevant files/functions:** adminRestaurantService.toRestaurantChanges/updateRestaurantByAdminService; new adminRestaurantLocationService; AddressSearch; AdminRestaurantPage; adminApi.
 - **Planned solution:** Focused compatible fix with mocked regressions.
-- **Files changed:** None yet.
-- **Tests added or modified:** Pending verification.
-- **Verification:** Not run yet.
-- **Blockers/limitations:** No live service/data testing authorized.
+- **Files changed:** adminRestaurantService.js, adminRestaurantLocationService.js, their tests; AddressSearch.tsx/test; AdminRestaurantPage.tsx; adminApi.ts.
+- **Tests added or modified:** typed match/failure, stale carried pin, selected replacement, explicit manual coordinates, unchanged identity; missing-city pick and stale city lookup. Old never-touch-provider-ID assertion updated because that behavior caused stale identity.
+- **Verification:** backend npm test -- tests/adminRestaurantService.test.js tests/adminRestaurantLocationService.test.js exit 0, 29 passed. Frontend npm test -- src/components/AddressSearch.test.tsx exit 0, 2 passed; npm run typecheck/lint exit 0. Mocks/jsdom only; no browser/live geocoding.
+- **Blockers/limitations:** Shared adminRestaurantService changes limited to import, location-field mapping and update function; report/delete/points workflows untouched. Placement failure saves address text with no invented pin and displays existing bilingual warning. Explicit new admin coordinates retain authority; unchanged location identity preserved. No added Hebrew strings. Integration may conflict with Agent 1 imports/function context.
 
 ### SEARCH-007 ? Pending duplicate identity omits city
 

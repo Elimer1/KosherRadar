@@ -92,6 +92,8 @@ import {
   updateRestaurantByAdminService,
 } from '../src/services/adminRestaurantService.js';
 import { dateOnlyToDate } from '../src/utils/israelDate.js';
+import { geocodeAddressService } from '../src/services/placesService.js';
+vi.mock('../src/services/placesService.js', () => ({ geocodeAddressService: vi.fn().mockResolvedValue({ status: 'unavailable' }) }));
 
 const admin = { _id: 'admin-1', role: 'ADMIN' };
 
@@ -213,20 +215,21 @@ describe('createRestaurantByAdminService', () => {
 });
 
 describe('updateRestaurantByAdminService', () => {
-  it('replaces the editable fields, keeps the status and never touches the Geoapify place id', async () => {
-    const existing = restaurant({ status: 'APPROVED', geoapifyPlaceId: 'place-1' });
+  it('replaces editable fields and preserves unchanged location identity and status', async () => {
+    const existing = restaurant({ status: 'APPROVED', latitude: 31.7, longitude: 35.2, geoapifyPlaceId: 'place-1' });
     findRestaurantByIdRepo.mockResolvedValue(existing);
     saveRestaurantChangesRepo.mockImplementation(async (doc, changes) => ({ ...doc, ...changes }));
 
     const result = await updateRestaurantByAdminService({
       restaurantId: 'rest-1',
-      restaurantData: restaurantFields({ name: 'Pizza Hut Jerusalem' }),
+      restaurantData: restaurantFields({ name: 'Pizza Hut Jerusalem', latitude: 31.7, longitude: 35.2, geoapifyPlaceId: 'place-1' }),
       extras: { adminNote: 'Name fixed' },
     });
 
     const changes = saveRestaurantChangesRepo.mock.calls[0][1];
     expect(changes).not.toHaveProperty('status');
-    expect(changes).not.toHaveProperty('geoapifyPlaceId');
+    expect(changes.geoapifyPlaceId).toBe('place-1');
+    expect(geocodeAddressService).not.toHaveBeenCalled();
     expect(changes).not.toHaveProperty('submittedBy');
     expect(result.name).toBe('Pizza Hut Jerusalem');
     expect(result.status).toBe('APPROVED');
