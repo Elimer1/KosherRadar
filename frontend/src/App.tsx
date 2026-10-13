@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+import UserSubmissionRoute from './components/UserSubmissionRoute';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -37,8 +38,10 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/account" element={<AccountPage />} />
           <Route path="/account/submissions" element={<Navigate to="/account" replace />} />
-          <Route path="/submit-restaurant" element={<SubmitRestaurantPage />} />
-          <Route path="/restaurants/:restaurantId/add-teuda" element={<SubmitTeudaPage />} />
+          <Route element={<UserSubmissionRoute />}>
+            <Route path="/submit-restaurant" element={<SubmitRestaurantPage />} />
+            <Route path="/restaurants/:restaurantId/add-teuda" element={<SubmitTeudaPage />} />
+          </Route>
           <Route path="/restaurants/:restaurantId/report" element={<SubmitReportPage />} />
         </Route>
 

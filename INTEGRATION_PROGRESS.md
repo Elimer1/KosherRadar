@@ -31,3 +31,11 @@ SEC-006 distinct concurrent reset issuance must be assessed in integrated code. 
 ## Verification and handoff
 
 No integration tests run yet. Next: merge email feature, verify email targeted tests, merge unique verification documentation, then Agent 1, Agent 2 and Agent 3 sequentially with conflict review and targeted checks. Finish full suites, frontend lint/typecheck/build, whitespace, deployment checklist, SEC-006 assessment and committed clean handoff.
+
+## Email and Agent 1 merge progress
+
+Email feature merged with preserved history; email evidence merge de83b93 includes 1beaaa9 (docs only). Targeted backend email/reset/notification tests: 5 files / 53 passed, exit 0; frontend recovery/token tests: 2 files / 14 passed, exit 0. Frontend first attempt failed before tests with sandbox EPERM in Vite config cache; expanded local execution passed. No mail/database calls.
+
+Agent 1 merge in progress: only FIX_TRACKER/PROGRESS conflicts; preserved all issue and historical handoff records and recomputed counts from detailed statuses. Automatic code merges retain post-decision approval/rejection notification calls and transactional creation/deletion/rejection. Targeted admin tests next. Disposable replica-set approval received with fresh directory/separate port, no original URI, external services disabled and cleanup restricted to newly created resources. Runner inspected: generated port/URI, mkdtemp, restricted child env, validated cleanup root.
+
+Agent 1 targeted verification: backend npm test -- tests/adminRestaurantService.test.js tests/adminTeudaService.test.js tests/adminReportService.test.js tests/pointsService.test.js tests/transaction.test.js tests/userSubmissionRoutesHttp.test.js: exit 0, 6 files / 89 passed. Frontend npm test -- src/components/UserSubmissionRoute.test.tsx: exit 0, 4 passed. No browser/live services. Commit merge now, then inspect Agent 2 changes.

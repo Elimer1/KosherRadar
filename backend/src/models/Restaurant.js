@@ -21,6 +21,8 @@ const pointSchema = new mongoose.Schema(
 
 const restaurantSchema = new mongoose.Schema(
   {
+    // Internal serialization counter; missing on legacy documents is incremented from zero.
+    integrityVersion: { type: Number, default: 0, select: false },
     name: { type: String, required: true, trim: true, maxlength: 150 },
     nameHe: { type: String, trim: true, maxlength: 150 },
     nameEn: { type: String, trim: true, maxlength: 150 },

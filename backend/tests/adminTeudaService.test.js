@@ -1,3 +1,10 @@
+vi.mock('../src/repositories/transaction.js', () => ({ withTransaction: vi.fn(async (work) => work()) }));
+vi.mock('../src/repositories/restaurantIntegrityRepository.js', () => ({ lockRestaurantForWriteRepo: vi.fn() }));
+vi.mock('../src/repositories/imageCleanupRepository.js', () => ({
+  enqueueImageCleanupRepo: vi.fn(),
+  findImageCleanupRepo: vi.fn(async (ids) => (ids || []).map((publicId) => ({ publicId }))),
+  completeImageCleanupRepo: vi.fn(), failImageCleanupRepo: vi.fn(),
+}));
 // NEW (Milestone 3): tests for admin certificate (teuda) moderation.
 // חדש (אבן דרך 3): בדיקות לניהול תעודות על ידי מנהל.
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -410,7 +417,7 @@ describe('deleteTeudaService', () => {
 
     const result = await deleteTeudaService({ teudaId: 'teuda-1' });
 
-    expect(result).toEqual({ deleted: true });
+    expect(result).toMatchObject({ deleted: true, imageCleanup: expect.any(Object) });
     expect(deleteTeudaByIdRepo).toHaveBeenCalledWith('teuda-1');
     expect(removeTeudaFromReportsRepo).toHaveBeenCalledWith('teuda-1');
     expect(deleteImageService).toHaveBeenCalledWith('kosherradar/teudot/p');

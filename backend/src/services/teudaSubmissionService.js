@@ -1,5 +1,9 @@
+import { withTransaction } from '../repositories/transaction.js';
+import { lockRestaurantForWriteRepo } from '../repositories/restaurantIntegrityRepository.js';
+import { cleanupFailedUploadService } from './imageCleanupService.js';
 import { createHash } from 'node:crypto';
 import { appError } from '../utils/appError.js';
+import { assertUserSubmission } from '../middleware/userSubmissionMiddleware.js';
 import { dateOnlyToDate, dateToDateOnly } from '../utils/israelDate.js';
 import { findRestaurantByIdRepo } from '../repositories/restaurantRepository.js';
 import {
@@ -7,7 +11,7 @@ import {
   findApprovedTeudotByRestaurantRepo,
   findSimilarPendingTeudaRepo,
 } from '../repositories/teudaRepository.js';
-import { checkImageFile, deleteImageService, uploadTeudaImageService } from './imageUploadService.js';
+import { checkImageFile, uploadTeudaImageService } from './imageUploadService.js';
 import {
   checkExpirationForSubmission,
   getTeudaVisibility,
@@ -146,6 +150,7 @@ export const buildTeudaRecord = ({
 // A user can add a teuda only to an approved restaurant. The new teuda is PENDING and does not
 // touch any approved teuda until an admin approves it.
 export const submitTeudaService = async ({ restaurantId, teudaData, file, user }) => {
+  assertUserSubmission(user);
   const restaurant = await findRestaurantByIdRepo(restaurantId);
 
   if (!restaurant || restaurant.status !== 'APPROVED') {
@@ -177,22 +182,23 @@ export const submitTeudaService = async ({ restaurantId, teudaData, file, user }
   const image = file ? await uploadTeudaImageService(file) : null;
 
   try {
-    const teuda = await createTeudaRepo(
-      buildTeudaRecord({
-        teudaData: evidence,
-        image,
-        photoFingerprint: fingerprint,
-        restaurantId: restaurant._id,
-        userId: user._id,
-        withNewRestaurant: false,
-      })
-    );
+    const teuda = await withTransaction(async () => {
+      await lockRestaurantForWriteRepo(restaurant._id, 'APPROVED');
+      return createTeudaRepo(
+        buildTeudaRecord({
+          teudaData: evidence,
+          image,
+          photoFingerprint: fingerprint,
+          restaurantId: restaurant._id,
+          userId: user._id,
+          withNewRestaurant: false,
+        })
+      );
+    });
 
     return { id: String(teuda._id), status: teuda.status };
   } catch (error) {
-    if (image) {
-      await deleteImageService(image.cloudinaryPublicId);
-    }
+    await cleanupFailedUploadService(image?.cloudinaryPublicId, error);
 
     if (isPendingCertificateDuplicate(error)) {
       throw pendingCertificateConflict();

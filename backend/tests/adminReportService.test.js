@@ -2,6 +2,8 @@
 // חדש (אבן דרך 3): בדיקות לטיפול מנהל בדיווחים (החלת תיקון או לא, +1 נקודה, דחייה).
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+vi.mock('../src/repositories/transaction.js', () => ({ withTransaction: vi.fn(async (work) => work()) }));
+
 vi.mock('../src/repositories/restaurantRepository.js', () => ({
   findRestaurantByIdRepo: vi.fn(),
 }));
@@ -153,7 +155,7 @@ describe('resolveReportService', () => {
     expect(awardPointsOnceRepo).not.toHaveBeenCalled();
   });
 
-  it('reopens the report when the correction write fails after the claim', async () => {
+  it('aborts the transaction when the correction write fails after the claim', async () => {
     findReportByIdRepo.mockResolvedValue(report());
     saveTeudaChangesRepo.mockRejectedValue(new Error('database down'));
 
@@ -161,7 +163,7 @@ describe('resolveReportService', () => {
       'database down'
     );
     expect(resolvePendingReportRepo).toHaveBeenCalled();
-    expect(reopenResolvedReportRepo).toHaveBeenCalledWith('report-1');
+    expect(reopenResolvedReportRepo).not.toHaveBeenCalled();
     expect(awardPointsOnceRepo).not.toHaveBeenCalled();
   });
 

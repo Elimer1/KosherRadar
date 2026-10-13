@@ -1,3 +1,7 @@
+import { withTransaction } from '../repositories/transaction.js';
+import { lockRestaurantForWriteRepo } from '../repositories/restaurantIntegrityRepository.js';
+import { enqueueImageCleanupRepo } from '../repositories/imageCleanupRepository.js';
+import { cleanupFailedUploadService, retryImageCleanupService } from './imageCleanupService.js';
 // NEW (Milestone 3): admin moderation of restaurants: lists, create, edit, approve, reject, delete.
 // חדש (אבן דרך 3): ניהול מסעדות על ידי מנהל: רשימות, יצירה, עריכה, אישור, דחייה, מחיקה.
 import { appError } from '../utils/appError.js';
@@ -29,7 +33,7 @@ import {
 } from '../repositories/adminReportRepository.js';
 import { toAdminRestaurant, toAdminTeuda } from './adminSerializerService.js';
 import { findPossibleDuplicatesService } from './duplicateService.js';
-import { checkImageFile, deleteImageService, uploadTeudaImageService } from './imageUploadService.js';
+import { checkImageFile, uploadTeudaImageService } from './imageUploadService.js';
 import { buildKashrutSummary, findConflictingTeudot } from './kashrutStatusService.js';
 import { notifyApprovalService, notifyRejectionService } from './moderationNotificationService.js';
 import { checkExpirationForAdmin } from './teudaRulesService.js';
@@ -126,54 +130,20 @@ export const createRestaurantByAdminService = async ({ restaurantData, extras, t
 
   const image = teudaData ? await uploadTeudaImageService(file) : null;
 
-  let restaurant;
-
   try {
-    restaurant = await createRestaurantRepo({
-      ...restaurantData,
-      ...extras,
-      status: 'APPROVED',
-      submittedBy: admin._id,
-      possibleDuplicates,
+    return await withTransaction(async () => {
+      const restaurant = await createRestaurantRepo({
+        ...restaurantData, ...extras, status: 'APPROVED', submittedBy: admin._id, possibleDuplicates,
+      });
+      const teuda = teudaData ? await createTeudaRepo({
+        ...buildTeudaRecord({ teudaData, image, restaurantId: restaurant._id, userId: admin._id, withNewRestaurant: false }),
+        status: 'APPROVED', adminNote: teudaData.adminNote,
+      }) : null;
+      return { restaurant: toAdminRestaurant(restaurant), teuda: teuda ? toAdminTeuda(teuda) : null,
+        possibleDuplicateCount: possibleDuplicates.length };
     });
   } catch (error) {
-    if (image) {
-      await deleteImageService(image.cloudinaryPublicId);
-    }
-    throw error;
-  }
-
-  if (!teudaData) {
-    return { restaurant: toAdminRestaurant(restaurant), teuda: null, possibleDuplicateCount: possibleDuplicates.length };
-  }
-
-  try {
-    const teuda = await createTeudaRepo({
-      ...buildTeudaRecord({
-        teudaData,
-        image,
-        restaurantId: restaurant._id,
-        userId: admin._id,
-        withNewRestaurant: false,
-      }),
-      status: 'APPROVED',
-      adminNote: teudaData.adminNote,
-    });
-
-    return {
-      restaurant: toAdminRestaurant(restaurant),
-      teuda: toAdminTeuda(teuda),
-      possibleDuplicateCount: possibleDuplicates.length,
-    };
-  } catch (error) {
-    // Same rule as user submissions: no half-created restaurant when the certificate was part of the request.
-    try {
-      await deleteRestaurantByIdRepo(restaurant._id);
-    } catch (cleanupError) {
-      console.error('Could not delete orphaned restaurant:', restaurant._id, cleanupError.message);
-    }
-
-    await deleteImageService(image.cloudinaryPublicId);
+    await cleanupFailedUploadService(image?.cloudinaryPublicId, error);
     throw error;
   }
 };
@@ -217,27 +187,19 @@ export const approveRestaurantService = async ({ restaurantId }) => {
 };
 
 export const rejectRestaurantService = async ({ restaurantId, reason }) => {
-  const restaurant = await loadRestaurantOr404(restaurantId);
-
-  if (restaurant.status !== 'PENDING') {
-    throw appError('Only a restaurant that is waiting for review can be rejected. Delete it instead.', 409);
-  }
-
-  const rejected = await rejectPendingRestaurantRepo(restaurant._id, reason);
-
-  if (!rejected) {
-    throw appError('This restaurant was just handled by another admin. Please refresh.', 409);
-  }
-
-  // A certificate cannot be approved before its restaurant, so the ones waiting for this restaurant are
-  // closed as well. The submitter gets one email (about the restaurant). A failure here is only logged.
-  // תעודות שממתינות למסעדה שנדחתה נסגרות גם הן. המשתמש מקבל מייל אחד. כשל כאן רק נרשם ביומן.
-  try {
+  const rejected = await withTransaction(async () => {
+    const restaurant = await loadRestaurantOr404(restaurantId);
+    if (restaurant.status !== 'PENDING') {
+      throw appError('Only a restaurant that is waiting for review can be rejected. Delete it instead.', 409);
+    }
+    const rejected = await rejectPendingRestaurantRepo(restaurant._id, reason);
+    if (!rejected) {
+      throw appError('This restaurant was just handled by another admin. Please refresh.', 409);
+    }
     await rejectPendingTeudotOfRestaurantRepo(restaurant._id, AUTO_REJECT_REASON);
-  } catch (error) {
-    console.error('Could not close the certificates of a rejected restaurant:', restaurant._id, error.message);
-  }
-
+    return rejected;
+  });
+  // Notify only after both database decisions commit; a mail failure cannot undo moderation.
   const emailStatus = await notifyRejectionService({
     submitterId: rejected.submittedBy,
     kind: 'restaurant',
@@ -253,22 +215,18 @@ export const rejectRestaurantService = async ({ restaurantId, reason }) => {
 // given stay with the users, and their award keys stay too, so nothing can be awarded again.
 // מדיניות מחיקה: המסעדה, כל התעודות והדיווחים שלה נמחקים; התמונות נמחקות מ-Cloudinary. נקודות שניתנו נשארות.
 export const deleteRestaurantService = async ({ restaurantId }) => {
-  const restaurant = await loadRestaurantOr404(restaurantId);
-
-  const teudot = await findTeudotOfRestaurantForDeleteRepo(restaurant._id);
-  const reports = await findReportsOfRestaurantRepo(restaurant._id);
-
-  await deleteTeudotOfRestaurantRepo(restaurant._id);
-  await deleteReportsOfRestaurantRepo(restaurant._id);
-  await deleteRestaurantByIdRepo(restaurant._id);
-
-  for (const teuda of teudot) {
-    await deleteImageService(teuda.cloudinaryPublicId);
-  }
-
-  for (const report of reports) {
-    await deleteImageService(report.cloudinaryPublicId);
-  }
-
-  return { deleted: true, deletedCertificates: teudot.length };
+  const { ids, deletedCertificates } = await withTransaction(async () => {
+    const restaurant = await loadRestaurantOr404(restaurantId);
+    await lockRestaurantForWriteRepo(restaurant._id);
+    const teudot = await findTeudotOfRestaurantForDeleteRepo(restaurant._id);
+    const reports = await findReportsOfRestaurantRepo(restaurant._id);
+    const ids = [...teudot, ...reports].map((row) => row.cloudinaryPublicId).filter(Boolean);
+    await enqueueImageCleanupRepo(ids);
+    await deleteTeudotOfRestaurantRepo(restaurant._id);
+    await deleteReportsOfRestaurantRepo(restaurant._id);
+    await deleteRestaurantByIdRepo(restaurant._id);
+    return { ids, deletedCertificates: teudot.length };
+  });
+  const imageCleanup = await retryImageCleanupService(ids);
+  return { deleted: true, deletedCertificates, imageCleanup };
 };
