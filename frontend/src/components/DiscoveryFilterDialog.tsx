@@ -98,7 +98,7 @@ function DiscoveryFilterDialog({ open, onClose, children }: DiscoveryFilterDialo
         aria-modal="true"
         aria-labelledby="discovery-filter-title"
         tabIndex={-1}
-        className="relative flex max-h-[min(100dvh,42rem)] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-white shadow-[0_24px_64px_rgba(28,36,32,0.18)] outline-none sm:rounded-3xl"
+        className="relative flex max-h-[min(100dvh,42rem)] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-white shadow-[0_12px_32px_rgba(24,42,36,0.12)] outline-none sm:rounded-2xl"
       >
         <div className="flex items-center justify-between gap-3 border-b border-soft px-4 py-3 sm:px-5">
           <h2 id="discovery-filter-title" className="text-base font-semibold text-ink">

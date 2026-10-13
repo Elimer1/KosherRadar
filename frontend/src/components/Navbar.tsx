@@ -6,15 +6,13 @@ import i18n, { activeLanguage } from '../i18n';
 import { rememberLanguage } from '../utils/language';
 import type { AppLanguage } from '../utils/language';
 
-const navLinkClassName =
-  'inline-flex min-h-11 items-center rounded-full px-3 text-sm text-mist hover:bg-white/10 hover:text-white';
+const textActionClassName =
+  'inline-flex min-h-11 items-center gap-1.5 rounded-[10px] px-2.5 text-sm font-medium text-ink hover:bg-mist hover:text-forest-deep';
 
-function Mark() {
+function PlusIcon() {
   return (
-    <svg viewBox="0 0 32 32" aria-hidden="true" className="h-8 w-8 shrink-0">
-      <rect width="32" height="32" rx="10" fill="#F4F0E8" />
-      <circle cx="16" cy="16" r="6.5" fill="none" stroke="#0F3D2D" strokeWidth="1.7" />
-      <circle cx="16" cy="16" r="2.1" fill="#0F3D2D" />
+    <svg viewBox="0 0 16 16" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M8 2.5v11M2.5 8h11" />
     </svg>
   );
 }
@@ -41,34 +39,80 @@ function Navbar() {
 
   const closeMenu = () => setMenuOpen(false);
 
+  const languageButton = (
+    <button
+      type="button"
+      onClick={() => handleLanguage(language === 'he' ? 'en' : 'he')}
+      aria-label={t('nav.switchLanguage')}
+      className="inline-flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-[10px] px-2 text-ink hover:bg-mist"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M3 12h18" />
+        <path d="M12 3c2.5 2.6 3.8 5.7 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3z" />
+      </svg>
+      <span className="text-xs font-semibold">{nextCode}</span>
+    </button>
+  );
+
+  const actions = (
+    <>
+      <Link to="/submit-restaurant" onClick={closeMenu} className={textActionClassName}>
+        <PlusIcon />
+        {t('nav.addRestaurant')}
+      </Link>
+      {user ? (
+        <>
+          {user.role === 'ADMIN' && (
+            <Link to="/admin" onClick={closeMenu} className={`${textActionClassName} font-semibold`}>
+              {t('nav.admin')}
+            </Link>
+          )}
+          <Link
+            to="/account"
+            title={user.email}
+            onClick={closeMenu}
+            className={`${textActionClassName} max-w-full truncate md:max-w-48`}
+          >
+            {user.email}
+          </Link>
+          <button type="button" onClick={handleLogout} className={textActionClassName}>
+            {t('nav.logout')}
+          </button>
+        </>
+      ) : (
+        <>
+          <Link to="/login" onClick={closeMenu} className={textActionClassName}>
+            {t('nav.login')}
+          </Link>
+          <Link
+            to="/register"
+            onClick={closeMenu}
+            className="inline-flex min-h-11 items-center justify-center rounded-[10px] bg-forest px-3.5 text-sm font-semibold text-white hover:bg-forest-deep"
+          >
+            {t('nav.signup')}
+          </Link>
+        </>
+      )}
+    </>
+  );
+
   return (
-    <header className="kr-header sticky top-0 z-[1100] bg-forest-deep text-white">
-      <nav
-        className="mx-auto flex max-w-6xl flex-col px-4 sm:px-6 md:flex-row md:items-center md:justify-between md:gap-6 lg:px-8"
-        aria-label={t('nav.main')}
-      >
-        <div className="flex min-h-16 items-center justify-between gap-3">
-          <Link to="/" onClick={closeMenu} className="inline-flex min-h-11 items-center gap-2.5 text-lg font-semibold tracking-tight text-white">
-            <Mark />
+    <header className="kr-header sticky top-0 z-[1100] border-b border-soft bg-white text-ink">
+      <nav className="v2-wrap" aria-label={t('nav.main')}>
+        <div className="flex h-[68px] items-center justify-between gap-3">
+          <Link to="/" onClick={closeMenu} className="inline-flex min-h-11 items-center text-lg font-semibold text-ink">
             KosherRadar
           </Link>
-          <div className="flex items-center gap-1">
+          <div className="hidden items-center gap-1 md:flex">
+            {actions}
+            {languageButton}
+          </div>
+          <div className="flex items-center gap-1 md:hidden">
+            {languageButton}
             <button
               type="button"
-              onClick={() => handleLanguage(language === 'he' ? 'en' : 'he')}
-              aria-label={t('nav.switchLanguage')}
-              className="inline-flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-2 text-mist hover:bg-white/10 hover:text-white"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <circle cx="12" cy="12" r="9" />
-                <path d="M3 12h18" />
-                <path d="M12 3c2.5 2.6 3.8 5.7 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3z" />
-              </svg>
-              <span className="text-xs font-semibold tracking-wide">{nextCode}</span>
-            </button>
-            <button
-              type="button"
-              className="inline-flex h-11 min-w-11 items-center justify-center rounded-full text-white hover:bg-white/10 md:hidden"
+              className="inline-flex h-11 min-w-11 items-center justify-center rounded-[10px] text-ink hover:bg-mist"
               aria-expanded={menuOpen}
               aria-controls="primary-nav"
               onClick={() => setMenuOpen((current) => !current)}
@@ -83,48 +127,9 @@ function Navbar() {
 
         <div
           id="primary-nav"
-          className={`${menuOpen ? 'flex' : 'hidden'} flex-col gap-1 border-t border-white/15 py-3 md:flex md:flex-row md:flex-wrap md:items-center md:justify-end md:gap-1 md:border-0 md:py-0`}
+          className={`${menuOpen ? 'flex' : 'hidden'} flex-col gap-1 border-t border-soft py-3 md:hidden`}
         >
-          <Link to="/submit-restaurant" onClick={closeMenu} className={navLinkClassName}>
-            {t('nav.addRestaurant')}
-          </Link>
-          {user ? (
-            <>
-              {user.role === 'ADMIN' && (
-                <Link to="/admin" onClick={closeMenu} className={`${navLinkClassName} font-semibold text-white`}>
-                  {t('nav.admin')}
-                </Link>
-              )}
-              <Link
-                to="/account"
-                title={user.email}
-                onClick={closeMenu}
-                className={`${navLinkClassName} max-w-full truncate md:max-w-48`}
-              >
-                {user.email}
-              </Link>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/35 px-3.5 text-sm font-medium text-white hover:bg-white/10"
-              >
-                {t('nav.logout')}
-              </button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" onClick={closeMenu} className={navLinkClassName}>
-                {t('nav.login')}
-              </Link>
-              <Link
-                to="/register"
-                onClick={closeMenu}
-                className="inline-flex min-h-11 items-center justify-center rounded-full bg-canvas px-4 text-sm font-semibold text-forest-deep hover:bg-white"
-              >
-                {t('nav.signup')}
-              </Link>
-            </>
-          )}
+          {actions}
         </div>
       </nav>
     </header>
