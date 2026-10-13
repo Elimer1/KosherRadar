@@ -9,8 +9,8 @@ Counts below are derived from the issue statuses in this file.
 | NOT STARTED | 10 |
 | ALREADY WORKING | 8 |
 | BLOCKED | 4 |
-| DEFERRED | 3 |
-| VERIFIED | 42 |
+| DEFERRED | 1 |
+| VERIFIED | 44 |
 | Other | 1 |
 | **Total** | **68** |
 
@@ -1124,6 +1124,8 @@ Agent 3 final result: all three assigned IDs and two scoped follow-up IDs verifi
 
 ### SEC-006 / EMAILAUD-001 - Account-level recovery races permit password overwrite
 
+**Current integration verification (13 October 2026):** Source fb31498da640d1686fd669726106093addbff0af incorporated as 4a958dc on integration/p1-security-admin-navigation, based on fetched main 1931d45. Full combined backend `npm test`: exit 0, 684 passed/51 files. Disposable `node integration/runAgent1Isolated.mjs --run-isolated passwordResetConcurrency.integration.mjs passwordResetAudit.integration.mjs`: exit 0, 16 passed/0 failed; new temporary loopback database only, mail disabled. Combined frontend 246 passed/39 files, lint/typecheck/build exit 0. No existing data/index/migration changes or live service verification. Full review and limitations in INTEGRATION_PROGRESS.md; source results below are historical branch evidence. VERIFIED locally, main promotion pending explicit approval.
+
 - **Milestone:** User-assigned SEC-006 password-reset concurrency remediation, 13 October 2026.
 - **Priority:** P1; confirmed security defect, now verified in this fix branch; not deployed.
 - **Status:** VERIFIED.
@@ -1143,6 +1145,8 @@ All five source histories incorporated locally in integration/agent-fixes; sourc
 Independent-audit follow-up verification (13 October 2026): targeted npm test -- tests/passwordResetService.test.js tests/passwordResetRepository.test.js tests/passwordResetRoutesHttp.test.js exit 0, 3 files/27 passed with mocks/local HTTP; disposable node integration/runAgent1Isolated.mjs --run-isolated passwordResetAudit.integration.mjs exit 0, 2 diagnostic checks reconfirm SEC-006. All five Agent 4 paths are attributed to the user-supplied independent in-memory audit report; only concurrent issuance and same-token consumption were executed here. Application/schema/tests unchanged. Prior full suites/build/browser evidence retained, not rerun for documentation. SEC-006 remains CONFIRMED P1 and DEFERRED from integration implementation, blocking production. No issue status/count changes.
 
 ### UIAUD-001 - Stale admin edit form can mutate a different restaurant
+
+**Current integration verification (13 October 2026):** Source 587bac18bc02c0ff68dbf6eb8bf839462d44b060 incorporated as c454188 on integration/p1-security-admin-navigation with prior ADMINCERT-001 payload normalization preserved. Combined frontend `npm test`: exit 0, 246 passed/39 files, including 19 routed navigation regressions. `npm run lint`, `npm run typecheck`, `npm run build`: exit 0. `node scripts/reviewAdminNavigation.mjs`: exit 0, four Chrome scenarios, zero exceptions, every API write intercepted and remote traffic blocked. Full backend 684 passed/51 files. Initial frontend test/typecheck generated-file writes failed with sandbox EPERM; authorized retries passed without code changes. Source results below are historical evidence. VERIFIED locally, main promotion pending explicit approval.
 
 - **Milestone:** User-assigned UIAUD-001 administrator navigation safety fix, 13 October 2026.
 - **Priority:** P1.
