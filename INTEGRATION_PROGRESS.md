@@ -6,7 +6,7 @@ Local integration only in `C:/FS/projects/KosherRadar-integration`, branch `inte
 
 ## Final result
 
-All five sources are integrated with preserved histories. Full available automated checks pass. One confirmed integration defect (INT-001) is fixed and verified. SEC-006 remains a confirmed pre-existing production release blocker; it was assessed and documented within the requested scope. Local integration is complete, but this is not approval for production or an unconditional recommendation to merge main.
+All five sources are integrated with preserved histories. Full available automated checks pass. One confirmed integration defect (INT-001) is fixed and verified. **SEC-006 / EMAILAUD-001 is CONFIRMED, P1, and an unresolved production release blocker.** Competing resets with different tokens can both succeed and overwrite a completed recovery. Passing existing recovery tests do not establish production readiness. Local integration is complete, but this is not approval for production or an unconditional recommendation to merge main.
 
 Final application fix: `7cdc1fb`. Final handoff HEAD is the commit containing this document; retrieve its exact hash with `git rev-parse integration/agent-fixes`. The user-facing final report records that exact hash after committing. No source history was squashed or rewritten.
 
@@ -32,11 +32,11 @@ User explicitly approved fresh disposable replica-set regressions with dedicated
 
 Agent 1 transactions require a replica set or sharded deployment; standalone fails closed. Startup disables implicit index creation and checks unique indexes. Agent 2 replaces the pending restaurant identity index with a city-aware constraint and adds a query index. Review these together after merging; do not provision/drop any existing database index. See SEARCH_LOCATION_INDEX_ROLLOUT.md when incorporated.
 
-SEC-006 distinct concurrent reset issuance must be assessed in integrated code. Historical Gmail live verification is source evidence only; this integration session will not send mail. Native Hebrew review, live service/deployment checks and existing bundle warning remain limitations.
+SEC-006 assessment is complete and confirms an unresolved production blocker; see the independent-audit follow-up below. Historical Gmail live verification is source evidence only; this integration session will not send mail. Native Hebrew review, live service/deployment checks and existing bundle warning remain limitations.
 
 ## Verification and handoff
 
-No integration tests run yet. Next: merge email feature, verify email targeted tests, merge unique verification documentation, then Agent 1, Agent 2 and Agent 3 sequentially with conflict review and targeted checks. Finish full suites, frontend lint/typecheck/build, whitespace, deployment checklist, SEC-006 assessment and committed clean handoff.
+Integration verification is complete; actual commands and results are recorded below. The initial sequential merge plan was executed without discarding completed work. The independent-audit follow-up is documentation and targeted verification only, with no authentication implementation rewrite.
 
 ## Email and Agent 1 merge progress
 
@@ -105,8 +105,62 @@ README corrected stale Resend/current-index references and distinguishes histori
 
 ## Remaining risks and exact next step
 
-- **Production blocker SEC-006:** separately fix/review concurrent reset issuance and distinct-token interleavings before public release. Same-token single-use/JWT invalidation remain intact; no speculative redesign here.
+- **CONFIRMED P1 production blocker SEC-006 / EMAILAUD-001:** separately fix/review all five independently reproduced account-level failure paths before public release. Same-token single-use and each password-write/JWT-version increment remain atomic, but they do not prevent competing distinct-token recoveries. No speculative redesign here.
 - **Required deployment preparation:** approve a target/topology and city-aware index replacement, provision all unique/query/geospatial/TTL indexes plus cleanup collection, verify catalog and legacy compatibility. Do not run existing-target operator commands under the disposable-test approval.
 - Native Hebrew review, live service/Atlas compatibility/performance, moderation email delivery, real browser workflows, backups/operations remain outstanding. Existing large bundle, localStorage risk and upload-before-durable-record crash window remain documented.
 
 Recommendation: suitable for local review as the consolidated integration candidate. Hold production release and unconditional main promotion until SEC-006 and deployment gates are addressed. No merge into main, push or deploy occurred. Exact next step: STOP and provide final report. Future work must reconcile this document/FIX_TRACKER/PROGRESS against Git, preserve all frozen source worktrees, and obtain separate scope/resource authorization where required.
+
+## Independent email security audit follow-up — 13 October 2026
+
+Resumed from clean completed integration `781f9707bbfc59cec2ed3d6eabce8a8fc4d3a46e`. All completed merges, source tips and application code are preserved. The user supplied Agent 4's independent audit conclusion: **EMAILAUD-001 aliases SEC-006, CONFIRMED P1**. Agent 4 reportedly reproduced five failure paths using an isolated in-memory harness:
+
+1. Concurrent issuance leaves multiple valid tokens.
+2. Competing resets using different tokens both succeed; a later write overwrites an already completed recovery.
+3. Issuance begun before a recovery can finish afterward and leave an obsolete request's token valid.
+4. Cleanup failure leaves other usable links after password change.
+5. Failed-write compensation restores a token that another completed recovery made obsolete.
+
+Evidence attribution: those five reproductions are the user's report of Agent 4's harness, not five tests run in this checkout. No new audit artifact was present in the inspected source branch trees or searched Markdown files. This integration independently reproduced concurrent issuance and same-token consumption on a real fresh disposable replica set. Code review supports the additional paths: unconditional per-user password updates, cleanup after the update, and token-only compensation without an account epoch check. Neither mocked test success nor historical Gmail delivery closes this finding.
+
+Integrated files involved:
+
+- `backend/src/services/passwordResetService.js`: separate delete/create issuance; token consumption before bcrypt/password write; cleanup after saving; failure compensation through releaseResetTokenRepo.
+- `backend/src/repositories/passwordResetRepository.js`: per-hash consume, delete-unused cleanup and token-only release.
+- `backend/src/repositories/userRepository.js`: setUserPasswordHashRepo updates passwordHash and tokenVersion atomically but has no expected account recovery generation/credential version guard.
+- `backend/src/models/PasswordResetToken.js`: unique tokenHash and expiry; no account recovery generation binding.
+- `backend/src/models/User.js`: current credential/session tokenVersion; no shared recovery-generation guard.
+- `backend/src/repositories/transaction.js`: existing transaction/session facility suitable for a separately reviewed narrow fix; currently not used by password recovery.
+- Verification boundaries: `backend/tests/passwordResetService.test.js`, `passwordResetRepository.test.js`, `passwordResetRoutesHttp.test.js`, and `backend/integration/passwordResetAudit.integration.mjs`. Existing passing cases do not cover all account-level interleavings.
+
+### Recommended account-level atomicity approach (proposal only)
+
+Keep the current account, JWT and localStorage architecture. Prefer the existing replica-set transaction facility with **a shared conditional write on the User document in both issuance and redemption**, plus a monotonic recovery generation bound to each token. Independent token-document transactions alone do not serialize two different tokens; an in-process mutex or cleanup-only fix is insufficient across workers and restarts.
+
+Issuance should capture the account's credential epoch when its work begins. In one transaction, conditionally guard that unchanged epoch, advance the account recovery generation and create the hash-only token bound to that generation. A request that began before a successful reset must not acquire fresh authority by rereading a new epoch on an automatic retry. A genuinely new request after a recovery can issue a new link normally. Concurrent issuance must have a defined commit order and only its current generation should be redeemable.
+
+Hash the new password outside the transaction, then revalidate expiry, unused status, token generation and credential epoch inside it. One transaction must conditionally claim the account/current generation, consume the token, update passwordHash, increment JWT tokenVersion and advance recovery generation to invalidate every previous or already-in-flight redemption. If another recovery wins, this transaction must abort without changing the password. Transaction rollback replaces unconditional token-release compensation; cleanup becomes housekeeping and cannot determine whether old links work. SMTP notifications run only after commit, outside retryable callbacks.
+
+Any proposed additive generation fields need explicit compatibility/rollback review. Missing legacy fields and already-issued tokens need a deliberate fail-closed rollout policy; do not silently grant old tokens the new generation or run a backfill. This document does not authorize schema/data changes or implement the proposal.
+
+### Required resolution tests
+
+Convert the diagnostic vulnerability expectations into fixed-behavior regressions when implementing the separately scoped fix. Use controlled barriers/failure injection, real approved disposable replica-set persistence and multiple processes where relevant:
+
+1. Simultaneous issuance: only the current committed generation is redeemable; stale issuance cannot overwrite newer recovery state.
+2. Two distinct tokens racing to reset: exactly one valid recovery commits; the loser cannot overwrite the winner; password/JWT epoch/generation/token state commit together.
+3. Delay issuance across a successful reset: its captured old credential epoch is rejected, including automatic transaction retries. A fresh post-reset request still works.
+4. Force cleanup failure after commit: every older token remains invalid, current password stays saved, existing JWTs remain rejected.
+5. Force hashing/password-write failure while another recovery or issuance wins: abort must not revive an obsolete token; a failure without a competing winner remains safely retryable.
+6. Same-token races, expired/used/unknown tokens, legacy-generation policy, missing/deleted user, and unrelated accounts progressing independently.
+7. Kill/restart a worker around token claim/password update/commit; verify rollback or complete commit, no partial state, and safe driver retries across processes.
+8. Preserve neutral forgot responses/no-store, hash-only storage, 60-minute validity, password policy, English/Hebrew/RTL UI, old-password rejection/new-password login, JWT invalidation and post-commit best-effort mail. No mail from aborted/retried transaction callbacks.
+
+Follow-up targeted verification:
+
+- `cd backend; npm test -- tests/passwordResetService.test.js tests/passwordResetRepository.test.js tests/passwordResetRoutesHttp.test.js`: exit 0, 3 files / 27 passed, mocked boundaries and local HTTP fixtures, service credentials disabled and non-listening loopback URI.
+- `cd backend; node integration/runAgent1Isolated.mjs --run-isolated passwordResetAudit.integration.mjs`: exit 0, 2 diagnostic checks passed on a fresh disposable replica set with mail disabled; again confirms two distinct consumable links and atomic same-hash consumption. Runner cleaned up only its generated resources. This is confirmation of a blocker, not remediation success.
+- No application/tests/package/schema changes in this follow-up; only INTEGRATION_PROGRESS.md, FIX_TRACKER.md, PROGRESS.md and INTEGRATION_DEPLOYMENT_CHECKLIST.md updated. Full prior 580 backend / 215 frontend tests, lint/typecheck/build, 21 database regressions and 88 browser fixture renders remain actual unchanged-code results; broad checks were not repeated for documentation edits. Backend has no build/lint/typecheck scripts. No new browser/live-service verification.
+- `git -c core.whitespace=cr-at-eol diff --check`: exit 0. Final documentation checkpoint contains these results; exact final HEAD is reported after committing. Source branch tips and main remain unchanged. Working tree clean after the checkpoint.
+
+No claim that five-path security remediation has passed. SEC-006 remains DEFERRED only as an implementation-scope status, never as evidence of lower severity or readiness. Exact next step: STOP/report completed local integration with a confirmed P1 production blocker; no automatic main merge/push/deploy or existing-database operations.

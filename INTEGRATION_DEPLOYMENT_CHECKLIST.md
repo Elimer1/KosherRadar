@@ -4,7 +4,7 @@ Prepared 13 October 2026. This is a review checklist, not authorization to run c
 
 ## Release gates
 
-- Resolve SEC-006 before public production release: concurrent reset issuance can leave multiple distinct valid links. The disposable diagnostic confirms this; it does not fix it. Single-use consumption of the same token remains atomic. See FIX_TRACKER.md and `backend/integration/passwordResetAudit.integration.mjs`.
+- Resolve **SEC-006 / EMAILAUD-001, CONFIRMED P1**, before public production release. Agent 4's independent audit, as reported by the user, confirms concurrent issuance, competing distinct-token resets overwriting completed recovery, delayed issuance after recovery, cleanup failure and compensation restoring obsolete tokens. This integration's disposable diagnostic independently confirms multiple consumable links; it does not fix the vulnerability. Single-use consumption of the same token remains atomic. Passing existing tests do not prove account-level recovery safety. See FIX_TRACKER.md, the affected-file/atomicity/test plan in INTEGRATION_PROGRESS.md and `backend/integration/passwordResetAudit.integration.mjs`.
 - Identify the deployment and approve its database/index operations separately. Do not infer readiness from local test success or a loopback URI.
 - Review new Hebrew email, photo and history copy with a native speaker (M8-004).
 - Verify deployed Gmail, Cloudinary, Geoapify and Atlas configuration on approved resources. Agent 4's historical isolated Gmail evidence is preserved, but no live service was called during integration. Moderation email delivery and email-client rendering remain unverified.
