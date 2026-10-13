@@ -1,14 +1,15 @@
-// NEW (Milestone 5): the search location, separate from the restaurant-name and food box.
+// The search location, separate from the restaurant-name and food box.
 // A suggestion or Enter looks the place up. A miss does not invent coordinates.
-// חדש (אבן דרך 5): מיקום החיפוש, נפרד מתיבת השם והאוכל. הצעה או Enter מחפשים את המקום. החטאה לא ממציאה קואורדינטות.
+// Geolocation runs only after the visitor presses the current-location control.
 import { useEffect, useState } from 'react';
+import type { KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { geocodePlace, suggestPlaces } from '../api/placesApi';
 import { activeLanguage } from '../i18n';
 import type { AddressSuggestion, PlaceLanguage } from '../api/placesApi';
 import type { SearchLocationPick } from '../hooks/useSearchCriteria';
 import type { SearchFilters } from '../types/search';
-import { inputClassName, labelClassName, quietActionClassName, secondaryButtonClassName } from './formStyles';
+import { quietActionClassName } from './formStyles';
 
 interface LocationFieldProps {
   filters: SearchFilters;
@@ -19,12 +20,32 @@ interface LocationFieldProps {
   lang?: PlaceLanguage;
 }
 
-function LocationField({ filters, appliedLabel = '', locationSource = null, onPickLocation, onClearLocation, lang }: LocationFieldProps) {
+const LIST_ID = 'location-suggestions';
+
+function LocateIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+      <circle cx="10" cy="10" r="3" />
+      <path d="M10 2.5v2.2M10 15.3v2.2M2.5 10h2.2M15.3 10h2.2" />
+    </svg>
+  );
+}
+
+function LocationField({
+  filters,
+  appliedLabel = '',
+  locationSource = null,
+  onPickLocation,
+  onClearLocation,
+  lang,
+}: LocationFieldProps) {
   const { t } = useTranslation();
   const placeLanguage = lang ?? activeLanguage();
   const [text, setText] = useState(locationSource === 'device' ? '' : appliedLabel);
   const [selectedLabel, setSelectedLabel] = useState(locationSource === 'device' ? '' : appliedLabel);
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const [note, setNote] = useState('');
   const [locating, setLocating] = useState(false);
 
@@ -45,6 +66,7 @@ function LocationField({ filters, appliedLabel = '', locationSource = null, onPi
         }
 
         setSuggestions(result.suggestions);
+        setActiveIndex(-1);
 
         if (!result.available) {
           setNote(t('location.unavailable'));
@@ -67,6 +89,8 @@ function LocationField({ filters, appliedLabel = '', locationSource = null, onPi
     setText(place.label);
     setSelectedLabel(place.label);
     setSuggestions([]);
+    setOpen(false);
+    setActiveIndex(-1);
     setNote('');
     onPickLocation({ source: 'named', label: place.label, latitude: place.latitude, longitude: place.longitude });
   };
@@ -75,6 +99,7 @@ function LocationField({ filters, appliedLabel = '', locationSource = null, onPi
     setText('');
     setSelectedLabel('');
     setSuggestions([]);
+    setOpen(false);
     setNote('');
     onClearLocation();
   };
@@ -87,6 +112,7 @@ function LocationField({ filters, appliedLabel = '', locationSource = null, onPi
     }
 
     setSuggestions([]);
+    setOpen(false);
     const result = await geocodePlace(query, placeLanguage);
 
     if (!result.available) {
@@ -119,6 +145,7 @@ function LocationField({ filters, appliedLabel = '', locationSource = null, onPi
         setText('');
         setSelectedLabel('');
         setSuggestions([]);
+        setOpen(false);
         onPickLocation({
           source: 'device',
           label: '',
@@ -134,76 +161,108 @@ function LocationField({ filters, appliedLabel = '', locationSource = null, onPi
     );
   };
 
+  const showList = open && suggestions.length > 0;
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Escape') {
+      setOpen(false);
+      return;
+    }
+
+    if (event.key === 'ArrowDown' && showList) {
+      event.preventDefault();
+      setActiveIndex((current) => (current + 1) % suggestions.length);
+      return;
+    }
+
+    if (event.key === 'ArrowUp' && showList) {
+      event.preventDefault();
+      setActiveIndex((current) => (current <= 0 ? suggestions.length - 1 : current - 1));
+      return;
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+
+      if (showList && activeIndex >= 0) {
+        applyPlace(suggestions[activeIndex]);
+        return;
+      }
+
+      void handleLookupTyped();
+    }
+  };
+
   return (
-    <div className="mt-3">
-      <label htmlFor="search-location" className={labelClassName}>
-        {t('location.label')}
-      </label>
-      <div className="mt-1 flex flex-col gap-2 sm:flex-row">
+    <>
+      <div className="v2-composer-place">
+        <label htmlFor="search-location" className="sr-only">
+          {t('location.label')}
+        </label>
         <input
           id="search-location"
           value={text}
           onChange={(event) => {
             setText(event.target.value);
             setNote('');
+            setOpen(true);
             if (event.target.value.trim().length < 2) {
               setSuggestions([]);
             }
           }}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              void handleLookupTyped();
-            }
-          }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setOpen(false)}
+          onKeyDown={handleKeyDown}
           placeholder={t('location.placeholder')}
           autoComplete="off"
-          className={`${inputClassName} mt-0 sm:flex-1`}
+          role="combobox"
+          aria-expanded={showList}
+          aria-controls={LIST_ID}
+          aria-autocomplete="list"
+          aria-activedescendant={activeIndex >= 0 ? `location-suggestion-${activeIndex}` : undefined}
+          className="v2-composer-input"
         />
-        <button
-          type="button"
-          onClick={handleUseMyLocation}
-          disabled={locating}
-          className={`${secondaryButtonClassName} w-full sm:w-auto`}
-        >
-          {locating ? t('location.finding') : t('location.useMine')}
-        </button>
-      </div>
-
-      {suggestions.length > 0 && (
-        <ul className="mt-2 overflow-hidden rounded-2xl border border-soft bg-white shadow-[0_8px_24px_rgba(23,75,58,0.08)]" role="listbox">
-          {suggestions.map((suggestion) => (
-            <li key={suggestion.placeId || suggestion.label}>
-              <button
-                type="button"
-                onClick={() => applyPlace(suggestion)}
-                dir="auto"
-                className="min-h-11 w-full px-3 py-2 text-start text-sm text-ink hover:bg-mist"
+        {showList && (
+          <ul id={LIST_ID} role="listbox" className="v2-suggest">
+            {suggestions.map((suggestion, index) => (
+              <li
+                key={suggestion.placeId || suggestion.label}
+                id={`location-suggestion-${index}`}
+                role="option"
+                aria-selected={index === activeIndex}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  applyPlace(suggestion);
+                }}
+                className={`min-h-12 cursor-pointer px-3.5 py-2 text-start text-sm text-ink ${index === activeIndex ? 'bg-mist' : 'hover:bg-canvas'}`}
               >
-                {suggestion.label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {(locationSource === 'device' || selectedLabel !== '') && filters.location && (
-        <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-ink">
-          <span dir="auto">
-            {t('location.using', { place: locationSource === 'device' ? t('location.current') : selectedLabel })}
-          </span>
-          <button type="button" onClick={handleClear} className={quietActionClassName}>
-            {t('location.clear')}
-          </button>
-        </p>
-      )}
-
-      {note !== '' && (
-        <p role="status" className="mt-2 text-sm text-amber-ink">
-          {note}
-        </p>
-      )}
-    </div>
+                <bdi>{suggestion.label}</bdi>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <div className="v2-composer-action">
+        <button type="button" id="use-current-location" onClick={handleUseMyLocation} disabled={locating} className="v2-location-action"><LocateIcon />{locating ? t('location.finding') : t('location.useMine')}</button>
+        {(locationSource === 'device' || selectedLabel !== '') && filters.location && (
+          <p className="flex flex-wrap items-center gap-2 text-sm text-ink">
+            <span>
+              <bdi>
+                {t('location.using', { place: locationSource === 'device' ? t('location.current') : selectedLabel })}
+              </bdi>
+            </span>
+            <button type="button" onClick={handleClear} className={quietActionClassName}>
+              {t('location.clear')}
+            </button>
+          </p>
+        )}
+        {note !== '' && (
+          <p role="status" className="text-sm text-amber-ink">
+            {note}
+          </p>
+        )}
+      </div>
+    </>
   );
 }
 

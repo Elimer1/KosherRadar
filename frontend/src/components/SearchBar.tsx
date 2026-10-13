@@ -1,12 +1,10 @@
-// NEW (Milestone 4): the main search box (restaurant name or food only, spec section 8) with autocomplete.
+// The main search box (restaurant name or food only) with autocomplete.
 // Suggestions start at 2 characters, wait 300 ms after the last keystroke, and old requests are cancelled.
 // Clicking a suggestion opens that restaurant; Enter or the Search button without a choice runs the search.
-// חדש (אבן דרך 4): תיבת החיפוש הראשית (שם מסעדה או אוכל בלבד) עם השלמה אוטומטית. הצעות מ-2 תווים, אחרי 300
-// מילישניות, ובקשות ישנות מבוטלות. לחיצה על הצעה פותחת את המסעדה; Enter בלי בחירה מריץ חיפוש.
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import type { FormEvent, KeyboardEvent, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { FormEvent, KeyboardEvent } from 'react';
 import { getRestaurantSuggestions } from '../api/searchApi';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import type { RestaurantSuggestion, SearchFilters } from '../types/search';
@@ -23,22 +21,36 @@ interface SearchBarProps {
   onTextChange: (text: string) => void;
   onSearch: (text: string) => void;
   onPickSuggestion: (restaurantId: string) => void;
-  // The current filters. Suggestions follow the same filters as the results (for example Include Unknown).
   filters: SearchFilters;
   hechsherOptions: HechsherOption[];
+  children?: ReactNode;
 }
 
-function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, hechsherOptions }: SearchBarProps) {
+function SearchIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <circle cx="8.5" cy="8.5" r="5.2" />
+      <path d="M12.4 12.4 17 17" />
+    </svg>
+  );
+}
+
+function SearchBar({
+  text,
+  onTextChange,
+  onSearch,
+  onPickSuggestion,
+  filters,
+  hechsherOptions,
+  children,
+}: SearchBarProps) {
   const { t } = useTranslation();
-  // The last answer, together with the text it was for.
   const [answer, setAnswer] = useState<{ query: string; rows: RestaurantSuggestion[] }>({ query: '', rows: [] });
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
 
   const trimmedText = text.trim();
   const debouncedText = useDebouncedValue(trimmedText, DEBOUNCE_MS);
-
-  // The filters except the text; a change here asks for new suggestions too.
   const filtersWithoutText = JSON.stringify({ ...filters, q: '' });
 
   useEffect(() => {
@@ -46,7 +58,6 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
       return;
     }
 
-    // Aborting the request when the text changes again keeps a slow, old answer from replacing a new one.
     const controller = new AbortController();
 
     const loadSuggestions = async () => {
@@ -58,7 +69,6 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
         setAnswer({ query: debouncedText, rows });
         setActiveIndex(-1);
       } catch (err) {
-        // Suggestions are a convenience: when they fail the visitor can still press Search.
         if (!axios.isCancel(err)) {
           setAnswer({ query: debouncedText, rows: [] });
         }
@@ -70,13 +80,10 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
     return () => controller.abort();
   }, [debouncedText, filtersWithoutText]);
 
-  // Keep showing the last answer while the visitor keeps typing (or deletes) the same word, but never show
-  // the answer for a different word (for example after clearing the box and typing something new).
   const normalizedText = trimmedText.toLowerCase();
   const normalizedQuery = answer.query.toLowerCase();
   const answerIsRelated = normalizedText.startsWith(normalizedQuery) || normalizedQuery.startsWith(normalizedText);
   const suggestions = answerIsRelated ? answer.rows : [];
-
   const showList = open && trimmedText.length >= MIN_CHARACTERS && suggestions.length > 0;
 
   const handleSubmit = (event: FormEvent) => {
@@ -102,18 +109,17 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
       event.preventDefault();
       setActiveIndex((current) => (current <= 0 ? suggestions.length - 1 : current - 1));
     } else if (event.key === 'Enter' && activeIndex >= 0) {
-      // A highlighted suggestion was chosen with the keyboard: go straight to that restaurant.
       event.preventDefault();
       onPickSuggestion(suggestions[activeIndex].id);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} role="search" className="relative" aria-label={t('search.form')}>
-      <label htmlFor="restaurant-search" className="sr-only">
-        {t('search.label')}
-      </label>
-      <div className="flex items-stretch overflow-hidden rounded-2xl border border-soft bg-white shadow-[0_8px_24px_rgba(23,75,58,0.06)] focus-within:border-forest focus-within:ring-2 focus-within:ring-forest/25">
+    <form onSubmit={handleSubmit} role="search" className="v2-composer" aria-label={t('search.form')}>
+      <div className="v2-composer-name">
+        <label htmlFor="restaurant-search" className="sr-only">
+          {t('search.label')}
+        </label>
         <input
           id="restaurant-search"
           type="search"
@@ -121,8 +127,7 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
           maxLength={100}
           autoComplete="off"
           placeholder={t('search.placeholder')}
-          dir="auto"
-          className="min-h-12 min-w-0 flex-1 bg-transparent px-4 text-ink outline-none placeholder:text-muted"
+          className="v2-composer-input"
           role="combobox"
           aria-expanded={showList}
           aria-controls={LIST_ID}
@@ -136,53 +141,51 @@ function SearchBar({ text, onTextChange, onSearch, onPickSuggestion, filters, he
           onBlur={() => setOpen(false)}
           onKeyDown={handleKeyDown}
         />
-        <button
-          type="submit"
-          className="m-1 inline-flex min-h-11 shrink-0 items-center rounded-xl bg-forest px-4 text-sm font-medium text-white hover:bg-forest-deep"
-        >
-          {t('search.button')}
-        </button>
-      </div>
+        {showList && (
+          <ul id={LIST_ID} role="listbox" className="v2-suggest">
+            {suggestions.map((suggestion, index) => {
+              const names = restaurantDisplayNames(suggestion);
 
-      {showList && (
-        <ul
-          id={LIST_ID}
-          role="listbox"
-          className="absolute inset-x-0 z-20 mt-2 max-h-96 overflow-y-auto rounded-2xl border border-soft bg-white py-1 shadow-[0_8px_24px_rgba(23,75,58,0.12)]"
-        >
-          {suggestions.map((suggestion, index) => {
-            const names = restaurantDisplayNames(suggestion);
-
-            return (
-              <li
-                key={suggestion.id}
-                id={`suggestion-${index}`}
-                role="option"
-                aria-selected={index === activeIndex}
-                // mousedown (not click) so the choice is registered before the input loses focus and closes the list.
-                onMouseDown={(event) => {
-                  event.preventDefault();
-                  onPickSuggestion(suggestion.id);
-                }}
-                className={`min-h-11 cursor-pointer px-4 py-2.5 ${index === activeIndex ? 'bg-mist' : 'hover:bg-canvas'}`}
-              >
-                <p className="break-words font-medium text-ink" dir="auto">
-                  {names.primary}
-                </p>
-                {names.secondary.length > 0 && (
-                  <p className="break-words text-sm text-muted" dir="auto">
-                    {names.secondary.join(' · ')}
+              return (
+                <li
+                  key={suggestion.id}
+                  id={`suggestion-${index}`}
+                  role="option"
+                  aria-selected={index === activeIndex}
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                    onPickSuggestion(suggestion.id);
+                  }}
+                  className={`min-h-12 cursor-pointer px-3.5 py-2 text-start ${index === activeIndex ? 'bg-mist' : 'hover:bg-canvas'}`}
+                >
+                  <p className="break-words text-[15px] font-semibold text-ink">
+                    <bdi>{names.primary}</bdi>
                   </p>
-                )}
-                <p className="break-words text-sm text-muted" dir="auto">
-                  {suggestion.city || suggestion.address}
-                </p>
-                <p className="text-sm text-ink">{describeKashrutShort(suggestion.kashrut, hechsherOptions)}</p>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+                  {names.secondary.length > 0 && (
+                    <p className="break-words text-sm text-muted">
+                      {names.secondary.map((name, nameIndex) => (
+                        <span key={`${name}-${nameIndex}`}>
+                          {nameIndex > 0 && <span aria-hidden="true"> · </span>}
+                          <bdi>{name}</bdi>
+                        </span>
+                      ))}
+                    </p>
+                  )}
+                  <p className="break-words text-sm text-muted">
+                    <bdi>{suggestion.city || suggestion.address}</bdi>
+                  </p>
+                  <p className="text-sm text-ink">{describeKashrutShort(suggestion.kashrut, hechsherOptions)}</p>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+      {children}
+      <button type="submit" className="v2-composer-submit">
+        <SearchIcon />
+        {t('search.button')}
+      </button>
     </form>
   );
 }
