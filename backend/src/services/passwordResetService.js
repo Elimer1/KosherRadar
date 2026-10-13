@@ -25,7 +25,8 @@ export const hashResetToken = (token) => crypto.createHash('sha256').update(toke
 
 export const buildResetLink = (token) => {
   const baseUrl = env.clientUrl.replace(/\/+$/, '');
-  return `${baseUrl}/reset-password?token=${token}`;
+  // Fragments are never sent to the frontend host or included in HTTP access logs.
+  return `${baseUrl}/reset-password#token=${token}`;
 };
 
 // Always resolves with nothing. The caller shows the same message in every case.

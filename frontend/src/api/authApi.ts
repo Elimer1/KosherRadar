@@ -23,12 +23,12 @@ export const getMyProfile = async () => {
 
 // NEW (Milestone 3): password reset. The server answers the same way for every email address.
 // חדש (אבן דרך 3): איפוס סיסמה. השרת עונה אותו דבר לכל כתובת מייל.
-export const requestPasswordReset = async (email: string) => {
-  const response = await api.post<{ message: string }>('/auth/forgot-password', { email });
+export const requestPasswordReset = async (email: string, language?: 'en' | 'he') => {
+  const response = await api.post<{ message: string }>('/auth/forgot-password', { email, ...(language ? { language } : {}) });
   return response.data.message;
 };
 
-export const resetPassword = async (token: string, password: string) => {
-  const response = await api.post<{ message: string }>('/auth/reset-password', { token, password });
+export const resetPassword = async (token: string, password: string, language?: 'en' | 'he') => {
+  const response = await api.post<{ message: string }>('/auth/reset-password', { token, password, ...(language ? { language } : {}) });
   return response.data.message;
 };

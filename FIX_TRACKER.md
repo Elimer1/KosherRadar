@@ -10,9 +10,9 @@ Counts below are derived from the issue statuses in this file.
 | ALREADY WORKING | 8 |
 | BLOCKED | 5 |
 | DEFERRED | 1 |
-| VERIFIED | 15 |
+| VERIFIED | 16 |
 | Other | 0 |
-| **Total** | **42** |
+| **Total** | **43** |
 
 ## Priority bands (12 October 2026)
 
@@ -50,6 +50,7 @@ QA-001 and QA-002 were found on 12 October 2026 while checking `feature/qa-testi
 | --- | --- | --- | --- | --- |
 | EP-001 | Email/password recovery (explicit request) | High | VERIFIED | Delivery/templates |
 | EP-002 | Email/password recovery (explicit request) | High | VERIFIED | Recovery and notification safety |
+| EP-003 | Email/password recovery (explicit request) | High | VERIFIED | Localized recovery UX and token privacy |
 | M1-001 | 1 Restaurant and certificate submission | Critical | VERIFIED | Confirmed bug |
 | M1-002 | 1 Restaurant and certificate submission | Critical | VERIFIED | UX improvement |
 | M1-003 | 1 Restaurant and certificate submission | Critical | VERIFIED | Reliability risk |
@@ -657,20 +658,20 @@ Live services were not called. Mocked unit tests are not evidence that these int
 - **Verification:** Not run live.
 - **Blockers:** Needs approved Cloudinary test credentials and permission to upload and delete a test image. Question: which Cloudinary cloud may be used?
 
-### M9-004 — Resend
+### M9-004 — Live email delivery (Gmail; historically Resend)
 
 - **Milestone:** 9
 - **Priority:** High before launch
 - **Status:** BLOCKED
-- **Description:** Rejection and reset mail go through the Resend REST API. Failure does not roll back a moderation decision. Delivery was not attempted. Reset links cannot be completed without the email or a database read of the hash, and the raw token is not stored.
-- **Evidence:** `emailService.js` returns `SENT`, `FAILED`, or `NOT_CONFIGURED` and does not throw. `emailService.test.js` mocks `fetch`. `backend/.env.example` documents the sandbox limit: without a verified domain, mail goes only to the account owner.
-- **Root cause:** Live send was out of scope. The sandbox rule is documented.
-- **Relevant files/functions:** `backend/src/services/emailService.js`; `backend/src/services/passwordResetService.js`; `backend/src/services/moderationNotificationService.js`.
+- **Description:** Live email delivery remains unverified. EP-001 replaced historical Resend REST with Gmail/Nodemailer at the user's explicit request. Delivery failure does not undo saved decisions; SENT means SMTP acceptance only. A stored reset hash cannot reconstruct the raw token.
+- **Evidence:** Original 12 October audit: emailService.js used Resend, tests mocked fetch, and .env.example documented Resend sandbox restrictions. Current 13 October evidence: emailTransport.js uses Gmail and EMAIL_USER/EMAIL_APP_PASSWORD, tests mock Nodemailer; four bilingual templates and safe diagnostics are covered by EP-001 through EP-003. No live SMTP/inbox test occurred.
+- **Root cause:** No approved isolated live-mail test resources or recipient used. Resend configuration is no longer needed.
+- **Relevant files/functions:** backend/src/services/emailService.js, emailTransport.js, emailTemplates.js, passwordResetService.js, moderationNotificationService.js; EMAIL_SETUP.md.
 - **Planned solution:** Send one reset and one rejection to an approved recipient on an isolated stack. Confirm the reset link works once and fails the second time. Do not email real users.
-- **Files changed:** none
-- **Tests added or modified:** none
-- **Verification:** Not run live. Mocked tests prove the client builds a request, not that Resend delivers it.
-- **Blockers:** Needs approved Resend key, from-address, and a recipient mailbox. Question: which address may receive the test messages?
+- **Files changed:** Provider/template/security changes tracked under EP-001 through EP-003; this entry records the current live-verification boundary and preserves original audit evidence.
+- **Tests added or modified:** See EP entries for mocked verification.
+- **Verification:** Not run live. Backend suite: 42 files / 534 passing tests, exit 0; mocks do not prove Gmail delivery. Browser fixtures do not prove SMTP/inbox behavior.
+- **Blockers:** Separately approved isolated Gmail test credentials/recipient and local test stack are needed for a live send. Do not request or use production credentials. Resend/DNS setup is not required.
 
 ---
 
@@ -738,6 +739,18 @@ Priority: High before launch
 ---
 
 ## Audit session record
+
+### EP-003 — Localized V2 recovery and token privacy
+
+- **Milestone:** Email/password recovery, 13 October 2026.
+- **Priority/status:** High / VERIFIED.
+- **Evidence/root cause:** Forgot page displayed English API success text in Hebrew mode; reset page retained query token in URL, used generic English server failures and did not clear the existing local login. Recovery panels did not match the accepted login panel. No component tests covered these forms.
+- **Relevant files/solution:** Recovery pages, auth API/error helpers, locale/reset-token utilities and index.html; fragment links prevent new tokens reaching frontend HTTP logs; same-origin validated legacy query links retained. Remove token from URL into component memory, no referrers, localized success/errors, explicit expired-link/retry paths, busy feedback, password validation/show-hide, clear current login after successful reset, accepted V2 form styling. No redesign of other pages.
+- **Files changed:** Those frontend files; PasswordRecovery.test.tsx/resetToken.test.ts; backend reset-link builder/template validation and corresponding tests; README.md, EMAIL_SETUP.md, scripts/reviewPasswordRecovery.mjs and tracking docs.
+- **Tests:** 11 component scenarios (parameterized to 11 executions) plus 3 reset-token tests cover EN/HE, pending requests, errors, retries, successful/failed reset, mismatch/byte bound, URL cleanup, current-login clear, expired/malformed links and language switching. Template tests accept new fragment/legacy links. Existing security tests preserved.
+- **Verification:** `cd frontend; npm test -- src/pages/PasswordRecovery.test.tsx src/utils/resetToken.test.ts` exit 0 / 2 files / 14 tests. Full frontend `npm test` exit 0 / 27 files / 170 tests. `npm run lint`, `npm run typecheck`, `npm run build` all exit 0; production JS 769.34 kB, existing >500 kB warning. Full backend `npm test` exit 0 / 42 files / 534 tests. Backend has no build/lint/typecheck scripts. `git -c core.whitespace=cr-at-eol diff --check` exit 0.
+- **Browser:** `node scripts/reviewPasswordRecovery.mjs` exit 0, production build plus intercepted API fixtures, installed Chrome; English/Hebrew at 375/768/1024/1280, 88 renders across 8 journeys. Loading, neutral confirmation, repeat request, rate/offline feedback, show/hide, mismatch, invalid/expired links, fragment/legacy cleanup, reset success and navigation to login passed; zero app exceptions, horizontal overflow or outgoing referrer headers. Screenshots visually inspected. Local ignored evidence: design-screenshots/email-password/results.json and PNGs. First sandbox attempt timed out before Page.enable; expanded process permissions resolved it. Explicit viewport clipping corrected Chrome's full-page RTL screenshot offset; application unchanged.
+- **Limitations:** Live Gmail and real database behavior not tested. No real login with a newly saved password in browser; API responses are fixtures. Hebrew needs native review M8-004. Token is intentionally lost on refresh of cleaned URL; reopen email. Legacy query URLs can still enter host access logs on their initial request; newly generated fragments cannot. No analytics exist today; future scripts must exclude recovery tokens. EP-002 crash/queue/concurrency limitations remain. Native devices/email-client rendering not tested.
 
 ### EP-002 — Recovery privacy and saved-decision notifications
 

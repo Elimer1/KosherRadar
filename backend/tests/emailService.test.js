@@ -109,6 +109,8 @@ describe('branded bilingual email templates', () => {
     expect(email.text).toContain(resetLink);
     expect(email.text).toContain('60 minutes');
     expect(buildPasswordChangedEmail().text).toContain('previous sessions have been invalidated');
+    expect(buildPasswordResetEmail({ resetLink: `http://localhost:5173/reset-password#token=${TOKEN}`, validMinutes: 60 }).text)
+      .toContain(`/reset-password#token=${TOKEN}`);
   });
 
   it.each(['https://evil.example/reset-password?token=' + TOKEN, 'javascript:alert(1)',

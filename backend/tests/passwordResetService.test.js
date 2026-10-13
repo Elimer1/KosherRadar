@@ -71,7 +71,7 @@ describe('requestPasswordResetService', () => {
 
     const stored = createResetTokenRepo.mock.calls[0][0];
     const email = sendPasswordResetEmailService.mock.calls[0][0];
-    const rawToken = new URL(email.resetLink).searchParams.get('token');
+    const rawToken = new URLSearchParams(new URL(email.resetLink).hash.slice(1)).get('token');
 
     expect(rawToken).toMatch(/^[a-f0-9]{64}$/);
     expect(stored.tokenHash).toBe(hashResetToken(rawToken));
@@ -80,7 +80,7 @@ describe('requestPasswordResetService', () => {
     expect(stored.expiresAt.getTime()).toBeGreaterThanOrEqual(before + RESET_TOKEN_VALID_MINUTES * 60 * 1000 - 1000);
     expect(stored.expiresAt.getTime()).toBeLessThanOrEqual(Date.now() + RESET_TOKEN_VALID_MINUTES * 60 * 1000);
     expect(email.to).toBe('a@b.com');
-    expect(email.resetLink.startsWith('http://localhost:5173/reset-password?token=')).toBe(true);
+    expect(email.resetLink.startsWith('http://localhost:5173/reset-password#token=')).toBe(true);
   });
 
   it('cancels older unused links before creating the new one', async () => {
@@ -120,7 +120,7 @@ describe('requestPasswordResetService', () => {
 
 describe('buildResetLink', () => {
   it('joins the client URL and the token without a double slash', () => {
-    expect(buildResetLink(TOKEN)).toBe(`http://localhost:5173/reset-password?token=${TOKEN}`);
+    expect(buildResetLink(TOKEN)).toBe(`http://localhost:5173/reset-password#token=${TOKEN}`);
   });
 });
 

@@ -2,9 +2,23 @@ import axios from 'axios';
 import i18n from '../i18n';
 
 interface ApiErrorBody {
+  code?: string;
   message?: string;
   errors?: { field: string; message: string }[];
 }
+
+export const isInvalidResetLinkError = (error: unknown) =>
+  axios.isAxiosError<ApiErrorBody>(error) && error.response?.data?.code === 'INVALID_RESET_TOKEN';
+
+export const getRecoveryErrorMessage = (error: unknown, fallback: string) => {
+  if (isInvalidResetLinkError(error)) return i18n.t('auth.resetExpiredBody');
+  if (axios.isAxiosError(error)) {
+    if (!error.response) return i18n.t('common.offline');
+    if (error.response.status === 429) return i18n.t('auth.rateLimited');
+    if (error.response.status === 400) return i18n.t('auth.recoveryValidation');
+  }
+  return fallback;
+};
 
 // Turns any error from an API call into a short message that is safe to show the user.
 export const getErrorMessage = (error: unknown, fallback?: string) => {

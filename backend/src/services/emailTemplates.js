@@ -77,8 +77,9 @@ export const buildPasswordResetEmail = ({ resetLink, validMinutes, language }) =
   const c = copy[emailLanguage(language)];
   const link = trustedEmailLink(resetLink, '/reset-password');
   const url = new URL(link);
-  if (url.hash || [...url.searchParams.keys()].some((key) => key !== 'token')
-    || url.searchParams.getAll('token').length !== 1 || !/^[a-f0-9]{64}$/i.test(url.searchParams.get('token') || '')) {
+  const params = url.hash ? new URLSearchParams(url.hash.slice(1)) : url.searchParams;
+  if ((url.hash && url.search) || [...params.keys()].some((key) => key !== 'token')
+    || params.getAll('token').length !== 1 || !/^[a-f0-9]{64}$/i.test(params.get('token') || '')) {
     throw new Error('Invalid password reset email link');
   }
   return renderEmail({ language, subject: c.reset, title: c.resetTitle,
