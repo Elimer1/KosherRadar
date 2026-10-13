@@ -53,25 +53,32 @@ function RestaurantCard({ restaurant, hechsherOptions, returnState, onOpenRestau
     <li className="kr-card border-b border-soft px-4 py-5 transition-colors last:border-b-0 hover:bg-canvas/60 sm:px-6">
       <div className="grid items-start gap-4 md:grid-cols-[minmax(0,1fr)_17rem]">
         <div className="min-w-0">
-          <h3 className="break-words text-xl font-semibold leading-snug tracking-tight text-ink sm:text-2xl">
-            <Link
-              to={`/restaurants/${restaurant.id}`}
-              state={returnState}
-              onClick={handleOpen}
-              dir="auto"
-              className="rounded-sm text-ink underline-offset-2 hover:text-forest hover:underline"
-            >
-              {names.primary}
-            </Link>
-          </h3>
-          {names.secondary.length > 0 && (
-            <p className="mt-0.5 break-words text-sm text-muted" dir="auto">
-              {names.secondary.join(' · ')}
-            </p>
-          )}
+          <div className="flex max-w-full flex-col items-start">
+            <h3 className="max-w-full break-words text-xl font-semibold leading-snug tracking-tight text-ink sm:text-2xl">
+              <Link
+                to={`/restaurants/${restaurant.id}`}
+                state={returnState}
+                onClick={handleOpen}
+                dir="auto"
+                className="rounded-sm text-ink underline-offset-2 hover:text-forest hover:underline"
+              >
+                <bdi>{names.primary}</bdi>
+              </Link>
+            </h3>
+            {names.secondary.length > 0 && (
+              <p className="mt-0.5 max-w-full break-words text-sm text-muted">
+                {names.secondary.map((name, index) => (
+                  <span key={`${name}-${index}`}>
+                    {index > 0 && <span aria-hidden="true"> · </span>}
+                    <bdi>{name}</bdi>
+                  </span>
+                ))}
+              </p>
+            )}
+          </div>
           {place !== '' && (
-            <p className="mt-1 break-words text-sm leading-relaxed text-muted" dir="auto">
-              {place}
+            <p className="mt-1 break-words text-sm leading-relaxed text-muted">
+              <bdi>{place}</bdi>
               {distanceText && <span className="ms-2 font-medium text-ink">{distanceText}</span>}
             </p>
           )}

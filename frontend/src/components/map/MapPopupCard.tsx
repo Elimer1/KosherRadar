@@ -45,17 +45,24 @@ function MapPopupCard({ restaurant, hechsherOptions, returnState, onOpenRestaura
 
   return (
     <div className="kr-map-popup-card">
-      <p className="kr-map-popup-title" dir="auto">
-        {names.primary}
-      </p>
-      {names.secondary.length > 0 && (
-        <p className="kr-map-popup-alt" dir="auto">
-          {names.secondary.join(' · ')}
+      <div className="kr-map-popup-names">
+        <p className="kr-map-popup-title" dir="auto">
+          <bdi>{names.primary}</bdi>
         </p>
-      )}
+        {names.secondary.length > 0 && (
+          <p className="kr-map-popup-alt">
+            {names.secondary.map((name, index) => (
+              <span key={`${name}-${index}`}>
+                {index > 0 && <span aria-hidden="true"> · </span>}
+                <bdi>{name}</bdi>
+              </span>
+            ))}
+          </p>
+        )}
+      </div>
       {place !== '' && (
-        <p className="kr-map-popup-place" dir="auto">
-          {place}
+        <p className="kr-map-popup-place">
+          <bdi>{place}</bdi>
         </p>
       )}
       {(restaurant.foodType || distance !== '') && (

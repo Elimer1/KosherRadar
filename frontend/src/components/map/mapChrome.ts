@@ -81,11 +81,11 @@ export const clusterMetrics = (count: number) => {
 };
 
 const PIN_BODY =
-  '<path fill="#174b3a" stroke="#fffdf8" stroke-width="2" d="M18 3.2C10.4 3.2 4.6 9 4.6 16.6 4.6 26.4 18 45 18 45s13.4-18.6 13.4-28.4C31.4 9 25.6 3.2 18 3.2z"/><circle cx="18" cy="16.2" r="5.2" fill="#f4efe4"/><circle cx="18" cy="16.2" r="2.1" fill="#174b3a"/>';
+  '<path fill="var(--color-forest)" stroke="#fff" stroke-width="2" d="M18 3.2C10.4 3.2 4.6 9 4.6 16.6 4.6 26.4 18 45 18 45s13.4-18.6 13.4-28.4C31.4 9 25.6 3.2 18 3.2z"/><circle cx="18" cy="16.2" r="5.2" fill="var(--color-canvas)"/><circle cx="18" cy="16.2" r="2.1" fill="var(--color-forest)"/>';
 
 export const markerPinHtml = (selected = false) =>
   `<svg class="kr-map-pin" viewBox="0 0 36 48" width="36" height="48" aria-hidden="true" focusable="false">${
-    selected ? '<circle cx="18" cy="16.2" r="11" fill="none" stroke="#f4efe4" stroke-width="3"/>' : ''
+    selected ? '<circle cx="18" cy="16.2" r="11" fill="none" stroke="var(--color-canvas)" stroke-width="3"/>' : ''
   }${PIN_BODY}</svg>`;
 
 // The count is a number from the cluster, never restaurant text.

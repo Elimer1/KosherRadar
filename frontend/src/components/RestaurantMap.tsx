@@ -228,7 +228,7 @@ function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant
             <Circle
               center={[filters.location.lat, filters.location.lng]}
               radius={filters.radiusKm * 1000}
-              pathOptions={{ color: '#2c6b56', weight: 1.5, fillColor: '#174b3a', fillOpacity: 0.06 }}
+              pathOptions={{ color: '#2a7a5a', weight: 1.5, fillColor: '#1a5c43', fillOpacity: 0.06 }}
             />
           )}
           <MarkerClusterGroup

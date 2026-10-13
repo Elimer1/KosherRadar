@@ -24,12 +24,12 @@ function DetailsIdentity({ restaurant, names }: DetailsIdentityProps) {
   return (
     <div className="kr-details-identity">
       <h1 className="kr-details-title kr-details-break" dir="auto">
-        {names.primary}
+        <bdi>{names.primary}</bdi>
       </h1>
       {names.secondary.length > 0 && (
-        <p className="kr-details-secondary kr-details-break" dir="auto">
+        <p className="kr-details-secondary kr-details-break">
           {names.secondary.map((name, index) => (
-            <span key={name}>
+            <span key={`${name}-${index}`}>
               {index > 0 && <span aria-hidden="true"> · </span>}
               <bdi>{name}</bdi>
             </span>
@@ -37,8 +37,8 @@ function DetailsIdentity({ restaurant, names }: DetailsIdentityProps) {
         </p>
       )}
       {place !== '' && (
-        <p className="kr-details-place kr-details-break" dir="auto">
-          {place}
+        <p className="kr-details-place kr-details-break">
+          <bdi>{place}</bdi>
         </p>
       )}
       {hasMeta && (
@@ -52,8 +52,8 @@ function DetailsIdentity({ restaurant, names }: DetailsIdentityProps) {
         </ul>
       )}
       {keywords.length > 0 && (
-        <p className="kr-details-serves kr-details-break" dir="auto">
-          {t('details.serves', { food: keywords.join(', ') })}
+        <p className="kr-details-serves kr-details-break">
+          <bdi>{t('details.serves', { food: keywords.join(', ') })}</bdi>
         </p>
       )}
     </div>

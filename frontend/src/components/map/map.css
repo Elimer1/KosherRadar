@@ -1,17 +1,17 @@
 /* Public map chrome. Scoped under .kr-map-shell so it does not restyle other Leaflet maps.
-   Colors match the current forest and warm-neutral palette until shared tokens exist. */
+   Colors come from the shared tokens in index.css. */
 
 .kr-map-frame {
   position: relative;
   height: 70vh;
   min-height: 20rem;
   overflow: hidden;
-  border: 1px solid #d5e3dc;
-  border-radius: 1.25rem;
-  background: #e8efe9;
+  border: 1px solid var(--color-soft);
+  border-radius: 1.5rem;
+  background: var(--color-mist);
   box-shadow:
-    0 1px 2px rgba(36, 52, 47, 0.04),
-    0 10px 28px rgba(23, 75, 58, 0.06);
+    0 1px 2px color-mix(in srgb, var(--color-ink) 4%, transparent),
+    0 10px 28px color-mix(in srgb, var(--color-forest) 6%, transparent);
 }
 
 @media (min-width: 640px) {
@@ -37,7 +37,7 @@
 .kr-map-shell .leaflet-container {
   width: 100%;
   height: 100%;
-  background: #e4ece7;
+  background: var(--color-mist);
   font-family: inherit;
 }
 
@@ -61,11 +61,11 @@ html[dir='rtl'] .kr-map-shell .leaflet-popup-content {
   display: block;
   width: 36px;
   height: 48px;
-  filter: drop-shadow(0 3px 4px rgba(16, 53, 40, 0.35));
+  filter: drop-shadow(0 3px 4px color-mix(in srgb, var(--color-forest-deep) 35%, transparent));
 }
 
 .kr-map-pin-selected .kr-map-pin {
-  filter: drop-shadow(0 0 0 #f4efe4) drop-shadow(0 6px 10px rgba(16, 53, 40, 0.45));
+  filter: drop-shadow(0 0 0 var(--color-canvas)) drop-shadow(0 6px 10px color-mix(in srgb, var(--color-forest-deep) 45%, transparent));
 }
 
 .kr-map-cluster {
@@ -74,21 +74,21 @@ html[dir='rtl'] .kr-map-shell .leaflet-popup-content {
   justify-content: center;
   width: 100%;
   height: 100%;
-  border: 3px solid #fffdf8;
+  border: 3px solid #fff;
   border-radius: 18px;
-  background: #174b3a;
-  color: #fffdf8;
+  background: var(--color-forest);
+  color: #fff;
   font-size: 1rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.03em;
   box-shadow:
-    0 0 0 6px rgba(23, 75, 58, 0.16),
-    0 10px 22px rgba(16, 53, 40, 0.28);
+    0 0 0 6px color-mix(in srgb, var(--color-forest) 16%, transparent),
+    0 10px 22px color-mix(in srgb, var(--color-forest-deep) 28%, transparent);
 }
 
 .kr-map-shell .leaflet-marker-icon:focus-visible {
-  outline: 2px solid #174b3a;
+  outline: 2px solid var(--color-forest);
   outline-offset: 3px;
   border-radius: 999px;
 }
@@ -111,21 +111,21 @@ html[dir='rtl'] .kr-map-shell .leaflet-popup-content {
   height: 3rem;
   margin-bottom: 0.45rem;
   line-height: 3rem;
-  border: 1px solid #d7e4dc;
+  border: 1px solid var(--color-soft);
   border-radius: 0.95rem;
-  background: #fffdf8;
-  color: #174b3a;
+  background: #fff;
+  color: var(--color-forest);
   font-size: 1.35rem;
-  box-shadow: 0 8px 20px rgba(16, 53, 40, 0.16);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--color-forest-deep) 16%, transparent);
 }
 
 .kr-map-shell .leaflet-control-zoom a:hover {
-  background: #eef4f1;
-  color: #103528;
+  background: var(--color-mist);
+  color: var(--color-forest-deep);
 }
 
 .kr-map-shell .leaflet-control-zoom a:focus-visible {
-  outline: 2px solid #174b3a;
+  outline: 2px solid var(--color-forest);
   outline-offset: -3px;
 }
 
@@ -133,15 +133,15 @@ html[dir='rtl'] .kr-map-shell .leaflet-popup-content {
   max-width: calc(100% - 0.5rem);
   padding: 0.15rem 0.4rem;
   border-radius: 0.45rem 0 0 0;
-  background: rgba(255, 252, 248, 0.92);
-  color: #4e5e58;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--color-muted);
   font-size: 11px;
   line-height: 1.35;
   white-space: normal;
 }
 
 .kr-map-shell .leaflet-control-attribution a {
-  color: #174b3a;
+  color: var(--color-forest);
 }
 
 .kr-map-loading {
@@ -157,9 +157,9 @@ html[dir='rtl'] .kr-map-shell .leaflet-popup-content {
   min-height: 2.75rem;
   margin: 0;
   padding: 0.35rem 4.5rem;
-  border-bottom: 1px solid #d7e4dc;
-  background: rgba(255, 253, 248, 0.94);
-  color: #174b3a;
+  border-bottom: 1px solid var(--color-soft);
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--color-forest);
   font-size: 0.92rem;
   font-weight: 600;
   line-height: 1.2;
@@ -171,8 +171,8 @@ html[dir='rtl'] .kr-map-shell .leaflet-popup-content {
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
-  border: 2px solid #dceae4;
-  border-top-color: #174b3a;
+  border: 2px solid var(--color-soft);
+  border-top-color: var(--color-forest);
   border-radius: 999px;
   animation: kr-map-spin 0.7s linear infinite;
 }
@@ -191,11 +191,11 @@ html[dir='rtl'] .kr-map-shell .leaflet-popup-content {
 
 .kr-map-shell .leaflet-popup-content-wrapper {
   overflow: hidden;
-  border: 1px solid #e4ebe4;
-  border-radius: 1rem;
-  background: #fffcf8;
-  color: #24342f;
-  box-shadow: 0 10px 28px rgba(36, 52, 47, 0.16);
+  border: 1px solid var(--color-soft);
+  border-radius: 1.25rem;
+  background: #fff;
+  color: var(--color-ink);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--color-ink) 16%, transparent);
 }
 
 .kr-map-shell .leaflet-popup-content {
@@ -204,7 +204,7 @@ html[dir='rtl'] .kr-map-shell .leaflet-popup-content {
 }
 
 .kr-map-shell .leaflet-popup-tip {
-  background: #fffcf8;
+  background: #fff;
   box-shadow: none;
 }
 
@@ -212,19 +212,19 @@ html[dir='rtl'] .kr-map-shell .leaflet-popup-content {
   width: 2.75rem !important;
   height: 2.75rem !important;
   padding: 0 !important;
-  color: #4e5e58 !important;
+  color: var(--color-muted) !important;
   font-size: 1.25rem !important;
   line-height: 2.75rem !important;
   text-align: center !important;
 }
 
 .kr-map-shell .leaflet-popup-close-button:hover {
-  background: #eef4f1;
-  color: #174b3a !important;
+  background: var(--color-mist);
+  color: var(--color-forest) !important;
 }
 
 .kr-map-shell .leaflet-popup-close-button:focus-visible {
-  outline: 2px solid #174b3a !important;
+  outline: 2px solid var(--color-forest) !important;
   outline-offset: -2px;
 }
 
@@ -234,7 +234,7 @@ html[dir='rtl'] .kr-map-shell .leaflet-popup-content {
   flex-direction: column;
   gap: 0.35rem;
   min-width: 0;
-  color: #24342f;
+  color: var(--color-ink);
   font-size: 0.875rem;
   line-height: 1.4;
 }
@@ -251,10 +251,10 @@ html[dir='rtl'] .kr-map-shell .leaflet-popup-content {
   gap: 0.25rem;
   overflow: auto;
   padding: 0.85rem 0.85rem 0.8rem;
-  border: 1px solid rgba(23, 75, 58, 0.14);
-  border-radius: 1.15rem;
-  background: #fffdf8;
-  box-shadow: 0 18px 40px rgba(16, 53, 40, 0.22);
+  border: 1px solid color-mix(in srgb, var(--color-forest) 14%, transparent);
+  border-radius: 1.5rem;
+  background: #fff;
+  box-shadow: 0 18px 40px color-mix(in srgb, var(--color-forest-deep) 22%, transparent);
 }
 
 .kr-map-dock:focus {
@@ -262,7 +262,7 @@ html[dir='rtl'] .kr-map-shell .leaflet-popup-content {
 }
 
 .kr-map-dock:focus-visible {
-  outline: 2px solid #174b3a;
+  outline: 2px solid var(--color-forest);
   outline-offset: 3px;
 }
 
@@ -277,19 +277,19 @@ html[dir='rtl'] .kr-map-shell .leaflet-popup-content {
   border: 0;
   border-radius: 999px;
   background: transparent;
-  color: #4e5e58;
+  color: var(--color-muted);
   font-size: 1.5rem;
   line-height: 1;
   cursor: pointer;
 }
 
 .kr-map-dock-close:hover {
-  background: #eef4f1;
-  color: #174b3a;
+  background: var(--color-mist);
+  color: var(--color-forest);
 }
 
 .kr-map-dock-close:focus-visible {
-  outline: 2px solid #174b3a;
+  outline: 2px solid var(--color-forest);
   outline-offset: 2px;
 }
 
@@ -302,9 +302,18 @@ html[dir='rtl'] .kr-map-shell .leaflet-popup-content {
   }
 }
 
+.kr-map-popup-names {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 100%;
+  min-width: 0;
+}
+
 .kr-map-popup-title {
   margin: 0;
-  color: #17352c;
+  max-width: 100%;
+  color: var(--color-ink);
   font-size: 1.35rem;
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -316,7 +325,8 @@ html[dir='rtl'] .kr-map-shell .leaflet-popup-content {
 .kr-map-popup-place,
 .kr-map-popup-meta {
   margin: 0;
-  color: #4e5e58;
+  max-width: 100%;
+  color: var(--color-muted);
   overflow-wrap: anywhere;
 }
 
@@ -339,10 +349,10 @@ html[dir='rtl'] .kr-map-shell .leaflet-popup-content {
   min-width: 2.75rem;
   min-height: 2.75rem;
   padding: 0.4rem 0.8rem;
-  border: 1px solid #174b3a;
-  border-radius: 0.7rem;
-  background: #ffffff;
-  color: #174b3a;
+  border: 1px solid var(--color-soft);
+  border-radius: 0.75rem;
+  background: #fff;
+  color: var(--color-ink);
   font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.2;
@@ -350,23 +360,23 @@ html[dir='rtl'] .kr-map-shell .leaflet-popup-content {
 }
 
 .kr-map-shell .kr-map-action-primary {
-  border-color: #174b3a;
-  background: #174b3a;
+  border-color: var(--color-forest);
+  background: var(--color-forest);
   color: #ffffff;
 }
 
 .kr-map-shell .kr-map-action:hover {
-  background: #eef4f1;
-  color: #103528;
+  background: var(--color-mist);
+  color: var(--color-ink);
 }
 
 .kr-map-shell .kr-map-action-primary:hover {
-  background: #103528;
+  background: var(--color-forest-deep);
   color: #ffffff;
 }
 
 .kr-map-shell .kr-map-action:focus-visible {
-  outline: 2px solid #174b3a;
+  outline: 2px solid var(--color-forest);
   outline-offset: 2px;
 }
 
@@ -386,19 +396,19 @@ html[dir='rtl'] .kr-map-shell .leaflet-popup-content {
 .kr-map-notice {
   margin: 0;
   padding: 0.8rem 0.95rem;
-  border: 1px solid #d5e3dc;
-  border-inline-start: 4px solid #174b3a;
+  border: 1px solid var(--color-soft);
+  border-inline-start: 4px solid var(--color-forest);
   border-radius: 0.35rem 0.9rem 0.9rem 0.35rem;
-  background: #fffdf8;
+  background: #fff;
   font-size: 0.92rem;
   line-height: 1.45;
 }
 
 .kr-map-notice-warn {
   border-color: #ead7b2;
-  border-inline-start-color: #8a6230;
+  border-inline-start-color: var(--color-amber-ink);
   background: #fbf6ec;
-  color: #6b4a1f;
+  color: var(--color-amber-ink);
 }
 
 .kr-map-notice-error {
@@ -412,13 +422,13 @@ html[dir='rtl'] .kr-map-shell .leaflet-popup-content {
   padding: 1.25rem 1rem;
   border-style: dashed;
   background: #ffffff;
-  color: #24342f;
+  color: var(--color-ink);
   text-align: center;
 }
 
 .kr-map-note {
   margin: 0;
-  color: #4e5e58;
+  color: var(--color-muted);
   font-size: 0.8125rem;
   line-height: 1.45;
 }
