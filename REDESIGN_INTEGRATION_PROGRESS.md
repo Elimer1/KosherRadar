@@ -126,3 +126,18 @@ None for Wave 1 integration. Do not start Wave 2. Do not merge into `main`. Do n
 ## 13. Uncommitted changes
 
 None after the harmonization commit on this branch. The merge commits are already recorded.
+
+## V2 integration and release review — 13 October 2026
+
+Starting branch `redesign/wave-1-integration`, HEAD `0140d195474c44011dbfd285b4b47338dab73451`, clean worktree. Local source tips: discovery `baff0d684a351ede628e05609290eff97a5a534b` (implementation `a75b82b9de770169320d129efdaa2dbd96b1ed65` plus a documentation-only commit); map `17b4a6275324a9d79411469a4a9a810c9a5c3789`; details `d45317b4dfb162df6910f96f1b2e7a4ceea13d1f`. All expected commits are reachable from their respective source branches; none of the three branches is an ancestor of integration HEAD. All use `0140d19` as baseline; implementation paths do not overlap. Semantic review must cover shared tokens, KashrutBadge, map container widths, search return state, and RTL. Source worktrees are read-only: discovery/map clean; details retains an untracked `frontend/vite.details-preview.config.ts` that must remain untouched. No fetch, push, main merge, credentials, or real services authorized for this review.
+
+The previous Wave 1 visual target and completion notes above are historical. V2 requires a light header and identity sections, compact directory results, scoped map/details styling, and the preserved business rules. Existing installed Chrome and native DevTools automation can support actual combined-app browser verification without installing dependencies. Backend dependencies are absent here; investigate an existing local test runner before marking backend verification unavailable.
+
+## NEXT AGENT ONBOARDING
+
+- Current milestone: V2 integration and release review, explicitly requested by user.
+- Current issue: preflight complete; merge discovery, map, details sequentially with preserved histories.
+- Starting HEAD: `0140d19`; source tips and preserved untracked source file listed above.
+- Completed: read standing instructions/tracking/source handoffs; audited clean integration, local ancestry, separate paths, and installed browser.
+- Tests: none yet for V2 combined tree. Prior source/browser claims are historical evidence only.
+- Next: merge the three local branches, inspect combined implementation, run frontend scripts and available isolated backend tests, browser-check actual app using fixtures at 375/768/1280 plus another width in both languages, document screenshots and limitations, commit locally. Do not modify source worktrees or main; do not push.
