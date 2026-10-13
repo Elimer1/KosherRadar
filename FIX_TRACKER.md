@@ -816,11 +816,11 @@ Explicit request authorizes this assigned batch, including the listed historical
 ### A1-R2 ? Pending certificates after rejection
 - **Milestone:** Agent 1 admin authority and data integrity.
 - **Priority:** P1.
-- **Status:** NOT STARTED.
+- **Status:** VERIFIED.
 - **Evidence/root cause:** Restaurant rejection precedes best-effort certificate rejection.
 - **Relevant files/solution:** Investigate adminRestaurantService/repositories for atomic or retryable behavior.
-- **Files changed/tests/verification:** None yet.
-- **Blockers/limitations:** None identified yet.
+- **Files changed/tests/verification:** adminRestaurantService rejection transaction; unit failure expectation updated; isolated rejection/race regression. Baseline exit 1, 1 pass / 1 fail. npm test -- tests/adminRestaurantService.test.js: exit 0, 23 tests. node integration/runAgent1Isolated.mjs --run-isolated agent1Rejection.integration.mjs: exit 0, 2 real MongoDB failure/retry and concurrent approve/reject regressions. Diff check exit 0. No build/lint/typecheck scripts in backend; frontend/browser not rerun; email unconfigured, no real email sent.
+- **Blockers/limitations:** Replica-set/sharded MongoDB required; old inconsistent rejected records need separately authorized review/backfill. Notifications run only after commit; live delivery unverified.
 
 ### A1-R4 ? Unique-index enforcement
 - **Milestone:** Agent 1 admin authority and data integrity.

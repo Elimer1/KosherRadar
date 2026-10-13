@@ -186,27 +186,19 @@ export const approveRestaurantService = async ({ restaurantId }) => {
 };
 
 export const rejectRestaurantService = async ({ restaurantId, reason }) => {
-  const restaurant = await loadRestaurantOr404(restaurantId);
-
-  if (restaurant.status !== 'PENDING') {
-    throw appError('Only a restaurant that is waiting for review can be rejected. Delete it instead.', 409);
-  }
-
-  const rejected = await rejectPendingRestaurantRepo(restaurant._id, reason);
-
-  if (!rejected) {
-    throw appError('This restaurant was just handled by another admin. Please refresh.', 409);
-  }
-
-  // A certificate cannot be approved before its restaurant, so the ones waiting for this restaurant are
-  // closed as well. The submitter gets one email (about the restaurant). A failure here is only logged.
-  // תעודות שממתינות למסעדה שנדחתה נסגרות גם הן. המשתמש מקבל מייל אחד. כשל כאן רק נרשם ביומן.
-  try {
+  const rejected = await withTransaction(async () => {
+    const restaurant = await loadRestaurantOr404(restaurantId);
+    if (restaurant.status !== 'PENDING') {
+      throw appError('Only a restaurant that is waiting for review can be rejected. Delete it instead.', 409);
+    }
+    const rejected = await rejectPendingRestaurantRepo(restaurant._id, reason);
+    if (!rejected) {
+      throw appError('This restaurant was just handled by another admin. Please refresh.', 409);
+    }
     await rejectPendingTeudotOfRestaurantRepo(restaurant._id, AUTO_REJECT_REASON);
-  } catch (error) {
-    console.error('Could not close the certificates of a rejected restaurant:', restaurant._id, error.message);
-  }
-
+    return rejected;
+  });
+  // Notify only after both database decisions commit; a mail failure cannot undo moderation.
   const emailStatus = await notifyRejectionService({
     submitterId: rejected.submittedBy,
     kind: 'restaurant',

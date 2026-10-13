@@ -324,14 +324,13 @@ describe('rejectRestaurantService', () => {
     expect(result.emailStatus).toBe('NOT_CONFIGURED');
   });
 
-  it('keeps the rejection when closing the certificates fails', async () => {
+  it('fails the transaction and sends no notification when certificate rejection fails', async () => {
     findRestaurantByIdRepo.mockResolvedValue(restaurant());
     rejectPendingRestaurantRepo.mockResolvedValue(restaurant({ status: 'REJECTED', rejectionReason: 'Duplicate' }));
     rejectPendingTeudotOfRestaurantRepo.mockRejectedValue(new Error('database hiccup'));
 
-    const result = await rejectRestaurantService({ restaurantId: 'rest-1', reason: 'Duplicate' });
-
-    expect(result.restaurant.status).toBe('REJECTED');
+    await expect(rejectRestaurantService({ restaurantId: 'rest-1', reason: 'Duplicate' })).rejects.toThrow('database hiccup');
+    expect(sendRejectionEmailService).not.toHaveBeenCalled();
   });
 
   it('only rejects a restaurant that is waiting for review', async () => {
