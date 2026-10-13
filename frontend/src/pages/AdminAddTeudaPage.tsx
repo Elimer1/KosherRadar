@@ -1,7 +1,7 @@
 // NEW (Milestone 3): an admin adds an approved certificate to an approved restaurant.
 // The expiration date may be in the past, so an admin can record an old certificate.
 // חדש (אבן דרך 3): מנהל מוסיף תעודה מאושרת למסעדה מאושרת. תאריך התפוגה יכול להיות בעבר.
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useParams } from 'react-router-dom';
@@ -18,9 +18,15 @@ import { emptyTeudaForm } from '../types/submissions';
 import type { TeudaFormValues } from '../types/submissions';
 
 function AdminAddTeudaPage() {
+  // NEW (UIAUD-001): route changes discard certificate fields, photo and pending UI state.
+  // חדש (UIAUD-001): שינוי מסלול מאפס את פרטי התעודה, התמונה ומצב הטופס.
+  const { restaurantId = '' } = useParams();
+  return <CertificateCreator key={restaurantId} restaurantId={restaurantId} />;
+}
+
+function CertificateCreator({ restaurantId }: { restaurantId: string }) {
   const { t } = useTranslation();
   const location = useLocation();
-  const { restaurantId = '' } = useParams();
   const { options, error: optionsError } = useFormOptions();
 
   const [restaurant, setRestaurant] = useState<AdminRestaurant | null>(null);
@@ -31,24 +37,39 @@ function AdminAddTeudaPage() {
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  // NEW (UIAUD-001): stale submissions and completions cannot affect the next restaurant.
+  // חדש (UIAUD-001): שליחות ותשובות ישנות אינן משפיעות על המסעדה הבאה.
+  const active = useRef(false);
+  const pending = useRef(false);
+  useLayoutEffect(() => {
+    active.current = true;
+    return () => { active.current = false; };
+  }, []);
 
   const { photo, photoError, photoValidating, getPhotoSubmissionError, handlePhotoChange, clearPhoto } = usePhotoField(options?.maxImageBytes || 5 * 1024 * 1024);
 
   useEffect(() => {
+    const controller = new AbortController();
+    let current = true;
     const loadRestaurant = async () => {
       try {
-        const details = await getRestaurantDetails(restaurantId);
+        const details = await getRestaurantDetails(restaurantId, controller.signal);
+        if (!current || !active.current) return;
+        if (details.restaurant.id !== restaurantId) throw new Error(t('forms.loadRestaurant'));
         setRestaurant(details.restaurant);
       } catch (err) {
+        if (!current || !active.current) return;
         setLoadError(getErrorMessage(err, t('forms.loadRestaurant')));
       }
     };
 
     loadRestaurant();
+    return () => { current = false; controller.abort(); };
   }, [restaurantId, t]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
+    if (!active.current || restaurant?.id !== restaurantId || pending.current) return;
     setError('');
 
     // NEW (Agent 3): guard keyboard submission as well as the button.
@@ -64,16 +85,22 @@ function AdminAddTeudaPage() {
       return;
     }
 
+    pending.current = true;
     setLoading(true);
     setProgress(0);
 
     try {
-      await createTeudaAsAdmin(restaurantId, values, adminNote, photo, setProgress);
+      await createTeudaAsAdmin(restaurant.id, values, adminNote, photo, (percent) => {
+        if (active.current) setProgress(percent);
+      });
+      if (!active.current) return;
       setDone(true);
     } catch (err) {
+      if (!active.current) return;
       setError(getErrorMessage(err, t('desk.addCertificateFailed')));
     } finally {
-      setLoading(false);
+      pending.current = false;
+      if (active.current) setLoading(false);
     }
   };
 
@@ -81,7 +108,7 @@ function AdminAddTeudaPage() {
     return <FormAlert message={loadError || optionsError} />;
   }
 
-  if (!restaurant || !options) {
+  if (!restaurant || restaurant.id !== restaurantId || !options) {
     return <p className="text-muted">{t('common.loading')}</p>;
   }
 

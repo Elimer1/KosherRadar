@@ -1144,17 +1144,18 @@ Independent-audit follow-up verification (13 October 2026): targeted npm test --
 
 ### UIAUD-001 - Stale admin edit form can mutate a different restaurant
 
-- **Milestone:** Completed-agent integration independent UI/UX audit follow-up.
-- **Priority:** P1; CONFIRMED pre-production blocker alongside SEC-006.
-- **Status:** DEFERRED.
-- **Description/evidence:** User reports Agent 3's independent browser-interception reproduction: A's form stays visible after route changes to B; Save sends A's values to B's update endpoint. No real database changed in that audit. Integrated source inspection confirms retained page state and a route-ID Save target. No new browser reproduction executed here.
-- **Root cause:** AdminRestaurantPage retains details/values/extras/hasDetails across route parameter changes; load effect lacks stale-response exclusion; render/Save checks presence rather than record identity. Failed/new delayed loads can leave old form actionable.
-- **Relevant files/functions:** AdminRestaurantPage load effect/render/handleSave; RestaurantFields; admin/RestaurantExtrasFields; App parameterized edit route; adminApi.getRestaurantDetails/updateRestaurant; adminForms mappings. Review stale AdminTeudaCard display/callbacks within same parent scope; no additional mutation defect claimed.
-- **Planned solution:** Separately scoped narrow route/loaded/form owner identity guard, immediate non-actionable mismatched record state, request generation guards and immutable mutation ID/payload snapshots. No unrelated UI work. Guard old mutation completions from updating the newly selected record.
-- **Files changed:** INTEGRATION_PROGRESS.md, FIX_TRACKER.md, PROGRESS.md, INTEGRATION_DEPLOYMENT_CHECKLIST.md only. No application/test/schema changes.
-- **Tests added or modified:** None. Required tests detailed in INTEGRATION_PROGRESS.md: A-to-B pending save, delayed/out-of-order success/failure, failed-load recovery, complete PUT target/payload consistency, in-flight mutation navigation, rapid/back-forward/language/unmount transitions and adjacent parent mutation guards. Use existing Vitest/jsdom router/deferred mocks plus fully intercepted browser mutations, with no real data writes.
-- **Verification:** Integrated source inspected; prior full frontend 215 tests/lint/typecheck/build remain actual unchanged-code integration evidence. No AdminRestaurantPage test covers this scenario; no fresh application test/browser pass claimed. git -c core.whitespace=cr-at-eol diff --check exit 0; tracker count validation confirms 65 issues / 3 DEFERRED / 40 VERIFIED. Source/main tips unchanged.
-- **Blockers/limitations:** Not fixed; DEFERRED describes this documentation follow-up's implementation scope, not reduced severity. Pre-production approval and unconditional main promotion remain blocked until both UIAUD-001 and SEC-006 are resolved/reviewed.
+- **Milestone:** User-assigned UIAUD-001 administrator navigation safety fix, 13 October 2026.
+- **Priority:** P1.
+- **Status:** VERIFIED.
+- **Description/evidence:** Original production build independently reproduced in Chrome with delayed GET B: Save emitted PUT B carrying A fields/extras, fully intercepted without database writes. Same final 19 regression cases against baseline 220365d exited 1: 17 failed, 2 passed.
+- **Root cause:** Route parameter changes retained unbound details/form/extras/cards and certificate-add photo state; mutation IDs came from the new route. Read responses and mutation completions lacked lifetime invalidation.
+- **Relevant files/functions:** AdminRestaurantPage/RestaurantEditor load and all mutation handlers; AdminTeudaCard.run; AdminAddTeudaPage/CertificateCreator load/submit/progress; adminApi.getRestaurantDetails; existing App edit/add parameter routes and payload builders.
+- **Planned solution/implemented:** Route-keyed form ownership with loaded-record ID validation, optional AbortSignal plus response invalidation, layout lifetime guards, synchronous mutation locks and original-ID/payload snapshots. Guard all restaurant and certificate actions and detached completions. No rules, auth, dependency or backend changes.
+- **Files changed:** Four application files above; AdminRestaurantPage.test.tsx, scripts/reviewAdminNavigation.mjs, UIAUD001_FIX_PROGRESS.md, PROGRESS.md and this tracker.
+- **Tests added or modified:** 19 new routed component regressions exercise real forms/API builders with intercepted Axios methods and assert outgoing IDs/payloads. Cover delayed/failed/out-of-order loads, identity mismatch, Save while loading, in-flight navigation, all adjacent mutations, back navigation, language reload, duplicate events, StrictMode normal Save and certificate upload/reset. No existing tests loosened.
+- **Verification:** Final frontend npm test exit 0, 38 files/242 passed; npm run lint/typecheck/build exit 0. Chrome baseline node scripts/reviewAdminNavigation.mjs --expect-vulnerable exit 0 confirms defect; fixed script exit 0, four scenarios/zero exceptions. CRLF-aware diff check exit 0. Actual command/setup/baseline evidence in UIAUD001_FIX_PROGRESS.md. Backend unchanged, no backend checks rerun.
+- **Blockers/limitations:** No remaining UIAUD-001 blocker. All HTTP/database/external responses mocked or intercepted; accepted original-record writes can finish after navigation but cannot affect the new page. Existing build size/jsdom diagnostics remain. Unsaved drafts reset on route changes. Other issues remain separately tracked; this is no blanket production approval. No merge/push/deploy/live services/other worktree changes.
+
 
 ## Main promotion outstanding issue reports - 13 October 2026
 

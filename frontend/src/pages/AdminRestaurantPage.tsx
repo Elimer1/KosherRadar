@@ -1,7 +1,7 @@
 // NEW (Milestone 3): the admin page of one restaurant: details and edit form, approve/reject, delete,
 // every certificate (including old expired ones), and a preview of what the public sees.
 // חדש (אבן דרך 3): דף המנהל של מסעדה אחת: פרטים ועריכה, אישור/דחייה, מחיקה, כל התעודות, ותצוגה של מה שהציבור רואה.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -29,10 +29,16 @@ import { describeEmailStatus, describePreviewItem, getDuplicateReasonLabel, getS
 import { adminTabFromState, adminTabPath } from '../utils/adminTab';
 
 function AdminRestaurantPage() {
+  // NEW (UIAUD-001): route identity owns the form and certificate subtree.
+  // חדש (UIAUD-001): מזהה המסלול קובע את הבעלות על הטופס והתעודות.
+  const { restaurantId = '' } = useParams();
+  return <RestaurantEditor key={restaurantId} restaurantId={restaurantId} />;
+}
+
+function RestaurantEditor({ restaurantId }: { restaurantId: string }) {
   const location = useLocation();
   const dashboardPath = adminTabPath(adminTabFromState(location.state));
   const { t } = useTranslation();
-  const { restaurantId = '' } = useParams();
   const navigate = useNavigate();
   const { options, error: optionsError } = useFormOptions();
 
@@ -45,6 +51,20 @@ function AdminRestaurantPage() {
   const [busy, setBusy] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const hasDetails = useRef(false);
+  // NEW (UIAUD-001): detached handlers and late completions cannot affect another route.
+  // חדש (UIAUD-001): פעולות מנותקות ותשובות מאוחרות אינן משפיעות על מסלול אחר.
+  const active = useRef(false);
+  const mutationPending = useRef(false);
+  useLayoutEffect(() => {
+    active.current = true;
+    return () => { active.current = false; };
+  }, []);
+  const canMutate = () => active.current && details?.restaurant.id === restaurantId;
+  const beginMutation = () => {
+    if (!canMutate() || mutationPending.current) return false;
+    mutationPending.current = true;
+    return true;
+  };
 
   // Changing this number makes the effect below load the restaurant again (used after every change).
   const [reloadKey, setReloadKey] = useState(0);
@@ -52,15 +72,22 @@ function AdminRestaurantPage() {
 
   // Loads the restaurant and fills the edit form from it. Runs on arrival and after every change.
   useEffect(() => {
+    // NEW (UIAUD-001): invalidate responses even when transport ignores cancellation.
+    // חדש (UIAUD-001): בדיקת תוקף מגנה גם כאשר הבקשה מתעלמת מביטול.
+    const controller = new AbortController();
+    let current = true;
     const loadRestaurant = async () => {
       try {
-        const loaded = await getRestaurantDetails(restaurantId);
+        const loaded = await getRestaurantDetails(restaurantId, controller.signal);
+        if (!current || !active.current) return;
+        if (loaded.restaurant.id !== restaurantId) throw new Error(t('forms.loadRestaurant'));
         setDetails(loaded);
         hasDetails.current = true;
         setValues(restaurantToFormValues(loaded.restaurant));
         setExtras(restaurantToExtrasValues(loaded.restaurant));
         setLoadError('');
       } catch (err) {
+        if (!current || !active.current) return;
         const message = getErrorMessage(err, t('forms.loadRestaurant'));
         if (hasDetails.current) {
           setDecisionNotices([{ kind: 'error', message }]);
@@ -71,6 +98,7 @@ function AdminRestaurantPage() {
     };
 
     loadRestaurant();
+    return () => { current = false; controller.abort(); };
   }, [restaurantId, reloadKey, t]);
 
   const handleToggleCategory = (category: string) => {
@@ -89,7 +117,7 @@ function AdminRestaurantPage() {
   const handleSave = async (event: FormEvent) => {
     event.preventDefault();
 
-    if (!values || !extras) {
+    if (!values || !extras || !beginMutation()) {
       return;
     }
 
@@ -97,25 +125,30 @@ function AdminRestaurantPage() {
     setNotices([]);
 
     try {
-      const saved = await updateRestaurant(restaurantId, values, extras);
+      const saved = await updateRestaurant(details!.restaurant.id, values, extras);
+      if (!active.current) return;
       setNotices([
         { kind: 'success', message: t('desk.saved') },
         ...(saved.latitude === null || saved.longitude === null ? [{ kind: 'warning' as const, message: t(saved.locationStatus === 'unavailable' ? 'forms.lookupUnavailableSaved' : 'forms.notPlaced') }] : []),
       ]);
       load();
     } catch (err) {
+      if (!active.current) return;
       setNotices([{ kind: 'error', message: getErrorMessage(err, t('desk.saveFailed')) }]);
     } finally {
-      setBusy(false);
+      mutationPending.current = false;
+      if (active.current) setBusy(false);
     }
   };
 
   const handleApprove = async () => {
+    if (!beginMutation()) return;
     setBusy(true);
     setDecisionNotices([]);
 
     try {
-      const result = await approveRestaurant(restaurantId);
+      const result = await approveRestaurant(details!.restaurant.id);
+      if (!active.current) return;
       setDetails((current) =>
         current ? { ...current, restaurant: { ...current.restaurant, status: result.restaurant.status } } : current
       );
@@ -123,18 +156,22 @@ function AdminRestaurantPage() {
       setRejecting(false);
       load();
     } catch (err) {
+      if (!active.current) return;
       setDecisionNotices([{ kind: 'error', message: getErrorMessage(err, t('desk.approveFailed')) }]);
     } finally {
-      setBusy(false);
+      mutationPending.current = false;
+      if (active.current) setBusy(false);
     }
   };
 
   const handleReject = async (reason: string) => {
+    if (!beginMutation()) return;
     setBusy(true);
     setDecisionNotices([]);
 
     try {
-      const result = await rejectRestaurant(restaurantId, reason);
+      const result = await rejectRestaurant(details!.restaurant.id, reason);
+      if (!active.current) return;
       setDetails((current) =>
         current
           ? {
@@ -154,20 +191,23 @@ function AdminRestaurantPage() {
       setRejecting(false);
       load();
     } catch (err) {
+      if (!active.current) return;
       setDecisionNotices([{ kind: 'error', message: getErrorMessage(err, t('desk.rejectFailed')) }]);
     } finally {
-      setBusy(false);
+      mutationPending.current = false;
+      if (active.current) setBusy(false);
     }
   };
 
   const handleDelete = async () => {
+    if (!canMutate() || mutationPending.current) return;
     const count = details?.teudot.length || 0;
     // Deleting is permanent and also removes the certificates and reports of this restaurant.
     const confirmed = window.confirm(
       t('desk.deleteConfirm', { count })
     );
 
-    if (!confirmed) {
+    if (!confirmed || !beginMutation()) {
       return;
     }
 
@@ -175,15 +215,20 @@ function AdminRestaurantPage() {
     setDecisionNotices([]);
 
     try {
-      await deleteRestaurant(restaurantId);
+      await deleteRestaurant(details!.restaurant.id);
+      if (!active.current) return;
       navigate(dashboardPath);
     } catch (err) {
+      if (!active.current) return;
       setDecisionNotices([{ kind: 'error', message: getErrorMessage(err, t('desk.deleteFailed')) }]);
-      setBusy(false);
+    } finally {
+      mutationPending.current = false;
+      if (active.current) setBusy(false);
     }
   };
 
   const handleTeudaChanged = (teudaNotices: Notice[]) => {
+    if (!canMutate()) return;
     setNotices(teudaNotices);
     load();
   };
@@ -192,7 +237,7 @@ function AdminRestaurantPage() {
     return <FormAlert message={loadError || optionsError} />;
   }
 
-  if (!details || !values || !extras || !options) {
+  if (!details || details.restaurant.id !== restaurantId || !values || !extras || !options) {
     return <p className="text-muted">{t('common.loading')}</p>;
   }
 
@@ -336,6 +381,7 @@ function AdminRestaurantPage() {
               teuda={teuda}
               options={options}
               restaurantApproved={restaurantApproved}
+              canMutate={canMutate}
               onChanged={handleTeudaChanged}
             />
           ))}

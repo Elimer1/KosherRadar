@@ -1,7 +1,7 @@
 // NEW (Milestone 3): one certificate on the admin restaurant page. The admin can edit its details (including a
 // private note), delete it, and approve or reject it if it is still pending.
 // חדש (אבן דרך 3): תעודה אחת בדף המסעדה של המנהל. אפשר לערוך פרטים (כולל הערה פרטית), למחוק, ולאשר או לדחות.
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { approveTeuda, deleteTeuda, rejectTeuda, updateTeuda } from '../../api/adminApi';
@@ -22,34 +22,49 @@ interface AdminTeudaCardProps {
   teuda: AdminTeuda & { conflicts: ConflictBrief[] };
   options: FormOptions;
   restaurantApproved: boolean;
+  canMutate: () => boolean;
   // Tells the page what happened and asks it to load the restaurant again.
   onChanged: (notices: Notice[]) => void;
 }
 
-function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: AdminTeudaCardProps) {
+function AdminTeudaCard({ teuda, options, restaurantApproved, canMutate, onChanged }: AdminTeudaCardProps) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<'view' | 'edit' | 'reject'>('view');
   const [values, setValues] = useState<TeudaFormValues>(() => teudaToFormValues(teuda));
   const [adminNote, setAdminNote] = useState(teuda.adminNote || '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // NEW (UIAUD-001): parent ownership and card lifetime guard every certificate mutation.
+  // חדש (UIAUD-001): בעלות המסעדה וחיי הרכיב מגנים על כל שינוי בתעודה.
+  const active = useRef(false);
+  const pending = useRef(false);
+  useLayoutEffect(() => {
+    active.current = true;
+    return () => { active.current = false; };
+  }, []);
+  const allowed = () => active.current && canMutate();
 
   const hechsherTitle = getHechsherLabel(teuda.hechsher, teuda.hechsherOther, options.hechsherOptions);
   const title = teuda.expirationDate ? `${hechsherTitle} (${teuda.expirationDate})` : hechsherTitle;
   const needsClassification = teuda.status === 'PENDING' && (!teuda.kashrutLevel || !teuda.expirationDate);
 
   const run = async (action: () => Promise<Notice[]>, fallback: string) => {
+    if (!allowed() || pending.current) return;
+    pending.current = true;
     setBusy(true);
     setError('');
 
     try {
       const notices = await action();
+      if (!allowed()) return;
       setMode('view');
       onChanged(notices);
     } catch (err) {
+      if (!allowed()) return;
       setError(getErrorMessage(err, fallback));
     } finally {
-      setBusy(false);
+      pending.current = false;
+      if (allowed()) setBusy(false);
     }
   };
 
@@ -88,6 +103,7 @@ function AdminTeudaCard({ teuda, options, restaurantApproved, onChanged }: Admin
   };
 
   const handleDelete = () => {
+    if (!allowed() || pending.current) return;
     // Deleting is permanent, so the admin has to confirm it.
     if (!window.confirm(t('desk.deleteCertificateConfirm'))) {
       return;
