@@ -1,58 +1,38 @@
-// Diagnostic evidence, not a security fix. All records belong to the disposable runner.
+// NEW (SEC-006): preserve the audit entry point as fixed-design compatibility regressions.
+// חדש (SEC-006): שימור נקודת הביקורת כבדיקות תאימות לתיקון.
 import assert from 'node:assert/strict';
 import test, { before, after } from 'node:test';
 import mongoose from 'mongoose';
 import { User } from '../src/models/User.js';
 import { PasswordResetToken } from '../src/models/PasswordResetToken.js';
-import { requestPasswordResetService } from '../src/services/passwordResetService.js';
-import { consumeResetTokenRepo } from '../src/repositories/passwordResetRepository.js';
+import { resetPasswordService, hashResetToken } from '../src/services/passwordResetService.js';
+import { authorizeResetTokenRepo } from '../src/repositories/passwordResetRepository.js';
 import { env } from '../src/config/env.js';
-
 before(async () => {
   const uri = new URL(process.env.AGENT1_ISOLATED_URI);
   assert.equal(uri.hostname, '127.0.0.1');
   assert.equal(uri.pathname, '/agent1_disposable');
   assert.equal(uri.searchParams.get('replicaSet'), process.env.AGENT1_REPLICA_SET);
   uri.pathname = '/agent1_disposable_reset_audit';
-  // Explicitly disable mail even if a future runner supplies configuration.
   env.emailUser = ''; env.emailAppPassword = '';
   await mongoose.connect(uri.href);
   await Promise.all([User.init(), PasswordResetToken.init()]);
 });
 after(async () => mongoose.disconnect());
-
-test('same reset hash can be consumed only once under concurrent MongoDB requests', async () => {
-  const user = await User.create({ email: 'single-use@example.invalid', passwordHash: 'fixture' });
-  const tokenHash = 'synthetic-single-use-hash';
-  await PasswordResetToken.create({ user: user._id, tokenHash, expiresAt: new Date(Date.now() + 60_000) });
-  const consumed = await Promise.all(Array.from({ length: 4 }, () => consumeResetTokenRepo(tokenHash, new Date())));
-  assert.equal(consumed.filter(Boolean).length, 1);
+test('unexpired unused legacy token rows grant no recovery authority', async () => {
+  const user = await User.create({ email: 'legacy-row@example.invalid', passwordHash: 'fixture' });
+  const token = 'a'.repeat(64);
+  await PasswordResetToken.create({ user: user._id, tokenHash: hashResetToken(token), expiresAt: new Date(Date.now() + 60_000) });
+  await assert.rejects(resetPasswordService({ token, password: 'must-not-save' }), { code: 'INVALID_RESET_TOKEN' });
+  const saved = await User.findById(user._id).select('+passwordHash');
+  assert.equal(saved.passwordHash, 'fixture'); assert.equal(saved.tokenVersion, 0);
+  assert.equal(await PasswordResetToken.countDocuments({ user: user._id, usedAt: null }), 1);
 });
-
-test('SEC-006 diagnostic: concurrent issuance leaves two distinct consumable links (known blocker)', async () => {
-  const user = await User.create({ email: 'reset-race@example.invalid', passwordHash: 'fixture' });
-  let completedDeletes = 0;
-  let release;
-  const gate = new Promise((done) => { release = done; });
-  const original = PasswordResetToken.collection.deleteMany;
-  PasswordResetToken.collection.deleteMany = async function (...args) {
-    const result = await original.apply(this, args);
-    if (++completedDeletes === 2) release();
-    await gate;
-    return result;
-  };
-  try {
-    await Promise.all([
-      requestPasswordResetService({ email: user.email, language: 'en' }),
-      requestPasswordResetService({ email: user.email, language: 'en' }),
-    ]);
-  } finally {
-    release();
-    PasswordResetToken.collection.deleteMany = original;
+test('recovery hash and expiry are hidden on normal account queries', async () => {
+  const user = await User.create({ email: 'hidden-authority@example.invalid', passwordHash: 'fixture' });
+  await authorizeResetTokenRepo({ userId: user._id, tokenVersion: 0, tokenHash: 'synthetic-hash', expiresAt: new Date(Date.now() + 60_000) });
+  for (const saved of [await User.findById(user._id).lean(), await User.findOne({ email: user.email }).lean()]) {
+    assert.equal(saved.resetTokenHash, undefined); assert.equal(saved.resetTokenExpiresAt, undefined);
   }
-  const tokens = await PasswordResetToken.find({ user: user._id, usedAt: null }).lean();
-  assert.equal(tokens.length, 2, 'Evidence of the unresolved latest-link-only issuance race');
-  assert.equal(new Set(tokens.map((row) => row.tokenHash)).size, 2);
-  const consumed = await Promise.all(tokens.map((row) => consumeResetTokenRepo(row.tokenHash, new Date())));
-  assert.equal(consumed.filter(Boolean).length, 2);
+  assert.equal((await User.findById(user._id).select('+resetTokenHash')).resetTokenHash, 'synthetic-hash');
 });

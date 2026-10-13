@@ -29,6 +29,10 @@ const userSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    // NEW (SEC-006): optional current recovery generation; legacy accounts need no backfill.
+    // חדש (SEC-006): דור האיפוס הנוכחי אופציונלי; אין צורך בהסבת חשבונות קיימים.
+    resetTokenHash: { type: String, select: false },
+    resetTokenExpiresAt: { type: Date, select: false },
     points: {
       type: Number,
       default: 0,

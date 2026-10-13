@@ -1,58 +1,37 @@
-// NEW (Milestone 3): password reset (spec section 6). A reset token is random, single-use and short-lived, and
-// only its SHA-256 hash is stored. The request endpoint answers the same way whether or not the email has an
-// account, so it cannot be used to find out who is registered.
-// חדש (אבן דרך 3): איפוס סיסמה. הטוקן אקראי, חד-פעמי וקצר-מועד, ורק ה-hash שלו נשמר. נקודת הבקשה עונה אותו דבר
-// בין אם יש חשבון ובין אם לא, כדי שאי אפשר יהיה לגלות מי רשום.
+// NEW (SEC-006): account-authorized password recovery, random hashed links and neutral request responses.
+// חדש (SEC-006): איפוס בסמכות החשבון, קישורים אקראיים מגובבים ותשובות בקשה ניטרליות.
 import bcrypt from 'bcrypt';
 import crypto from 'node:crypto';
 import { env } from '../config/env.js';
 import { appError } from '../utils/appError.js';
-import {
-  consumeResetTokenRepo,
-  createResetTokenRepo,
-  deleteUnusedResetTokensRepo,
-  releaseResetTokenRepo,
-} from '../repositories/passwordResetRepository.js';
-import { findUserByEmailRepo, setUserPasswordHashRepo } from '../repositories/userRepository.js';
+import { authorizeResetTokenRepo, resetAuthorizedPasswordRepo } from '../repositories/passwordResetRepository.js';
+import { findUserByEmailRepo } from '../repositories/userRepository.js';
 import { sendPasswordChangedEmailService, sendPasswordResetEmailService } from './emailService.js';
 
 const SALT_ROUNDS = 10;
-
 export const RESET_TOKEN_VALID_MINUTES = 60;
-
-// The token is random and long, so a fast hash (SHA-256) is enough here. bcrypt is used for the password itself.
 export const hashResetToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
-
 export const buildResetLink = (token) => {
   const baseUrl = env.clientUrl.replace(/\/+$/, '');
-  // Fragments are never sent to the frontend host or included in HTTP access logs.
+  // Fragments never reach frontend hosting access logs.
   return `${baseUrl}/reset-password#token=${token}`;
 };
 
-// Always resolves with nothing. The caller shows the same message in every case.
-// תמיד מסתיים בלי ערך. הקורא מציג אותה הודעה בכל מקרה.
+// NEW (SEC-006): atomically replace current authority only within the captured credential epoch.
+// חדש (SEC-006): החלפת סמכות אטומית רק בתוך גרסת האישורים שנקראה.
 export const requestPasswordResetService = async ({ email, language }) => {
   const user = await findUserByEmailRepo(email);
-
-  if (!user) {
-    return;
-  }
-
-  // 32 random bytes = 256 bits, which cannot be guessed.
+  if (!user) return;
   const token = crypto.randomBytes(32).toString('hex');
   const expiresAt = new Date(Date.now() + RESET_TOKEN_VALID_MINUTES * 60 * 1000);
+  const authorized = await authorizeResetTokenRepo({
+    userId: user._id, tokenVersion: user.tokenVersion ?? 0, tokenHash: hashResetToken(token), expiresAt,
+  });
+  if (!authorized) return;
 
-  // Older unused links stop working: only the newest one is valid.
-  await deleteUnusedResetTokensRepo(user._id);
-  await createResetTokenRepo({ userId: user._id, tokenHash: hashResetToken(token), expiresAt });
-
-  // The email is not awaited: sending takes time, and waiting would make an existing account slower to answer
-  // than an unknown one. sendEmail never throws; a failure is only logged on the server.
-  // המייל לא ממתינים לו: אחרת חשבון קיים היה עונה לאט יותר מחשבון לא קיים. כשל נרשם ביומן בשרת בלבד.
+  // Send only after acknowledged authority; delayed delivery cannot grant obsolete authority.
   void sendPasswordResetEmailService({
-    to: user.email,
-    resetLink: buildResetLink(token),
-    validMinutes: RESET_TOKEN_VALID_MINUTES,
+    to: user.email, resetLink: buildResetLink(token), validMinutes: RESET_TOKEN_VALID_MINUTES,
     language: user.preferredLanguage || language,
   }).then((status) => {
     if (status !== 'SENT') {
@@ -61,46 +40,14 @@ export const requestPasswordResetService = async ({ email, language }) => {
   }).catch(() => console.error('Password reset email failed'));
 };
 
+// NEW (SEC-006): no consume/save gap and no compensating release, including ambiguous write outcomes.
+// חדש (SEC-006): אין פער בין ניצול לשמירה ואין שחזור טוקן גם כשהתוצאה אינה ודאית.
 export const resetPasswordService = async ({ token, password, language }) => {
-  // One atomic step both checks the token (known, not used, not expired) and marks it used.
-  const consumed = await consumeResetTokenRepo(hashResetToken(token), new Date());
-
-  if (!consumed) {
+  const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+  const user = await resetAuthorizedPasswordRepo(hashResetToken(token), passwordHash);
+  if (!user) {
     throw appError('This reset link is invalid or has expired. Please request a new one.', 400, 'INVALID_RESET_TOKEN');
   }
-
-  // NEW (Audit M5): if the password is not saved, put the link back. A later cleanup failure must not,
-  // because the new password is already stored.
-  // חדש (ביקורת M5): אם הסיסמה לא נשמרה, מחזירים את הקישור. כשל בניקוי שאחרי שמירה מוצלחת לא מחזיר אותו.
-  let passwordSaved = false;
-
-  try {
-    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-    const user = await setUserPasswordHashRepo(consumed.user, passwordHash);
-
-    if (!user) {
-      throw appError('This reset link is invalid or has expired. Please request a new one.', 400, 'INVALID_RESET_TOKEN');
-    }
-
-    passwordSaved = true;
-    // Any other link that was still waiting is cancelled too.
-    try {
-      await deleteUnusedResetTokensRepo(user._id);
-    } catch {
-      // The password is saved and sessions invalidated. Do not tell the user the reset failed.
-      console.error('Could not cancel other reset links after password change');
-    }
-    void sendPasswordChangedEmailService({ to: user.email, language: user.preferredLanguage || language })
-      .catch(() => console.error('Password-change notification failed'));
-  } catch (error) {
-    if (!passwordSaved) {
-      try {
-        await releaseResetTokenRepo(consumed._id);
-      } catch {
-        console.error('Could not release reset token after a failed password update');
-      }
-    }
-
-    throw error;
-  }
+  void sendPasswordChangedEmailService({ to: user.email, language: user.preferredLanguage || language })
+    .catch(() => console.error('Password-change notification failed'));
 };
