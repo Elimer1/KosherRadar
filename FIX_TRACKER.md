@@ -6,13 +6,13 @@ Counts below are derived from the issue statuses in this file.
 
 | Status | Count |
 | --- | ---: |
-| NOT STARTED | 10 |
+| NOT STARTED | 12 |
 | ALREADY WORKING | 8 |
 | BLOCKED | 4 |
 | DEFERRED | 3 |
 | VERIFIED | 40 |
 | Other | 0 |
-| **Total** | **65** |
+| **Total** | **67** |
 
 ## Priority bands (12 October 2026)
 
@@ -1140,3 +1140,33 @@ Independent-audit follow-up verification (13 October 2026): targeted npm test --
 - **Tests added or modified:** None. Required tests detailed in INTEGRATION_PROGRESS.md: A-to-B pending save, delayed/out-of-order success/failure, failed-load recovery, complete PUT target/payload consistency, in-flight mutation navigation, rapid/back-forward/language/unmount transitions and adjacent parent mutation guards. Use existing Vitest/jsdom router/deferred mocks plus fully intercepted browser mutations, with no real data writes.
 - **Verification:** Integrated source inspected; prior full frontend 215 tests/lint/typecheck/build remain actual unchanged-code integration evidence. No AdminRestaurantPage test covers this scenario; no fresh application test/browser pass claimed. git -c core.whitespace=cr-at-eol diff --check exit 0; tracker count validation confirms 65 issues / 3 DEFERRED / 40 VERIFIED. Source/main tips unchanged.
 - **Blockers/limitations:** Not fixed; DEFERRED describes this documentation follow-up's implementation scope, not reduced severity. Pre-production approval and unconditional main promotion remain blocked until both UIAUD-001 and SEC-006 are resolved/reviewed.
+
+## Main promotion outstanding issue reports - 13 October 2026
+
+### ADMINCERT-001 - Reported administrator certificate hechsherOther validation failure
+
+- **Milestone:** Authorized final integration promotion/handoff.
+- **Priority:** High; outstanding pre-production workflow issue.
+- **Status:** NOT STARTED.
+- **Description/evidence:** User reports administrator certificate creation may fail with teuda.hechsherOther validation error. Not reproduced in this promotion; passing synthetic LOCAL_RABBANUT admin checks do not prove the affected payload works.
+- **Root cause:** Undetermined; inspect optional hechsherOther form/payload and schema handling before changing validation.
+- **Relevant files/functions:** AdminAddTeudaPage, AdminCreateRestaurantPage, TeudaFields, adminApi certificate payload builders, backend adminSchemas/Teuda model/adminTeudaService. Exact failing payload path requires focused reproduction.
+- **Planned solution:** Separate mocked/intercepted reproduction and minimal validated fix; preserve admin authority and required OTHER labels. No application fix in merge/push scope.
+- **Files changed:** Tracking notes only.
+- **Tests added or modified:** None; recommend omitted/empty/named hechsherOther cases for ordinary and OTHER hechshers on direct/combined administrator creation.
+- **Verification:** User-supplied report only; no live upload or database operation.
+- **Blockers/limitations:** Outstanding; never represented as fixed by existing admin test success.
+
+### MAPTILE-001 - Observed OpenStreetMap tile HTTP 403
+
+- **Milestone:** Authorized final integration promotion/handoff.
+- **Priority:** High; observed map availability limitation.
+- **Status:** NOT STARTED.
+- **Description/evidence:** User reports OpenStreetMap tiles return HTTP 403 in the observed environment. No live tile request in promotion; fixture/mocked map tests do not verify real tile availability.
+- **Root cause:** Undetermined; distinguish provider/environment response from application integration regression before changing provider/configuration.
+- **Relevant files/functions:** Public map tile layer/configuration and map UI; inspect request origin/headers/provider requirements without credentials or production data.
+- **Planned solution:** Separately authorized investigation; no provider/hosting change during merge/push.
+- **Files changed:** Tracking notes only.
+- **Tests added or modified:** None; recommend tile-error feedback regression and approved environment browser verification of successful tile loads.
+- **Verification:** User-supplied observed HTTP 403, not a new live reproduction.
+- **Blockers/limitations:** Outstanding map rendering limitation; do not count fixture tiles as real service verification.
