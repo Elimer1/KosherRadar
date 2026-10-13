@@ -830,14 +830,14 @@ Explicit user assignment supersedes historical stop instructions for this worktr
 
 - **Milestone:** Agent 2 search/location reliability.
 - **Priority:** P1/P2 per assignment.
-- **Status:** NOT STARTED
+- **Status:** VERIFIED
 - **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
-- **Root cause:** Pending investigation.
-- **Relevant files/functions:** Assigned search/location files in pasted request.
+- **Root cause:** capped warning was nested inside nonempty list rendering.
+- **Relevant files/functions:** HomePage.tsx result warning.
 - **Planned solution:** Focused compatible fix with mocked regressions.
-- **Files changed:** None yet.
-- **Tests added or modified:** Pending verification.
-- **Verification:** Not run yet.
+- **Files changed:** HomePage.tsx; HomePage.test.tsx.
+- **Tests added or modified:** Zero-match partial results in intro and searched directory.
+- **Verification:** frontend npm test -- src/pages/HomePage.test.tsx exit 0 (4 passed); npm run typecheck/lint exit 0. No browser/live integrations.
 - **Blockers/limitations:** No live service/data testing authorized.
 
 ### SEARCH-006 ? Admin address/location identity consistency

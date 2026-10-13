@@ -220,6 +220,10 @@ function HomePage() {
 
       {composer}
 
+      {view === 'list' && !criteria.locationBlocked && !search.loading && search.capped && (
+        <p role="status" className={`mt-4 ${warningNoticeClassName}`}>{t('home.capped')}</p>
+      )}
+
       {criteria.locationError && (
         <div role="alert" className={`mt-4 ${errorNoticeClassName}`}>
           <p>{t('location.' + (criteria.locationError === 'not_found' ? 'noMatch' : criteria.locationError))}</p>
@@ -368,12 +372,6 @@ function HomePage() {
               {view === 'list' && !criteria.locationBlocked && search.items.length > 0 && (
                 <>
                   {!filters.includeUnknown && <p className="mb-3 text-sm text-muted">{t('home.unknownHidden')}</p>}
-
-                  {search.capped && (
-                    <p role="status" className={`mb-3 ${warningNoticeClassName}`}>
-                      {t('home.capped')}
-                    </p>
-                  )}
 
                   <ul className="v2-directory">
                     {search.items.map((restaurant) => (

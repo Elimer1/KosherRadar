@@ -17,14 +17,19 @@ vi.mock('../components/discovery/DiscoveryPreview', () => ({ default: () => <div
 let root: Root;
 let container: HTMLDivElement;
 const retry = vi.fn();
-const mount = async () => {
-  vi.mocked(useRestaurantSearch).mockReturnValue({ items: [], page: 1, total: 0, hasMore: false, capped: false, atlasUnavailable: false, loading: false, loadingMore: false, error: '', retry, loadMore: vi.fn() });
+const mount = async (entry = '/?near=Jerusalem&radius=5', capped = false) => {
+  vi.mocked(useRestaurantSearch).mockReturnValue({ items: [], page: 1, total: 0, hasMore: false, capped, atlasUnavailable: false, loading: false, loadingMore: false, error: '', retry, loadMore: vi.fn() });
   container = document.createElement('div'); document.body.append(container); root = createRoot(container);
-  await act(async () => root.render(<MemoryRouter initialEntries={['/?near=Jerusalem&radius=5']}><HomePage /></MemoryRouter>));
+  await act(async () => root.render(<MemoryRouter initialEntries={[entry]}><HomePage /></MemoryRouter>));
 };
 afterEach(() => { act(() => root?.unmount()); container?.remove(); localStorage.clear(); sessionStorage.clear(); vi.clearAllMocks(); });
 
 describe('unresolved geographic searches', () => {
+  it.each(['/', '/?q=pizza'])('shows incomplete-result feedback for zero matches at %s', async (entry) => {
+    await mount(entry, true);
+    const warnings = [...container.querySelectorAll('[role="status"]')].filter(node => node.textContent?.includes('may be incomplete'));
+    expect(warnings).toHaveLength(1);
+  });
   it.each(['list', 'map'])('blocks the %s and offers retry/clear when URL restoration fails', async (view) => {
     localStorage.setItem('kosherradar-view', view);
     vi.mocked(geocodePlace).mockResolvedValue({ available: true, place: null, reason: 'ambiguous' });
