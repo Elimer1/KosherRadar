@@ -780,3 +780,132 @@ User accepted V2 and authorized local-main promotion. No new identified issue or
 Actual post-merge main commands: frontend `npm run lint`, `npm run typecheck`, `npm test` (26 files / 158 passed), `npm run build`; backend `npm test` (40 files / 505 passed); `git -c core.whitespace=cr-at-eol diff 5393037 HEAD --check`: all exit 0. Backend has no lint/typecheck/build scripts. Existing bundle warning persists (JS 766.92 kB). Tests mocked; no live database/services, production data, email or upload. No browser rerun; prior accepted browser evidence remains in integration worktree. Public trust terminology, moderation and administrator authority/zero-point rules unchanged. Native-speaker Hebrew review and live-service/production-readiness issues remain as tracked.
 
 Only post-merge documentation files updated: this file, PROGRESS.md, REDESIGN_INTEGRATION_PROGRESS.md. Main's untracked PRE_PUSH_REVIEW.md preserved unchanged and excluded from commit. No source branch/worktree edit, push, deploy, branch/worktree deletion, reset or clean. Exact next step: stop; accepted local merge complete.
+## Search and location reliability ? Agent 2, 13 October 2026
+
+Explicit user assignment supersedes historical stop instructions for this worktree. Existing issue statuses unchanged.
+
+### SEARCH-001 ? Out-of-order location lookups
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P1/P2 per assignment.
+- **Status:** VERIFIED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** Typed lookup has no generation guard or rejection catch.
+- **Relevant files/functions:** Assigned search/location files in pasted request.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** LocationField.tsx; LocationField.test.tsx.
+- **Tests added or modified:** LocationField.test.tsx: stale success/failure, current rejection and clear invalidation (4 passing).
+- **Verification:** frontend npm test -- src/components/LocationField.test.tsx exit 0, 4/4 passed. npm run typecheck and npm run lint exit 0. Build pending batch verification. jsdom component tests; browser and live services not tested.
+- **Blockers/limitations:** No live service/data testing authorized.
+
+### SEARCH-002 ? Failed URL location removes geography
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P1/P2 per assignment.
+- **Status:** NOT STARTED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** Pending investigation.
+- **Relevant files/functions:** Assigned search/location files in pasted request.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** None yet.
+- **Tests added or modified:** Pending verification.
+- **Verification:** Not run yet.
+- **Blockers/limitations:** No live service/data testing authorized.
+
+### SEARCH-004 ? Candidate caps omit eligible and nearest results
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P1/P2 per assignment.
+- **Status:** NOT STARTED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** Pending investigation.
+- **Relevant files/functions:** Assigned search/location files in pasted request.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** None yet.
+- **Tests added or modified:** Pending verification.
+- **Verification:** Not run yet.
+- **Blockers/limitations:** No live service/data testing authorized.
+
+### SEARCH-005 ? Missing zero-result completeness warning
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P1/P2 per assignment.
+- **Status:** NOT STARTED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** Pending investigation.
+- **Relevant files/functions:** Assigned search/location files in pasted request.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** None yet.
+- **Tests added or modified:** Pending verification.
+- **Verification:** Not run yet.
+- **Blockers/limitations:** No live service/data testing authorized.
+
+### SEARCH-006 ? Admin address/location identity consistency
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P1/P2 per assignment.
+- **Status:** NOT STARTED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** Pending investigation.
+- **Relevant files/functions:** Assigned search/location files in pasted request.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** None yet.
+- **Tests added or modified:** Pending verification.
+- **Verification:** Not run yet.
+- **Blockers/limitations:** No live service/data testing authorized.
+
+### SEARCH-007 ? Pending duplicate identity omits city
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P1/P2 per assignment.
+- **Status:** NOT STARTED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** Pending investigation.
+- **Relevant files/functions:** Assigned search/location files in pasted request.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** None yet.
+- **Tests added or modified:** Pending verification.
+- **Verification:** Not run yet.
+- **Blockers/limitations:** No live service/data testing authorized.
+
+### SEARCH-008 ? City search versus precise address geocoding
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P1/P2 per assignment.
+- **Status:** NOT STARTED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** Pending investigation.
+- **Relevant files/functions:** Assigned search/location files in pasted request.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** None yet.
+- **Tests added or modified:** Pending verification.
+- **Verification:** Not run yet.
+- **Blockers/limitations:** No live service/data testing authorized.
+
+### SEARCH-009 ? Confidence boundary and competing candidates
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P1/P2 per assignment.
+- **Status:** NOT STARTED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** Pending investigation.
+- **Relevant files/functions:** Assigned search/location files in pasted request.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** None yet.
+- **Tests added or modified:** Pending verification.
+- **Verification:** Not run yet.
+- **Blockers/limitations:** No live service/data testing authorized.
+
+### SEARCH-010 ? Geoapify request deadlines
+
+- **Milestone:** Agent 2 search/location reliability.
+- **Priority:** P1/P2 per assignment.
+- **Status:** NOT STARTED
+- **Evidence:** Pasted implementation audit; reconcile with baseline dc5dc24.
+- **Root cause:** Pending investigation.
+- **Relevant files/functions:** Assigned search/location files in pasted request.
+- **Planned solution:** Focused compatible fix with mocked regressions.
+- **Files changed:** None yet.
+- **Tests added or modified:** Pending verification.
+- **Verification:** Not run yet.
+- **Blockers/limitations:** No live service/data testing authorized.
