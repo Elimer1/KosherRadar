@@ -4,6 +4,8 @@ Authoritative requirements: `PROJECT_SPEC.md` (do not edit without approval). Re
 
 ## Active milestone
 
+**Worktree `fix/map-tiles`, 13 October 2026:** explicitly requested MAP-001 tile-provider fix completed; see current `NEXT AGENT ONBOARDING` and `MAP_TILES_FIX_PROGRESS.md`. Earlier milestone history below is preserved.
+
 **Milestone 7 — Hebrew academic project book** (DONE and merged to `main`). Scope from `PROJECT_SPEC.md` section 16: `PROJECT_BOOK.md` in Hebrew from the actual implementation. It does not claim Atlas Search, Cloudinary, Resend or Geoapify were verified. The local MongoDB checks in Milestone 6 are not Atlas. No application behavior was changed. Kashrut status and filters stay in `kashrutStatusService.js` and `restaurantSearchService.js`.
 
 Milestones 1 to 7 are merged to `main`, including the later product update on public forms and the account page (`e483c2e`). This milestone has not been pushed. Cloudinary, Resend, Geoapify and Atlas Search are still without credentials (see "Blockers").
@@ -707,6 +709,15 @@ SEARCH-003 checkpoint f00109b. A1-003 returns stored correctionApplied and displ
 
 **Agent 3 current handoff - 13 October 2026, fix/submissions-app (supersedes older stop instruction for this assigned scope).**
 SEARCH-003 verified: shared photo hook and all five consumers guard pending validation, ignore obsolete results, show read errors; photo accessibility and localized messages added. See AGENT_3_FIX_PROGRESS.md for files, tests and decisions. Focused tests 19 passed; full frontend 170 passed before final test cleanup; lint/typecheck/build exit 0. No browser or external integrations; Hebrew requires native review. Next: A1-003 history outcome (do not edit correction/award logic), then SEC-011 readiness. Final full suites still pending. No partially implemented source changes outside SEARCH-003. Read Git state plus this branch's progress before continuing.
+
+
+**Map tiles fix — 13 October 2026 (current handoff for `fix/map-tiles`)**
+
+Explicit user request: MAP-001 only in `C:/FS/projects/KosherRadar-map-tiles`, baseline `dc5dc24`, initially clean. Implemented Geoapify osm-carto tile options using separate public `VITE_GEOAPIFY_MAPS_API_KEY`, retained max zoom 18, added missing-key notice and provider tests, updated frontend `.env.example` and README. Marker/clustering, search/navigation, backend and existing private `GEOAPIFY_API_KEY` remain intact. Full evidence and limitations: `MAP_TILES_FIX_PROGRESS.md`; authoritative status: `FIX_TRACKER.md`.
+
+Current milestone complete; MAP-001 implementation VERIFIED, live rendering pending. Last verified fix MAP-001; no next audit issue authorized. New `RestaurantMap.test.tsx` renders real Leaflet in jsdom, with mock bounds API/clustering and synthetic keys/dimensions; verifies tile URLs, attribution, selection and bilingual missing-key notices. First checks exited 1 due to absent dependencies; `npm ci --no-audit --no-fund` installed only existing locked packages (exit 0). Corrected added test fixture typing/dimensions after intermediate failures. Final frontend `npm test`: exit 0, 28 files / 166 passed; lint/typecheck/build each exit 0. JS 767.42 kB, existing >500 kB warning. Backend unchanged/not tested. No failing checks or partial implementation remain.
+
+Files changed: `RestaurantMap.tsx`/its new test, `mapChrome.ts`/its test, new `mapTiles.ts`/its test, locale files, frontend `.env.example`, README and the three tracking documents. Exact next step: integration owner may cherry-pick the final `fix/map-tiles` commit (hash via `git rev-parse fix/map-tiles`), preserve both tracking histories if conflicts occur, run frontend test/lint/typecheck/build, and configure `VITE_GEOAPIFY_MAPS_API_KEY` before manually verifying live tile responses/attribution on mobile/desktop and English/Hebrew. No real env files/keys were read, and no live tile/browser verification is claimed. New Hebrew notice needs native-speaker review (M8-004). No other audit issue resumed. This session stops after its checkpoint: no integration worktree modifications, merge, push, deployment or database access.
 
 **Accepted V2 merge into local main — 13 October 2026 (current handoff; supersedes historical worktree instructions below)**
 

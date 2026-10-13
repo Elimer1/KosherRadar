@@ -10,9 +10,9 @@ Counts below are derived from the issue statuses in this file.
 | ALREADY WORKING | 8 |
 | BLOCKED | 4 |
 | DEFERRED | 3 |
-| VERIFIED | 40 |
+| VERIFIED | 41 |
 | Other | 0 |
-| **Total** | **67** |
+| **Total** | **68** |
 
 ## Priority bands (12 October 2026)
 
@@ -66,6 +66,7 @@ QA-001 and QA-002 were found on 12 October 2026 while checking `feature/qa-testi
 | QA-002 | Integration QA | Low | VERIFIED | Cleanup |
 | V2-D001 | Visual v2 restaurant details | High | VERIFIED | Visual redesign recovery |
 | V2-I001 | Visual v2 integration | Medium | VERIFIED | Repeated claim status |
+| MAP-001 | Dedicated map tiles fix | High | VERIFIED | Blocked upstream tiles (implementation verified; live rendering pending) |
 | M4-002 | 4 Authentication and security | High | ALREADY WORKING | Already implemented |
 | M4-003 | 4 Authentication and security | High | NOT STARTED | Security risk |
 | M4-004 | 4 Authentication and security | High | DEFERRED | Security risk |
@@ -804,6 +805,20 @@ Priority: High before launch
 - **Verification:** `cd backend; npm test -- tests/emailService.test.js` exit 0, 1 file / 22 tests passed. Gmail fully mocked; no real mail/database. No backend build/lint/typecheck scripts; frontend unchanged in this fix. Full milestone checks/browser pending EP-003.
 - **Limitations:** SMTP acceptance is not inbox delivery; Gmail credentials/live test not used. Hebrew copy needs native-speaker review M8-004. No migration/backfill; provider request overrides historical Resend requirements without modifying PROJECT_SPEC.md. Historical M9-004 evidence remains Resend-specific; live Gmail is equally unverified.
 
+### MAP-001 — Replace blocked OpenStreetMap volunteer tiles
+
+- **Milestone:** Dedicated map tiles fix (explicit user request).
+- **Priority:** High.
+- **Status:** VERIFIED.
+- **Description/evidence:** User reports OSM policy-block tile images. `RestaurantMap` hard-coded OSM volunteer subdomain tiles through `mapChrome.ts`.
+- **Root cause:** Access denied by the upstream basemap service; exact enforcement trigger cannot be established from repository evidence. Restaurant data fetching is separate.
+- **Relevant files/functions:** `RestaurantMap`, `mapChrome`, `mapTiles`, frontend environment and README setup.
+- **Planned solution:** Geoapify osm-carto raster tiles, separate public origin-restricted browser key; preserve backend private geocoding key and existing Leaflet behavior. No blocked-server fallback.
+- **Files changed:** `frontend/src/components/RestaurantMap.tsx` and new `RestaurantMap.test.tsx`, `frontend/src/components/map/mapChrome.ts`, `mapChrome.test.ts`, new `mapTiles.ts`/`mapTiles.test.ts`, locale files, `frontend/.env.example`, `README.md`, this file, `PROGRESS.md`, `MAP_TILES_FIX_PROGRESS.md`.
+- **Tests added/modified:** Replace obsolete hard-coded OSM assertion with missing-key, encoding, Geoapify URL, zoom and attribution tests. Marker/panel behavior tests retained.
+- **Verification:** `cd frontend; npm ci --no-audit --no-fund` exit 0 (existing lockfile, 142 packages). Final `npm test` exit 0, 28 files / 166 tests; `npm run lint`, `npm run typecheck`, `npm run build` each exit 0. Build JS 767.42 kB; existing >500 kB warning. Initial attempts exited 1 due to missing dependencies; intermediate component test/typecheck failures were incorrect synthetic fixture fields and absent jsdom dimensions, corrected without changing application behavior or weakening assertions. Real Leaflet rendered in jsdom, bounds API mocked, clustering wrapper mocked; tile URLs/attribution, marker selection and bilingual missing-key behavior pass. Backend unchanged/not tested; browser/live integration not tested.
+- **Blockers/limitations:** No real env files read; public map key availability unconfirmed. No live tiles/browser verified. New Hebrew notice needs native-speaker review (M8-004). No new dependencies/backend changes.
+
 ### V2-I001 — Remove a redundant status inside claim-only evidence
 
 - **Milestone:** Visual v2 integration and release review (explicit user request).
@@ -1172,3 +1187,4 @@ Independent-audit follow-up verification (13 October 2026): targeted npm test --
 - **Blockers/limitations:** Outstanding map rendering limitation; do not count fixture tiles as real service verification.
 
 Authorized main promotion verification - 13 October 2026: main --no-ff merge f252e4c incorporates integration a9c2b0e with history preserved/no conflicts. Post-merge backend npm test exit 0 (580/49 files), frontend npm test exit 0 (215/35 files), npm run lint/typecheck/build exit 0; CRLF-aware whitespace exit 0. No issue resolution/status changes from promotion. SEC-006, UIAUD-001, ADMINCERT-001 and MAPTILE-001 remain outstanding. Final main/normal-push remote confirmation reported after tracking checkpoint. Production/database/hosting actions remain unauthorized.
+

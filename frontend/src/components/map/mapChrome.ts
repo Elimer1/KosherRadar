@@ -4,9 +4,6 @@ import type { HechsherOption } from '../../types/submissions';
 import type { KashrutPreview } from '../../types/search';
 import { describeEvidenceName, describeValidity, formatMoreCount } from '../../utils/kashrutText';
 
-export const OSM_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-export const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
-
 /** Narrow maps use a bottom sheet. This is the last width that still does. */
 export const MAP_SHEET_MAX_PX = 559;
 /** Compact bottom dock starts here and runs through 799px. */

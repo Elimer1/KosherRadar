@@ -130,6 +130,7 @@ export const he: Messages = {
     wazeName: 'ניווט אל {{name}} ב-Waze',
   },
   map: {
+    tilesUnavailable: 'מפת הרקע אינה זמינה. סמני המסעדות עדיין מוצגים.',
     loading: 'טוען מפה...',
     loadError: 'לא ניתן לטעון את המפה.',
     zoomIn: 'התקרבו כדי לראות מסעדות. תצוגה רחבה כל כך אינה נסרקת.',
