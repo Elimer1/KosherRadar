@@ -2,13 +2,11 @@
 // same filters as the list. Moving the map does not change the chosen search location.
 // חדש (אבן דרך 5): תצוגת המפה. טוענת מסעדות מאושרות בתוך המלבן הנראה, עם אותם מסננים כמו הרשימה.
 // הזזת המפה לא משנה את מיקום החיפוש שנבחר.
-import type { MouseEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
 import axios from 'axios';
 import L from 'leaflet';
-import { Circle, MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
+import { Circle, MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster';
@@ -19,13 +17,13 @@ import { searchRestaurantsInBounds } from '../api/searchApi';
 import type { SearchReturnState } from '../search/searchReturn';
 import type { HechsherOption } from '../types/submissions';
 import type { MapBounds, RestaurantCardData, SearchFilters } from '../types/search';
-import { getFoodTypeLabel } from '../utils/labels';
-import { restaurantDisplayNames } from '../utils/restaurantName';
 import { ISRAEL_MAP_BOUNDS, boundsCrossDateLine, zoomForRadius } from '../utils/mapView';
-import { buildTelUrl, buildWazeUrl, restaurantPageUrl } from '../utils/navigationLinks';
-import KashrutBadge from './KashrutBadge';
-import ShareButton from './ShareButton';
-import { errorNoticeClassName, primaryButtonCompactClassName, secondaryButtonClassName, warningNoticeClassName } from './formStyles';
+import { restaurantDisplayNames } from '../utils/restaurantName';
+import { OSM_ATTRIBUTION, OSM_TILE_URL } from './map/mapChrome';
+import { clusterIcon, markerIcon, selectedMarkerIcon } from './map/mapIcons';
+import MapNotices from './map/MapNotices';
+import MapPopupCard from './map/MapPopupCard';
+import './map/map.css';
 
 interface RestaurantMapProps {
   filters: SearchFilters;
@@ -33,18 +31,6 @@ interface RestaurantMapProps {
   returnState?: SearchReturnState;
   onOpenRestaurant?: (restaurantId: string, background: boolean) => void;
 }
-
-const actionClassName = secondaryButtonClassName;
-
-// A green pin drawn in the page, so the map does not depend on Leaflet's default image files.
-// סיכה ירוקה שמצוירת בדף, כדי שהמפה לא תלויה בקובצי התמונה של Leaflet.
-const markerIcon = L.divIcon({
-  className: 'kr-marker-wrap',
-  html: '<span class="kr-marker"></span>',
-  iconSize: [28, 36],
-  iconAnchor: [14, 34],
-  popupAnchor: [0, -30],
-});
 
 const readBounds = (map: L.Map): MapBounds => {
   const box = map.getBounds();
@@ -111,71 +97,20 @@ function FollowSearchLocation({ location, radiusKm }: { location: SearchFilters[
   return null;
 }
 
-function MapPopup({
-  restaurant,
-  hechsherOptions,
-  returnState,
-  onOpenRestaurant,
-}: {
-  restaurant: RestaurantCardData;
-  hechsherOptions: HechsherOption[];
-  returnState?: SearchReturnState;
-  onOpenRestaurant?: (restaurantId: string, background: boolean) => void;
-}) {
-  const { t } = useTranslation();
-  const telUrl = buildTelUrl(restaurant.phone);
-  const wazeUrl = buildWazeUrl(restaurant.latitude, restaurant.longitude);
-  const pageUrl = restaurantPageUrl(restaurant.id, window.location.origin);
-  const names = restaurantDisplayNames(restaurant);
-  const handleOpen = (event: MouseEvent<HTMLAnchorElement>) => {
-    if (!onOpenRestaurant) {
-      return;
-    }
+function SelectionClear({ onClear }: { onClear: () => void }) {
+  const onClearRef = useRef(onClear);
 
-    const background = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0;
+  useEffect(() => {
+    onClearRef.current = onClear;
+  }, [onClear]);
 
-    if (!background) {
-      event.preventDefault();
-    }
+  useMapEvents({
+    click() {
+      onClearRef.current();
+    },
+  });
 
-    onOpenRestaurant(restaurant.id, background);
-  };
-
-  return (
-    <div className="w-64 max-w-full space-y-2 text-sm text-ink">
-      <p className="break-words text-base font-semibold text-ink" dir="auto">
-        {names.primary}
-      </p>
-      {names.secondary.length > 0 && (
-        <p className="break-words text-muted" dir="auto">
-          {names.secondary.join(' · ')}
-        </p>
-      )}
-      {restaurant.address && (
-        <p className="break-words text-muted" dir="auto">
-          {restaurant.address}
-        </p>
-      )}
-      {restaurant.foodType && <p>{getFoodTypeLabel(restaurant.foodType)}</p>}
-      <KashrutBadge kashrut={restaurant.kashrut} hechsherOptions={hechsherOptions} />
-      <div className="flex flex-wrap gap-2 pt-1">
-        <Link to={`/restaurants/${restaurant.id}`} state={returnState} onClick={handleOpen} className={primaryButtonCompactClassName}>
-          {t('card.viewDetails')}
-        </Link>
-        {telUrl && (
-          <a href={telUrl} className={actionClassName}>
-            {t('card.call')}
-          </a>
-        )}
-        {wazeUrl && (
-          <a href={wazeUrl} target="_blank" rel="noopener noreferrer" className={actionClassName}>
-            {t('card.waze')}
-          </a>
-        )}
-        <ShareButton title={names.primary} url={pageUrl} className={actionClassName} />
-      </div>
-    </div>
-  );
+  return null;
 }
 
 function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant }: RestaurantMapProps) {
@@ -186,6 +121,9 @@ function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [retryCounter, setRetryCounter] = useState(0);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const dockRef = useRef<HTMLDivElement>(null);
+  const markerClick = useRef(false);
 
   const boundsKey = bounds ? `${bounds.west},${bounds.south},${bounds.east},${bounds.north}` : '';
   const filtersKey = JSON.stringify(filters);
@@ -242,10 +180,23 @@ function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant
   const markers = items.filter(
     (restaurant) => typeof restaurant.latitude === 'number' && typeof restaurant.longitude === 'number'
   );
+  const selected = markers.find((restaurant) => restaurant.id === selectedId) ?? null;
+
+  useEffect(() => {
+    if (selectedId && !markers.some((restaurant) => restaurant.id === selectedId)) {
+      setSelectedId(null);
+    }
+  }, [markers, selectedId]);
+
+  useEffect(() => {
+    if (selectedId) {
+      dockRef.current?.focus();
+    }
+  }, [selectedId]);
 
   return (
-    <div>
-      <div className="relative h-[70vh] min-h-80 overflow-hidden rounded-2xl border border-soft bg-mist shadow-[0_1px_2px_rgba(23,75,58,0.05)] sm:h-[72vh] md:h-[68vh] lg:h-[calc(100vh-14rem)]">
+    <div className="kr-map-shell">
+      <div className="kr-map-frame">
         <MapContainer
           {...(located
             ? { center: located.center, zoom: located.zoom }
@@ -256,82 +207,95 @@ function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant
                 ] as L.LatLngBoundsExpression,
               })}
           scrollWheelZoom
-          className="h-full w-full"
+          className="kr-map-canvas"
         >
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution={OSM_ATTRIBUTION}
+            url={OSM_TILE_URL}
           />
           <BoundsReporter onBounds={setBounds} />
+          <SelectionClear
+            onClear={() => {
+              if (markerClick.current) {
+                return;
+              }
+
+              setSelectedId(null);
+            }}
+          />
           <FollowSearchLocation location={filters.location} radiusKm={filters.radiusKm} />
           {filters.location && filters.radiusKm !== null && (
             <Circle
               center={[filters.location.lat, filters.location.lng]}
               radius={filters.radiusKm * 1000}
-              pathOptions={{ color: '#174b3a', weight: 1, fillColor: '#174b3a', fillOpacity: 0.08 }}
+              pathOptions={{ color: '#2c6b56', weight: 1.5, fillColor: '#174b3a', fillOpacity: 0.06 }}
             />
           )}
           <MarkerClusterGroup
             chunkedLoading
             showCoverageOnHover={false}
-            iconCreateFunction={(cluster) =>
-              L.divIcon({
-                html: `<span class="kr-cluster">${cluster.getChildCount()}</span>`,
-                className: 'kr-cluster-wrap',
-                iconSize: [40, 40],
-              })
-            }
+            iconCreateFunction={(cluster) => clusterIcon(cluster.getChildCount())}
           >
             {markers.map((restaurant) => (
-              <Marker key={restaurant.id} position={[restaurant.latitude as number, restaurant.longitude as number]} icon={markerIcon}>
-                <Popup>
-                  <MapPopup
-                    restaurant={restaurant}
-                    hechsherOptions={hechsherOptions}
-                    returnState={returnState}
-                    onOpenRestaurant={onOpenRestaurant}
-                  />
-                </Popup>
-              </Marker>
+              <Marker
+                key={restaurant.id}
+                position={[restaurant.latitude as number, restaurant.longitude as number]}
+                icon={restaurant.id === selectedId ? selectedMarkerIcon : markerIcon}
+                eventHandlers={{
+                  click: () => {
+                    markerClick.current = true;
+                    setSelectedId(restaurant.id);
+                    window.setTimeout(() => {
+                      markerClick.current = false;
+                    }, 0);
+                  },
+                }}
+                title={restaurantDisplayNames(restaurant).primary}
+              />
             ))}
           </MarkerClusterGroup>
         </MapContainer>
 
         {loading && (
-          <p role="status" className="pointer-events-none absolute start-3 top-3 z-[500] inline-flex min-h-11 items-center gap-2 rounded-full border border-soft bg-white/95 px-3 text-sm text-ink shadow-sm">
-            <span className="kr-spinner" aria-hidden="true" />
+          <p role="status" className="kr-map-loading">
+            <span className="kr-map-spinner" aria-hidden="true" />
             {t('map.loading')}
           </p>
         )}
+        {selected && (
+          <div
+            ref={dockRef}
+            className="kr-map-dock"
+            role="dialog"
+            tabIndex={-1}
+            aria-label={selected.name}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                setSelectedId(null);
+              }
+            }}
+          >
+            <MapPopupCard
+              restaurant={selected}
+              hechsherOptions={hechsherOptions}
+              returnState={returnState}
+              onOpenRestaurant={onOpenRestaurant}
+            />
+            <button type="button" className="kr-map-dock-close" onClick={() => setSelectedId(null)} aria-label={t('layout.dismiss')}>
+              ×
+            </button>
+          </div>
+        )}
       </div>
 
-      <div className="mt-3 space-y-2 text-sm text-muted">
-        {tooWide && (
-          <p role="status" className={warningNoticeClassName}>
-            {t('map.zoomIn')}
-          </p>
-        )}
-        {error !== '' && (
-          <p role="alert" className={errorNoticeClassName}>
-            {error}{' '}
-            <button type="button" onClick={() => setRetryCounter((current) => current + 1)} className="inline-flex min-h-11 items-center font-medium underline">
-              {t('common.tryAgain')}
-            </button>
-          </p>
-        )}
-        {capped && (
-          <p role="status" className={warningNoticeClassName}>
-            {t('map.capped')}
-          </p>
-        )}
-        {!loading && !tooWide && error === '' && markers.length === 0 && (
-          <p className="rounded-2xl border border-dashed border-soft bg-white px-4 py-6 text-center text-ink">{t('map.empty')}</p>
-        )}
-        {filters.location && filters.radiusKm !== null && (
-          <p>{t('map.radius')}</p>
-        )}
-        <p>{t('map.note')}</p>
-      </div>
+      <MapNotices
+        tooWide={tooWide}
+        error={error}
+        capped={capped}
+        showEmpty={!loading && !tooWide && error === '' && markers.length === 0}
+        showRadius={Boolean(filters.location && filters.radiusKm !== null)}
+        onRetry={() => setRetryCounter((current) => current + 1)}
+      />
     </div>
   );
 }
