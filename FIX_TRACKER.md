@@ -1170,3 +1170,5 @@ Independent-audit follow-up verification (13 October 2026): targeted npm test --
 - **Tests added or modified:** None; recommend tile-error feedback regression and approved environment browser verification of successful tile loads.
 - **Verification:** User-supplied observed HTTP 403, not a new live reproduction.
 - **Blockers/limitations:** Outstanding map rendering limitation; do not count fixture tiles as real service verification.
+
+Authorized main promotion verification - 13 October 2026: main --no-ff merge f252e4c incorporates integration a9c2b0e with history preserved/no conflicts. Post-merge backend npm test exit 0 (580/49 files), frontend npm test exit 0 (215/35 files), npm run lint/typecheck/build exit 0; CRLF-aware whitespace exit 0. No issue resolution/status changes from promotion. SEC-006, UIAUD-001, ADMINCERT-001 and MAPTILE-001 remain outstanding. Final main/normal-push remote confirmation reported after tracking checkpoint. Production/database/hosting actions remain unauthorized.

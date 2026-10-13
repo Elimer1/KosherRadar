@@ -214,3 +214,25 @@ Outgoing history scan: 393 reachable outgoing blobs inspected, checking real env
 Outstanding issues intentionally preserved, not fixed by promotion: SEC-006 / EMAILAUD-001 P1; UIAUD-001 P1; ADMINCERT-001 reported teuda.hechsherOther validation failure in administrator certificate creation; MAPTILE-001 observed OpenStreetMap tile HTTP 403. Last two are user-reported and not newly reproduced. Added separate tracker records without changing app validation, provider/hosting settings or data. Main promotion/push approval is distinct from production readiness.
 
 Next: commit this documentation preflight on integration, verify clean, switch this checkout to main, preserve merge history, verify merged tree, run post-merge checks, record merge/hash and results, recheck remote, normal push main and confirm GitHub hash. STOP on any failing check or unexpected remote. No deployment/database/index/hosting operations or worktree deletion.
+
+## Main promotion verification and final handoff - 13 October 2026
+
+Integration preflight/documentation checkpoint: a9c2b0e8de4e02d4f5b9426e8f5d97d72d9bb2ee, descending from user-reviewed bbeec70. Local main merge: f252e4c3416ef269f608ea7a3641eafcd31b06ef; parents dc5dc24aab5ecac8701fd5083238d4de9f75a5b7 and a9c2b0e8de4e02d4f5b9426e8f5d97d72d9bb2ee. --no-ff, no conflicts, tracked merge tree exactly equals integration. This checkout alone switched from integration/agent-fixes to previously unowned main; original project/email branch and every source worktree remain untouched. No reset, force, deletion, squash or history rewrite.
+
+Actual post-merge main verification (all exit 0):
+- cd backend; npm test: 49 files / 580 passed; external credentials disabled and MongoDB URI set to non-listening loopback mock target. Repositories/providers mocked, local HTTP fixtures; no database/service access.
+- cd frontend; npm test: 35 files / 215 passed. Existing non-failing jsdom navigation diagnostic remains.
+- cd frontend; npm run lint (oxlint), npm run typecheck, npm run build: passed. Production assets identical to integrated build: JS 774.93 kB/gzip 226.52 kB, CSS 70.70 kB; existing >500 kB warning remains. Backend has no build/lint/typecheck scripts.
+- git diff --quiet integration/agent-fixes HEAD: exit 0 at merge. git -c core.whitespace=cr-at-eol diff dc5dc24 HEAD --check: exit 0.
+- GitHub main rechecked after tests: 539303733b887f499dbbeaf49db3e3dff55b2eeb, unchanged from preflight and ancestor of local main. No unexpected remote work.
+
+Earlier 21 disposable MongoDB regressions, strengthened admin check, SEC-006 diagnostics and 88 recovery fixture browser renders remain integrated-tree evidence; not rerun in merge/push-only authorization. No deployment, migrations/index changes, existing application DB operations, hosting changes, real mail/uploads or live tile/provider tests.
+
+Outstanding, intentionally NOT fixed:
+1. SEC-006 / EMAILAUD-001, confirmed P1: concurrent account recovery can overwrite a completed reset.
+2. UIAUD-001, confirmed P1: stale admin form can target another restaurant.
+3. ADMINCERT-001: reported administrator certificate teuda.hechsherOther validation failure; exact payload still needs reproduction.
+4. MAPTILE-001: observed OpenStreetMap tile HTTP 403 in the reported environment; mocked tiles are not live verification.
+Native Hebrew review, live-service/topology/index rollout, backups/readiness and bundle warning also remain. This promotion publishes code/history only; it does not approve production readiness or resolve blockers.
+
+Final local main is the documentation checkpoint containing this handoff; resolve exact hash with git rev-parse main. The normal push and subsequent git ls-remote confirmation occur after this checkpoint; the final user-facing report records exact matching local/GitHub hashes and actual push result. Do not infer push success from this pre-push committed record alone: verify remote equality if resuming. Commit only these tracking notes, recheck clean/remote, push origin main:main normally and confirm equality; STOP/report on failure or unexpected remote. Once confirmed, STOP; no further work/production deployment.
