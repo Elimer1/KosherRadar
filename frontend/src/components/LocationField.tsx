@@ -2,14 +2,14 @@
 // A suggestion or Enter looks the place up. A miss does not invent coordinates.
 // Geolocation runs only after the visitor presses the current-location control.
 import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import type { KeyboardEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { geocodePlace, suggestPlaces } from '../api/placesApi';
 import { activeLanguage } from '../i18n';
 import type { AddressSuggestion, PlaceLanguage } from '../api/placesApi';
 import type { SearchLocationPick } from '../hooks/useSearchCriteria';
 import type { SearchFilters } from '../types/search';
-import { inputClassName, labelClassName, quietActionClassName } from './formStyles';
+import { quietActionClassName } from './formStyles';
 
 interface LocationFieldProps {
   filters: SearchFilters;
@@ -22,7 +22,23 @@ interface LocationFieldProps {
 
 const LIST_ID = 'location-suggestions';
 
-function LocationField({ filters, appliedLabel = '', locationSource = null, onPickLocation, onClearLocation, lang }: LocationFieldProps) {
+function LocateIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+      <circle cx="10" cy="10" r="3" />
+      <path d="M10 2.5v2.2M10 15.3v2.2M2.5 10h2.2M15.3 10h2.2" />
+    </svg>
+  );
+}
+
+function LocationField({
+  filters,
+  appliedLabel = '',
+  locationSource = null,
+  onPickLocation,
+  onClearLocation,
+  lang,
+}: LocationFieldProps) {
   const { t } = useTranslation();
   const placeLanguage = lang ?? activeLanguage();
   const [text, setText] = useState(locationSource === 'device' ? '' : appliedLabel);
@@ -178,11 +194,11 @@ function LocationField({ filters, appliedLabel = '', locationSource = null, onPi
   };
 
   return (
-    <div className="mt-4 border-t border-soft pt-4">
-      <label htmlFor="search-location" className={labelClassName}>
-        {t('location.label')}
-      </label>
-      <div className="mt-1.5 flex flex-col gap-2 sm:flex-row sm:items-stretch">
+    <>
+      <div className="v2-composer-place">
+        <label htmlFor="search-location" className="sr-only">
+          {t('location.label')}
+        </label>
         <input
           id="search-location"
           value={text}
@@ -199,66 +215,54 @@ function LocationField({ filters, appliedLabel = '', locationSource = null, onPi
           onKeyDown={handleKeyDown}
           placeholder={t('location.placeholder')}
           autoComplete="off"
-          dir="auto"
           role="combobox"
           aria-expanded={showList}
           aria-controls={LIST_ID}
           aria-autocomplete="list"
           aria-activedescendant={activeIndex >= 0 ? `location-suggestion-${activeIndex}` : undefined}
-          className={`${inputClassName} mt-0 sm:min-w-0 sm:flex-1`}
+          className="v2-composer-input"
         />
-        <button
-          type="button"
-          onClick={handleUseMyLocation}
-          disabled={locating}
-          className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-grove-soft px-4 text-sm font-semibold text-forest-deep hover:bg-[#d7efe3] disabled:cursor-not-allowed disabled:opacity-60 sm:w-56"
-        >
-          {locating ? t('location.finding') : t('location.useMine')}
-        </button>
+        {showList && (
+          <ul id={LIST_ID} role="listbox" className="v2-suggest">
+            {suggestions.map((suggestion, index) => (
+              <li
+                key={suggestion.placeId || suggestion.label}
+                id={`location-suggestion-${index}`}
+                role="option"
+                aria-selected={index === activeIndex}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  applyPlace(suggestion);
+                }}
+                className={`min-h-12 cursor-pointer px-3.5 py-2 text-start text-sm text-ink ${index === activeIndex ? 'bg-mist' : 'hover:bg-canvas'}`}
+              >
+                <bdi>{suggestion.label}</bdi>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
-
-      {showList && (
-        <ul
-          id={LIST_ID}
-          role="listbox"
-          className="mt-2 overflow-hidden rounded-2xl bg-white shadow-[0_16px_40px_rgba(28,36,32,0.1)] ring-1 ring-soft"
-        >
-          {suggestions.map((suggestion, index) => (
-            <li
-              key={suggestion.placeId || suggestion.label}
-              id={`location-suggestion-${index}`}
-              role="option"
-              aria-selected={index === activeIndex}
-              onMouseDown={(event) => {
-                event.preventDefault();
-                applyPlace(suggestion);
-              }}
-              className={`min-h-11 cursor-pointer px-3 py-2 text-start text-sm text-ink ${index === activeIndex ? 'bg-mist' : 'hover:bg-canvas'}`}
-              dir="auto"
-            >
-              {suggestion.label}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {(locationSource === 'device' || selectedLabel !== '') && filters.location && (
-        <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-ink">
-          <span dir="auto">
-            {t('location.using', { place: locationSource === 'device' ? t('location.current') : selectedLabel })}
-          </span>
-          <button type="button" onClick={handleClear} className={quietActionClassName}>
-            {t('location.clear')}
-          </button>
-        </p>
-      )}
-
-      {note !== '' && (
-        <p role="status" className="mt-2 text-sm text-amber-ink">
-          {note}
-        </p>
-      )}
-    </div>
+      <div className="v2-composer-action">
+        <button type="button" id="use-current-location" onClick={handleUseMyLocation} disabled={locating} className="v2-location-action"><LocateIcon />{locating ? t('location.finding') : t('location.useMine')}</button>
+        {(locationSource === 'device' || selectedLabel !== '') && filters.location && (
+          <p className="flex flex-wrap items-center gap-2 text-sm text-ink">
+            <span>
+              <bdi>
+                {t('location.using', { place: locationSource === 'device' ? t('location.current') : selectedLabel })}
+              </bdi>
+            </span>
+            <button type="button" onClick={handleClear} className={quietActionClassName}>
+              {t('location.clear')}
+            </button>
+          </p>
+        )}
+        {note !== '' && (
+          <p role="status" className="text-sm text-amber-ink">
+            {note}
+          </p>
+        )}
+      </div>
+    </>
   );
 }
 

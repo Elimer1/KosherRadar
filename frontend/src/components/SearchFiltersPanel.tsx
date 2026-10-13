@@ -21,8 +21,8 @@ function SearchFiltersPanel({ filters, options, onChange, showHeading = true }: 
   const { t } = useTranslation();
 
   return (
-    <div className="space-y-6">
-      {showHeading && <h2 className="text-base font-semibold text-ink">{t('home.filters')}</h2>}
+    <div className="v2-filter-stack">
+      {showHeading && <h2 className="text-[15px] font-semibold text-ink">{t('home.filters')}</h2>}
       <div>
         <div className="flex items-center justify-between gap-2">
           <label htmlFor="filter-level" className={labelClassName}>

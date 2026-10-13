@@ -2,12 +2,34 @@ import { act } from 'react';
 import type { ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import i18n from '../i18n';
+import HomePage from '../pages/HomePage';
 import KashrutBadge from './KashrutBadge';
 import LocationField from './LocationField';
 import SearchFiltersPanel from './SearchFiltersPanel';
 import { emptySearchFilters } from '../types/search';
 import type { KashrutPreview, KashrutStatus } from '../types/search';
+
+vi.mock('../hooks/useRestaurantSearch', () => ({
+  useRestaurantSearch: () => ({
+    items: [],
+    page: 0,
+    total: 0,
+    hasMore: false,
+    capped: false,
+    atlasUnavailable: false,
+    loading: false,
+    loadingMore: false,
+    error: '',
+    retry: () => undefined,
+    loadMore: () => undefined,
+  }),
+}));
+
+vi.mock('../hooks/useFormOptions', () => ({
+  useFormOptions: () => ({ options: null, error: '' }),
+}));
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -76,10 +98,17 @@ describe('discovery presentation', () => {
 
     const verifiedBox = verified.firstElementChild?.className ?? '';
     const unverifiedBox = unverified.firstElementChild?.className ?? '';
-    expect(verifiedBox).not.toContain('border-dashed');
-    expect(unverifiedBox).toContain('border-dashed');
-    expect(unverifiedBox).toContain('amber');
-    expect(verifiedBox).not.toContain('amber');
+    const expiredBox = expired.firstElementChild?.className ?? '';
+    const unknownBox = unknown.firstElementChild?.className ?? '';
+    // Visual v2 uses separate status surfaces. The previous dashed amber card is no longer the treatment.
+    expect(verifiedBox).toContain('v2-status-verified');
+    expect(unverifiedBox).toContain('v2-status-unverified');
+    expect(expiredBox).toContain('v2-status-expired');
+    expect(unknownBox).toContain('v2-status-unknown');
+    expect(verifiedBox).not.toContain('v2-status-unverified');
+    expect(unverifiedBox).not.toContain('v2-status-verified');
+    expect(verified.querySelector('svg')).toBeTruthy();
+    expect(unverified.querySelector('svg')).toBeTruthy();
   });
 
   it('applies a filter immediately and does not add an Apply step', async () => {
@@ -137,5 +166,47 @@ describe('discovery presentation', () => {
       configurable: true,
       value: previous,
     });
+  });
+});
+
+describe('discovery homepage structure', () => {
+  it('opens with a light introduction instead of a green hero', async () => {
+    await act(async () => {
+      await i18n.changeLanguage('en');
+    });
+
+    const container = render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>
+    );
+
+    expect(container.querySelector('h1')?.textContent).toContain('Find restaurants and the evidence');
+    expect(container.textContent).toContain('Find kosher places with clearer information');
+    expect(container.textContent).toContain('Search by restaurant');
+    expect(container.textContent).toContain('Explore an area');
+    expect(container.textContent).toContain('Near me');
+    expect(container.querySelector('.bg-forest-deep')).toBeNull();
+    expect(container.querySelector('.v2-display')).toBeTruthy();
+    expect(container.querySelector('#restaurant-search')).toBeTruthy();
+    expect(container.querySelector('#search-location')).toBeTruthy();
+  });
+
+  it('switches to the directory once a search is in the address', async () => {
+    await act(async () => {
+      await i18n.changeLanguage('en');
+    });
+
+    const container = render(
+      <MemoryRouter initialEntries={['/?q=pizza']}>
+        <HomePage />
+      </MemoryRouter>
+    );
+
+    expect(container.querySelector('h1')).toBeNull();
+    expect(container.querySelector('h2')?.textContent).toContain('Search results');
+    expect(container.textContent).toContain('pizza');
+    expect(container.querySelector('.v2-directory')).toBeNull();
+    expect(container.textContent).toContain('No restaurants match your search.');
   });
 });

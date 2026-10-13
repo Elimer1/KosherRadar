@@ -1,5 +1,5 @@
-// One search result: name, place, food type, categories, kashrut status, distance, Call and Waze.
-// There are no ratings, reviews, photos, or opening hours. KosherRadar is a factual directory.
+// One search result in the directory: name, place, food, kashrut evidence, and quiet actions.
+// There are no ratings, reviews, photos, or opening hours.
 import type { MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -11,7 +11,6 @@ import { buildTelUrl, buildWazeUrl } from '../utils/navigationLinks';
 import { restaurantDisplayNames } from '../utils/restaurantName';
 import type { SearchReturnState } from '../search/searchReturn';
 import KashrutBadge from './KashrutBadge';
-import { metaChipClassName, primaryButtonCompactClassName, quietChipClassName, secondaryButtonClassName } from './formStyles';
 
 interface RestaurantCardProps {
   restaurant: RestaurantCardData;
@@ -27,6 +26,24 @@ function placeLine(restaurant: RestaurantCardData) {
   return [address, showCity ? city : ''].filter((part) => part !== '').join(', ');
 }
 
+function PhoneIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M6.2 3.6h2l1 2.4-1.3 1a9 9 0 0 0 4.1 4.1l1-1.3 2.4 1v2A1.4 1.4 0 0 1 14 14 11.4 11.4 0 0 1 4.6 4.6 1.4 1.4 0 0 1 6.2 3.6z" />
+    </svg>
+  );
+}
+
+function RouteIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <circle cx="5" cy="5" r="2" />
+      <circle cx="15" cy="15" r="2" />
+      <path d="M7 6.2c2.4.4 3.6 1.6 4.2 3.2S13 13 13 13" />
+    </svg>
+  );
+}
+
 function RestaurantCard({ restaurant, hechsherOptions, returnState, onOpenRestaurant }: RestaurantCardProps) {
   const { t } = useTranslation();
   const telUrl = buildTelUrl(restaurant.phone);
@@ -34,7 +51,10 @@ function RestaurantCard({ restaurant, hechsherOptions, returnState, onOpenRestau
   const place = placeLine(restaurant);
   const distanceText = formatDistance(restaurant.distanceKm);
   const names = restaurantDisplayNames(restaurant);
-  const hasMeta = Boolean(restaurant.foodType) || restaurant.categories.length > 0;
+  const meta = [
+    restaurant.foodType ? getFoodTypeLabel(restaurant.foodType) : '',
+    ...restaurant.categories.map((category) => getCategoryLabel(category)),
+  ].filter((part) => part !== '');
   const handleOpen = (event: MouseEvent<HTMLAnchorElement>) => {
     if (!onOpenRestaurant) {
       return;
@@ -50,61 +70,53 @@ function RestaurantCard({ restaurant, hechsherOptions, returnState, onOpenRestau
   };
 
   return (
-    <li className="kr-card border-b border-soft px-4 py-5 transition-colors last:border-b-0 hover:bg-canvas/60 sm:px-6">
-      <div className="grid items-start gap-4 md:grid-cols-[minmax(0,1fr)_17rem]">
-        <div className="min-w-0">
-          <div className="flex max-w-full flex-col items-start">
-            <h3 className="max-w-full break-words text-xl font-semibold leading-snug tracking-tight text-ink sm:text-2xl">
-              <Link
-                to={`/restaurants/${restaurant.id}`}
-                state={returnState}
-                onClick={handleOpen}
-                dir="auto"
-                className="rounded-sm text-ink underline-offset-2 hover:text-forest hover:underline"
-              >
-                <bdi>{names.primary}</bdi>
-              </Link>
-            </h3>
-            {names.secondary.length > 0 && (
-              <p className="mt-0.5 max-w-full break-words text-sm text-muted">
-                {names.secondary.map((name, index) => (
-                  <span key={`${name}-${index}`}>
-                    {index > 0 && <span aria-hidden="true"> · </span>}
-                    <bdi>{name}</bdi>
-                  </span>
-                ))}
-              </p>
-            )}
-          </div>
-          {place !== '' && (
-            <p className="mt-1 break-words text-sm leading-relaxed text-muted">
-              <bdi>{place}</bdi>
-              {distanceText && <span className="ms-2 font-medium text-ink">{distanceText}</span>}
-            </p>
-          )}
-          {place === '' && distanceText && <p className="mt-1 text-sm font-medium text-ink">{distanceText}</p>}
+    <li className="v2-result kr-card">
+      <div className="v2-result-identity">
+        <h3 className="v2-result-name text-start">
+          <Link
+            to={`/restaurants/${restaurant.id}`}
+            state={returnState}
+            onClick={handleOpen}
+            className="text-ink underline-offset-2 hover:text-forest hover:underline"
+          >
+            <bdi>{names.primary}</bdi>
+          </Link>
+        </h3>
+        {names.secondary.length > 0 && (
+          <p className="v2-result-secondary text-start">
+            {names.secondary.map((name, index) => (
+              <span key={`${name}-${index}`}>
+                {index > 0 && <span aria-hidden="true"> · </span>}
+                <bdi>{name}</bdi>
+              </span>
+            ))}
+          </p>
+        )}
+        {place !== '' && (
+          <p className="v2-result-address text-start">
+            <bdi>{place}</bdi>
+            {distanceText && <span className="ms-2 text-ink">{distanceText}</span>}
+          </p>
+        )}
+        {place === '' && distanceText && <p className="v2-result-address text-ink">{distanceText}</p>}
+      </div>
 
-          {hasMeta && (
-            <ul className="mt-3 flex flex-wrap gap-1.5">
-              {restaurant.foodType && <li className={metaChipClassName}>{getFoodTypeLabel(restaurant.foodType)}</li>}
-              {restaurant.categories.map((category) => (
-                <li key={category} className={quietChipClassName}>
-                  {getCategoryLabel(category)}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+      <p className="v2-result-meta">{meta.join(' · ')}</p>
 
+      <div className="v2-result-kashrut">
         <KashrutBadge kashrut={restaurant.kashrut} hechsherOptions={hechsherOptions} />
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2 md:ps-0">
-        <Link to={`/restaurants/${restaurant.id}`} state={returnState} onClick={handleOpen} className={primaryButtonCompactClassName}>
+      <div className="v2-result-actions">
+        <Link to={`/restaurants/${restaurant.id}`} state={returnState} onClick={handleOpen} className="v2-details-action">
           {t('card.viewDetails')}
+          <span aria-hidden="true" className="v2-forward-mark">
+            →
+          </span>
         </Link>
         {telUrl && (
-          <a href={telUrl} className={secondaryButtonClassName} aria-label={t('card.callName', { name: names.primary })}>
+          <a href={telUrl} className="v2-aux-action" aria-label={t('card.callName', { name: names.primary })}>
+            <PhoneIcon />
             {t('card.call')}
           </a>
         )}
@@ -113,9 +125,10 @@ function RestaurantCard({ restaurant, hechsherOptions, returnState, onOpenRestau
             href={wazeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className={secondaryButtonClassName}
+            className="v2-aux-action"
             aria-label={t('card.wazeName', { name: names.primary })}
           >
+            <RouteIcon />
             {t('card.waze')}
           </a>
         )}

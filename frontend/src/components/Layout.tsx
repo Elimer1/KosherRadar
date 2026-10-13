@@ -12,12 +12,12 @@ function Layout() {
 
   return (
     <PageMetaProvider title={t('meta.title')} description={t('meta.description')}>
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-screen flex-col bg-canvas">
         <Navbar />
 
         {sessionExpired && (
-          <div role="alert" className="border-b border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-ink">
-            <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
+          <div role="alert" className="border-b border-amber-ink/30 bg-amber-soft px-4 py-2.5 text-sm text-amber-ink">
+            <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between gap-3 md:px-4">
               <span>{t('layout.sessionExpired')}</span>
               <button type="button" onClick={dismissSessionExpired} className="min-h-11 shrink-0 rounded-xl px-2 font-medium underline">
                 {t('layout.dismiss')}
@@ -26,12 +26,12 @@ function Layout() {
           </div>
         )}
 
-        <main className={discoveryHome ? 'w-full flex-1 pb-10' : 'mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8'}>
+        <main className={discoveryHome ? 'w-full flex-1 pb-12' : 'mx-auto w-full max-w-[1200px] flex-1 px-4 py-6 md:px-8 md:py-8'}>
           <Outlet />
         </main>
 
-        <footer className="border-t border-soft px-4 py-6 text-center text-sm text-muted sm:px-6 lg:px-8">
-          <p className="mx-auto max-w-6xl leading-relaxed">{t('layout.footer')}</p>
+        <footer className="border-t border-soft px-4 py-6 text-center text-sm text-muted md:px-8">
+          <p className="mx-auto max-w-[1200px] leading-relaxed">{t('layout.footer')}</p>
         </footer>
       </div>
     </PageMetaProvider>
