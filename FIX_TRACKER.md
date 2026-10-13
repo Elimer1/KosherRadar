@@ -10,9 +10,9 @@ Counts below are derived from the issue statuses in this file.
 | ALREADY WORKING | 8 |
 | BLOCKED | 5 |
 | DEFERRED | 1 |
-| VERIFIED | 13 |
+| VERIFIED | 14 |
 | Other | 0 |
-| **Total** | **40** |
+| **Total** | **41** |
 
 ## Priority bands (12 October 2026)
 
@@ -48,6 +48,7 @@ QA-001 and QA-002 were found on 12 October 2026 while checking `feature/qa-testi
 
 | ID | Milestone | Priority | Status | Class |
 | --- | --- | --- | --- | --- |
+| EP-001 | Email/password recovery (explicit request) | High | VERIFIED | Delivery/templates |
 | M1-001 | 1 Restaurant and certificate submission | Critical | VERIFIED | Confirmed bug |
 | M1-002 | 1 Restaurant and certificate submission | Critical | VERIFIED | UX improvement |
 | M1-003 | 1 Restaurant and certificate submission | Critical | VERIFIED | Reliability risk |
@@ -736,6 +737,17 @@ Priority: High before launch
 ---
 
 ## Audit session record
+
+### EP-001 — Gmail transport and branded bilingual email
+
+- **Milestone:** Email/password recovery, explicitly authorized 13 October 2026.
+- **Priority/status:** High / VERIFIED.
+- **Evidence/root cause:** Verified main dc5dc24 uses Resend REST, has no Nodemailer, and renders English plain text only; request explicitly requires Gmail/Nodemailer and bilingual HTML/text. Existing transport logs provider response text that could expose sensitive content.
+- **Relevant files/planned solution:** emailService.js/env.js; separate Gmail transport, safe templates and caller-compatible services.
+- **Files changed:** backend/src/services/emailTransport.js, emailTemplates.js, emailService.js, config/env.js, backend/.env.example, backend/package.json/package-lock.json, backend/tests/emailService.test.js, EMAIL_SETUP.md and tracking documents.
+- **Tests:** Replaced outdated Resend-specific assertions because the explicitly requested provider is now Gmail. Preserved original missing config, successful/failed delivery, public reason, kind and reset content scenarios; expanded escaping, Hebrew, trusted links, recipient acceptance and secret-free diagnostics.
+- **Verification:** `cd backend; npm test -- tests/emailService.test.js` exit 0, 1 file / 22 tests passed. Gmail fully mocked; no real mail/database. No backend build/lint/typecheck scripts; frontend unchanged in this fix. Full milestone checks/browser pending EP-003.
+- **Limitations:** SMTP acceptance is not inbox delivery; Gmail credentials/live test not used. Hebrew copy needs native-speaker review M8-004. No migration/backfill; provider request overrides historical Resend requirements without modifying PROJECT_SPEC.md. Historical M9-004 evidence remains Resend-specific; live Gmail is equally unverified.
 
 ### V2-I001 — Remove a redundant status inside claim-only evidence
 
