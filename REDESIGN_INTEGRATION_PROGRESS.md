@@ -134,6 +134,20 @@ Starting branch `redesign/wave-1-integration`, HEAD `0140d195474c44011dbfd285b4b
 The previous Wave 1 visual target and completion notes above are historical. V2 requires a light header and identity sections, compact directory results, scoped map/details styling, and the preserved business rules. Existing installed Chrome and native DevTools automation can support actual combined-app browser verification without installing dependencies. Backend dependencies are absent here; investigate an existing local test runner before marking backend verification unavailable.
 
 ## NEXT AGENT ONBOARDING
+**Accepted V2 merge into local main — 13 October 2026 (current handoff; supersedes historical worktree instructions below)**
+
+The user accepted the integrated V2 redesign and explicitly authorized its local merge into main. Worktree `C:/FS/projects/KosherRadar`, branch `main`; pre-merge main `539303733b887f499dbbeaf49db3e3dff55b2eeb`. Integration was clean and exactly at accepted commit `548743ec9c0084c5dda6db30603eb4b43a6ebed3`. Main had no tracked edits and only untracked `PRE_PUSH_REVIEW.md`. Its SHA256 before/after merge and validation: `D987D0DD2FBA7D1D2E9F94F3B1C70BEF6552594C6A99134DAA5A7D03ACA69E24`; preserved and excluded from commits.
+
+Merge commit `406dd65b254333fa86d2f771554545e25c380406`, parents pre-merge main and accepted integration. `--no-ff`, no conflicts. The resulting tracked tree exactly equals accepted integration; no source code merge fixes or new redesign. Source integration remains at `548743e`, clean; source branches/worktrees were not modified. No reset, clean, deletion, push or deployment.
+
+Post-merge checks from main: frontend `npm run lint`, `npm run typecheck`, `npm test` (26 files / 158 passed), `npm run build`, backend `npm test` (40 files / 505 passed), CRLF-aware diff check all exit 0. Build JS 766.92 kB / 224.38 kB gzip, CSS 70.70 kB; existing >500 kB chunk warning persists. Backend has no lint/typecheck/build scripts. Backend tests mocked; live service credentials disabled in that test process and MongoDB URI set to non-listening loopback test address. No database or live integration accessed. Browser not rerun in this promotion: accepted browser evidence remains in the integration worktree; source and production build outputs match the accepted version.
+
+Review: no confirmed functional/security regression. Backend, API clients, auth/authorization/storage, search-state/navigation helpers, public status derivation/locale terminology, moderation/points, package manifests and lockfiles unchanged from pre-merge main. New UI keeps safe URL checks, text escaping, explicit geolocation, map request cancellation, route return state and separate trust/evidence states. Existing tests preserved; four component/map test files added. No new issue or partially implemented fix; tracker statuses unchanged.
+
+Files modified after merge: documentation only (`PROGRESS.md`, `REDESIGN_INTEGRATION_PROGRESS.md`, `FIX_TRACKER.md`). The main documentation commit containing this handoff is final main HEAD; get exact hash with `git rev-parse main`. Historical integration prohibitions on merging main were superseded by the user's explicit acceptance/merge request; push/deploy prohibitions remain.
+
+Exact next step: stop. V2 is accepted and integrated locally. Do not redesign, remerge, start LATER work, push, deploy, or delete branches/worktrees. Preserve untracked `PRE_PUSH_REVIEW.md`. Remaining limitations: native-speaker Hebrew review M8-004, existing bundle warning, and unverified live integrations/production readiness in FIX_TRACKER. These were not closed by this merge.
+
 
 - Current milestone: V2 integration and release review COMPLETE within the requested local/fixture scope; ready for final human visual review.
 - Branch: `redesign/wave-1-integration`; verified application checkpoint `a34130d`. The documentation commit containing this final handoff is the final integration HEAD; obtain its exact hash with `git rev-parse HEAD` (a commit cannot contain its own hash).

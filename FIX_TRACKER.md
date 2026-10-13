@@ -772,3 +772,11 @@ Priority: High before launch
 - **Application code modified:** no
 - **Tests executed:** none (read-only audit)
 - **Live Cloudinary, Resend, Geoapify, or Atlas calls:** none
+
+## Accepted V2 local-main merge verification — 13 October 2026
+
+User accepted V2 and authorized local-main promotion. No new identified issue or status/count change. Merge `406dd65b254333fa86d2f771554545e25c380406` incorporates accepted `548743ec9c0084c5dda6db30603eb4b43a6ebed3` into pre-merge main `539303733b887f499dbbeaf49db3e3dff55b2eeb` with no conflicts; tracked tree equals accepted integration. V2-I001/V2-D001 remain VERIFIED. No application code fix or redesign during promotion.
+
+Actual post-merge main commands: frontend `npm run lint`, `npm run typecheck`, `npm test` (26 files / 158 passed), `npm run build`; backend `npm test` (40 files / 505 passed); `git -c core.whitespace=cr-at-eol diff 5393037 HEAD --check`: all exit 0. Backend has no lint/typecheck/build scripts. Existing bundle warning persists (JS 766.92 kB). Tests mocked; no live database/services, production data, email or upload. No browser rerun; prior accepted browser evidence remains in integration worktree. Public trust terminology, moderation and administrator authority/zero-point rules unchanged. Native-speaker Hebrew review and live-service/production-readiness issues remain as tracked.
+
+Only post-merge documentation files updated: this file, PROGRESS.md, REDESIGN_INTEGRATION_PROGRESS.md. Main's untracked PRE_PUSH_REVIEW.md preserved unchanged and excluded from commit. No source branch/worktree edit, push, deploy, branch/worktree deletion, reset or clean. Exact next step: stop; accepted local merge complete.
