@@ -1,36 +1,53 @@
-// Checks map chrome measurements, cluster counts, and that new selectors do not reuse the global pin names.
-// בודק מידות, מספרי מקבץ, וששמות המחלקות החדשים לא חופפים לסיכות הגלובליות.
-import { describe, expect, it } from 'vitest';
+// Checks panel breakpoints, circular marker markup, and the OpenStreetMap tile contract.
+import { beforeEach, describe, expect, it } from 'vitest';
+import i18n from '../../i18n';
+import type { KashrutPreview } from '../../types/search';
 import {
   OSM_ATTRIBUTION,
   OSM_TILE_URL,
   clusterBubbleHtml,
   clusterMetrics,
+  evidenceSummaryLine,
+  mapPanelMode,
+  markerGlyphHtml,
   markerIconMetrics,
-  markerPinHtml,
-  popupLayout,
-  popupMaxHeight,
-  popupMaxWidth,
   popupPlaceLine,
+  selectionChangesMapView,
+  zoomControlCorner,
 } from './mapChrome';
 
-describe('popup layout', () => {
-  it('keeps a popup inside a phone viewport and caps it on a wide screen', () => {
-    expect(popupMaxWidth(320)).toBe(272);
-    expect(popupMaxWidth(1440)).toBe(300);
-    expect(popupMaxWidth(120)).toBe(200);
-    expect(popupMaxWidth(Number.NaN)).toBe(300);
+const verified: KashrutPreview = {
+  status: 'VERIFIED',
+  primary: {
+    kind: 'VERIFIED',
+    hechsher: 'LOCAL',
+    hechsherOther: null,
+    kashrutLevel: 'MEHADRIN',
+    expirationDate: '2026-12-01',
+  },
+  moreCount: 1,
+  hasRecentExpired: false,
+};
+
+describe('panel layout', () => {
+  it('picks a sheet, dock, or side panel from the map container width', () => {
+    expect(mapPanelMode(375)).toBe('sheet');
+    expect(mapPanelMode(559)).toBe('sheet');
+    expect(mapPanelMode(560)).toBe('dock');
+    expect(mapPanelMode(600)).toBe('dock');
+    expect(mapPanelMode(799)).toBe('dock');
+    expect(mapPanelMode(800)).toBe('side');
+    expect(mapPanelMode(900)).toBe('side');
+    expect(mapPanelMode(1280)).toBe('side');
+    expect(mapPanelMode(Number.NaN)).toBe('sheet');
   });
 
-  it('reserves space for the zoom control without following the popup out of view', () => {
-    const layout = popupLayout(390, 520);
-
-    expect(layout.autoPan).toBe(false);
-    expect(layout.keepInView).toBe(false);
-    expect(layout.autoPanPaddingTopLeft[0]).toBeGreaterThanOrEqual(44);
-    expect(layout.maxHeight).toBe(popupMaxHeight(520));
-    expect(layout.maxHeight).toBeLessThanOrEqual(360);
-    expect(layout.maxWidth).toBeLessThanOrEqual(300);
+  it('keeps zoom off the side panel and does not move the map when a place is selected', () => {
+    expect(selectionChangesMapView).toBe(false);
+    expect(zoomControlCorner('sheet', 'ltr')).toBe('topleft');
+    expect(zoomControlCorner('dock', 'rtl')).toBe('topleft');
+    expect(zoomControlCorner('side', 'ltr')).toBe('topright');
+    expect(zoomControlCorner('side', 'rtl')).toBe('topleft');
   });
 });
 
@@ -45,21 +62,50 @@ describe('popup place line', () => {
 });
 
 describe('marker and cluster markup', () => {
-  it('uses one pin design and keeps the tip on the coordinate', () => {
-    expect(markerIconMetrics.className).toBe('kr-map-pin-wrap');
-    expect(markerIconMetrics.iconAnchor).toEqual([18, 46]);
-    expect(markerPinHtml()).toContain('kr-map-pin');
-    expect(markerPinHtml(true)).toContain('kr-map-pin');
-    expect(markerPinHtml()).not.toContain('kr-marker');
+  it('uses a circular place marker anchored on its center', () => {
+    expect(markerIconMetrics.className).toBe('kr-v2-map-marker-wrap');
+    expect(markerIconMetrics.iconSize).toEqual([34, 34]);
+    expect(markerIconMetrics.iconAnchor).toEqual([17, 17]);
+
+    const idle = markerGlyphHtml();
+    const selected = markerGlyphHtml(true);
+
+    expect(idle).toContain('kr-v2-map-marker');
+    expect(idle).not.toContain('kr-v2-map-marker-selected');
+    expect(selected).toContain('kr-v2-map-marker-selected');
+    expect(idle).not.toContain('kr-marker');
+    expect(idle).not.toContain('M18 3.2');
+    expect(selected).not.toContain('verified');
   });
 
-  it('shows the cluster count and grows only the bubble, not the anchor point', () => {
-    expect(clusterBubbleHtml(7)).toBe('<span class="kr-map-cluster">7</span>');
+  it('shows a circular cluster count and grows only the bubble', () => {
+    expect(clusterBubbleHtml(7)).toBe('<span class="kr-v2-map-cluster">7</span>');
     expect(clusterBubbleHtml(120)).toContain('120');
     expect(clusterBubbleHtml(-4)).toContain('>0<');
+    expect(clusterMetrics(7).size).toBe(40);
+    expect(clusterMetrics(12).size).toBe(46);
+    expect(clusterMetrics(120).size).toBe(52);
     expect(clusterMetrics(7).anchor).toBe(clusterMetrics(7).size / 2);
     expect(clusterMetrics(120).size).toBeGreaterThan(clusterMetrics(7).size);
+    expect(clusterMetrics(7).className).toBe('kr-v2-map-cluster-wrap');
     expect(clusterMetrics(7).className).not.toBe('kr-cluster-wrap');
+  });
+});
+
+describe('evidence summary', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('en');
+  });
+
+  it('puts hechsher, level, and validity on one line and leaves the status headline out', () => {
+    const line = evidenceSummaryLine(verified, [{ value: 'LOCAL', labelEn: 'Local Rabbinate', labelHe: 'רבנות מקומית' }]);
+
+    expect(line).toContain('Local Rabbinate');
+    expect(line).toContain('Mehadrin');
+    expect(line).toContain('(+1 more)');
+    expect(line).not.toContain('Verified certificate');
+    expect(line.indexOf('Local Rabbinate')).toBe(line.lastIndexOf('Local Rabbinate'));
+    expect(line.indexOf('Mehadrin')).toBe(line.lastIndexOf('Mehadrin'));
   });
 });
 

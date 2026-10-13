@@ -21,7 +21,7 @@ import { ISRAEL_MAP_BOUNDS, boundsCrossDateLine, zoomForRadius } from '../utils/
 import { restaurantDisplayNames } from '../utils/restaurantName';
 import { OSM_ATTRIBUTION, OSM_TILE_URL } from './map/mapChrome';
 import { clusterIcon, markerIcon, selectedMarkerIcon } from './map/mapIcons';
-import MapNotices from './map/MapNotices';
+import { MapFootnotes, MapOverlayNotices } from './map/MapNotices';
 import MapPopupCard from './map/MapPopupCard';
 import './map/map.css';
 
@@ -122,7 +122,7 @@ function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant
   const [error, setError] = useState('');
   const [retryCounter, setRetryCounter] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const dockRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const markerClick = useRef(false);
 
   const boundsKey = bounds ? `${bounds.west},${bounds.south},${bounds.east},${bounds.north}` : '';
@@ -190,13 +190,13 @@ function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant
 
   useEffect(() => {
     if (selectedId) {
-      dockRef.current?.focus();
+      panelRef.current?.focus();
     }
   }, [selectedId]);
 
   return (
-    <div className="kr-map-shell">
-      <div className="kr-map-frame">
+    <div className="kr-v2-map-shell">
+      <div className={`kr-v2-map-frame${selected ? ' kr-v2-map-has-panel' : ''}`}>
         <MapContainer
           {...(located
             ? { center: located.center, zoom: located.zoom }
@@ -207,7 +207,7 @@ function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant
                 ] as L.LatLngBoundsExpression,
               })}
           scrollWheelZoom
-          className="kr-map-canvas"
+          className="kr-v2-map-canvas"
         >
           <TileLayer
             attribution={OSM_ATTRIBUTION}
@@ -228,7 +228,7 @@ function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant
             <Circle
               center={[filters.location.lat, filters.location.lng]}
               radius={filters.radiusKm * 1000}
-              pathOptions={{ color: '#2a7a5a', weight: 1.5, fillColor: '#1a5c43', fillOpacity: 0.06 }}
+              pathOptions={{ color: '#176348', weight: 1.5, fillColor: '#176348', fillOpacity: 0.05 }}
             />
           )}
           <MarkerClusterGroup
@@ -257,18 +257,17 @@ function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant
         </MapContainer>
 
         {loading && (
-          <p role="status" className="kr-map-loading">
-            <span className="kr-map-spinner" aria-hidden="true" />
-            {t('map.loading')}
-          </p>
+          <div className="kr-v2-map-progress" role="status">
+            <span className="kr-v2-map-sr">{t('map.loading')}</span>
+          </div>
         )}
         {selected && (
           <div
-            ref={dockRef}
-            className="kr-map-dock"
+            ref={panelRef}
+            className="kr-v2-map-panel"
             role="dialog"
             tabIndex={-1}
-            aria-label={selected.name}
+            aria-label={restaurantDisplayNames(selected).primary}
             onKeyDown={(event) => {
               if (event.key === 'Escape') {
                 setSelectedId(null);
@@ -280,22 +279,19 @@ function RestaurantMap({ filters, hechsherOptions, returnState, onOpenRestaurant
               hechsherOptions={hechsherOptions}
               returnState={returnState}
               onOpenRestaurant={onOpenRestaurant}
+              onClose={() => setSelectedId(null)}
             />
-            <button type="button" className="kr-map-dock-close" onClick={() => setSelectedId(null)} aria-label={t('layout.dismiss')}>
-              ×
-            </button>
           </div>
         )}
+        <MapOverlayNotices
+          tooWide={tooWide}
+          error={error}
+          capped={capped}
+          showEmpty={!loading && !tooWide && error === '' && markers.length === 0}
+          onRetry={() => setRetryCounter((current) => current + 1)}
+        />
       </div>
-
-      <MapNotices
-        tooWide={tooWide}
-        error={error}
-        capped={capped}
-        showEmpty={!loading && !tooWide && error === '' && markers.length === 0}
-        showRadius={Boolean(filters.location && filters.radiusKm !== null)}
-        onRetry={() => setRetryCounter((current) => current + 1)}
-      />
+      <MapFootnotes showRadius={Boolean(filters.location && filters.radiusKm !== null)} />
     </div>
   );
 }
